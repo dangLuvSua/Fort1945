@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: d202686244070674e8eea3abff3ac076
+guid: 1ff8c60e93140b74ebd4ecf0fa5950dc
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
@@ -7,8 +7,23 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Material.001
-    second: {fileID: 2100000, guid: 8533ae15952121d4e9ffef0f2b94c32d, type: 2}
+      name: Material.004
+    second: {fileID: 2100000, guid: 1f762e2db8bc419409d9af23e4ee49b0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Metal
+    second: {fileID: 2100000, guid: e830ff2ef8287e9488f0f47f457fab7c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: brickpath
+    second: {fileID: 2100000, guid: caa6e43233af5be4fac2604ac0f63677, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: rock
+    second: {fileID: 2100000, guid: 1f762e2db8bc419409d9af23e4ee49b0, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: d202686244070674e8eea3abff3ac076
+guid: 41747de0d74b9d0469e1149be272b9da
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
@@ -7,8 +7,68 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Material.001
-    second: {fileID: 2100000, guid: 8533ae15952121d4e9ffef0f2b94c32d, type: 2}
+      name: BlackBars
+    second: {fileID: 2100000, guid: f9cba95939f4d4f429f5bbc309a00646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: BlackBars.001
+    second: {fileID: 2100000, guid: f9cba95939f4d4f429f5bbc309a00646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: BlackBars.002
+    second: {fileID: 2100000, guid: f9cba95939f4d4f429f5bbc309a00646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: BlackBars.003
+    second: {fileID: 2100000, guid: f9cba95939f4d4f429f5bbc309a00646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: BlackBars.004
+    second: {fileID: 2100000, guid: f9cba95939f4d4f429f5bbc309a00646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: BlackBars.005
+    second: {fileID: 2100000, guid: f9cba95939f4d4f429f5bbc309a00646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: BlackBars.006
+    second: {fileID: 2100000, guid: f9cba95939f4d4f429f5bbc309a00646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: BlackBars.007
+    second: {fileID: 2100000, guid: f9cba95939f4d4f429f5bbc309a00646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: BlackBars.008
+    second: {fileID: 2100000, guid: f9cba95939f4d4f429f5bbc309a00646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: BlackBars.009
+    second: {fileID: 2100000, guid: f9cba95939f4d4f429f5bbc309a00646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: BlackBars.010
+    second: {fileID: 2100000, guid: f9cba95939f4d4f429f5bbc309a00646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: BlackBars.011
+    second: {fileID: 2100000, guid: f9cba95939f4d4f429f5bbc309a00646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: WhiteHouse
+    second: {fileID: 2100000, guid: 93cafe1b07014e0459e128af4faa2b8e, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
