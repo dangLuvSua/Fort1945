@@ -1,29 +1,9 @@
 fileFormatVersion: 2
-guid: 5cf7480b9afd30845a06b18f8a32f443
+guid: 1810aef39979576488b7fedd25d72839
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Cloth
-    second: {fileID: 2100000, guid: 59ae4057d6df5544e8adabc2a960fd83, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Hair.001
-    second: {fileID: 2100000, guid: e6ef0695d57a78c4c9a0904b1836604c, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Head
-    second: {fileID: 2100000, guid: e6ef0695d57a78c4c9a0904b1836604c, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Material.001
-    second: {fileID: 2100000, guid: 675e407f45ee8454889922d0694d8610, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
