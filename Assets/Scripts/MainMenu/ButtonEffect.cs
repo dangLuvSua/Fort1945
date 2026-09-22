@@ -5,7 +5,8 @@ using System.Collections;
 
 public class ButtonHoverEffect : MonoBehaviour,
     IPointerEnterHandler,
-    IPointerExitHandler
+    IPointerExitHandler,
+    IDeselectHandler
 {
     [Header("Text")]
     [SerializeField] private TMP_Text buttonText;
@@ -20,7 +21,7 @@ public class ButtonHoverEffect : MonoBehaviour,
 
     [Header("Hover SFX")]
     [SerializeField] private AudioClip hoverSound;
-    [SerializeField] [Range(0f, 1f)] private float hoverVolume = 0.5f;
+    [SerializeField][Range(0f, 1f)] private float hoverVolume = 0.5f;
 
     private Vector3 originalScale;
     private Coroutine scaleCoroutine;
@@ -28,7 +29,7 @@ public class ButtonHoverEffect : MonoBehaviour,
 
     private void Awake()
     {
-        // Automatically get TMP component
+        // Automatically find TMP text
         if (buttonText == null)
             buttonText = GetComponent<TMP_Text>();
 
@@ -42,19 +43,18 @@ public class ButtonHoverEffect : MonoBehaviour,
         audioSource.playOnAwake = false;
         audioSource.loop = false;
         audioSource.spatialBlend = 0f;
+
+        originalScale = transform.localScale;
     }
 
     private void Start()
     {
-        originalScale = transform.localScale;
-
-        if (buttonText != null)
-            buttonText.color = normalColor;
+        ResetButton();
     }
 
-    // =========================
+    // =====================================================
     // HOVER ENTER
-    // =========================
+    // =====================================================
 
     public void OnPointerEnter(PointerEventData eventData)
     {
@@ -72,21 +72,54 @@ public class ButtonHoverEffect : MonoBehaviour,
         StartScale(originalScale * hoverScale);
     }
 
-    // =========================
+    // =====================================================
     // HOVER EXIT
-    // =========================
+    // =====================================================
 
     public void OnPointerExit(PointerEventData eventData)
+    {
+        ResetButton();
+    }
+
+    // =====================================================
+    // DESELECT
+    // =====================================================
+
+    public void OnDeselect(BaseEventData eventData)
+    {
+        ResetButton();
+    }
+
+    // =====================================================
+    // WHEN CANVAS / BUTTON IS DISABLED
+    // =====================================================
+
+    private void OnDisable()
+    {
+        ResetButton();
+    }
+
+    // =====================================================
+    // RESET BUTTON
+    // =====================================================
+
+    private void ResetButton()
     {
         if (buttonText != null)
             buttonText.color = normalColor;
 
-        StartScale(originalScale);
+        if (scaleCoroutine != null)
+        {
+            StopCoroutine(scaleCoroutine);
+            scaleCoroutine = null;
+        }
+
+        transform.localScale = originalScale;
     }
 
-    // =========================
+    // =====================================================
     // SCALE
-    // =========================
+    // =====================================================
 
     private void StartScale(Vector3 targetScale)
     {
@@ -115,5 +148,6 @@ public class ButtonHoverEffect : MonoBehaviour,
         }
 
         transform.localScale = targetScale;
+        scaleCoroutine = null;
     }
 }

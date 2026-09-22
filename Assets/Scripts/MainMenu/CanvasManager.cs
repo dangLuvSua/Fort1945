@@ -109,6 +109,19 @@ public class CanvasManager : MonoBehaviour
         mainMenuCanvas.SetActive(true);
     }
 
+    // =====================================================
+    // BACK TO MAIN MENU
+    // =====================================================
+
+    public void BackToMainMenu()
+    {
+        PlayClickSound();
+
+        HideAllCanvases();
+
+        mainMenuCanvas.SetActive(true);
+    }
+
 
     // =====================================================
     // OPTIONS PANELS
