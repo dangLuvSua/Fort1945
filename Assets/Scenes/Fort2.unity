@@ -75547,11 +75547,31 @@ PrefabInstance:
       objectReference: {fileID: 664351337}
     - target: {fileID: 190867757424193635, guid: e8eb97ed39f96a6418c743ecc7596d93, type: 3}
       propertyPath: m_VersionIndex
-      value: 680
+      value: 686
       objectReference: {fileID: 0}
     - target: {fileID: 280334201440140231, guid: e8eb97ed39f96a6418c743ecc7596d93, type: 3}
       propertyPath: m_Name
       value: Rizal Statue
+      objectReference: {fileID: 0}
+    - target: {fileID: 1291761728701351158, guid: e8eb97ed39f96a6418c743ecc7596d93, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.62
+      objectReference: {fileID: 0}
+    - target: {fileID: 1291761728701351158, guid: e8eb97ed39f96a6418c743ecc7596d93, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -2.08
+      objectReference: {fileID: 0}
+    - target: {fileID: 1291761728701351158, guid: e8eb97ed39f96a6418c743ecc7596d93, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7620456
+      objectReference: {fileID: 0}
+    - target: {fileID: 1291761728701351158, guid: e8eb97ed39f96a6418c743ecc7596d93, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.6475233
+      objectReference: {fileID: 0}
+    - target: {fileID: 1291761728701351158, guid: e8eb97ed39f96a6418c743ecc7596d93, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -80.71
       objectReference: {fileID: 0}
     - target: {fileID: 2432886971229757323, guid: e8eb97ed39f96a6418c743ecc7596d93, type: 3}
       propertyPath: m_Mesh
@@ -75623,7 +75643,7 @@ PrefabInstance:
       objectReference: {fileID: 1602458071}
     - target: {fileID: 7191556851072322274, guid: e8eb97ed39f96a6418c743ecc7596d93, type: 3}
       propertyPath: m_VersionIndex
-      value: 2920
+      value: 2926
       objectReference: {fileID: 0}
     - target: {fileID: 8212029933524575211, guid: e8eb97ed39f96a6418c743ecc7596d93, type: 3}
       propertyPath: m_Mesh
@@ -75631,7 +75651,7 @@ PrefabInstance:
       objectReference: {fileID: 1236885190}
     - target: {fileID: 8212029933524575211, guid: e8eb97ed39f96a6418c743ecc7596d93, type: 3}
       propertyPath: m_VersionIndex
-      value: 2104
+      value: 2110
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
