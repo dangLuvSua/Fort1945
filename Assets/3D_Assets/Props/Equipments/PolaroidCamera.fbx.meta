@@ -1,49 +1,9 @@
 fileFormatVersion: 2
-guid: f44954adfb915b7429075bf3d2181f3a
+guid: 892c08399cf5c4e4c9cdf30c308325cf
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: black_st
-    second: {fileID: 2100000, guid: b7548056264c4bd4f98663f1836a4cb4, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: mat_steklo
-    second: {fileID: 2100000, guid: 0777d934a1dad9040a182887ac91a375, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: st_leather
-    second: {fileID: 2100000, guid: 7b7ab33d93d36a74fa021aea414476a6, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: st_light
-    second: {fileID: 2100000, guid: bc241be7bc0372649a389aa89271c605, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: st_red
-    second: {fileID: 2100000, guid: e49f3975d5dc0ab42bcf79dd4647bda2, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: st_wood
-    second: {fileID: 2100000, guid: 32893776f376ff04a80859d7bbaec5f0, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: white_st
-    second: {fileID: 2100000, guid: e73bb9ea3dede964fb2e0d7383a56b31, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: yellow
-    second: {fileID: 2100000, guid: fb5dec26674802f428aafb4385b1b3c3, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0

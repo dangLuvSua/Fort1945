@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 2042cc405ff9f1e45813fda62a7f50b2
+guid: e1b3407affb7b5f43a1524172778b2b7
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -93,6 +93,19 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites: []
@@ -115,10 +128,3 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 351188
-  packageName: Low-Poly Ghost Hunting Pack Lite
-  packageVersion: 1.1
-  assetPath: Assets/Devtricked/LPGHP/Textures/LPGHPTextureAlt.png
-  uploadId: 866680

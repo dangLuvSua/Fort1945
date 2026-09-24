@@ -1,19 +1,9 @@
 fileFormatVersion: 2
-guid: d770f5ea8808faf4197e2b2c86d04bf2
+guid: 139acf78d407e5b4fbfee54fbd89f4c5
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Brick
-    second: {fileID: 2100000, guid: 827dc301de3f75744a69051dad88d7de, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Chain
-    second: {fileID: 2100000, guid: e830ff2ef8287e9488f0f47f457fab7c, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
