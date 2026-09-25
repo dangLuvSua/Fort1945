@@ -3,7 +3,12 @@ guid: f611a1da59de874478c532a310d5f4c9
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: LPGHPTexture
+    second: {fileID: 2100000, guid: 4262d315c3fb8bc4e91fbdca2a3a0127, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
