@@ -1,14 +1,9 @@
 fileFormatVersion: 2
-guid: 5b1c6b158a4ec8449b86cc157d536f6d
+guid: bb904fac98298cf4293fd5d9e1426a0a
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: BlackBrick
-    second: {fileID: 2100000, guid: c5998191242f5274c8088cddd68e2ff6, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
