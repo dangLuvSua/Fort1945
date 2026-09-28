@@ -1,29 +1,9 @@
 fileFormatVersion: 2
-guid: 691ce0e58c5b11f459d368f7aa7a7b92
+guid: fcf422a5da6d5a5408642a7fc51f438b
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: brickpath
-    second: {fileID: 2100000, guid: 0873bf1bf15be6e45bd3cd9866f178bb, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: rock
-    second: {fileID: 2100000, guid: 1be86042504eca34a8608cff6deb7f07, type: 2}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Bricks076B_1K-JPG_Color
-    second: {fileID: 2800000, guid: 9688cfdfea642a14bb463e01c9fc0b18, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Bricks096_1K-JPG_Color
-    second: {fileID: 2800000, guid: 2f4a75fc64881f64d9d3a4885216e41b, type: 3}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0

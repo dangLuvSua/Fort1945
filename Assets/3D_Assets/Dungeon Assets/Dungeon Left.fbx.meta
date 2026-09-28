@@ -1,79 +1,9 @@
 fileFormatVersion: 2
-guid: 5bab8de9a8f8b63418c80c060b9ff6d2
+guid: 9602e330e7b1cf1468a96dfa821f4e9e
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Bricks
-    second: {fileID: 2100000, guid: 64b815fcd66aa9a4c8645d9a2b28ce9e, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Candle
-    second: {fileID: 2100000, guid: bceae9e56289bba428cfe6bb71df0e77, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Lantern
-    second: {fileID: 2100000, guid: 6aaa495c4d3e89446aab191ee0096b15, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Slight rust metal
-    second: {fileID: 2100000, guid: 1a0c4eafdd25b014faea23be28e000e9, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Smooth metal
-    second: {fileID: 2100000, guid: 37ff1077eb7a63144a6d9b2b21388202, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Wood
-    second: {fileID: 2100000, guid: d1396473b1572de4ebece11b50c04805, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: brickpath
-    second: {fileID: 2100000, guid: 4c96d3e40a2bbc44e89bab2796f0824b, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: rock
-    second: {fileID: 2100000, guid: 87046725bdf305e44b9776feea2ac363, type: 2}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Bark014_1K-JPG_Color
-    second: {fileID: 2800000, guid: 4bc005525317384468b3c01fc1860043, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Bricks076B_1K-JPG_Color
-    second: {fileID: 2800000, guid: a7c8b50fbc4369b43a53b52c50baa622, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Bricks096_1K-JPG_Color
-    second: {fileID: 2800000, guid: 28903c4ad73ec4b42b587320aea1cb9a, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Metal046A_1K-JPG_Color
-    second: {fileID: 2800000, guid: 5de95f3392bb73e42b4be0df89bddefd, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Metal053B_1K-JPG_Color
-    second: {fileID: 2800000, guid: 6392b030225e33e438b6f20288dbb69b, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Wood035_1K-JPG_Color
-    second: {fileID: 2800000, guid: 21e4d554743615743ba3edfb6470c3f1, type: 3}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0

@@ -1,49 +1,9 @@
 fileFormatVersion: 2
-guid: 1560b793b2b2c0f4f9cfe7e4e809bee0
+guid: 939927d0afdaf374c9d22aa817555721
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Concrete
-    second: {fileID: 2100000, guid: 20edd715e7b57134684a99b38d2621bb, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Slight rust metal
-    second: {fileID: 2100000, guid: 0ede25f61d3cf5f45b0b3e06f062eaa8, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: brickpath
-    second: {fileID: 2100000, guid: 53f3e6c7a2cc0234ca0ccfdab0ee94b8, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: rock
-    second: {fileID: 2100000, guid: 614b5ad40ca8bcb428e52ad93616cff9, type: 2}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Bricks076B_1K-JPG_Color
-    second: {fileID: 2800000, guid: 85cf26a9fabb3ff45a022af8f8630cc3, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Bricks096_1K-JPG_Color
-    second: {fileID: 2800000, guid: 3f8fd6d5c26e1cf44821f70de928d5fc, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Concrete047A_1K-JPG_Color
-    second: {fileID: 2800000, guid: e17802c6458d9cd439dd3e145153b933, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Metal053B_1K-JPG_Color
-    second: {fileID: 2800000, guid: c221dee5fa520a1429912a8289fa0a2f, type: 3}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
