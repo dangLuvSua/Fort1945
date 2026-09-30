@@ -50,7 +50,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 29d63deaaa736e9448b578f65723c91f, type: 3}
       propertyPath: m_Name
-      value: boy
+      value: Boy1
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 29d63deaaa736e9448b578f65723c91f, type: 3}
       propertyPath: m_Controller
@@ -63,56 +63,5 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 29d63deaaa736e9448b578f65723c91f, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3855355551885749783}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 29d63deaaa736e9448b578f65723c91f, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 281886820117059274}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 29d63deaaa736e9448b578f65723c91f, type: 3}
---- !u!1 &2769300666014492038 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 29d63deaaa736e9448b578f65723c91f, type: 3}
-  m_PrefabInstance: {fileID: 3075925119609526487}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &3855355551885749783
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2769300666014492038}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac430167059e08640b50ec0271202488, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  walkSpeed: 3
-  runSpeed: 6
-  turnSpeed: 10
---- !u!143 &281886820117059274
-CharacterController:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2769300666014492038}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Height: 2.02
-  m_Radius: 0.5
-  m_SlopeLimit: 45
-  m_StepOffset: 0.3
-  m_SkinWidth: 0.08
-  m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 1.05, z: 0}
