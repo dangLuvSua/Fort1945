@@ -10,10 +10,31 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private GameObject optionsCanvas;
     [SerializeField] private GameObject creditsCanvas;
 
+
+    // =====================================================
+    // MULTIPLAYER PANELS
+    // =====================================================
+
+    [Header("Multiplayer Panels")]
+    [SerializeField] private GameObject multiplayerPanel;
+    [SerializeField] private GameObject createLobbyPanel;
+    [SerializeField] private GameObject joinLobbyPanel;
+    [SerializeField] private GameObject findLobbyPanel;
+
+
+    // =====================================================
+    // OPTIONS PANELS
+    // =====================================================
+
     [Header("Options Panels")]
     [SerializeField] private GameObject audioPanel;
     [SerializeField] private GameObject graphicsPanel;
     [SerializeField] private GameObject controlsPanel;
+
+
+    // =====================================================
+    // UI CLICK AUDIO
+    // =====================================================
 
     [Header("UI Click Audio")]
     [SerializeField] private AudioSource uiAudioSource;
@@ -22,6 +43,11 @@ public class CanvasManager : MonoBehaviour
     [SerializeField]
     [Range(0f, 1f)]
     private float clickVolume = 0.7f;
+
+
+    // =====================================================
+    // GAME SCENE
+    // =====================================================
 
     [Header("Game Scene")]
     [SerializeField] private string gameSceneName = "GameScene";
@@ -74,6 +100,9 @@ public class CanvasManager : MonoBehaviour
         HideAllCanvases();
 
         multiplayerCanvas.SetActive(true);
+
+        // Always start at the Multiplayer main panel
+        ShowMultiplayerMainPanelWithoutSound();
     }
 
 
@@ -109,6 +138,7 @@ public class CanvasManager : MonoBehaviour
         mainMenuCanvas.SetActive(true);
     }
 
+
     // =====================================================
     // BACK TO MAIN MENU
     // =====================================================
@@ -124,6 +154,89 @@ public class CanvasManager : MonoBehaviour
 
 
     // =====================================================
+    // MULTIPLAYER NAVIGATION
+    // =====================================================
+
+    // Opens Create Lobby
+    public void ShowCreateLobby()
+    {
+        PlayClickSound();
+
+        HideAllMultiplayerPanels();
+
+        if (createLobbyPanel != null)
+            createLobbyPanel.SetActive(true);
+    }
+
+
+    // Opens Join Lobby
+    public void ShowJoinLobby()
+    {
+        PlayClickSound();
+
+        HideAllMultiplayerPanels();
+
+        if (joinLobbyPanel != null)
+            joinLobbyPanel.SetActive(true);
+    }
+
+
+    // Opens Find Lobby
+    public void ShowFindLobby()
+    {
+        PlayClickSound();
+
+        HideAllMultiplayerPanels();
+
+        if (findLobbyPanel != null)
+            findLobbyPanel.SetActive(true);
+    }
+
+
+    // Returns from Create / Join / Find
+    // back to the main Multiplayer panel
+    public void BackToMultiplayer()
+    {
+        PlayClickSound();
+
+        ShowMultiplayerMainPanelWithoutSound();
+    }
+
+
+    // =====================================================
+    // SHOW MULTIPLAYER MAIN PANEL WITHOUT SOUND
+    // =====================================================
+
+    private void ShowMultiplayerMainPanelWithoutSound()
+    {
+        HideAllMultiplayerPanels();
+
+        if (multiplayerPanel != null)
+            multiplayerPanel.SetActive(true);
+    }
+
+
+    // =====================================================
+    // HIDE ALL MULTIPLAYER PANELS
+    // =====================================================
+
+    private void HideAllMultiplayerPanels()
+    {
+        if (multiplayerPanel != null)
+            multiplayerPanel.SetActive(false);
+
+        if (createLobbyPanel != null)
+            createLobbyPanel.SetActive(false);
+
+        if (joinLobbyPanel != null)
+            joinLobbyPanel.SetActive(false);
+
+        if (findLobbyPanel != null)
+            findLobbyPanel.SetActive(false);
+    }
+
+
+    // =====================================================
     // OPTIONS PANELS
     // =====================================================
 
@@ -133,7 +246,8 @@ public class CanvasManager : MonoBehaviour
 
         HideAllOptionPanels();
 
-        audioPanel.SetActive(true);
+        if (audioPanel != null)
+            audioPanel.SetActive(true);
     }
 
 
@@ -143,7 +257,8 @@ public class CanvasManager : MonoBehaviour
 
         HideAllOptionPanels();
 
-        graphicsPanel.SetActive(true);
+        if (graphicsPanel != null)
+            graphicsPanel.SetActive(true);
     }
 
 
@@ -153,7 +268,8 @@ public class CanvasManager : MonoBehaviour
 
         HideAllOptionPanels();
 
-        controlsPanel.SetActive(true);
+        if (controlsPanel != null)
+            controlsPanel.SetActive(true);
     }
 
 
