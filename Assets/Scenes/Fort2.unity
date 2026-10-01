@@ -85499,7 +85499,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45b2f6d13aa152649a84d4faf05f23fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Spawner
-  playerPrefab: {fileID: 2481270183145079181, guid: ddc5dfc990d6831408c4d5f15c7b31fe, type: 3}
+  playerPrefab: {fileID: 2481270183145079181, guid: 8b623d1846bdc6349836e6bdad5d04ee, type: 3}
   spawnPoint: {fileID: 1920830432}
 --- !u!4 &1438607220
 Transform:
