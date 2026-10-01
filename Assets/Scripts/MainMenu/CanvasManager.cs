@@ -1,9 +1,14 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using TMPro;
 
 public class CanvasManager : MonoBehaviour
 {
+    // =====================================================
+    // MAIN CANVASES
+    // =====================================================
+
     [Header("Main Canvases")]
     [SerializeField] private GameObject mainMenuCanvas;
     [SerializeField] private GameObject multiplayerCanvas;
@@ -30,6 +35,16 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private GameObject audioPanel;
     [SerializeField] private GameObject graphicsPanel;
     [SerializeField] private GameObject controlsPanel;
+
+
+    // =====================================================
+    // PLAYER PROFILE
+    // =====================================================
+
+    [Header("Player Profile")]
+    [SerializeField] private TMP_InputField playerNameInput;
+    // Player name field shown in Multiplayer panel
+    [SerializeField] private TMP_InputField multiplayerPlayerNameInput;
 
 
     // =====================================================
@@ -101,10 +116,12 @@ public class CanvasManager : MonoBehaviour
 
         multiplayerCanvas.SetActive(true);
 
+        // Load saved player name into Multiplayer
+        LoadMultiplayerPlayerName();
+
         // Always start at the Multiplayer main panel
         ShowMultiplayerMainPanelWithoutSound();
     }
-
 
     public void ShowOptions()
     {
@@ -113,6 +130,9 @@ public class CanvasManager : MonoBehaviour
         HideAllCanvases();
 
         optionsCanvas.SetActive(true);
+
+        // Load saved player name
+        LoadPlayerName();
 
         // Show Audio panel by default
         ShowAudioPanelWithoutSound();
@@ -259,6 +279,9 @@ public class CanvasManager : MonoBehaviour
 
         if (graphicsPanel != null)
             graphicsPanel.SetActive(true);
+
+        // Load saved player name when Graphics panel opens
+        LoadPlayerName();
     }
 
 
@@ -300,6 +323,92 @@ public class CanvasManager : MonoBehaviour
 
         if (controlsPanel != null)
             controlsPanel.SetActive(false);
+    }
+
+
+    // =====================================================
+    // PLAYER NAME
+    // =====================================================
+
+    private void LoadPlayerName()
+    {
+        if (playerNameInput == null)
+        {
+            Debug.LogWarning(
+                "CanvasManager: Player Name Input " +
+                "is not assigned."
+            );
+
+            return;
+        }
+
+        playerNameInput.text =
+            PlayerProfile.PlayerName;
+
+        Debug.Log(
+            $"Loaded player name: " +
+            $"{PlayerProfile.PlayerName}"
+        );
+    }
+
+
+
+    private void LoadMultiplayerPlayerName()
+    {
+        if (multiplayerPlayerNameInput == null)
+        {
+            Debug.LogWarning(
+                "CanvasManager: Multiplayer Player Name Input " +
+                "is not assigned."
+            );
+
+            return;
+        }
+
+        multiplayerPlayerNameInput.text =
+            PlayerProfile.PlayerName;
+
+        Debug.Log(
+            $"Loaded multiplayer player name: " +
+            $"{PlayerProfile.PlayerName}"
+        );
+    }
+    public void SavePlayerName()
+    {
+        if (playerNameInput == null)
+        {
+            Debug.LogWarning(
+                "CanvasManager: Player Name Input " +
+                "is not assigned."
+            );
+
+            return;
+        }
+
+        string playerName =
+            playerNameInput.text.Trim();
+
+        // Prevent empty player names
+        if (string.IsNullOrEmpty(playerName))
+        {
+            playerName = "Player";
+        }
+
+        // Save to PlayerPrefs
+        PlayerProfile.SetPlayerName(
+            playerName
+        );
+
+        // Make sure input field displays
+        // the cleaned value
+        playerNameInput.text = playerName;
+
+        PlayClickSound();
+
+        Debug.Log(
+            $"Player name saved successfully: " +
+            $"{playerName}"
+        );
     }
 
 

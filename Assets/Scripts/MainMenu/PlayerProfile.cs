@@ -4,6 +4,10 @@ public static class PlayerProfile
 {
     private const string PlayerNameKey = "PlayerName";
 
+    // =====================================================
+    // GET PLAYER NAME
+    // =====================================================
+
     public static string PlayerName
     {
         get
@@ -15,10 +19,16 @@ public static class PlayerProfile
         }
     }
 
+
+    // =====================================================
+    // SAVE PLAYER NAME
+    // =====================================================
+
     public static void SetPlayerName(string name)
     {
         name = name.Trim();
 
+        // Prevent empty player names
         if (string.IsNullOrEmpty(name))
         {
             name = "Player";
@@ -31,6 +41,8 @@ public static class PlayerProfile
 
         PlayerPrefs.Save();
 
-        Debug.Log($"Player name saved: {name}");
+        Debug.Log(
+            $"Player name saved: {name}"
+        );
     }
 }
