@@ -16,7 +16,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &6696248831404805245
 Transform:
@@ -143,7 +143,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &6360898122130912534
 Transform:
@@ -270,7 +270,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &4594176968915570345
 Transform:
@@ -397,7 +397,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &5966395287654205207
 Transform:
@@ -524,7 +524,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &458028065383584038
 Transform:
@@ -649,7 +649,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &5236996173694829613
 Transform:
@@ -694,7 +694,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &4625186553213230179
 Transform:
@@ -821,7 +821,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &8399021088776608142
 Transform:
@@ -948,7 +948,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &6589469076796276761
 Transform:
@@ -1075,7 +1075,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &1950557007364200212
 Transform:
@@ -1202,7 +1202,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &2617522409877194050
 Transform:
@@ -1327,7 +1327,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &4301973383280641954
 Transform:
@@ -1373,7 +1373,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &4203919303066792767
 Transform:
@@ -1500,7 +1500,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &37251580341660816
 Transform:
@@ -1659,9 +1659,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5617632582832292604, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 6834099463015569028, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
       propertyPath: m_VersionIndex
-      value: 918
+      value: 921
       objectReference: {fileID: 0}
     - target: {fileID: 7982727732800090042, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -1670,6 +1674,14 @@ PrefabInstance:
     - target: {fileID: 8248284211639071940, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
       propertyPath: m_Name
       value: StreetLamp (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8248284211639071940, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8487214797251333743, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1689,6 +1701,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4301973383280641954}
     m_Modifications:
+    - target: {fileID: 1753662117150058842, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 2412411356682499068, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 2414774935807289302, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_LocalPosition.x
       value: -3.5767202
@@ -1729,9 +1749,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5572488599219571934, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 6579073870156742567, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_Name
       value: FieldLamp with Stand (6)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1751,6 +1783,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4301973383280641954}
     m_Modifications:
+    - target: {fileID: 1753662117150058842, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 2412411356682499068, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 2414774935807289302, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_LocalPosition.x
       value: -18.586721
@@ -1791,9 +1831,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5572488599219571934, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 6579073870156742567, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_Name
       value: FieldLamp with Stand (7)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1853,9 +1905,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5617632582832292604, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 6834099463015569028, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
       propertyPath: m_VersionIndex
-      value: 918
+      value: 921
       objectReference: {fileID: 0}
     - target: {fileID: 7982727732800090042, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -1864,6 +1920,14 @@ PrefabInstance:
     - target: {fileID: 8248284211639071940, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
       propertyPath: m_Name
       value: StreetLamp
+      objectReference: {fileID: 0}
+    - target: {fileID: 8248284211639071940, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8487214797251333743, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1883,6 +1947,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4301973383280641954}
     m_Modifications:
+    - target: {fileID: 1753662117150058842, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 2412411356682499068, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 2414774935807289302, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_LocalPosition.x
       value: 5.4482794
@@ -1923,9 +1995,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5572488599219571934, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 6579073870156742567, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_Name
       value: FieldLamp with Stand (5)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1945,6 +2029,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4301973383280641954}
     m_Modifications:
+    - target: {fileID: 1753662117150058842, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 2412411356682499068, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 2414774935807289302, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_LocalPosition.x
       value: 19.602442
@@ -1985,9 +2077,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5572488599219571934, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 6579073870156742567, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_Name
       value: FieldLamp with Stand (4)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2007,6 +2111,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4301973383280641954}
     m_Modifications:
+    - target: {fileID: 1753662117150058842, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 2412411356682499068, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 2414774935807289302, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.6302795
@@ -2047,9 +2159,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5572488599219571934, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 6579073870156742567, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_Name
       value: FieldLamp with Stand (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2109,9 +2233,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5617632582832292604, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 6834099463015569028, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
       propertyPath: m_VersionIndex
-      value: 918
+      value: 921
       objectReference: {fileID: 0}
     - target: {fileID: 7982727732800090042, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -2120,6 +2248,14 @@ PrefabInstance:
     - target: {fileID: 8248284211639071940, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
       propertyPath: m_Name
       value: StreetLamp (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8248284211639071940, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8487214797251333743, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2139,6 +2275,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4301973383280641954}
     m_Modifications:
+    - target: {fileID: 1753662117150058842, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 2412411356682499068, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 2414774935807289302, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_LocalPosition.x
       value: -6.32672
@@ -2179,9 +2323,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5572488599219571934, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 6579073870156742567, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_Name
       value: FieldLamp with Stand (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2201,6 +2357,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4301973383280641954}
     m_Modifications:
+    - target: {fileID: 1753662117150058842, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 2412411356682499068, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 2414774935807289302, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_LocalPosition.x
       value: 16.83728
@@ -2241,9 +2405,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5572488599219571934, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 6579073870156742567, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_Name
       value: FieldLamp with Stand (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2303,9 +2479,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5617632582832292604, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 6834099463015569028, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
       propertyPath: m_VersionIndex
-      value: 918
+      value: 921
       objectReference: {fileID: 0}
     - target: {fileID: 7982727732800090042, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -2314,6 +2494,14 @@ PrefabInstance:
     - target: {fileID: 8248284211639071940, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
       propertyPath: m_Name
       value: StreetLamp (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8248284211639071940, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8487214797251333743, guid: e26ad90b29c4fcb4fa3216f3cdae7384, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2333,6 +2521,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4301973383280641954}
     m_Modifications:
+    - target: {fileID: 1753662117150058842, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 2412411356682499068, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 2414774935807289302, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_LocalPosition.x
       value: -17.442694
@@ -2373,9 +2569,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5572488599219571934, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 6579073870156742567, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
       propertyPath: m_Name
       value: FieldLamp with Stand
+      objectReference: {fileID: 0}
+    - target: {fileID: 7924979956859290942, guid: ebdebf534b6956549bcd778bb0180afd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
