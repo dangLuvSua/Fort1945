@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: f213ec306d5a53e44b2f26da63537924
+guid: c89aaebbec587c84cb5104716e1803b8
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
@@ -112,10 +112,3 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 404640
-  packageName: FREE 3D VEGETATION PACK
-  packageVersion: 1.0
-  assetPath: Assets/ZNS3D/FREE_VEGETATION_PACK/MODELS/Grass_1.fbx
-  uploadId: 987176

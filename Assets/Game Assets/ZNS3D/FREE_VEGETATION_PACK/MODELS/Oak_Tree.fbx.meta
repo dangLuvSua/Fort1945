@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 9defd45b99b4e424c9512c9e5ba75b98
+guid: 10461a3c15a4b524c957e202d03033fe
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
@@ -112,10 +112,3 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 404640
-  packageName: FREE 3D VEGETATION PACK
-  packageVersion: 1.0
-  assetPath: Assets/ZNS3D/FREE_VEGETATION_PACK/MODELS/Oak_Tree.fbx
-  uploadId: 987176

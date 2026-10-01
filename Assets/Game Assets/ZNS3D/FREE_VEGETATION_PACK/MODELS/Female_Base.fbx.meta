@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 0b164b9cb2c963b4997649d6ed04659a
+guid: 671d98becd2a7c547bdc5b3848485b72
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
@@ -112,10 +112,3 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 404640
-  packageName: FREE 3D VEGETATION PACK
-  packageVersion: 1.0
-  assetPath: Assets/ZNS3D/FREE_VEGETATION_PACK/MODELS/Female_Base.fbx
-  uploadId: 987176

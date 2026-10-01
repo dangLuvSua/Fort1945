@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 22c29acdea389574cafba2ca8f3a54bf
+guid: dab31047d3278ed409e859f63d3796d6
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
@@ -112,10 +112,3 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 404640
-  packageName: FREE 3D VEGETATION PACK
-  packageVersion: 1.0
-  assetPath: Assets/ZNS3D/FREE_VEGETATION_PACK/MODELS/Shrub.fbx
-  uploadId: 987176

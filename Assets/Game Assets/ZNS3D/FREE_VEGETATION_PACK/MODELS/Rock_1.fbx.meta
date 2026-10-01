@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 5c1b1f3cb75bed84ba1e0a5bbd84bdf9
+guid: c238cc934e05d7b49b000888a2174d1c
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
@@ -112,10 +112,3 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 404640
-  packageName: FREE 3D VEGETATION PACK
-  packageVersion: 1.0
-  assetPath: Assets/ZNS3D/FREE_VEGETATION_PACK/MODELS/Rock_1.fbx
-  uploadId: 987176
