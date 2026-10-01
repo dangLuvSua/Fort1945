@@ -101,11 +101,11 @@ public class PlayerController : NetworkBehaviour
         inputActions = actions; // para ma-disable natin sa OnDisable
 
         // Itago ang sariling katawan, pero may shadow pa rin
-        if (playerBody != null)
-        {
-            foreach (var r in playerBody.GetComponentsInChildren<Renderer>())
-                r.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
-        }
+        // if (playerBody != null)
+        // {
+        //     foreach (var r in playerBody.GetComponentsInChildren<Renderer>())
+        //         r.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
+        // }
 
         LockCursor(true);
     }
@@ -242,5 +242,18 @@ public class PlayerController : NetworkBehaviour
             inputActions?.FindActionMap("Player")?.Disable();
             LockCursor(false);
         }
+    }
+
+    public void Teleport(Vector3 position, Quaternion rotation)
+    {
+        var cc = GetComponent<CharacterController>();
+
+        cc.enabled = false;
+        transform.SetPositionAndRotation(position, rotation);
+        cc.enabled = true;
+
+        yaw = rotation.eulerAngles.y;
+        currentVelocity = Vector3.zero;
+        verticalVelocity = 0f;
     }
 }
