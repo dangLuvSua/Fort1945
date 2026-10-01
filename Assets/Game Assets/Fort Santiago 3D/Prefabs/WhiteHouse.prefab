@@ -14,7 +14,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 18
   m_IsActive: 1
 --- !u!4 &3956476176159685602
 Transform:
@@ -124,6 +124,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WhiteWall (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -201,6 +205,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
       propertyPath: m_Name
       value: WhiteWall (19)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -280,6 +288,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WhiteWall (21)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -357,6 +369,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
       propertyPath: m_Name
       value: WhiteWall (23)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -436,6 +452,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WhiteWall (24)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -513,6 +533,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
       propertyPath: m_Name
       value: WhiteWall (22)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -592,6 +616,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WhiteWall (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -669,6 +697,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
       propertyPath: m_Name
       value: WhiteWall (5)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -748,6 +780,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WhiteWall (6)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -825,6 +861,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
       propertyPath: m_Name
       value: WhiteWall
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -904,6 +944,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WhiteWall (12)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -981,6 +1025,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
       propertyPath: m_Name
       value: WhiteWall (17)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1060,6 +1108,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WhiteWall (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1137,6 +1189,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
       propertyPath: m_Name
       value: WhiteWall (10)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1216,6 +1272,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Roof
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 0bc9903a9ea50fd489680239e14f11b0, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1293,6 +1353,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
       propertyPath: m_Name
       value: WhiteWall (20)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1372,6 +1436,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WhiteWall (11)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1449,6 +1517,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
       propertyPath: m_Name
       value: WhiteWall (8)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1528,6 +1600,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WhiteWall (14)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1605,6 +1681,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
       propertyPath: m_Name
       value: WhiteWall (9)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1684,6 +1764,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WhiteWall (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1761,6 +1845,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
       propertyPath: m_Name
       value: WhiteWall (16)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1840,6 +1928,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WhiteWall (13)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1918,6 +2010,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WhiteWall (18)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1995,6 +2091,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
       propertyPath: m_Name
       value: WhiteWall (15)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 41747de0d74b9d0469e1149be272b9da, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
