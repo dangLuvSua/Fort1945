@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b3ef1bd304fb5f24baa55a89447235c5
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 366180
+  packageName: 3D Low Poly Chests
+  packageVersion: 1.0
+  assetPath: Assets/ChestDF/Prefab/Chest2/Model/Material/Chest2.mat
+  uploadId: 875530

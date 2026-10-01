@@ -14,7 +14,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 18
   m_IsActive: 1
 --- !u!4 &3183431004236639274
 Transform:
@@ -149,6 +149,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (8)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -256,6 +260,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (18)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -365,6 +373,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeft (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e2105e33063c0ab4d9aca314f29beb10, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -472,6 +484,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (13)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -581,6 +597,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (20)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -688,6 +708,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (23)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -797,6 +821,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (7)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -904,6 +932,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (5)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1013,6 +1045,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (16)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1120,6 +1156,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (28)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1229,6 +1269,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (15)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1336,6 +1380,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (10)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1445,6 +1493,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (36)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1552,6 +1604,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 7e9413fffc0982d448bf150a36ded2e6, type: 3}
       propertyPath: m_Name
       value: FortLeftCrooked
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7e9413fffc0982d448bf150a36ded2e6, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1661,6 +1717,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeft (6)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e2105e33063c0ab4d9aca314f29beb10, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1768,6 +1828,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: e2105e33063c0ab4d9aca314f29beb10, type: 3}
       propertyPath: m_Name
       value: FortLeft (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e2105e33063c0ab4d9aca314f29beb10, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1877,6 +1941,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (31)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1984,6 +2052,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (19)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2093,6 +2165,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (17)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2200,6 +2276,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (26)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2309,6 +2389,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (24)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2416,6 +2500,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (6)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2525,6 +2613,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (33)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2632,6 +2724,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (34)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2741,6 +2837,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeft
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e2105e33063c0ab4d9aca314f29beb10, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2848,6 +2948,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (12)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2957,6 +3061,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeft (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e2105e33063c0ab4d9aca314f29beb10, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3064,6 +3172,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (22)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3173,6 +3285,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (30)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3281,11 +3397,45 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 830159262044851641}
   m_SourcePrefab: {fileID: 100100000, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+--- !u!1 &5143811539556442859 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+  m_PrefabInstance: {fileID: 5450222541733633978}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &830159262044851641
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5143811539556442859}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 2212009239438826721, guid: 9c148e206c30305429afe64acdf50775, type: 3}
 --- !u!4 &5488108914683770961 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9c148e206c30305429afe64acdf50775, type: 3}
@@ -3359,11 +3509,45 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6812331987464814746}
   m_SourcePrefab: {fileID: 100100000, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+--- !u!1 &4747018778695822393 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+  m_PrefabInstance: {fileID: 5557905643270623592}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &6812331987464814746
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4747018778695822393}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 2212009239438826721, guid: 9c148e206c30305429afe64acdf50775, type: 3}
 --- !u!4 &5380425795966973571 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9c148e206c30305429afe64acdf50775, type: 3}
@@ -3436,6 +3620,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (37)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3545,6 +3733,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (11)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3652,6 +3844,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3761,6 +3957,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (35)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3868,6 +4068,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (25)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3977,11 +4181,45 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (21)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4880248332212681915}
   m_SourcePrefab: {fileID: 100100000, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+--- !u!1 &6330904033039685981 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+  m_PrefabInstance: {fileID: 6564711676462375948}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &4880248332212681915
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6330904033039685981}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 2212009239438826721, guid: 9c148e206c30305429afe64acdf50775, type: 3}
 --- !u!4 &6669887125222802407 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9c148e206c30305429afe64acdf50775, type: 3}
@@ -4054,6 +4292,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (9)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4163,6 +4405,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeft (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e2105e33063c0ab4d9aca314f29beb10, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4270,6 +4516,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 8b549d00e4c31b34f91242798800777c, type: 3}
       propertyPath: m_Name
       value: FortLeftGate
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 8b549d00e4c31b34f91242798800777c, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4379,11 +4629,45 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7698266899588779218}
   m_SourcePrefab: {fileID: 100100000, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+--- !u!1 &7299087522191608518 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+  m_PrefabInstance: {fileID: 7605164407185389463}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &7698266899588779218
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7299087522191608518}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 2212009239438826721, guid: 9c148e206c30305429afe64acdf50775, type: 3}
 --- !u!4 &7926407643403899004 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9c148e206c30305429afe64acdf50775, type: 3}
@@ -4456,6 +4740,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (27)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4565,6 +4853,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (29)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4672,6 +4964,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 8b549d00e4c31b34f91242798800777c, type: 3}
       propertyPath: m_Name
       value: FortLeftGate (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 8b549d00e4c31b34f91242798800777c, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4781,6 +5077,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (32)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4888,6 +5188,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
       propertyPath: m_Name
       value: FortLeftWall (14)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4997,6 +5301,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (39)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -5104,6 +5412,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 7e9413fffc0982d448bf150a36ded2e6, type: 3}
       propertyPath: m_Name
       value: FortLeftCrooked (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7e9413fffc0982d448bf150a36ded2e6, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5213,6 +5525,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FortLeftWall (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c148e206c30305429afe64acdf50775, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -5320,6 +5636,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: e2105e33063c0ab4d9aca314f29beb10, type: 3}
       propertyPath: m_Name
       value: FortLeft (7)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e2105e33063c0ab4d9aca314f29beb10, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
