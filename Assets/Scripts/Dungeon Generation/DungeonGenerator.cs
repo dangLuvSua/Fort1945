@@ -108,6 +108,12 @@ public class DungeonGenerator : MonoBehaviour
 
     private bool uniqueRoomCreated = false;
 
+    public static event System.Action<DungeonGenerator> OnDungeonGenerated;
+
+    public bool IsGenerated { get; private set; }
+
+    private readonly List<Transform> spawnPoints = new List<Transform>();
+
 
     // =========================================================
     // START
@@ -189,6 +195,8 @@ public class DungeonGenerator : MonoBehaviour
 
     private bool GenerateDungeon()
     {
+        IsGenerated = false;
+        spawnPoints.Clear();
         ClearDungeon();
 
         if (!ValidateSetup())
@@ -355,6 +363,10 @@ public class DungeonGenerator : MonoBehaviour
                 );
             }
 
+            CollectSpawnPoints();
+            IsGenerated = true;
+            OnDungeonGenerated?.Invoke(this);
+
             return true;
         }
 
@@ -362,6 +374,50 @@ public class DungeonGenerator : MonoBehaviour
         return false;
     }
 
+    private void CollectSpawnPoints()
+    {
+        spawnPoints.Clear();
+
+        // Hanapin ang mga piece na may spawn marker (Dungeon Room lang)
+        List<GameObject> roomsWithSpawns = new List<GameObject>();
+
+        foreach (GameObject piece in generatedPieces)
+        {
+            if (piece == null) continue;
+
+            if (piece.GetComponentInChildren<DungeonSpawnPoint>() != null)
+                roomsWithSpawns.Add(piece);
+        }
+
+        if (roomsWithSpawns.Count == 0)
+        {
+            Debug.LogError("Walang room na may DungeonSpawnPoint. Maglagay ng marker sa Dungeon Room prefab.");
+            return;
+        }
+
+        // Isang random na Dungeon Room ang pipiliin, doon lahat ang players
+        GameObject spawnRoom = roomsWithSpawns[Random.Range(0, roomsWithSpawns.Count)];
+
+        foreach (var point in spawnRoom.GetComponentsInChildren<DungeonSpawnPoint>())
+            spawnPoints.Add(point.transform);
+        
+        Debug.Log("Spawn room: " + spawnRoom.name + " at " + spawnRoom.transform.position, spawnRoom);
+    }
+
+    public void GetSpawn(int playerIndex, out Vector3 position, out Quaternion rotation)
+    {
+        if (spawnPoints.Count == 0)
+        {
+            Debug.LogError("Walang spawn point. Naka-spawn sa (0,1,0).");
+            position = Vector3.up;
+            rotation = Quaternion.identity;
+            return;
+        }
+
+        Transform point = spawnPoints[playerIndex % spawnPoints.Count];
+        position = point.position;
+        rotation = point.rotation;
+    }
 
     // =========================================================
     // ADD INTERSECTION
