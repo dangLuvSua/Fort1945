@@ -14,7 +14,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
     [Header("Game")]
     [SerializeField] private int maxPlayers = 5;
-    [SerializeField] private int gameSceneBuildIndex = 0;
+    [SerializeField] private int gameSceneBuildIndex = 1;
 
     private NetworkRunner runner;
 
@@ -109,22 +109,16 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             runner.gameObject.AddComponent<
                 NetworkSceneManagerDefault>();
 
-        StartGameArgs startGameArgs =
-            new StartGameArgs
-            {
-                GameMode = gameMode,
+        StartGameArgs startGameArgs = new StartGameArgs
+        {
+            GameMode = gameMode,
 
-                SessionName = sessionName,
+            SessionName = sessionName,
 
-                PlayerCount = maxPlayers,
+            PlayerCount = maxPlayers,
 
-                Scene = SceneRef.FromIndex(
-                    gameSceneBuildIndex
-                ),
-
-                SceneManager = sceneManager
-            };
-
+            SceneManager = sceneManager
+        };
         Debug.Log(
             $"Starting game: {sessionName}"
         );
@@ -210,19 +204,24 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     private Vector3 GetSpawnPosition()
     {
         GameObject[] spawnPoints =
-            GameObject.FindGameObjectsWithTag(
-                "PlayerSpawn"
-            );
+            GameObject.FindGameObjectsWithTag("PlayerSpawn");
+
+        Debug.Log(
+            $"[SPAWN] Found {spawnPoints.Length} PlayerSpawn point(s)."
+        );
 
         if (spawnPoints.Length == 0)
         {
-            Debug.LogWarning(
-                "No PlayerSpawn objects found. " +
-                "Using Vector3.zero."
+            Debug.LogError(
+                "[SPAWN ERROR] No PlayerSpawn objects found!"
             );
 
-            return Vector3.zero;
+            return new Vector3(0f, 10f, 0f);
         }
+
+        // ---------------------------------------------------------
+        // Choose a random spawn point
+        // ---------------------------------------------------------
 
         int randomIndex =
             UnityEngine.Random.Range(
@@ -230,9 +229,48 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
                 spawnPoints.Length
             );
 
-        return spawnPoints[
-            randomIndex
-        ].transform.position;
+        Transform spawn =
+            spawnPoints[randomIndex].transform;
+
+        // ---------------------------------------------------------
+        // Find actual ground below the spawn point
+        // ---------------------------------------------------------
+
+        Vector3 rayOrigin =
+            spawn.position + Vector3.up * 10f;
+
+        if (Physics.Raycast(
+            rayOrigin,
+            Vector3.down,
+            out RaycastHit hit,
+            50f,
+            ~0,
+            QueryTriggerInteraction.Ignore))
+        {
+            // Put the PlayerRoot above the actual ground.
+            Vector3 position =
+                hit.point + Vector3.up * 1.1f;
+
+            Debug.Log(
+                $"[SPAWN] Using {spawn.name}\n" +
+                $"Spawn Point: {spawn.position}\n" +
+                $"Ground Hit: {hit.point}\n" +
+                $"Final Player Position: {position}"
+            );
+
+            return position;
+        }
+
+        // ---------------------------------------------------------
+        // Fallback
+        // ---------------------------------------------------------
+
+        Debug.LogWarning(
+            $"[SPAWN WARNING] Could not find ground below " +
+            $"{spawn.name}. Using spawn point position."
+        );
+
+        return spawn.position + Vector3.up * 2f;
     }
 
     // =========================================================

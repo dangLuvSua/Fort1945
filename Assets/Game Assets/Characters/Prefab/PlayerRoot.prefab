@@ -124,7 +124,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -46.4, y: 8.743, z: -45.8}
-  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6498372524614538273}
@@ -177,13 +177,19 @@ MonoBehaviour:
   deceleration: 14
   jumpHeight: 1
   gravity: -20
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  groundRayDistance: 1.5
+  fallLimit: -20
+  recoveryHeight: 1
   mouseSensitivity: 0.1
   maxLookUp: 80
   maxLookDown: 80
   playerCamera: {fileID: 2575002923815907540}
   audioListener: {fileID: 665955509501171220}
   cameraHolder: {fileID: 4990974187311543404}
-  playerBody: {fileID: 0}
+  playerBody: {fileID: 2751663222661193382}
   speedParameter: Speed
 --- !u!114 &2481270183145079181
 MonoBehaviour:
@@ -294,7 +300,7 @@ Transform:
   m_GameObject: {fileID: 4822536655996908664}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.6, z: 0}
+  m_LocalPosition: {x: 0, y: 1.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
