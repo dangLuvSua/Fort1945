@@ -1,130 +1,61 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 using Fusion;
 
 public class PlayerController : NetworkBehaviour
 {
-    // =========================================================
-    // MOVEMENT
-    // =========================================================
+    [Header("Input")]
+    [Tooltip("I-drag dito ang InputSystem_Actions asset.")]
+    [SerializeField] private InputActionAsset inputActions;
 
     [Header("Movement")]
     [SerializeField] private float walkSpeed = 3f;
     [SerializeField] private float runSpeed = 6f;
-
-    [Tooltip("How quickly the player reaches movement speed.")]
     [SerializeField] private float acceleration = 12f;
-
-    [Tooltip("How quickly the player stops.")]
     [SerializeField] private float deceleration = 14f;
-
-    [Tooltip("How quickly the character turns toward movement.")]
-    [SerializeField] private float rotationSpeed = 12f;
-
+    [SerializeField] private float jumpHeight = 1.0f;
     [SerializeField] private float gravity = -20f;
 
-
-    // =========================================================
-    // MOUSE LOOK
-    // =========================================================
-
     [Header("Mouse Look")]
-    [SerializeField] private float mouseSensitivity = 2f;
-
-    [Tooltip("Smoothness of character body rotation.")]
-    [SerializeField] private float bodySmoothSpeed = 18f;
-
-    [Tooltip("Smoothness of camera rotation.")]
-    [SerializeField] private float cameraSmoothSpeed = 18f;
-
-
-    // =========================================================
-    // CAMERA LIMITS
-    // =========================================================
-
-    [Header("Camera Look Limits")]
+    [Tooltip("Mouse delta ay pixels, kaya maliit ang tamang value (0.05 - 0.2).")]
+    [SerializeField] private float mouseSensitivity = 0.1f;
     [SerializeField] private float maxLookUp = 80f;
-
     [SerializeField] private float maxLookDown = 80f;
-
-    [SerializeField] private float maxLookLeft = 90f;
-
-    [SerializeField] private float maxLookRight = 90f;
-
-
-    // =========================================================
-    // CAMERA
-    // =========================================================
 
     [Header("Camera")]
     [SerializeField] private Camera playerCamera;
-
     [SerializeField] private AudioListener audioListener;
-
+    [Tooltip("Child ng player na may camera. Ito ang titingin pataas/pababa.")]
     [SerializeField] private Transform cameraHolder;
 
-
-    // =========================================================
-    // PLAYER BODY
-    // =========================================================
-
     [Header("Player Body")]
+    [Tooltip("Model ng player. Itatago sa sariling camera pero makikita ng ibang players.")]
     [SerializeField] private GameObject playerBody;
-
-
-    // =========================================================
-    // ANIMATOR
-    // =========================================================
 
     [Header("Animator")]
     [SerializeField] private string speedParameter = "Speed";
 
-
-    // =========================================================
-    // INTERNAL VARIABLES
-    // =========================================================
-
+    // Internal
     private Animator animator;
-
     private CharacterController characterController;
 
-
-    // Gravity
-    private float verticalVelocity;
-
-
-    // Current movement velocity
-    private Vector3 currentVelocity;
-
-
-    // =========================================================
-    // PLAYER ROTATION
-    // =========================================================
-
-    private float targetPlayerYaw;
-
-    private float currentPlayerYaw;
-
-
-    // =========================================================
-    // CAMERA ROTATION
-    // =========================================================
-
-    private float targetCameraYaw;
-
-    private float currentCameraYaw;
-
-
-    private float targetCameraPitch;
-
-    private float currentCameraPitch;
-
-
-    // =========================================================
-    // INPUT
-    // =========================================================
+    private InputAction moveAction;
+    private InputAction lookAction;
+    private InputAction sprintAction;
+    private InputAction jumpAction;
 
     private Vector2 moveInput;
+    private bool runInput;
+    private bool jumpRequested;
 
+    private Vector3 currentVelocity;
+    private float verticalVelocity;
+
+    private float yaw;
+    private float pitch;
+
+    private bool isLocal;
 
     // =========================================================
     // SPAWNED
@@ -132,529 +63,184 @@ public class PlayerController : NetworkBehaviour
 
     public override void Spawned()
     {
-        Debug.Log(
-            "PLAYER SPAWNED: " +
-            Object.InputAuthority
-        );
-
-
-        animator =
-            GetComponentInChildren<Animator>();
-
-
-        characterController =
-            GetComponent<CharacterController>();
-
+        animator = GetComponentInChildren<Animator>();
+        characterController = GetComponent<CharacterController>();
 
         if (characterController == null)
-        {
-            Debug.LogError(
-                "NO CHARACTER CONTROLLER FOUND ON PLAYER1!"
-            );
-        }
-
+            Debug.LogError("NO CHARACTER CONTROLLER FOUND ON PLAYER!");
 
         if (animator == null)
-        {
-            Debug.LogError(
-                "NO ANIMATOR FOUND IN BOY1!"
-            );
-        }
+            Debug.LogError("NO ANIMATOR FOUND IN PLAYER MODEL!");
 
+        yaw = transform.eulerAngles.y;
+        pitch = 0f;
 
-        // =====================================================
-        // INITIAL ROTATION
-        // =====================================================
-
-        currentPlayerYaw =
-            transform.eulerAngles.y;
-
-        targetPlayerYaw =
-            currentPlayerYaw;
-
-
-        currentCameraYaw = 0f;
-        targetCameraYaw = 0f;
-
-
-        currentCameraPitch = 0f;
-        targetCameraPitch = 0f;
-
+        isLocal = Object.HasStateAuthority;
 
         SetupLocalPlayer();
     }
 
-
-    // =========================================================
-    // LOCAL PLAYER / CAMERA SETUP
-    // =========================================================
-
     private void SetupLocalPlayer()
     {
-        bool isLocalPlayer =
-            Object.HasStateAuthority;
+        if (playerCamera != null) playerCamera.enabled = isLocal;
+        if (audioListener != null) audioListener.enabled = isLocal;
 
+        if (!isLocal)
+            return;
 
-        if (isLocalPlayer)
+        // Clone ng asset para hindi mag-share ng state ang ibang instances
+        InputActionAsset actions = Instantiate(inputActions);
+        InputActionMap map = actions.FindActionMap("Player", true);
+
+        moveAction = map.FindAction("Move", true);
+        lookAction = map.FindAction("Look", true);
+        sprintAction = map.FindAction("Sprint", true);
+        jumpAction = map.FindAction("Jump", true);
+
+        map.Enable();
+        inputActions = actions; // para ma-disable natin sa OnDisable
+
+        // Itago ang sariling katawan, pero may shadow pa rin
+        if (playerBody != null)
         {
-            // Enable ONLY our camera
-            if (playerCamera != null)
-            {
-                playerCamera.enabled = true;
-            }
-
-
-            // Enable ONLY our audio listener
-            if (audioListener != null)
-            {
-                audioListener.enabled = true;
-            }
-
-
-            Cursor.lockState =
-                CursorLockMode.Locked;
-
-            Cursor.visible = false;
+            foreach (var r in playerBody.GetComponentsInChildren<Renderer>())
+                r.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
         }
-        else
-        {
-            // Disable cameras belonging to other players
-            if (playerCamera != null)
-            {
-                playerCamera.enabled = false;
-            }
 
-
-            if (audioListener != null)
-            {
-                audioListener.enabled = false;
-            }
-        }
+        LockCursor(true);
     }
 
-
     // =========================================================
-    // UPDATE
+    // UPDATE (input + look)
     // =========================================================
 
     private void Update()
     {
-        if (Object == null)
+        if (Object == null || !isLocal)
             return;
 
+        // Esc para lumabas ang cursor, click para bumalik
+        var kb = Keyboard.current;
+        if (kb != null && kb.escapeKey.wasPressedThisFrame)
+            LockCursor(false);
 
-        // Only local player reads mouse/input
-        if (!Object.HasStateAuthority)
+        var mouse = Mouse.current;
+        if (mouse != null && mouse.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked)
+            LockCursor(true);
+
+        if (Cursor.lockState != CursorLockMode.Locked)
+        {
+            moveInput = Vector2.zero;
             return;
-
+        }
 
         ReadInput();
-
-        HandleMouseLook();
+        HandleLook();
     }
-
-
-    // =========================================================
-    // READ INPUT
-    // =========================================================
 
     private void ReadInput()
     {
-        float horizontal =
-            Input.GetAxisRaw("Horizontal");
+        moveInput = Vector2.ClampMagnitude(moveAction.ReadValue<Vector2>(), 1f);
+        runInput = sprintAction.IsPressed();
 
-        float vertical =
-            Input.GetAxisRaw("Vertical");
-
-
-        moveInput =
-            new Vector2(
-                horizontal,
-                vertical
-            );
-
-
-        moveInput =
-            Vector2.ClampMagnitude(
-                moveInput,
-                1f
-            );
+        // I-latch ang jump kasi ang FixedUpdateNetwork ay hindi tumatakbo kada frame
+        if (jumpAction.WasPressedThisFrame())
+            jumpRequested = true;
     }
 
-
-    // =========================================================
-    // MOUSE LOOK
-    // =========================================================
-
-    private void HandleMouseLook()
+    private void HandleLook()
     {
-        float mouseX =
-            Input.GetAxis("Mouse X");
+        Vector2 look = lookAction.ReadValue<Vector2>() * mouseSensitivity;
 
+        // Yaw: ikot ng buong katawan
+        yaw += look.x;
+        transform.rotation = Quaternion.Euler(0f, yaw, 0f);
 
-        float mouseY =
-            Input.GetAxis("Mouse Y");
+        // Pitch: tingin pataas/pababa sa camera holder lang
+        pitch = Mathf.Clamp(pitch - look.y, -maxLookUp, maxLookDown);
 
-
-        // =====================================================
-        // HORIZONTAL CAMERA
-        // =====================================================
-
-        targetCameraYaw +=
-            mouseX *
-            mouseSensitivity;
-
-
-        // Camera exceeds right boundary
-        if (targetCameraYaw > maxLookRight)
-        {
-            float overflow =
-                targetCameraYaw -
-                maxLookRight;
-
-
-            targetPlayerYaw += overflow;
-
-
-            targetCameraYaw =
-                maxLookRight;
-        }
-
-
-        // Camera exceeds left boundary
-        if (targetCameraYaw < -maxLookLeft)
-        {
-            float overflow =
-                targetCameraYaw +
-                maxLookLeft;
-
-
-            targetPlayerYaw += overflow;
-
-
-            targetCameraYaw =
-                -maxLookLeft;
-        }
-
-
-        // =====================================================
-        // VERTICAL CAMERA
-        // =====================================================
-
-        targetCameraPitch -=
-            mouseY *
-            mouseSensitivity;
-
-
-        targetCameraPitch =
-            Mathf.Clamp(
-                targetCameraPitch,
-                -maxLookDown,
-                maxLookUp
-            );
+        if (cameraHolder != null)
+            cameraHolder.localRotation = Quaternion.Euler(pitch, 0f, 0f);
     }
 
-
     // =========================================================
-    // FIXED NETWORK UPDATE
+    // FIXED NETWORK UPDATE (movement)
     // =========================================================
 
     public override void FixedUpdateNetwork()
     {
-        if (!Object.HasStateAuthority)
+        if (!isLocal)
             return;
 
-
         HandleMovement();
-
-        HandleSmoothRotation();
     }
-
-
-    // =========================================================
-    // MOVEMENT
-    // =========================================================
 
     private void HandleMovement()
     {
-        // =====================================================
-        // GET MOVEMENT DIRECTION
-        // =====================================================
+        Vector3 desiredDirection = transform.forward * moveInput.y + transform.right * moveInput.x;
+        desiredDirection = Vector3.ClampMagnitude(desiredDirection, 1f);
 
-        Vector3 forward =
-            transform.forward;
+        bool isRunning = runInput && moveInput.magnitude > 0.01f;
+        float targetSpeed = isRunning ? runSpeed : walkSpeed;
+        Vector3 targetVelocity = desiredDirection * targetSpeed;
 
-        Vector3 right =
-            transform.right;
+        float rate = desiredDirection.magnitude > 0.01f ? acceleration : deceleration;
+        currentVelocity = Vector3.MoveTowards(currentVelocity, targetVelocity, rate * Runner.DeltaTime);
 
-
-        Vector3 desiredDirection =
-            forward * moveInput.y +
-            right * moveInput.x;
-
-
-        desiredDirection =
-            Vector3.ClampMagnitude(
-                desiredDirection,
-                1f
-            );
-
-
-        // =====================================================
-        // SPEED
-        // =====================================================
-
-        bool isRunning =
-            Input.GetKey(KeyCode.LeftShift) &&
-            moveInput.magnitude > 0.01f;
-
-
-        float targetSpeed =
-            isRunning
-                ? runSpeed
-                : walkSpeed;
-
-
-        Vector3 targetVelocity =
-            desiredDirection *
-            targetSpeed;
-
-
-        // =====================================================
-        // SMOOTH ACCELERATION / DECELERATION
-        // =====================================================
-
-        float smoothRate =
-            desiredDirection.magnitude > 0.01f
-                ? acceleration
-                : deceleration;
-
-
-        currentVelocity =
-            Vector3.MoveTowards(
-                currentVelocity,
-                targetVelocity,
-                smoothRate *
-                Runner.DeltaTime
-            );
-
-
-        // =====================================================
-        // GRAVITY
-        // =====================================================
-
+        // Gravity + Jump
         if (characterController.isGrounded)
         {
             if (verticalVelocity < 0f)
-            {
                 verticalVelocity = -2f;
-            }
-        }
-        else
-        {
-            verticalVelocity +=
-                gravity *
-                Runner.DeltaTime;
+
+            if (jumpRequested)
+                verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
 
+        jumpRequested = false;
+        verticalVelocity += gravity * Runner.DeltaTime;
 
-        // =====================================================
-        // APPLY MOVEMENT
-        // =====================================================
+        Vector3 finalMovement = currentVelocity;
+        finalMovement.y = verticalVelocity;
 
-        Vector3 finalMovement =
-            currentVelocity;
+        characterController.Move(finalMovement * Runner.DeltaTime);
 
-
-        finalMovement.y =
-            verticalVelocity;
-
-
-        characterController.Move(
-            finalMovement *
-            Runner.DeltaTime
-        );
-
-
-        // =====================================================
-        // ANIMATION
-        // =====================================================
-
-        UpdateAnimator(
-            currentVelocity,
-            isRunning
-        );
+        UpdateAnimator(currentVelocity, isRunning);
     }
-
-
-    // =========================================================
-    // CHARACTER ROTATION
-    // =========================================================
-
-    private void HandleSmoothRotation()
-    {
-        // =====================================================
-        // MOVEMENT ROTATION
-        // =====================================================
-
-        Vector3 horizontalVelocity =
-            new Vector3(
-                currentVelocity.x,
-                0f,
-                currentVelocity.z
-            );
-
-
-        if (horizontalVelocity.magnitude > 0.05f)
-        {
-            float movementYaw =
-                Mathf.Atan2(
-                    horizontalVelocity.x,
-                    horizontalVelocity.z
-                ) *
-                Mathf.Rad2Deg;
-
-
-            /*
-             * Only rotate toward movement when
-             * the player is actually moving.
-             */
-
-            targetPlayerYaw =
-                Mathf.LerpAngle(
-                    targetPlayerYaw,
-                    movementYaw,
-                    rotationSpeed *
-                    Runner.DeltaTime
-                );
-
-
-            /*
-             * If movement turns the body,
-             * keep camera relative to the body.
-             */
-            targetCameraYaw = 0f;
-        }
-
-
-        // =====================================================
-        // SMOOTH BODY ROTATION
-        // =====================================================
-
-        currentPlayerYaw =
-            Mathf.LerpAngle(
-                currentPlayerYaw,
-                targetPlayerYaw,
-                bodySmoothSpeed *
-                Runner.DeltaTime
-            );
-
-
-        transform.rotation =
-            Quaternion.Euler(
-                0f,
-                currentPlayerYaw,
-                0f
-            );
-
-
-        // =====================================================
-        // SMOOTH CAMERA
-        // =====================================================
-
-        currentCameraYaw =
-            Mathf.Lerp(
-                currentCameraYaw,
-                targetCameraYaw,
-                cameraSmoothSpeed *
-                Runner.DeltaTime
-            );
-
-
-        currentCameraPitch =
-            Mathf.Lerp(
-                currentCameraPitch,
-                targetCameraPitch,
-                cameraSmoothSpeed *
-                Runner.DeltaTime
-            );
-
-
-        if (cameraHolder != null)
-        {
-            cameraHolder.localRotation =
-                Quaternion.Euler(
-                    currentCameraPitch,
-                    currentCameraYaw,
-                    0f
-                );
-        }
-    }
-
 
     // =========================================================
     // ANIMATOR
     // =========================================================
 
-    private void UpdateAnimator(
-        Vector3 velocity,
-        bool isRunning
-    )
+    private void UpdateAnimator(Vector3 velocity, bool isRunning)
     {
         if (animator == null)
             return;
 
+        float horizontalSpeed = new Vector3(velocity.x, 0f, velocity.z).magnitude / runSpeed;
 
-        Vector3 horizontalVelocity =
-            new Vector3(
-                velocity.x,
-                0f,
-                velocity.z
-            );
-
-
-        float normalizedSpeed =
-            horizontalVelocity.magnitude /
-            runSpeed;
-
-
-        if (normalizedSpeed < 0.01f)
-        {
-            animator.SetFloat(
-                speedParameter,
-                0f
-            );
-        }
-        else if (isRunning)
-        {
-            animator.SetFloat(
-                speedParameter,
-                0.8f
-            );
-        }
+        if (horizontalSpeed < 0.01f)
+            animator.SetFloat(speedParameter, 0f);
         else
-        {
-            animator.SetFloat(
-                speedParameter,
-                0.3f
-            );
-        }
+            animator.SetFloat(speedParameter, isRunning ? 0.8f : 0.3f);
     }
 
+    // =========================================================
+    // CURSOR + CLEANUP
+    // =========================================================
 
-    // =========================================================
-    // CLEANUP
-    // =========================================================
+    private void LockCursor(bool locked)
+    {
+        Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !locked;
+    }
 
     private void OnDisable()
     {
-        if (Object != null &&
-            Object.HasStateAuthority)
+        if (isLocal)
         {
-            Cursor.lockState =
-                CursorLockMode.None;
-
-            Cursor.visible = true;
+            inputActions?.FindActionMap("Player")?.Disable();
+            LockCursor(false);
         }
     }
 }
