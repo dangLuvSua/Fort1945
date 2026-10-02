@@ -107,6 +107,7 @@ GameObject:
   - component: {fileID: 2481270183145079181}
   - component: {fileID: 1612331710460718894}
   - component: {fileID: 928027291685714054}
+  - component: {fileID: 2250046110655713653}
   m_Layer: 0
   m_Name: PlayerRoot
   m_TagString: Untagged
@@ -212,6 +213,7 @@ MonoBehaviour:
   - {fileID: 1612331710460718894}
   - {fileID: 646776472205063453}
   - {fileID: 928027291685714054}
+  - {fileID: 2250046110655713653}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &1612331710460718894
 MonoBehaviour:
@@ -276,6 +278,21 @@ MonoBehaviour:
   audioListener: {fileID: 665955509501171220}
   _CharacterIndex: 0
   _PlayerName: 
+--- !u!114 &2250046110655713653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3522006267438135775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3205391bcc66874a8a4a310b66c6302, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerData
+  _SelectedCharacter: 0
+  _HasSelectedCharacter:
+    RawValue: 0
 --- !u!1 &4822536655996908664
 GameObject:
   m_ObjectHideFlags: 0

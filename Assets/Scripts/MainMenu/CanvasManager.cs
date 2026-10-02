@@ -17,6 +17,33 @@ public class CanvasManager : MonoBehaviour
 
 
     // =====================================================
+    // CHARACTER SELECTION
+    // =====================================================
+
+    [Header("Character Selection")]
+    [SerializeField] private GameObject characterSelectionCanvas;
+    [SerializeField] private TMP_InputField characterSelectionPlayerNameInput;
+
+
+    // =====================================================
+    // CHARACTER SELECTION OBJECTS
+    // =====================================================
+
+    [Header("Character Selection Objects")]
+    [SerializeField] private GameObject characterDisplay;
+    [SerializeField] private GameObject prisonStatue;
+
+
+    // =====================================================
+    // CHARACTER SELECTION CAMERAS
+    // =====================================================
+
+    [Header("Character Selection Cameras")]
+    [SerializeField] private Camera mainCamera;
+    [SerializeField] private Camera characterCamera;
+
+
+    // =====================================================
     // MULTIPLAYER PANELS
     // =====================================================
 
@@ -70,6 +97,17 @@ public class CanvasManager : MonoBehaviour
 
 
     // =====================================================
+    // UNITY START
+    // =====================================================
+
+    private void Start()
+    {
+        SetCharacterSelectionCamera(false);
+        SetCharacterSelectionObjects(false);
+    }
+
+
+    // =====================================================
     // CLICK SOUND
     // =====================================================
 
@@ -115,12 +153,14 @@ public class CanvasManager : MonoBehaviour
 
         HideAllCanvases();
 
-        multiplayerCanvas.SetActive(true);
+        if (multiplayerCanvas != null)
+            multiplayerCanvas.SetActive(true);
 
-        // Load saved name into Multiplayer panel
+        SetCharacterSelectionCamera(false);
+        SetCharacterSelectionObjects(false);
+
         LoadMultiplayerPlayerName();
 
-        // Always start at Multiplayer main panel
         ShowMultiplayerMainPanelWithoutSound();
     }
 
@@ -131,12 +171,14 @@ public class CanvasManager : MonoBehaviour
 
         HideAllCanvases();
 
-        optionsCanvas.SetActive(true);
+        if (optionsCanvas != null)
+            optionsCanvas.SetActive(true);
 
-        // Load saved player name
+        SetCharacterSelectionCamera(false);
+        SetCharacterSelectionObjects(false);
+
         LoadPlayerName();
 
-        // Show Audio panel by default
         ShowAudioPanelWithoutSound();
     }
 
@@ -147,7 +189,11 @@ public class CanvasManager : MonoBehaviour
 
         HideAllCanvases();
 
-        creditsCanvas.SetActive(true);
+        if (creditsCanvas != null)
+            creditsCanvas.SetActive(true);
+
+        SetCharacterSelectionCamera(false);
+        SetCharacterSelectionObjects(false);
     }
 
 
@@ -157,7 +203,145 @@ public class CanvasManager : MonoBehaviour
 
         HideAllCanvases();
 
-        mainMenuCanvas.SetActive(true);
+        if (mainMenuCanvas != null)
+            mainMenuCanvas.SetActive(true);
+
+        SetCharacterSelectionCamera(false);
+        SetCharacterSelectionObjects(false);
+    }
+
+
+    // =====================================================
+    // CHARACTER SELECTION
+    // =====================================================
+
+    public void ShowCharacterSelection()
+    {
+        PlayClickSound();
+
+        HideAllCanvases();
+
+        if (characterSelectionCanvas != null)
+            characterSelectionCanvas.SetActive(true);
+
+        // Load the CURRENTLY SAVED player name.
+        LoadCharacterSelectionPlayerName();
+
+        SetCharacterSelectionCamera(true);
+        SetCharacterSelectionObjects(true);
+    }
+
+
+    // =====================================================
+    // BACK FROM CHARACTER SELECTION
+    // =====================================================
+
+    public void BackFromCharacterSelection()
+    {
+        PlayClickSound();
+
+        HideAllCanvases();
+
+        if (mainMenuCanvas != null)
+            mainMenuCanvas.SetActive(true);
+
+        SetCharacterSelectionCamera(false);
+        SetCharacterSelectionObjects(false);
+    }
+
+
+    // =====================================================
+    // CHARACTER SELECTION CAMERA
+    // =====================================================
+
+    private void SetCharacterSelectionCamera(bool characterSelection)
+    {
+        if (mainCamera == null && characterCamera == null)
+            return;
+
+        if (mainCamera != null)
+        {
+            mainCamera.gameObject.SetActive(!characterSelection);
+        }
+
+        if (characterCamera != null)
+        {
+            characterCamera.gameObject.SetActive(characterSelection);
+        }
+    }
+
+
+    // =====================================================
+    // CHARACTER SELECTION OBJECTS
+    // =====================================================
+
+    private void SetCharacterSelectionObjects(bool characterSelection)
+    {
+        if (characterDisplay != null)
+        {
+            characterDisplay.SetActive(characterSelection);
+        }
+
+        if (prisonStatue != null)
+        {
+            prisonStatue.SetActive(!characterSelection);
+        }
+    }
+
+
+    // =====================================================
+    // CHARACTER SELECTION PLAYER NAME
+    // =====================================================
+
+    private void LoadCharacterSelectionPlayerName()
+    {
+        if (characterSelectionPlayerNameInput == null)
+        {
+            Debug.LogWarning(
+                "CanvasManager: Character Selection Player Name Input is not assigned."
+            );
+
+            return;
+        }
+
+        characterSelectionPlayerNameInput.text =
+            PlayerProfile.PlayerName;
+    }
+
+
+    // =====================================================
+    // SAVE NAME FROM CHARACTER SELECTION
+    // =====================================================
+
+    public void SaveCharacterSelectionPlayerName()
+    {
+        if (characterSelectionPlayerNameInput == null)
+        {
+            Debug.LogWarning(
+                "CanvasManager: Character Selection Player Name Input is not assigned."
+            );
+
+            return;
+        }
+
+        string playerName =
+            characterSelectionPlayerNameInput.text.Trim();
+
+        if (string.IsNullOrEmpty(playerName))
+        {
+            playerName = "Player";
+        }
+
+        PlayerProfile.SetPlayerName(playerName);
+
+        // Make sure the input shows exactly what was saved.
+        characterSelectionPlayerNameInput.text = playerName;
+
+        PlayClickSound();
+
+        Debug.Log(
+            $"Character Selection Name Saved: {PlayerProfile.PlayerName}"
+        );
     }
 
 
@@ -171,7 +355,11 @@ public class CanvasManager : MonoBehaviour
 
         HideAllCanvases();
 
-        mainMenuCanvas.SetActive(true);
+        if (mainMenuCanvas != null)
+            mainMenuCanvas.SetActive(true);
+
+        SetCharacterSelectionCamera(false);
+        SetCharacterSelectionObjects(false);
     }
 
 
@@ -179,11 +367,11 @@ public class CanvasManager : MonoBehaviour
     // MULTIPLAYER NAVIGATION
     // =====================================================
 
-    // Opens Create Lobby
     public void ShowCreateLobby()
     {
         PlayClickSound();
 
+        // Keep compatibility with your existing system.
         SaveMultiplayerPlayerName();
 
         HideAllMultiplayerPanels();
@@ -193,11 +381,11 @@ public class CanvasManager : MonoBehaviour
     }
 
 
-    // Opens Join Lobby
     public void ShowJoinLobby()
     {
         PlayClickSound();
 
+        // Keep compatibility with your existing system.
         SaveMultiplayerPlayerName();
 
         HideAllMultiplayerPanels();
@@ -207,7 +395,6 @@ public class CanvasManager : MonoBehaviour
     }
 
 
-    // Opens Find Lobby
     public void ShowFindLobby()
     {
         PlayClickSound();
@@ -221,7 +408,6 @@ public class CanvasManager : MonoBehaviour
             findLobbyPanel.SetActive(true);
         }
 
-        // Start lobby discovery after the panel is active
         if (NetworkRunnerHandler.Instance != null)
         {
             NetworkRunnerHandler.Instance.FindLobbies();
@@ -235,8 +421,6 @@ public class CanvasManager : MonoBehaviour
     }
 
 
-    // Returns from Create / Join / Find
-    // back to the main Multiplayer panel
     public void BackToMultiplayer()
     {
         PlayClickSound();
@@ -246,7 +430,7 @@ public class CanvasManager : MonoBehaviour
 
 
     // =====================================================
-    // SHOW MULTIPLAYER MAIN PANEL WITHOUT SOUND
+    // MULTIPLAYER MAIN PANEL
     // =====================================================
 
     private void ShowMultiplayerMainPanelWithoutSound()
@@ -256,13 +440,12 @@ public class CanvasManager : MonoBehaviour
         if (multiplayerPanel != null)
             multiplayerPanel.SetActive(true);
 
-        // Always show the latest saved name
         LoadMultiplayerPlayerName();
     }
 
 
     // =====================================================
-    // HIDE ALL MULTIPLAYER PANELS
+    // HIDE MULTIPLAYER PANELS
     // =====================================================
 
     private void HideAllMultiplayerPanels()
@@ -320,10 +503,6 @@ public class CanvasManager : MonoBehaviour
     }
 
 
-    // =====================================================
-    // SHOW AUDIO PANEL WITHOUT CLICK SOUND
-    // =====================================================
-
     private void ShowAudioPanelWithoutSound()
     {
         HideAllOptionPanels();
@@ -334,7 +513,7 @@ public class CanvasManager : MonoBehaviour
 
 
     // =====================================================
-    // HIDE ALL OPTIONS PANELS
+    // HIDE OPTIONS PANELS
     // =====================================================
 
     private void HideAllOptionPanels()
@@ -359,8 +538,7 @@ public class CanvasManager : MonoBehaviour
         if (playerNameInput == null)
         {
             Debug.LogWarning(
-                "CanvasManager: Player Name Input " +
-                "is not assigned."
+                "CanvasManager: Player Name Input is not assigned."
             );
 
             return;
@@ -371,13 +549,16 @@ public class CanvasManager : MonoBehaviour
     }
 
 
+    // =====================================================
+    // SAVE PLAYER NAME - SETTINGS
+    // =====================================================
+
     public void SavePlayerName()
     {
         if (playerNameInput == null)
         {
             Debug.LogWarning(
-                "CanvasManager: Player Name Input " +
-                "is not assigned."
+                "CanvasManager: Player Name Input is not assigned."
             );
 
             return;
@@ -391,17 +572,17 @@ public class CanvasManager : MonoBehaviour
             playerName = "Player";
         }
 
-        PlayerProfile.SetPlayerName(
-            playerName
-        );
+        // Save ONLY the player name.
+        PlayerProfile.SetPlayerName(playerName);
 
+        // Update input field.
         playerNameInput.text =
             playerName;
 
         PlayClickSound();
 
         Debug.Log(
-            $"Player name saved: {playerName}"
+            $"Player Name Saved: {PlayerProfile.PlayerName}"
         );
     }
 
@@ -415,8 +596,7 @@ public class CanvasManager : MonoBehaviour
         if (multiplayerPlayerNameInput == null)
         {
             Debug.LogWarning(
-                "CanvasManager: Multiplayer Player Name " +
-                "Input is not assigned."
+                "CanvasManager: Multiplayer Player Name Input is not assigned."
             );
 
             return;
@@ -432,8 +612,7 @@ public class CanvasManager : MonoBehaviour
         if (multiplayerPlayerNameInput == null)
         {
             Debug.LogWarning(
-                "CanvasManager: Multiplayer Player Name " +
-                "Input is not assigned."
+                "CanvasManager: Multiplayer Player Name Input is not assigned."
             );
 
             return;
@@ -447,15 +626,13 @@ public class CanvasManager : MonoBehaviour
             playerName = "Player";
         }
 
-        PlayerProfile.SetPlayerName(
-            playerName
-        );
+        PlayerProfile.SetPlayerName(playerName);
 
         multiplayerPlayerNameInput.text =
             playerName;
 
         Debug.Log(
-            $"Multiplayer player name saved: {playerName}"
+            $"Multiplayer Player Name Saved: {PlayerProfile.PlayerName}"
         );
     }
 
@@ -477,5 +654,8 @@ public class CanvasManager : MonoBehaviour
 
         if (creditsCanvas != null)
             creditsCanvas.SetActive(false);
+
+        if (characterSelectionCanvas != null)
+            characterSelectionCanvas.SetActive(false);
     }
 }
