@@ -1,10 +1,11 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class MenuCamera : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float panAmount = 2f;
-    [SerializeField] private float panSpeed = 0.15f;
+    [FormerlySerializedAs("panSpeed")]
+    [SerializeField] private float rotationSpeed = 0.15f;
 
     [Header("Rotation")]
     [SerializeField] private float rotationAmount = 2f;
@@ -16,42 +17,30 @@ public class MenuCamera : MonoBehaviour
 
     private Vector3 startPosition;
     private Quaternion startRotation;
-    private Vector3 startRight;
 
     private void Start()
     {
         startPosition = transform.position;
         startRotation = transform.rotation;
-
-        // Save the ORIGINAL right direction
-        startRight = startRotation * Vector3.right;
     }
 
     private void Update()
     {
-        // =====================================
-        // SLOW CINEMATIC PAN
-        // =====================================
-
-        // Moves:
-        // Original → Right → Original → Right...
-        float pan = Mathf.PingPong(
-            Time.time * panSpeed,
-            panAmount
-        );
+        float time = Time.time;
+        float yawSway = Mathf.Sin(time * rotationSpeed);
 
         // =====================================
         // SUBTLE HORROR SHAKE
         // =====================================
 
         float noiseX = Mathf.PerlinNoise(
-            Time.time * shakeSpeed,
+            time * shakeSpeed,
             0f
         );
 
         float noiseY = Mathf.PerlinNoise(
             0f,
-            Time.time * shakeSpeed
+            time * shakeSpeed
         );
 
         float shakeX =
@@ -68,8 +57,6 @@ public class MenuCamera : MonoBehaviour
         // CAMERA POSITION
         // =====================================
 
-        Vector3 panOffset = startRight * pan;
-
         Vector3 shakeOffset = new Vector3(
             shakeX,
             shakeY,
@@ -78,31 +65,19 @@ public class MenuCamera : MonoBehaviour
 
         transform.position =
             startPosition +
-            panOffset +
             shakeOffset;
 
         // =====================================
         // CAMERA ROTATION
         // =====================================
 
-        // Convert pan into a -1 to +1 value.
-        // This makes the camera rotate slightly
-        // toward the direction of movement.
-        float panDirection = 0f;
-
-        if (panAmount > 0f)
-        {
-            panDirection =
-                (pan / panAmount) * 2f - 1f;
-        }
-
         float baseRotation =
-            panDirection * rotationAmount;
+            yawSway * rotationAmount;
 
         // Horror shake rotation
         float shakeRotation =
             (Mathf.PerlinNoise(
-                Time.time * shakeSpeed,
+                time * shakeSpeed,
                 10f
             ) - 0.5f)
             * 2f
