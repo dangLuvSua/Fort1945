@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 {
@@ -13,12 +14,23 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     [SerializeField] private NetworkObject playerPrefab;
 
     [Header("Game")]
-    [SerializeField] private int maxPlayers = 5;
-    [SerializeField] private int gameSceneBuildIndex = 1;
+    [SerializeField] private int maxPlayers = 4;
 
+    // Build Index of the Lobby scene
+    [SerializeField] private int gameSceneBuildIndex = 2;
+
+    // =========================================================
+    // RUNNERS
+    // =========================================================
+
+    // Main runner used for Create Game / Join Game
     private NetworkRunner runner;
 
+    // Separate runner used only for Find Lobby
+    private NetworkRunner lobbyRunner;
+
     private string currentSessionName;
+
 
     // =========================================================
     // UNITY
@@ -37,24 +49,34 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         DontDestroyOnLoad(gameObject);
     }
 
+
     // =========================================================
     // CREATE GAME
     // =========================================================
 
-    public async void CreateGame(string sessionName)
+    public async void CreateGame(
+        string sessionName,
+        string lobbyName)
     {
         if (string.IsNullOrWhiteSpace(sessionName))
         {
             sessionName = "MysteryRoom";
         }
 
+        if (string.IsNullOrWhiteSpace(lobbyName))
+        {
+            lobbyName = sessionName;
+        }
+
         currentSessionName = sessionName;
 
         await StartRunner(
             GameMode.Shared,
-            sessionName
+            sessionName,
+            lobbyName
         );
     }
+
 
     // =========================================================
     // JOIN GAME
@@ -79,14 +101,143 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         );
     }
 
+
     // =========================================================
-    // START RUNNER
+    // FIND LOBBIES
+    // =========================================================
+
+    public async void FindLobbies()
+    {
+        // ---------------------------------------------------------
+        // Already browsing
+        // ---------------------------------------------------------
+
+        if (lobbyRunner != null)
+        {
+            Debug.Log(
+                "[LOBBY] Lobby browser is already connected."
+            );
+
+            return;
+        }
+
+        // ---------------------------------------------------------
+        // Create dedicated lobby browser runner
+        // ---------------------------------------------------------
+
+        Debug.Log(
+            "[LOBBY] Creating dedicated lobby browser runner..."
+        );
+
+        lobbyRunner = Instantiate(runnerPrefab);
+
+        lobbyRunner.name = "LobbyBrowserRunner";
+
+        // ---------------------------------------------------------
+        // Register callbacks
+        // ---------------------------------------------------------
+
+        lobbyRunner.AddCallbacks(this);
+
+        Debug.Log(
+            "[LOBBY] Joining Shared Session Lobby..."
+        );
+
+        // ---------------------------------------------------------
+        // Join Shared Session Lobby
+        // ---------------------------------------------------------
+
+        StartGameResult result =
+            await lobbyRunner.JoinSessionLobby(
+                SessionLobby.Shared
+            );
+
+        // ---------------------------------------------------------
+        // Failed
+        // ---------------------------------------------------------
+
+        if (!result.Ok)
+        {
+            Debug.LogError(
+                $"[LOBBY] Failed to join Shared Session Lobby: " +
+                $"{result.ShutdownReason}"
+            );
+
+            if (lobbyRunner != null)
+            {
+                Destroy(
+                    lobbyRunner.gameObject
+                );
+
+                lobbyRunner = null;
+            }
+
+            return;
+        }
+
+        // ---------------------------------------------------------
+        // Successful
+        // ---------------------------------------------------------
+
+        Debug.Log(
+            "[LOBBY] Successfully joined Shared Session Lobby."
+        );
+    }
+
+
+    // =========================================================
+    // REFRESH LOBBIES
+    // =========================================================
+
+    public void RefreshLobbies()
+    {
+        // ---------------------------------------------------------
+        // No lobby browser runner
+        // ---------------------------------------------------------
+
+        if (lobbyRunner == null)
+        {
+            Debug.Log(
+                "[LOBBY] Lobby browser is not connected. " +
+                "Connecting..."
+            );
+
+            FindLobbies();
+
+            return;
+        }
+
+        // ---------------------------------------------------------
+        // Already connected
+        // ---------------------------------------------------------
+
+        Debug.Log(
+            "[LOBBY] Refresh requested. " +
+            "Waiting for updated session list..."
+        );
+
+        // Fusion automatically sends session-list updates
+        // through OnSessionListUpdated().
+        //
+        // We intentionally do NOT call JoinSessionLobby()
+        // again here because the lobbyRunner is already inside
+        // the Shared Session Lobby.
+    }
+
+
+    // =========================================================
+    // START GAME RUNNER
     // =========================================================
 
     private async System.Threading.Tasks.Task StartRunner(
         GameMode gameMode,
-        string sessionName)
+        string sessionName,
+        string lobbyName = null)
     {
+        // ---------------------------------------------------------
+        // Prevent duplicate main runner
+        // ---------------------------------------------------------
+
         if (runner != null)
         {
             Debug.LogWarning(
@@ -96,37 +247,88 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             return;
         }
 
+        // ---------------------------------------------------------
         // Create NetworkRunner
+        // ---------------------------------------------------------
+
         runner = Instantiate(runnerPrefab);
 
         runner.name = "NetworkRunner";
 
+        // ---------------------------------------------------------
         // Register callbacks
+        // ---------------------------------------------------------
+
         runner.AddCallbacks(this);
 
+        // ---------------------------------------------------------
         // Scene manager
+        // ---------------------------------------------------------
+
         NetworkSceneManagerDefault sceneManager =
             runner.gameObject.AddComponent<
-                NetworkSceneManagerDefault>();
+                NetworkSceneManagerDefault
+            >();
 
-        StartGameArgs startGameArgs = new StartGameArgs
+        // ---------------------------------------------------------
+        // Session Properties
+        // ---------------------------------------------------------
+
+        Dictionary<string, SessionProperty> sessionProperties =
+            null;
+
+        // Only the creator needs to send the LobbyName property.
+        if (gameMode == GameMode.Shared &&
+            !string.IsNullOrWhiteSpace(lobbyName))
         {
-            GameMode = gameMode,
+            sessionProperties =
+                new Dictionary<string, SessionProperty>
+                {
+                    ["LobbyName"] = lobbyName
+                };
+        }
 
-            SessionName = sessionName,
+        // ---------------------------------------------------------
+        // Start Game Arguments
+        // ---------------------------------------------------------
 
-            PlayerCount = maxPlayers,
+        StartGameArgs startGameArgs =
+            new StartGameArgs
+            {
+                GameMode = gameMode,
 
-            SceneManager = sceneManager
-        };
+                SessionName = sessionName,
+
+                PlayerCount = maxPlayers,
+
+                SceneManager = sceneManager,
+
+                SessionProperties = sessionProperties
+            };
+
         Debug.Log(
             $"Starting game: {sessionName}"
         );
+
+        if (!string.IsNullOrWhiteSpace(lobbyName))
+        {
+            Debug.Log(
+                $"Lobby name: {lobbyName}"
+            );
+        }
+
+        // ---------------------------------------------------------
+        // Start Fusion
+        // ---------------------------------------------------------
 
         StartGameResult result =
             await runner.StartGame(
                 startGameArgs
             );
+
+        // ---------------------------------------------------------
+        // Start Failed
+        // ---------------------------------------------------------
 
         if (!result.Ok)
         {
@@ -135,18 +337,88 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
                 $"{result.ShutdownReason}"
             );
 
-            Destroy(runner.gameObject);
+            if (runner != null)
+            {
+                Destroy(
+                    runner.gameObject
+                );
 
-            runner = null;
+                runner = null;
+            }
+
+            return;
         }
-        else
+
+        // ---------------------------------------------------------
+        // Start Successful
+        // ---------------------------------------------------------
+
+        Debug.Log(
+            $"Successfully joined session: " +
+            $"{sessionName}"
+        );
+
+        // ---------------------------------------------------------
+        // Load Lobby
+        // ---------------------------------------------------------
+
+        LoadLobbyScene();
+    }
+
+
+    // =========================================================
+    // LOAD LOBBY SCENE
+    // =========================================================
+
+    private void LoadLobbyScene()
+    {
+        if (runner == null)
+        {
+            Debug.LogError(
+                "Cannot load Lobby scene because Runner is null."
+            );
+
+            return;
+        }
+
+        // ---------------------------------------------------------
+        // Only Scene Authority should load the scene
+        // ---------------------------------------------------------
+
+        if (!runner.IsSceneAuthority)
         {
             Debug.Log(
-                $"Successfully joined session: " +
-                $"{sessionName}"
+                "This client is not the Scene Authority. " +
+                "Waiting for the Lobby scene to be loaded."
             );
+
+            return;
         }
+
+        Debug.Log(
+            $"Loading Lobby scene. " +
+            $"Build Index: {gameSceneBuildIndex}"
+        );
+
+        // ---------------------------------------------------------
+        // Create Fusion SceneRef
+        // ---------------------------------------------------------
+
+        SceneRef lobbyScene =
+            SceneRef.FromIndex(
+                gameSceneBuildIndex
+            );
+
+        // ---------------------------------------------------------
+        // Load Lobby through Fusion
+        // ---------------------------------------------------------
+
+        runner.LoadScene(
+            lobbyScene,
+            LoadSceneMode.Single
+        );
     }
+
 
     // =========================================================
     // PLAYER JOINED
@@ -159,16 +431,8 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         Debug.Log(
             $"Player joined: {player}"
         );
-
-        // In Shared Mode, the local player
-        // spawns its own player object.
-        if (player != runner.LocalPlayer)
-        {
-            return;
-        }
-
-        SpawnPlayer(player);
     }
+
 
     // =========================================================
     // SPAWN PLAYER
@@ -176,8 +440,38 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
     private void SpawnPlayer(PlayerRef player)
     {
+        if (runner == null)
+        {
+            Debug.LogError(
+                "Cannot spawn player because Runner is null."
+            );
+
+            return;
+        }
+
+        // ---------------------------------------------------------
+        // Prevent duplicate player object
+        // ---------------------------------------------------------
+
+        if (runner.GetPlayerObject(player) != null)
+        {
+            Debug.LogWarning(
+                $"Player object already exists for {player}."
+            );
+
+            return;
+        }
+
+        // ---------------------------------------------------------
+        // Get spawn position
+        // ---------------------------------------------------------
+
         Vector3 spawnPosition =
             GetSpawnPosition();
+
+        // ---------------------------------------------------------
+        // Spawn Network Player
+        // ---------------------------------------------------------
 
         NetworkObject playerObject =
             runner.Spawn(
@@ -186,6 +480,10 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
                 Quaternion.identity,
                 player
             );
+
+        // ---------------------------------------------------------
+        // Register player object
+        // ---------------------------------------------------------
 
         runner.SetPlayerObject(
             player,
@@ -197,6 +495,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         );
     }
 
+
     // =========================================================
     // SPAWN POSITION
     // =========================================================
@@ -204,11 +503,18 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     private Vector3 GetSpawnPosition()
     {
         GameObject[] spawnPoints =
-            GameObject.FindGameObjectsWithTag("PlayerSpawn");
+            GameObject.FindGameObjectsWithTag(
+                "PlayerSpawn"
+            );
 
         Debug.Log(
-            $"[SPAWN] Found {spawnPoints.Length} PlayerSpawn point(s)."
+            $"[SPAWN] Found {spawnPoints.Length} " +
+            $"PlayerSpawn point(s)."
         );
+
+        // ---------------------------------------------------------
+        // No spawn points found
+        // ---------------------------------------------------------
 
         if (spawnPoints.Length == 0)
         {
@@ -216,11 +522,15 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
                 "[SPAWN ERROR] No PlayerSpawn objects found!"
             );
 
-            return new Vector3(0f, 10f, 0f);
+            return new Vector3(
+                0f,
+                10f,
+                0f
+            );
         }
 
         // ---------------------------------------------------------
-        // Choose a random spawn point
+        // Choose random spawn point
         // ---------------------------------------------------------
 
         int randomIndex =
@@ -233,11 +543,12 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             spawnPoints[randomIndex].transform;
 
         // ---------------------------------------------------------
-        // Find actual ground below the spawn point
+        // Find actual ground below spawn
         // ---------------------------------------------------------
 
         Vector3 rayOrigin =
-            spawn.position + Vector3.up * 10f;
+            spawn.position +
+            Vector3.up * 10f;
 
         if (Physics.Raycast(
             rayOrigin,
@@ -247,9 +558,9 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             ~0,
             QueryTriggerInteraction.Ignore))
         {
-            // Put the PlayerRoot above the actual ground.
             Vector3 position =
-                hit.point + Vector3.up * 1.1f;
+                hit.point +
+                Vector3.up * 1.1f;
 
             Debug.Log(
                 $"[SPAWN] Using {spawn.name}\n" +
@@ -270,8 +581,10 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             $"{spawn.name}. Using spawn point position."
         );
 
-        return spawn.position + Vector3.up * 2f;
+        return spawn.position +
+               Vector3.up * 2f;
     }
+
 
     // =========================================================
     // SESSION LIST
@@ -282,20 +595,42 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         List<SessionInfo> sessionList)
     {
         Debug.Log(
-            $"Available sessions: " +
-            $"{sessionList.Count}"
+            $"[LOBBY] Sessions found: {sessionList.Count}"
         );
 
-        foreach (
-            SessionInfo session
-            in sessionList)
+        foreach (SessionInfo session in sessionList)
         {
             Debug.Log(
-                $"Session: {session.Name} | " +
-                $"Players: {session.PlayerCount}"
+                $"[LOBBY] {session.Name} " +
+                $"Players: {session.PlayerCount}/{session.MaxPlayers}"
+            );
+
+            // Log lobby name if available.
+            if (session.Properties.TryGetValue(
+                "LobbyName",
+                out SessionProperty lobbyNameProperty))
+            {
+                Debug.Log(
+                    $"[LOBBY] Lobby Name: " +
+                    $"{lobbyNameProperty.PropertyValue}"
+                );
+            }
+        }
+
+        if (LobbySessionList.Instance != null)
+        {
+            LobbySessionList.Instance.UpdateSessions(
+                sessionList
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[LOBBY] LobbySessionList instance was not found."
             );
         }
     }
+
 
     // =========================================================
     // DISCONNECT
@@ -303,13 +638,29 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
     public void Disconnect()
     {
+        // ---------------------------------------------------------
+        // Shutdown main game runner
+        // ---------------------------------------------------------
+
         if (runner != null)
         {
             runner.Shutdown();
 
             runner = null;
         }
+
+        // ---------------------------------------------------------
+        // Shutdown lobby browser runner
+        // ---------------------------------------------------------
+
+        if (lobbyRunner != null)
+        {
+            lobbyRunner.Shutdown();
+
+            lobbyRunner = null;
+        }
     }
+
 
     // =========================================================
     // CONNECTION CALLBACKS
@@ -323,6 +674,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         );
     }
 
+
     public void OnDisconnectedFromServer(
         NetworkRunner runner,
         NetDisconnectReason reason)
@@ -331,6 +683,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             $"Disconnected: {reason}"
         );
     }
+
 
     public void OnConnectFailed(
         NetworkRunner runner,
@@ -341,6 +694,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             $"Connection failed: {reason}"
         );
     }
+
 
     // =========================================================
     // PLAYER CALLBACKS
@@ -355,6 +709,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         );
     }
 
+
     // =========================================================
     // INPUT
     // =========================================================
@@ -367,12 +722,14 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         // in the next networking stage.
     }
 
+
     public void OnInputMissing(
         NetworkRunner runner,
         PlayerRef player,
         NetworkInput input)
     {
     }
+
 
     // =========================================================
     // SHUTDOWN
@@ -388,6 +745,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         );
     }
 
+
     // =========================================================
     // CONNECTION REQUEST
     // =========================================================
@@ -399,6 +757,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     {
     }
 
+
     // =========================================================
     // AUTHENTICATION
     // =========================================================
@@ -409,6 +768,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     {
     }
 
+
     // =========================================================
     // HOST MIGRATION
     // =========================================================
@@ -418,6 +778,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         HostMigrationToken hostMigrationToken)
     {
     }
+
 
     // =========================================================
     // RELIABLE DATA
@@ -431,6 +792,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     {
     }
 
+
     public void OnReliableDataProgress(
         NetworkRunner runner,
         PlayerRef player,
@@ -438,6 +800,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         float progress)
     {
     }
+
 
     // =========================================================
     // SCENE
@@ -449,7 +812,26 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         Debug.Log(
             "Scene loading completed."
         );
+
+        // ---------------------------------------------------------
+        // Spawn local player if it hasn't spawned yet
+        // ---------------------------------------------------------
+
+        if (runner.LocalPlayer != PlayerRef.None)
+        {
+            if (
+                runner.GetPlayerObject(
+                    runner.LocalPlayer
+                ) == null
+            )
+            {
+                SpawnPlayer(
+                    runner.LocalPlayer
+                );
+            }
+        }
     }
+
 
     public void OnSceneLoadStart(
         NetworkRunner runner)
@@ -458,6 +840,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             "Scene loading started."
         );
     }
+
 
     // =========================================================
     // AREA OF INTEREST
@@ -469,6 +852,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         PlayerRef player)
     {
     }
+
 
     public void OnObjectExitAOI(
         NetworkRunner runner,

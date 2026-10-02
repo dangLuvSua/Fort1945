@@ -17,18 +17,43 @@ public class PlayerNetwork : NetworkBehaviour
     [Networked]
     public int CharacterIndex { get; set; }
 
+    [Networked, Capacity(32)]
+    public string PlayerName { get; set; }
+
     private GameObject currentCharacter;
+
 
     public override void Spawned()
     {
+        if (Object.HasStateAuthority)
+        {
+            string localPlayerName =
+                PlayerProfile.PlayerName;
+
+            if (string.IsNullOrWhiteSpace(localPlayerName))
+            {
+                localPlayerName = "Player";
+            }
+
+            PlayerName =
+                localPlayerName;
+
+            Debug.Log(
+                $"[PLAYER NETWORK] " +
+                $"Network name set to: {PlayerName}"
+            );
+        }
+
         UpdateCharacter();
         SetupCamera();
     }
+
 
     public override void Render()
     {
         UpdateCharacter();
     }
+
 
     private void UpdateCharacter()
     {
@@ -75,6 +100,7 @@ public class PlayerNetwork : NetworkBehaviour
             Vector3.one;
     }
 
+
     private void SetupCamera()
     {
         bool isLocalPlayer =
@@ -92,6 +118,7 @@ public class PlayerNetwork : NetworkBehaviour
                 isLocalPlayer;
         }
     }
+
 
     public void SetCharacter(int index)
     {

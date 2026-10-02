@@ -43,7 +43,8 @@ public class CanvasManager : MonoBehaviour
 
     [Header("Player Profile")]
     [SerializeField] private TMP_InputField playerNameInput;
-    // Player name field shown in Multiplayer panel
+
+    [Header("Multiplayer Player Name")]
     [SerializeField] private TMP_InputField multiplayerPlayerNameInput;
 
 
@@ -116,12 +117,13 @@ public class CanvasManager : MonoBehaviour
 
         multiplayerCanvas.SetActive(true);
 
-        // Load saved player name into Multiplayer
+        // Load saved name into Multiplayer panel
         LoadMultiplayerPlayerName();
 
-        // Always start at the Multiplayer main panel
+        // Always start at Multiplayer main panel
         ShowMultiplayerMainPanelWithoutSound();
     }
+
 
     public void ShowOptions()
     {
@@ -182,6 +184,8 @@ public class CanvasManager : MonoBehaviour
     {
         PlayClickSound();
 
+        SaveMultiplayerPlayerName();
+
         HideAllMultiplayerPanels();
 
         if (createLobbyPanel != null)
@@ -193,6 +197,8 @@ public class CanvasManager : MonoBehaviour
     public void ShowJoinLobby()
     {
         PlayClickSound();
+
+        SaveMultiplayerPlayerName();
 
         HideAllMultiplayerPanels();
 
@@ -206,10 +212,26 @@ public class CanvasManager : MonoBehaviour
     {
         PlayClickSound();
 
+        SaveMultiplayerPlayerName();
+
         HideAllMultiplayerPanels();
 
         if (findLobbyPanel != null)
+        {
             findLobbyPanel.SetActive(true);
+        }
+
+        // Start lobby discovery after the panel is active
+        if (NetworkRunnerHandler.Instance != null)
+        {
+            NetworkRunnerHandler.Instance.FindLobbies();
+        }
+        else
+        {
+            Debug.LogError(
+                "CanvasManager: NetworkRunnerHandler not found."
+            );
+        }
     }
 
 
@@ -233,6 +255,9 @@ public class CanvasManager : MonoBehaviour
 
         if (multiplayerPanel != null)
             multiplayerPanel.SetActive(true);
+
+        // Always show the latest saved name
+        LoadMultiplayerPlayerName();
     }
 
 
@@ -280,7 +305,6 @@ public class CanvasManager : MonoBehaviour
         if (graphicsPanel != null)
             graphicsPanel.SetActive(true);
 
-        // Load saved player name when Graphics panel opens
         LoadPlayerName();
     }
 
@@ -327,7 +351,7 @@ public class CanvasManager : MonoBehaviour
 
 
     // =====================================================
-    // PLAYER NAME
+    // PLAYER NAME - SETTINGS
     // =====================================================
 
     private void LoadPlayerName()
@@ -344,35 +368,9 @@ public class CanvasManager : MonoBehaviour
 
         playerNameInput.text =
             PlayerProfile.PlayerName;
-
-        Debug.Log(
-            $"Loaded player name: " +
-            $"{PlayerProfile.PlayerName}"
-        );
     }
 
 
-
-    private void LoadMultiplayerPlayerName()
-    {
-        if (multiplayerPlayerNameInput == null)
-        {
-            Debug.LogWarning(
-                "CanvasManager: Multiplayer Player Name Input " +
-                "is not assigned."
-            );
-
-            return;
-        }
-
-        multiplayerPlayerNameInput.text =
-            PlayerProfile.PlayerName;
-
-        Debug.Log(
-            $"Loaded multiplayer player name: " +
-            $"{PlayerProfile.PlayerName}"
-        );
-    }
     public void SavePlayerName()
     {
         if (playerNameInput == null)
@@ -388,26 +386,76 @@ public class CanvasManager : MonoBehaviour
         string playerName =
             playerNameInput.text.Trim();
 
-        // Prevent empty player names
         if (string.IsNullOrEmpty(playerName))
         {
             playerName = "Player";
         }
 
-        // Save to PlayerPrefs
         PlayerProfile.SetPlayerName(
             playerName
         );
 
-        // Make sure input field displays
-        // the cleaned value
-        playerNameInput.text = playerName;
+        playerNameInput.text =
+            playerName;
 
         PlayClickSound();
 
         Debug.Log(
-            $"Player name saved successfully: " +
-            $"{playerName}"
+            $"Player name saved: {playerName}"
+        );
+    }
+
+
+    // =====================================================
+    // PLAYER NAME - MULTIPLAYER
+    // =====================================================
+
+    private void LoadMultiplayerPlayerName()
+    {
+        if (multiplayerPlayerNameInput == null)
+        {
+            Debug.LogWarning(
+                "CanvasManager: Multiplayer Player Name " +
+                "Input is not assigned."
+            );
+
+            return;
+        }
+
+        multiplayerPlayerNameInput.text =
+            PlayerProfile.PlayerName;
+    }
+
+
+    private void SaveMultiplayerPlayerName()
+    {
+        if (multiplayerPlayerNameInput == null)
+        {
+            Debug.LogWarning(
+                "CanvasManager: Multiplayer Player Name " +
+                "Input is not assigned."
+            );
+
+            return;
+        }
+
+        string playerName =
+            multiplayerPlayerNameInput.text.Trim();
+
+        if (string.IsNullOrEmpty(playerName))
+        {
+            playerName = "Player";
+        }
+
+        PlayerProfile.SetPlayerName(
+            playerName
+        );
+
+        multiplayerPlayerNameInput.text =
+            playerName;
+
+        Debug.Log(
+            $"Multiplayer player name saved: {playerName}"
         );
     }
 
