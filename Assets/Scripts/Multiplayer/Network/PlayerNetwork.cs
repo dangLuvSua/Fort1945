@@ -22,30 +22,169 @@ public class PlayerNetwork : NetworkBehaviour
 
     private GameObject currentCharacter;
 
+    private void Awake()
+    {
+        if (player == null)
+        {
+            player = transform;
+        }
+    }
 
     public override void Spawned()
     {
-        if (Object.HasStateAuthority)
+        Debug.Log(
+            $"[PLAYER NETWORK] Spawned for {Object.InputAuthority}"
+        );
+
+        // Only the local player reads their local PlayerPrefs.
+        if (Object.HasInputAuthority)
         {
-            string localPlayerName =
-                PlayerProfile.PlayerName;
-
-            if (string.IsNullOrWhiteSpace(localPlayerName))
-            {
-                localPlayerName = "Player";
-            }
-
-            PlayerName =
-                localPlayerName;
-
-            Debug.Log(
-                $"[PLAYER NETWORK] " +
-                $"Network name set to: {PlayerName}"
-            );
+            SetLocalPlayerData();
         }
 
-        UpdateCharacter();
         SetupCamera();
+
+        UpdateCharacter();
+    }
+
+    private void SetLocalPlayerData()
+    {
+        // -------------------------
+        // PLAYER NAME
+        // -------------------------
+
+        string localPlayerName =
+            PlayerProfile.PlayerName;
+
+        if (string.IsNullOrWhiteSpace(localPlayerName))
+        {
+            localPlayerName = "Player";
+        }
+
+        // Host can directly set its own data.
+        if (Object.HasStateAuthority)
+        {
+            PlayerName = localPlayerName;
+        }
+        else
+        {
+            RPC_SetPlayerName(localPlayerName);
+        }
+
+
+        // -------------------------
+        // SELECTED CHARACTER
+        // -------------------------
+
+        int selectedCharacterIndex =
+            GetSavedCharacterIndex();
+
+        Debug.Log(
+            $"[PLAYER NETWORK] " +
+            $"Local selected character index: {selectedCharacterIndex}"
+        );
+
+        // Host can directly set its own data.
+        if (Object.HasStateAuthority)
+        {
+            CharacterIndex =
+                selectedCharacterIndex;
+        }
+        else
+        {
+            RPC_SetCharacter(
+                selectedCharacterIndex
+            );
+        }
+    }
+
+    private int GetSavedCharacterIndex()
+    {
+        string selectedCharacter =
+            PlayerProfile.SelectedCharacter;
+
+        Debug.Log(
+            $"[PLAYER NETWORK] " +
+            $"Saved Character: {selectedCharacter}"
+        );
+
+        if (selectedCharacter.StartsWith("Character"))
+        {
+            string numberPart =
+                selectedCharacter.Replace(
+                    "Character",
+                    ""
+                );
+
+            if (int.TryParse(
+                    numberPart,
+                    out int characterNumber))
+            {
+                int index =
+                    characterNumber - 1;
+
+                if (index >= 0 &&
+                    index < characterPrefabs.Length)
+                {
+                    return index;
+                }
+            }
+        }
+
+        // Default to Character 1
+        return 0;
+    }
+
+
+    [Rpc(
+        RpcSources.InputAuthority,
+        RpcTargets.StateAuthority
+    )]
+    private void RPC_SetCharacter(
+        int characterIndex
+    )
+    {
+        if (characterIndex < 0 ||
+            characterIndex >= characterPrefabs.Length)
+        {
+            Debug.LogWarning(
+                $"[PLAYER NETWORK] Invalid character index: " +
+                $"{characterIndex}"
+            );
+
+            return;
+        }
+
+        CharacterIndex =
+            characterIndex;
+
+        Debug.Log(
+            $"[PLAYER NETWORK] " +
+            $"Character set to index {characterIndex}"
+        );
+    }
+
+
+    [Rpc(
+        RpcSources.InputAuthority,
+        RpcTargets.StateAuthority
+    )]
+    private void RPC_SetPlayerName(
+        string playerName
+    )
+    {
+        if (string.IsNullOrWhiteSpace(playerName))
+        {
+            playerName = "Player";
+        }
+
+        PlayerName =
+            playerName;
+
+        Debug.Log(
+            $"[PLAYER NETWORK] " +
+            $"Player name set to: {PlayerName}"
+        );
     }
 
 
@@ -69,15 +208,30 @@ public class PlayerNetwork : NetworkBehaviour
             return;
         }
 
-        // Already showing the correct character
+        GameObject selectedPrefab =
+            characterPrefabs[CharacterIndex];
+
+        if (selectedPrefab == null)
+        {
+            Debug.LogWarning(
+                $"[PLAYER NETWORK] " +
+                $"Character prefab at index " +
+                $"{CharacterIndex} is missing!"
+            );
+
+            return;
+        }
+
+        // Already showing correct character
         if (currentCharacter != null &&
             currentCharacter.name.StartsWith(
-                characterPrefabs[CharacterIndex].name))
+                selectedPrefab.name
+            ))
         {
             return;
         }
 
-        // Remove previous visual
+        // Remove previous character
         if (currentCharacter != null)
         {
             Destroy(currentCharacter);
@@ -85,10 +239,11 @@ public class PlayerNetwork : NetworkBehaviour
         }
 
         // Create selected character
-        currentCharacter = Instantiate(
-            characterPrefabs[CharacterIndex],
-            player
-        );
+        currentCharacter =
+            Instantiate(
+                selectedPrefab,
+                player
+            );
 
         currentCharacter.transform.localPosition =
             Vector3.zero;
@@ -98,6 +253,12 @@ public class PlayerNetwork : NetworkBehaviour
 
         currentCharacter.transform.localScale =
             Vector3.one;
+
+        Debug.Log(
+            $"[PLAYER NETWORK] " +
+            $"Displaying character: " +
+            $"{selectedPrefab.name}"
+        );
     }
 
 
@@ -127,16 +288,19 @@ public class PlayerNetwork : NetworkBehaviour
             return;
         }
 
-        if (index < 0 ||
+        if (characterPrefabs == null ||
+            index < 0 ||
             index >= characterPrefabs.Length)
         {
             Debug.LogWarning(
+                $"[PLAYER NETWORK] " +
                 $"Invalid character index: {index}"
             );
 
             return;
         }
 
-        CharacterIndex = index;
+        CharacterIndex =
+            index;
     }
 }
