@@ -254,6 +254,16 @@ public class PlayerNetwork : NetworkBehaviour
         currentCharacter.transform.localScale =
             Vector3.one;
 
+        bool hideCharacter =
+            Object.HasInputAuthority;
+
+        foreach (Renderer characterRenderer in
+                 currentCharacter.GetComponentsInChildren<Renderer>(true))
+        {
+            characterRenderer.enabled =
+                !hideCharacter;
+        }
+
         Debug.Log(
             $"[PLAYER NETWORK] " +
             $"Displaying character: " +

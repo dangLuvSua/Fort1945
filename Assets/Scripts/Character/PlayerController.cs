@@ -36,7 +36,7 @@ public class PlayerController : NetworkBehaviour
     [Tooltip("Layers considered ground.")]
     [SerializeField] private LayerMask groundLayers = ~0;
 
-   
+
 
     [Tooltip("How far below the world before the player is reset.")]
     [SerializeField] private float fallLimit = -20f;
@@ -571,8 +571,6 @@ public class PlayerController : NetworkBehaviour
     {
         if (!isLocal)
             return;
-
-
         // -----------------------------------------------------
         // FALL RECOVERY
         // -----------------------------------------------------
