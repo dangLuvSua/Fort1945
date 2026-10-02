@@ -26,6 +26,15 @@ public class LobbyUI : MonoBehaviour
 
     public void CreateLobby()
     {
+        if (lobbyNameInput == null)
+        {
+            Debug.LogError(
+                "Lobby name input field is not assigned."
+            );
+
+            return;
+        }
+
         string lobbyName =
             lobbyNameInput.text.Trim();
 
@@ -38,11 +47,17 @@ public class LobbyUI : MonoBehaviour
             return;
         }
 
-        // Generate a unique-looking 6-character code.
+        // -------------------------------------------------
+        // Generate lobby code
+        // -------------------------------------------------
+
         string lobbyCode =
             GenerateLobbyCode();
 
-        // Display the generated code.
+        // -------------------------------------------------
+        // Display generated code
+        // -------------------------------------------------
+
         if (lobbyCodeText != null)
         {
             lobbyCodeText.text = lobbyCode;
@@ -60,10 +75,9 @@ public class LobbyUI : MonoBehaviour
             $"Player name: {PlayerProfile.PlayerName}"
         );
 
-
-        // =================================================
-        // START FUSION SESSION
-        // =================================================
+        // -------------------------------------------------
+        // Network Runner Handler
+        // -------------------------------------------------
 
         if (NetworkRunnerHandler.Instance == null)
         {
@@ -74,8 +88,13 @@ public class LobbyUI : MonoBehaviour
             return;
         }
 
+        // -------------------------------------------------
+        // Send BOTH lobby code and lobby name
+        // -------------------------------------------------
+
         NetworkRunnerHandler.Instance.CreateGame(
-            lobbyCode
+            lobbyCode,
+            lobbyName
         );
     }
 
@@ -86,6 +105,15 @@ public class LobbyUI : MonoBehaviour
 
     public void JoinLobby()
     {
+        if (joinLobbyCodeInput == null)
+        {
+            Debug.LogError(
+                "Join lobby code input field is not assigned."
+            );
+
+            return;
+        }
+
         string lobbyCode =
             joinLobbyCodeInput.text.Trim();
 
@@ -98,11 +126,17 @@ public class LobbyUI : MonoBehaviour
             return;
         }
 
-        // Convert code to uppercase.
+        // -------------------------------------------------
+        // Convert code to uppercase
+        // -------------------------------------------------
+
         lobbyCode =
             lobbyCode.ToUpperInvariant();
 
-        // Update the input field with cleaned code.
+        // -------------------------------------------------
+        // Update input field
+        // -------------------------------------------------
+
         joinLobbyCodeInput.text =
             lobbyCode;
 
@@ -114,10 +148,9 @@ public class LobbyUI : MonoBehaviour
             $"Player name: {PlayerProfile.PlayerName}"
         );
 
-
-        // =================================================
-        // JOIN FUSION SESSION
-        // =================================================
+        // -------------------------------------------------
+        // Network Runner Handler
+        // -------------------------------------------------
 
         if (NetworkRunnerHandler.Instance == null)
         {

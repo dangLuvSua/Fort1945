@@ -217,7 +217,21 @@ public class CanvasManager : MonoBehaviour
         HideAllMultiplayerPanels();
 
         if (findLobbyPanel != null)
+        {
             findLobbyPanel.SetActive(true);
+        }
+
+        // Start lobby discovery after the panel is active
+        if (NetworkRunnerHandler.Instance != null)
+        {
+            NetworkRunnerHandler.Instance.FindLobbies();
+        }
+        else
+        {
+            Debug.LogError(
+                "CanvasManager: NetworkRunnerHandler not found."
+            );
+        }
     }
 
 

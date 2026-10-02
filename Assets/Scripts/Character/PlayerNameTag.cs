@@ -88,11 +88,7 @@ public class PlayerNameTag : MonoBehaviour
             return;
         }
 
-        // Keep the text facing the camera.
-        transform.rotation =
-            Quaternion.LookRotation(
-                transform.position -
-                targetCamera.transform.position
-            );
+        transform.forward =
+            targetCamera.transform.forward;
     }
 }
