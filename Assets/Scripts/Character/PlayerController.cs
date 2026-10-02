@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 using Fusion;
 
 public class PlayerController : NetworkBehaviour
@@ -50,7 +51,7 @@ public class PlayerController : NetworkBehaviour
     // =========================================================
 
     [Header("Mouse Look")]
-    [Tooltip("Mouse sensitivity. 0.05 - 0.2 is usually good.")]
+    [Tooltip("Mouse sensitivity.")]
     [SerializeField] private float mouseSensitivity = 0.1f;
 
     [SerializeField] private float maxLookUp = 80f;
@@ -63,7 +64,6 @@ public class PlayerController : NetworkBehaviour
 
     [Header("Camera")]
     [SerializeField] private Camera playerCamera;
-
     [SerializeField] private AudioListener audioListener;
 
     [Tooltip("Child of PlayerRoot containing the camera.")]
@@ -75,10 +75,6 @@ public class PlayerController : NetworkBehaviour
     // =========================================================
 
     [Header("Player Body")]
-    [Tooltip(
-        "Visual player model/container. " +
-        "It remains visible to other players."
-    )]
     [SerializeField] private GameObject playerBody;
 
 
@@ -87,11 +83,6 @@ public class PlayerController : NetworkBehaviour
     // =========================================================
 
     [Header("Network Animation")]
-
-    [Tooltip(
-        "Networked animation speed. " +
-        "0 = Idle, 0.3 = Walk, 0.8 = Run."
-    )]
     [Networked]
     private float NetworkAnimationSpeed { get; set; }
 
@@ -109,7 +100,6 @@ public class PlayerController : NetworkBehaviour
     // =========================================================
 
     private Animator animator;
-
     private CharacterController characterController;
 
     private InputAction moveAction;
@@ -123,14 +113,12 @@ public class PlayerController : NetworkBehaviour
     private bool jumpRequested;
 
     private Vector3 currentVelocity;
-
     private float verticalVelocity;
 
     private float yaw;
     private float pitch;
 
     private bool isLocal;
-
     private bool inputInitialized;
 
     private float animatorSearchTimer;
@@ -147,7 +135,6 @@ public class PlayerController : NetworkBehaviour
         Debug.Log(
             $"[PLAYER] Spawned at {transform.position}"
         );
-
 
         // -----------------------------------------------------
         // CHARACTER CONTROLLER
@@ -177,22 +164,27 @@ public class PlayerController : NetworkBehaviour
 
 
         // -----------------------------------------------------
+        // AUTHORITY
+        // -----------------------------------------------------
+
+        isLocal =
+            Object.HasInputAuthority;
+
+        Debug.Log(
+            $"[PLAYER] Input Authority = {isLocal}"
+        );
+
+        Debug.Log(
+            $"[PLAYER] Input Authority = " +
+            $"{Object.HasInputAuthority}"
+        );
+
+
+        // -----------------------------------------------------
         // ANIMATOR
         // -----------------------------------------------------
 
         TryFindAnimator();
-
-
-        // -----------------------------------------------------
-        // LOCAL / STATE AUTHORITY
-        // -----------------------------------------------------
-
-        isLocal =
-            Object.HasStateAuthority;
-
-        Debug.Log(
-            $"[PLAYER] Local/State Authority = {isLocal}"
-        );
 
 
         // -----------------------------------------------------
@@ -223,7 +215,7 @@ public class PlayerController : NetworkBehaviour
 
 
         // -----------------------------------------------------
-        // INITIAL GROUND CHECK
+        // GROUND CHECK
         // -----------------------------------------------------
 
         CheckGroundAtSpawn();
@@ -233,21 +225,9 @@ public class PlayerController : NetworkBehaviour
     // =========================================================
     // RENDER
     // =========================================================
-    //
-    // Render() runs on every client.
-    //
-    // This is where we apply the networked animation value
-    // to the local visual Animator.
-    //
-    // =========================================================
 
     public override void Render()
     {
-        // -----------------------------------------------------
-        // The character visual is instantiated by PlayerNetwork.
-        // It may not exist yet when Spawned() executes.
-        // -----------------------------------------------------
-
         if (animator == null)
         {
             animatorSearchTimer -= Time.deltaTime;
@@ -260,11 +240,6 @@ public class PlayerController : NetworkBehaviour
                 TryFindAnimator();
             }
         }
-
-
-        // -----------------------------------------------------
-        // APPLY NETWORKED ANIMATION
-        // -----------------------------------------------------
 
         if (animator != null)
         {
@@ -337,17 +312,14 @@ public class PlayerController : NetworkBehaviour
         {
             Debug.LogError(
                 "[INPUT ERROR] " +
-                "InputActionAsset is not assigned!"
+                "InputActionAsset is NOT assigned " +
+                "on PlayerController!"
             );
 
             return;
         }
 
-
-        // -----------------------------------------------------
-        // Clone the asset so each player has its own state.
-        // -----------------------------------------------------
-
+        // Clone the asset so every player has its own input state.
         InputActionAsset actions =
             Instantiate(inputActions);
 
@@ -356,7 +328,6 @@ public class PlayerController : NetworkBehaviour
                 "Player",
                 true
             );
-
 
         moveAction =
             map.FindAction(
@@ -382,7 +353,6 @@ public class PlayerController : NetworkBehaviour
                 true
             );
 
-
         map.Enable();
 
         inputActions =
@@ -393,6 +363,22 @@ public class PlayerController : NetworkBehaviour
 
         Debug.Log(
             "[INPUT] Player input initialized."
+        );
+
+        Debug.Log(
+            $"[INPUT] Move Action: {moveAction != null}"
+        );
+
+        Debug.Log(
+            $"[INPUT] Look Action: {lookAction != null}"
+        );
+
+        Debug.Log(
+            $"[INPUT] Sprint Action: {sprintAction != null}"
+        );
+
+        Debug.Log(
+            $"[INPUT] Jump Action: {jumpAction != null}"
         );
 
         LockCursor(true);
@@ -408,110 +394,92 @@ public class PlayerController : NetworkBehaviour
         if (Object == null)
             return;
 
-        if (!isLocal)
+        if (!Object.HasInputAuthority)
             return;
 
-        if (!inputInitialized)
-            return;
+        Debug.Log(
+            $"[PLAYER UPDATE] " +
+            $"InputAuthority={Object.HasInputAuthority} " +
+            $"Initialized={inputInitialized}"
+        );
 
-
-        // -----------------------------------------------------
-        // Escape = unlock cursor
-        // -----------------------------------------------------
-
-        Keyboard kb =
-            Keyboard.current;
-
-        if (kb != null &&
-            kb.escapeKey.wasPressedThisFrame)
+        if (Keyboard.current != null &&
+            Keyboard.current.escapeKey.wasPressedThisFrame)
         {
-            LockCursor(false);
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
 
-
-        // -----------------------------------------------------
-        // Left click = lock cursor again
-        // -----------------------------------------------------
-
-        Mouse mouse =
-            Mouse.current;
-
-        if (mouse != null &&
-            mouse.leftButton.wasPressedThisFrame &&
-            Cursor.lockState !=
-            CursorLockMode.Locked)
+        if (Mouse.current != null &&
+            Mouse.current.leftButton.wasPressedThisFrame)
         {
-            LockCursor(true);
+            bool clickedUI =
+                EventSystem.current != null &&
+                EventSystem.current.IsPointerOverGameObject();
+
+            if (!clickedUI)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
         }
-
-
-        // -----------------------------------------------------
-        // Don't read gameplay input while cursor is unlocked.
-        // -----------------------------------------------------
-
-        if (Cursor.lockState !=
-            CursorLockMode.Locked)
-        {
-            moveInput =
-                Vector2.zero;
-
-            runInput =
-                false;
-
-            return;
-        }
-
 
         ReadInput();
 
-        HandleLook();
+        if (Cursor.lockState == CursorLockMode.Locked)
+        {
+            HandleLook();
+        }
     }
-
-
     // =========================================================
     // READ INPUT
     // =========================================================
 
     private void ReadInput()
     {
-        if (moveAction == null)
-            return;
-
-
-        // -----------------------------------------------------
-        // Movement
-        // -----------------------------------------------------
-
-        moveInput =
-            Vector2.ClampMagnitude(
-                moveAction.ReadValue<Vector2>(),
-                1f
-            );
-
-
-        // -----------------------------------------------------
-        // Sprint
-        // -----------------------------------------------------
-
-        if (sprintAction != null)
+        if (Keyboard.current == null)
         {
-            runInput =
-                sprintAction.IsPressed();
+            Debug.LogWarning("[INPUT TEST] Keyboard.current is NULL!");
+            return;
         }
 
+        Vector2 keyboardInput = Vector2.zero;
 
-        // -----------------------------------------------------
-        // Jump
-        // -----------------------------------------------------
+        if (Keyboard.current.wKey.isPressed)
+            keyboardInput.y += 1f;
 
-        if (jumpAction != null &&
-            jumpAction.WasPressedThisFrame())
+        if (Keyboard.current.sKey.isPressed)
+            keyboardInput.y -= 1f;
+
+        if (Keyboard.current.dKey.isPressed)
+            keyboardInput.x += 1f;
+
+        if (Keyboard.current.aKey.isPressed)
+            keyboardInput.x -= 1f;
+
+        moveInput = keyboardInput.normalized;
+
+        if (moveInput.sqrMagnitude > 0.01f)
         {
-            jumpRequested =
-                true;
+            Debug.Log(
+                $"[KEYBOARD TEST] WASD = {moveInput}"
+            );
+        }
+
+        runInput =
+            Keyboard.current.leftShiftKey.isPressed ||
+            Keyboard.current.rightShiftKey.isPressed;
+
+        if (runInput)
+        {
+            Debug.Log("[KEYBOARD TEST] SPRINT = TRUE");
+        }
+
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            Debug.Log("[KEYBOARD TEST] JUMP = TRUE");
         }
     }
-
 
     // =========================================================
     // MOUSE LOOK
@@ -522,26 +490,12 @@ public class PlayerController : NetworkBehaviour
         if (lookAction == null)
             return;
 
-
         Vector2 look =
             lookAction.ReadValue<Vector2>() *
             mouseSensitivity;
 
-
-        // -----------------------------------------------------
-        // Store yaw.
-        //
-        // The actual networked PlayerRoot rotation is applied
-        // inside FixedUpdateNetwork().
-        // -----------------------------------------------------
-
         yaw +=
             look.x;
-
-
-        // -----------------------------------------------------
-        // Camera pitch remains local.
-        // -----------------------------------------------------
 
         pitch =
             Mathf.Clamp(
@@ -549,7 +503,6 @@ public class PlayerController : NetworkBehaviour
                 -maxLookUp,
                 maxLookDown
             );
-
 
         if (cameraHolder != null)
         {
@@ -567,9 +520,9 @@ public class PlayerController : NetworkBehaviour
     // FIXED NETWORK UPDATE
     // =========================================================
 
-    public override void FixedUpdateNetwork()
+    private void FixedUpdateNetwork()
     {
-        if (!isLocal)
+        if (!Object.HasStateAuthority)
             return;
         // -----------------------------------------------------
         // FALL RECOVERY
@@ -577,27 +530,12 @@ public class PlayerController : NetworkBehaviour
 
         if (transform.position.y <= fallLimit)
         {
-            RecoverFromFall();
-
-            return;
-        }
-
-
-        // -----------------------------------------------------
-        // ROTATION
-        // -----------------------------------------------------
-
-        transform.rotation =
-            Quaternion.Euler(
-                0f,
-                yaw,
-                0f
+            Debug.Log(
+                $"[NETWORK MOVE TEST] " +
+                $"Move={moveInput}, " +
+                $"Position={transform.position}"
             );
-
-
-        // -----------------------------------------------------
-        // MOVEMENT
-        // -----------------------------------------------------
+        }
 
         HandleMovement();
     }
@@ -609,10 +547,6 @@ public class PlayerController : NetworkBehaviour
 
     private void HandleMovement()
     {
-        // -----------------------------------------------------
-        // MOVEMENT DIRECTION
-        // -----------------------------------------------------
-
         Vector3 desiredDirection =
             transform.forward *
             moveInput.y
@@ -620,43 +554,29 @@ public class PlayerController : NetworkBehaviour
             transform.right *
             moveInput.x;
 
-
         desiredDirection =
             Vector3.ClampMagnitude(
                 desiredDirection,
                 1f
             );
 
-
-        // -----------------------------------------------------
-        // RUNNING
-        // -----------------------------------------------------
-
         bool isRunning =
             runInput &&
             moveInput.magnitude > 0.01f;
-
 
         float targetSpeed =
             isRunning
                 ? runSpeed
                 : walkSpeed;
 
-
         Vector3 targetVelocity =
             desiredDirection *
             targetSpeed;
-
-
-        // -----------------------------------------------------
-        // ACCELERATION / DECELERATION
-        // -----------------------------------------------------
 
         float rate =
             desiredDirection.magnitude > 0.01f
                 ? acceleration
                 : deceleration;
-
 
         currentVelocity =
             Vector3.MoveTowards(
@@ -676,17 +596,15 @@ public class PlayerController : NetworkBehaviour
 
 
         // -----------------------------------------------------
-        // FALLING / JUMPING
+        // JUMP
         // -----------------------------------------------------
 
         if (isGrounded)
         {
             if (verticalVelocity < 0f)
             {
-                verticalVelocity =
-                    -2f;
+                verticalVelocity = -2f;
             }
-
 
             if (jumpRequested)
             {
@@ -699,9 +617,7 @@ public class PlayerController : NetworkBehaviour
             }
         }
 
-
-        jumpRequested =
-            false;
+        jumpRequested = false;
 
 
         // -----------------------------------------------------
@@ -724,37 +640,20 @@ public class PlayerController : NetworkBehaviour
             verticalVelocity;
 
 
-        // -----------------------------------------------------
-        // CHARACTER CONTROLLER MOVE
-        // -----------------------------------------------------
+        characterController.Move(
+            finalMovement *
+            Runner.DeltaTime
+        );
 
-        CollisionFlags collisionFlags =
-            characterController.Move(
-                finalMovement *
-                Runner.DeltaTime
-            );
-
-
-        // -----------------------------------------------------
-        // GROUND DIAGNOSTICS
-        // -----------------------------------------------------
-
-        if (isLocal)
-        {
-            if ((collisionFlags &
-                CollisionFlags.Below) != 0)
-            {
-                Debug.Log(
-                    $"[GROUND] " +
-                    $"Player touching ground. " +
-                    $"Y = {transform.position.y:F2}"
-                );
-            }
-        }
+        Debug.Log(
+    $"[CHARACTER MOVE TEST] " +
+    $"Velocity={currentVelocity}, " +
+    $"MoveInput={moveInput}"
+);
 
 
         // -----------------------------------------------------
-        // NETWORK ANIMATION STATE
+        // ANIMATION
         // -----------------------------------------------------
 
         UpdateNetworkAnimation(
@@ -767,16 +666,6 @@ public class PlayerController : NetworkBehaviour
     // =========================================================
     // NETWORK ANIMATION
     // =========================================================
-    //
-    // Only the State Authority calculates the animation state.
-    //
-    // The value is then synchronized through Fusion.
-    //
-    // 0.0 = Idle
-    // 0.3 = Walk
-    // 0.8 = Run
-    //
-    // =========================================================
 
     private void UpdateNetworkAnimation(
         Vector3 velocity,
@@ -785,7 +674,6 @@ public class PlayerController : NetworkBehaviour
         if (!isLocal)
             return;
 
-
         float horizontalSpeed =
             new Vector3(
                 velocity.x,
@@ -793,46 +681,25 @@ public class PlayerController : NetworkBehaviour
                 velocity.z
             ).magnitude;
 
-
         horizontalSpeed /=
             Mathf.Max(
                 runSpeed,
                 0.01f
             );
 
-
-        // -----------------------------------------------------
-        // IDLE
-        // -----------------------------------------------------
-
         if (horizontalSpeed < 0.01f)
         {
-            NetworkAnimationSpeed =
-                0f;
-
+            NetworkAnimationSpeed = 0f;
             return;
         }
-
-
-        // -----------------------------------------------------
-        // RUN
-        // -----------------------------------------------------
 
         if (isRunning)
         {
-            NetworkAnimationSpeed =
-                0.8f;
-
+            NetworkAnimationSpeed = 0.8f;
             return;
         }
 
-
-        // -----------------------------------------------------
-        // WALK
-        // -----------------------------------------------------
-
-        NetworkAnimationSpeed =
-            0.3f;
+        NetworkAnimationSpeed = 0.3f;
     }
 
 
@@ -845,11 +712,9 @@ public class PlayerController : NetworkBehaviour
         if (!isLocal)
             return;
 
-
         Vector3 rayOrigin =
             transform.position +
             Vector3.up * 2f;
-
 
         if (Physics.Raycast(
             rayOrigin,
@@ -865,51 +730,25 @@ public class PlayerController : NetworkBehaviour
                 $"Distance = {hit.distance:F2}"
             );
 
-
-            // -------------------------------------------------
-            // Put the CharacterController above the ground.
-            // -------------------------------------------------
-
             Vector3 safePosition =
                 hit.point +
                 Vector3.up *
                 recoveryHeight;
 
-
             CharacterController cc =
                 characterController;
 
-
             if (cc != null)
-            {
-                cc.enabled =
-                    false;
-            }
-
+                cc.enabled = false;
 
             transform.position =
                 safePosition;
 
-
             if (cc != null)
-            {
-                cc.enabled =
-                    true;
-            }
+                cc.enabled = true;
 
-
-            verticalVelocity =
-                0f;
-
-            currentVelocity =
-                Vector3.zero;
-
-
-            Debug.Log(
-                $"[GROUND SPAWN] " +
-                $"Player positioned at " +
-                $"{transform.position}"
-            );
+            verticalVelocity = 0f;
+            currentVelocity = Vector3.zero;
         }
         else
         {
@@ -930,28 +769,20 @@ public class PlayerController : NetworkBehaviour
         if (!isLocal)
             return;
 
-
         Debug.LogWarning(
             $"[FALL RECOVERY] " +
             $"Player fell to Y = " +
             $"{transform.position.y:F2}"
         );
 
-
         Vector3 recoveryPosition =
             FindNearestSpawnPoint();
-
 
         CharacterController cc =
             characterController;
 
-
         if (cc != null)
-        {
-            cc.enabled =
-                false;
-        }
-
+            cc.enabled = false;
 
         transform.SetPositionAndRotation(
             recoveryPosition,
@@ -962,34 +793,17 @@ public class PlayerController : NetworkBehaviour
             )
         );
 
-
         if (cc != null)
-        {
-            cc.enabled =
-                true;
-        }
+            cc.enabled = true;
 
-
-        currentVelocity =
-            Vector3.zero;
-
-        verticalVelocity =
-            0f;
-
-        jumpRequested =
-            false;
-
-
-        Debug.Log(
-            $"[FALL RECOVERY] " +
-            $"Player returned to " +
-            $"{recoveryPosition}"
-        );
+        currentVelocity = Vector3.zero;
+        verticalVelocity = 0f;
+        jumpRequested = false;
     }
 
 
     // =========================================================
-    // FIND SPAWN POINT FOR RECOVERY
+    // FIND SPAWN POINT
     // =========================================================
 
     private Vector3 FindNearestSpawnPoint()
@@ -999,7 +813,6 @@ public class PlayerController : NetworkBehaviour
                 "PlayerSpawn"
             );
 
-
         if (spawnPoints.Length == 0)
         {
             Debug.LogWarning(
@@ -1007,17 +820,11 @@ public class PlayerController : NetworkBehaviour
                 "No PlayerSpawn found."
             );
 
-
             return Vector3.up * 5f;
         }
 
-
-        GameObject closest =
-            null;
-
-        float closestDistance =
-            Mathf.Infinity;
-
+        GameObject closest = null;
+        float closestDistance = Mathf.Infinity;
 
         foreach (
             GameObject spawnPoint
@@ -1029,26 +836,16 @@ public class PlayerController : NetworkBehaviour
                     spawnPoint.transform.position
                 );
 
-
             if (distance < closestDistance)
             {
-                closestDistance =
-                    distance;
-
-                closest =
-                    spawnPoint;
+                closestDistance = distance;
+                closest = spawnPoint;
             }
         }
-
-
-        // -----------------------------------------------------
-        // Search for actual ground.
-        // -----------------------------------------------------
 
         Vector3 rayOrigin =
             closest.transform.position +
             Vector3.up * 10f;
-
 
         if (Physics.Raycast(
             rayOrigin,
@@ -1058,32 +855,16 @@ public class PlayerController : NetworkBehaviour
             groundLayers,
             QueryTriggerInteraction.Ignore))
         {
-            Vector3 position =
+            return
                 hit.point +
                 Vector3.up *
                 recoveryHeight;
-
-
-            Debug.Log(
-                $"[FALL RECOVERY] " +
-                $"Ground found at {hit.point}. " +
-                $"Returning player to {position}"
-            );
-
-
-            return position;
         }
 
-
-        Debug.LogWarning(
-            "[FALL RECOVERY] " +
-            "Could not find ground."
-        );
-
-
-        return closest.transform.position +
-               Vector3.up *
-               recoveryHeight;
+        return
+            closest.transform.position +
+            Vector3.up *
+            recoveryHeight;
     }
 
 
@@ -1097,7 +878,6 @@ public class PlayerController : NetworkBehaviour
             locked
                 ? CursorLockMode.Locked
                 : CursorLockMode.None;
-
 
         Cursor.visible =
             !locked;
@@ -1116,7 +896,6 @@ public class PlayerController : NetworkBehaviour
                 .FindActionMap("Player")?
                 .Disable();
 
-
             LockCursor(false);
         }
     }
@@ -1133,43 +912,27 @@ public class PlayerController : NetworkBehaviour
         if (characterController == null)
             return;
 
-
-        characterController.enabled =
-            false;
-
+        characterController.enabled = false;
 
         transform.SetPositionAndRotation(
             position,
             rotation
         );
 
-
-        characterController.enabled =
-            true;
-
+        characterController.enabled = true;
 
         yaw =
             rotation.eulerAngles.y;
 
-        pitch =
-            0f;
+        pitch = 0f;
 
+        currentVelocity = Vector3.zero;
+        verticalVelocity = 0f;
+        jumpRequested = false;
 
-        currentVelocity =
-            Vector3.zero;
-
-        verticalVelocity =
-            0f;
-
-        jumpRequested =
-            false;
-
-
-        // Reset animation after teleport.
         if (isLocal)
         {
-            NetworkAnimationSpeed =
-                0f;
+            NetworkAnimationSpeed = 0f;
         }
     }
 }

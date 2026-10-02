@@ -5,7 +5,9 @@ using Fusion.Sockets;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
+public class NetworkRunnerHandler :
+    MonoBehaviour,
+    INetworkRunnerCallbacks
 {
     public static NetworkRunnerHandler Instance { get; private set; }
 
@@ -16,17 +18,18 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     [Header("Game")]
     [SerializeField] private int maxPlayers = 4;
 
-    // Build Index of the Lobby scene
+    [Header("Scenes")]
     [SerializeField] private int gameSceneBuildIndex = 2;
+
 
     // =========================================================
     // RUNNERS
     // =========================================================
 
-    // Main runner used for Create Game / Join Game
+    // Main game runner.
     private NetworkRunner runner;
 
-    // Separate runner used only for Find Lobby
+    // Separate runner used ONLY for browsing lobbies.
     private NetworkRunner lobbyRunner;
 
     private string currentSessionName;
@@ -40,6 +43,11 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (Instance != null && Instance != this)
         {
+            Debug.LogWarning(
+                "[RUNNER HANDLER] Duplicate NetworkRunnerHandler found. Destroying duplicate.",
+                this
+            );
+
             Destroy(gameObject);
             return;
         }
@@ -47,6 +55,18 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         Instance = this;
 
         DontDestroyOnLoad(gameObject);
+
+        Debug.Log(
+            "[RUNNER HANDLER] Initialized."
+        );
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
 
@@ -70,6 +90,14 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
         currentSessionName = sessionName;
 
+        Debug.Log(
+            $"[GAME] Creating session: {sessionName}"
+        );
+
+        Debug.Log(
+            $"[GAME] Lobby: {lobbyName}"
+        );
+
         await StartRunner(
             GameMode.Shared,
             sessionName,
@@ -82,18 +110,23 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // JOIN GAME
     // =========================================================
 
-    public async void JoinGame(string sessionName)
+    public async void JoinGame(
+        string sessionName)
     {
         if (string.IsNullOrWhiteSpace(sessionName))
         {
             Debug.LogWarning(
-                "Session name is empty."
+                "[GAME] Session name is empty."
             );
 
             return;
         }
 
         currentSessionName = sessionName;
+
+        Debug.Log(
+            $"[GAME] Joining session: {sessionName}"
+        );
 
         await StartRunner(
             GameMode.Shared,
@@ -108,10 +141,6 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
     public async void FindLobbies()
     {
-        // ---------------------------------------------------------
-        // Already browsing
-        // ---------------------------------------------------------
-
         if (lobbyRunner != null)
         {
             Debug.Log(
@@ -121,21 +150,22 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             return;
         }
 
-        // ---------------------------------------------------------
-        // Create dedicated lobby browser runner
-        // ---------------------------------------------------------
+        if (runner != null)
+        {
+            Debug.Log(
+                "[LOBBY] Main game runner is already running."
+            );
+        }
 
         Debug.Log(
             "[LOBBY] Creating dedicated lobby browser runner..."
         );
 
-        lobbyRunner = Instantiate(runnerPrefab);
+        lobbyRunner =
+            Instantiate(runnerPrefab);
 
-        lobbyRunner.name = "LobbyBrowserRunner";
-
-        // ---------------------------------------------------------
-        // Register callbacks
-        // ---------------------------------------------------------
+        lobbyRunner.name =
+            "LobbyBrowserRunner";
 
         lobbyRunner.AddCallbacks(this);
 
@@ -143,18 +173,10 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             "[LOBBY] Joining Shared Session Lobby..."
         );
 
-        // ---------------------------------------------------------
-        // Join Shared Session Lobby
-        // ---------------------------------------------------------
-
         StartGameResult result =
             await lobbyRunner.JoinSessionLobby(
                 SessionLobby.Shared
             );
-
-        // ---------------------------------------------------------
-        // Failed
-        // ---------------------------------------------------------
 
         if (!result.Ok)
         {
@@ -175,10 +197,6 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             return;
         }
 
-        // ---------------------------------------------------------
-        // Successful
-        // ---------------------------------------------------------
-
         Debug.Log(
             "[LOBBY] Successfully joined Shared Session Lobby."
         );
@@ -191,15 +209,10 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
     public void RefreshLobbies()
     {
-        // ---------------------------------------------------------
-        // No lobby browser runner
-        // ---------------------------------------------------------
-
         if (lobbyRunner == null)
         {
             Debug.Log(
-                "[LOBBY] Lobby browser is not connected. " +
-                "Connecting..."
+                "[LOBBY] Lobby browser is not connected. Connecting..."
             );
 
             FindLobbies();
@@ -207,21 +220,9 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             return;
         }
 
-        // ---------------------------------------------------------
-        // Already connected
-        // ---------------------------------------------------------
-
         Debug.Log(
-            "[LOBBY] Refresh requested. " +
-            "Waiting for updated session list..."
+            "[LOBBY] Refresh requested. Waiting for updated session list..."
         );
-
-        // Fusion automatically sends session-list updates
-        // through OnSessionListUpdated().
-        //
-        // We intentionally do NOT call JoinSessionLobby()
-        // again here because the lobbyRunner is already inside
-        // the Shared Session Lobby.
     }
 
 
@@ -234,63 +235,45 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         string sessionName,
         string lobbyName = null)
     {
-        // ---------------------------------------------------------
-        // Prevent duplicate main runner
-        // ---------------------------------------------------------
-
         if (runner != null)
         {
             Debug.LogWarning(
-                "Runner is already running."
+                "[GAME] Main runner is already running."
             );
 
             return;
         }
 
-        // ---------------------------------------------------------
-        // Create NetworkRunner
-        // ---------------------------------------------------------
+        Debug.Log(
+            "[GAME] Creating main NetworkRunner..."
+        );
 
-        runner = Instantiate(runnerPrefab);
+        runner =
+            Instantiate(runnerPrefab);
 
-        runner.name = "NetworkRunner";
-
-        // ---------------------------------------------------------
-        // Register callbacks
-        // ---------------------------------------------------------
+        runner.name =
+            "NetworkRunner";
 
         runner.AddCallbacks(this);
-
-        // ---------------------------------------------------------
-        // Scene manager
-        // ---------------------------------------------------------
 
         NetworkSceneManagerDefault sceneManager =
             runner.gameObject.AddComponent<
                 NetworkSceneManagerDefault
             >();
 
-        // ---------------------------------------------------------
-        // Session Properties
-        // ---------------------------------------------------------
+        Dictionary<string, SessionProperty>
+            sessionProperties = null;
 
-        Dictionary<string, SessionProperty> sessionProperties =
-            null;
-
-        // Only the creator needs to send the LobbyName property.
         if (gameMode == GameMode.Shared &&
             !string.IsNullOrWhiteSpace(lobbyName))
         {
             sessionProperties =
                 new Dictionary<string, SessionProperty>
                 {
-                    ["LobbyName"] = lobbyName
+                    ["LobbyName"] =
+                        lobbyName
                 };
         }
-
-        // ---------------------------------------------------------
-        // Start Game Arguments
-        // ---------------------------------------------------------
 
         StartGameArgs startGameArgs =
             new StartGameArgs
@@ -303,37 +286,30 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
                 SceneManager = sceneManager,
 
-                SessionProperties = sessionProperties
+                SessionProperties =
+                    sessionProperties
             };
 
         Debug.Log(
-            $"Starting game: {sessionName}"
+            $"[GAME] Starting game: {sessionName}"
         );
 
         if (!string.IsNullOrWhiteSpace(lobbyName))
         {
             Debug.Log(
-                $"Lobby name: {lobbyName}"
+                $"[GAME] Lobby name: {lobbyName}"
             );
         }
-
-        // ---------------------------------------------------------
-        // Start Fusion
-        // ---------------------------------------------------------
 
         StartGameResult result =
             await runner.StartGame(
                 startGameArgs
             );
 
-        // ---------------------------------------------------------
-        // Start Failed
-        // ---------------------------------------------------------
-
         if (!result.Ok)
         {
             Debug.LogError(
-                $"Failed to start game: " +
+                $"[GAME] Failed to start game: " +
                 $"{result.ShutdownReason}"
             );
 
@@ -349,18 +325,10 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             return;
         }
 
-        // ---------------------------------------------------------
-        // Start Successful
-        // ---------------------------------------------------------
-
         Debug.Log(
-            $"Successfully joined session: " +
+            $"[GAME] Successfully joined session: " +
             $"{sessionName}"
         );
-
-        // ---------------------------------------------------------
-        // Load Lobby
-        // ---------------------------------------------------------
 
         LoadLobbyScene();
     }
@@ -375,43 +343,31 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         if (runner == null)
         {
             Debug.LogError(
-                "Cannot load Lobby scene because Runner is null."
+                "[GAME] Cannot load Lobby scene because Runner is null."
             );
 
             return;
         }
 
-        // ---------------------------------------------------------
-        // Only Scene Authority should load the scene
-        // ---------------------------------------------------------
-
         if (!runner.IsSceneAuthority)
         {
             Debug.Log(
-                "This client is not the Scene Authority. " +
-                "Waiting for the Lobby scene to be loaded."
+                "[GAME] This client is not Scene Authority. " +
+                "Waiting for scene load."
             );
 
             return;
         }
 
         Debug.Log(
-            $"Loading Lobby scene. " +
+            $"[GAME] Loading Lobby scene. " +
             $"Build Index: {gameSceneBuildIndex}"
         );
-
-        // ---------------------------------------------------------
-        // Create Fusion SceneRef
-        // ---------------------------------------------------------
 
         SceneRef lobbyScene =
             SceneRef.FromIndex(
                 gameSceneBuildIndex
             );
-
-        // ---------------------------------------------------------
-        // Load Lobby through Fusion
-        // ---------------------------------------------------------
 
         runner.LoadScene(
             lobbyScene,
@@ -425,12 +381,17 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // =========================================================
 
     public void OnPlayerJoined(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         PlayerRef player)
     {
         Debug.Log(
-            $"Player joined: {player}"
+            $"[GAME] Player joined: {player}"
         );
+
+        // We intentionally do not spawn here.
+        //
+        // Player spawning is handled after the network
+        // scene has finished loading.
     }
 
 
@@ -438,60 +399,59 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // SPAWN PLAYER
     // =========================================================
 
-    private void SpawnPlayer(PlayerRef player)
+    private void SpawnPlayer(
+        NetworkRunner callbackRunner,
+        PlayerRef player)
     {
-        if (runner == null)
+        if (callbackRunner == null)
         {
             Debug.LogError(
-                "Cannot spawn player because Runner is null."
+                "[SPAWN ERROR] Callback runner is null."
             );
 
             return;
         }
 
-        // ---------------------------------------------------------
-        // Prevent duplicate player object
-        // ---------------------------------------------------------
+        if (playerPrefab == null)
+        {
+            Debug.LogError(
+                "[SPAWN ERROR] Player Prefab is not assigned!"
+            );
 
-        if (runner.GetPlayerObject(player) != null)
+            return;
+        }
+
+        if (callbackRunner.GetPlayerObject(player) != null)
         {
             Debug.LogWarning(
-                $"Player object already exists for {player}."
+                $"[SPAWN] Player object already exists for {player}."
             );
 
             return;
         }
-
-        // ---------------------------------------------------------
-        // Get spawn position
-        // ---------------------------------------------------------
 
         Vector3 spawnPosition =
             GetSpawnPosition();
 
-        // ---------------------------------------------------------
-        // Spawn Network Player
-        // ---------------------------------------------------------
+        Debug.Log(
+            $"[SPAWN] Spawning player {player} at {spawnPosition}"
+        );
 
         NetworkObject playerObject =
-            runner.Spawn(
+            callbackRunner.Spawn(
                 playerPrefab,
                 spawnPosition,
                 Quaternion.identity,
                 player
             );
 
-        // ---------------------------------------------------------
-        // Register player object
-        // ---------------------------------------------------------
-
-        runner.SetPlayerObject(
+        callbackRunner.SetPlayerObject(
             player,
             playerObject
         );
 
         Debug.Log(
-            $"Spawned player for {player}"
+            $"[SPAWN] Spawned player for {player}"
         );
     }
 
@@ -508,13 +468,8 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             );
 
         Debug.Log(
-            $"[SPAWN] Found {spawnPoints.Length} " +
-            $"PlayerSpawn point(s)."
+            $"[SPAWN] Found {spawnPoints.Length} PlayerSpawn point(s)."
         );
-
-        // ---------------------------------------------------------
-        // No spawn points found
-        // ---------------------------------------------------------
 
         if (spawnPoints.Length == 0)
         {
@@ -529,10 +484,6 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             );
         }
 
-        // ---------------------------------------------------------
-        // Choose random spawn point
-        // ---------------------------------------------------------
-
         int randomIndex =
             UnityEngine.Random.Range(
                 0,
@@ -541,10 +492,6 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
         Transform spawn =
             spawnPoints[randomIndex].transform;
-
-        // ---------------------------------------------------------
-        // Find actual ground below spawn
-        // ---------------------------------------------------------
 
         Vector3 rayOrigin =
             spawn.position +
@@ -572,10 +519,6 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             return position;
         }
 
-        // ---------------------------------------------------------
-        // Fallback
-        // ---------------------------------------------------------
-
         Debug.LogWarning(
             $"[SPAWN WARNING] Could not find ground below " +
             $"{spawn.name}. Using spawn point position."
@@ -591,9 +534,17 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // =========================================================
 
     public void OnSessionListUpdated(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         List<SessionInfo> sessionList)
     {
+        // Only the lobby browser should process
+        // lobby session lists.
+
+        if (callbackRunner != lobbyRunner)
+        {
+            return;
+        }
+
         Debug.Log(
             $"[LOBBY] Sessions found: {sessionList.Count}"
         );
@@ -605,7 +556,6 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
                 $"Players: {session.PlayerCount}/{session.MaxPlayers}"
             );
 
-            // Log lobby name if available.
             if (session.Properties.TryGetValue(
                 "LobbyName",
                 out SessionProperty lobbyNameProperty))
@@ -638,9 +588,9 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
     public void Disconnect()
     {
-        // ---------------------------------------------------------
-        // Shutdown main game runner
-        // ---------------------------------------------------------
+        Debug.Log(
+            "[NETWORK] Disconnect requested."
+        );
 
         if (runner != null)
         {
@@ -648,10 +598,6 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
             runner = null;
         }
-
-        // ---------------------------------------------------------
-        // Shutdown lobby browser runner
-        // ---------------------------------------------------------
 
         if (lobbyRunner != null)
         {
@@ -667,31 +613,37 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // =========================================================
 
     public void OnConnectedToServer(
-        NetworkRunner runner)
+        NetworkRunner callbackRunner)
     {
         Debug.Log(
-            "Connected to server."
+            $"[NETWORK] Connected to server. " +
+            $"Runner = {callbackRunner.name}"
         );
     }
 
 
     public void OnDisconnectedFromServer(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         NetDisconnectReason reason)
     {
         Debug.Log(
-            $"Disconnected: {reason}"
+            $"[NETWORK] Disconnected: {reason}"
         );
+
+        if (callbackRunner == lobbyRunner)
+        {
+            lobbyRunner = null;
+        }
     }
 
 
     public void OnConnectFailed(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         NetAddress remoteAddress,
         NetConnectFailedReason reason)
     {
         Debug.LogError(
-            $"Connection failed: {reason}"
+            $"[NETWORK] Connection failed: {reason}"
         );
     }
 
@@ -701,11 +653,11 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // =========================================================
 
     public void OnPlayerLeft(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         PlayerRef player)
     {
         Debug.Log(
-            $"Player left: {player}"
+            $"[GAME] Player left: {player}"
         );
     }
 
@@ -715,16 +667,32 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // =========================================================
 
     public void OnInput(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         NetworkInput input)
     {
-        // We will implement player input
-        // in the next networking stage.
+        /*
+         * IMPORTANT:
+         *
+         * Your game is using GameMode.Shared.
+         *
+         * Do NOT put your PlayerController InputAction
+         * movement system here unless you intentionally
+         * convert the whole movement system to Fusion's
+         * network input architecture.
+         *
+         * Your current PlayerController is reading:
+         *
+         *     moveAction.ReadValue<Vector2>()
+         *
+         * directly.
+         *
+         * Therefore this callback can remain empty.
+         */
     }
 
 
     public void OnInputMissing(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         PlayerRef player,
         NetworkInput input)
     {
@@ -736,13 +704,23 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // =========================================================
 
     public void OnShutdown(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         ShutdownReason shutdownReason)
     {
         Debug.Log(
-            $"Runner shutdown: " +
+            $"[NETWORK] Runner shutdown: " +
             $"{shutdownReason}"
         );
+
+        if (callbackRunner == lobbyRunner)
+        {
+            lobbyRunner = null;
+        }
+
+        if (callbackRunner == runner)
+        {
+            runner = null;
+        }
     }
 
 
@@ -751,7 +729,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // =========================================================
 
     public void OnConnectRequest(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         NetworkRunnerCallbackArgs.ConnectRequest request,
         byte[] token)
     {
@@ -763,7 +741,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // =========================================================
 
     public void OnCustomAuthenticationResponse(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         Dictionary<string, object> data)
     {
     }
@@ -774,7 +752,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // =========================================================
 
     public void OnHostMigration(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         HostMigrationToken hostMigrationToken)
     {
     }
@@ -785,7 +763,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // =========================================================
 
     public void OnReliableDataReceived(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         PlayerRef player,
         ReliableKey key,
         ReadOnlySpan<byte> data)
@@ -794,7 +772,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
 
     public void OnReliableDataProgress(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         PlayerRef player,
         ReliableKey key,
         float progress)
@@ -807,37 +785,58 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // =========================================================
 
     public void OnSceneLoadDone(
-        NetworkRunner runner)
+        NetworkRunner callbackRunner)
     {
         Debug.Log(
-            "Scene loading completed."
+            $"[SCENE] Scene loading completed. " +
+            $"Runner = {callbackRunner.name}"
         );
 
-        // ---------------------------------------------------------
-        // Spawn local player if it hasn't spawned yet
-        // ---------------------------------------------------------
-
-        if (runner.LocalPlayer != PlayerRef.None)
+        // Ignore the lobby browser runner.
+        if (callbackRunner != runner)
         {
-            if (
-                runner.GetPlayerObject(
-                    runner.LocalPlayer
-                ) == null
-            )
-            {
-                SpawnPlayer(
-                    runner.LocalPlayer
-                );
-            }
+            Debug.Log(
+                "[SCENE] Ignoring scene callback from lobby browser runner."
+            );
+
+            return;
+        }
+
+        if (callbackRunner.LocalPlayer == PlayerRef.None)
+        {
+            Debug.LogWarning(
+                "[SCENE] LocalPlayer is None."
+            );
+
+            return;
+        }
+
+        if (
+            callbackRunner.GetPlayerObject(
+                callbackRunner.LocalPlayer
+            ) == null
+        )
+        {
+            SpawnPlayer(
+                callbackRunner,
+                callbackRunner.LocalPlayer
+            );
+        }
+        else
+        {
+            Debug.Log(
+                "[SPAWN] Local player already exists."
+            );
         }
     }
 
 
     public void OnSceneLoadStart(
-        NetworkRunner runner)
+        NetworkRunner callbackRunner)
     {
         Debug.Log(
-            "Scene loading started."
+            $"[SCENE] Scene loading started. " +
+            $"Runner = {callbackRunner.name}"
         );
     }
 
@@ -847,7 +846,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // =========================================================
 
     public void OnObjectEnterAOI(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         NetworkObject obj,
         PlayerRef player)
     {
@@ -855,7 +854,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
 
     public void OnObjectExitAOI(
-        NetworkRunner runner,
+        NetworkRunner callbackRunner,
         NetworkObject obj,
         PlayerRef player)
     {
