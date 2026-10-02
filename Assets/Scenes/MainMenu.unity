@@ -5798,6 +5798,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 18
       objectReference: {fileID: 0}
+    - target: {fileID: 268878347071510516, guid: 1ff8c60e93140b74ebd4ecf0fa5950dc, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 6d651432a81446144ac3be037cc4baa7, type: 2}
     - target: {fileID: 919132149155446097, guid: 1ff8c60e93140b74ebd4ecf0fa5950dc, type: 3}
       propertyPath: m_Name
       value: Menu
@@ -12879,12 +12883,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af3ebc187f59e134ca095167ea800c65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MenuCamera
-  panAmount: 2
-  panSpeed: 0.15
+  rotationSpeed: 0.41
   rotationAmount: 2
   shakeAmount: 0.025
-  shakeSpeed: 1.5
-  rotationShakeAmount: 0.4
+  shakeSpeed: 1.11
+  rotationShakeAmount: 0.25
 --- !u!114 &1227655554
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13874,7 +13877,7 @@ MonoBehaviour:
   pointLight: {fileID: 1325160987}
   minIntensity: 100
   maxIntensity: 300
-  flickerSpeed: 8
+  flickerSpeed: 3.81
 --- !u!1 &1336717984
 GameObject:
   m_ObjectHideFlags: 0
