@@ -36,8 +36,7 @@ public class PlayerController : NetworkBehaviour
     [Tooltip("Layers considered ground.")]
     [SerializeField] private LayerMask groundLayers = ~0;
 
-    [Tooltip("Distance used by the ground raycast.")]
-    [SerializeField] private float groundRayDistance = 1.5f;
+   
 
     [Tooltip("How far below the world before the player is reset.")]
     [SerializeField] private float fallLimit = -20f;
