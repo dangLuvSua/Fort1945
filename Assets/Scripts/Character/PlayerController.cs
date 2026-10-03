@@ -477,6 +477,7 @@ public class PlayerController : NetworkBehaviour
 
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
         {
+            jumpRequested = true;
             Debug.Log("[KEYBOARD TEST] JUMP = TRUE");
         }
     }
@@ -485,60 +486,65 @@ public class PlayerController : NetworkBehaviour
     // MOUSE LOOK
     // =========================================================
 
-    private void HandleLook()
+   private void HandleLook()
+{
+    if (lookAction == null)
+        return;
+
+    Vector2 look =
+        lookAction.ReadValue<Vector2>() *
+        mouseSensitivity;
+
+    // Store horizontal rotation
+    yaw += look.x;
+
+    // Vertical camera rotation
+    pitch = Mathf.Clamp(
+        pitch - look.y,
+        -maxLookUp,
+        maxLookDown
+    );
+
+    // Camera only handles up/down here
+    if (cameraHolder != null)
     {
-        if (lookAction == null)
-            return;
-
-        Vector2 look =
-            lookAction.ReadValue<Vector2>() *
-            mouseSensitivity;
-
-        yaw +=
-            look.x;
-
-        pitch =
-            Mathf.Clamp(
-                pitch - look.y,
-                -maxLookUp,
-                maxLookDown
+        cameraHolder.localRotation =
+            Quaternion.Euler(
+                pitch,
+                0f,
+                0f
             );
-
-        if (cameraHolder != null)
-        {
-            cameraHolder.localRotation =
-                Quaternion.Euler(
-                    pitch,
-                    0f,
-                    0f
-                );
-        }
     }
+}
 
 
     // =========================================================
     // FIXED NETWORK UPDATE
     // =========================================================
+public override void FixedUpdateNetwork()
+{
+    if (!Object.HasStateAuthority)
+        return;
 
-    private void FixedUpdateNetwork()
+    // Apply horizontal player rotation
+    transform.rotation =
+        Quaternion.Euler(
+            0f,
+            yaw,
+            0f
+        );
+
+    if (transform.position.y <= fallLimit)
     {
-        if (!Object.HasStateAuthority)
-            return;
-        // -----------------------------------------------------
-        // FALL RECOVERY
-        // -----------------------------------------------------
-
-        if (transform.position.y <= fallLimit)
-        {
-            Debug.Log(
-                $"[NETWORK MOVE TEST] " +
-                $"Move={moveInput}, " +
-                $"Position={transform.position}"
-            );
-        }
-
-        HandleMovement();
+        Debug.Log(
+            $"[NETWORK MOVE TEST] " +
+            $"Move={moveInput}, " +
+            $"Position={transform.position}"
+        );
     }
+
+    HandleMovement();
+}
 
 
     // =========================================================
