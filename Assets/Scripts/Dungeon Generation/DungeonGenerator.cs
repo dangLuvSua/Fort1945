@@ -57,6 +57,18 @@ public class DungeonGenerator : MonoBehaviour
     [Tooltip("Number of placement attempts for each piece.")]
     public int placementAttempts = 15;
 
+    // =========================================================
+    // CHEST SPAWN POINTS
+    // =========================================================
+
+    [Header("Chest")]
+    [Tooltip("Add Chest1 and Chest2 here. One random chest spawns in the whole dungeon.")]
+    public GameObject[] chestPrefabs;
+
+    [Tooltip("Do not put the chest in the same room where players spawn.")]
+    public bool avoidSpawnRoom = true;
+
+    private GameObject spawnRoomObject;
 
     // =========================================================
     // LEVEL
@@ -364,6 +376,7 @@ public class DungeonGenerator : MonoBehaviour
             }
 
             CollectSpawnPoints();
+            SpawnChest();          // <-- idagdag ito
             IsGenerated = true;
             OnDungeonGenerated?.Invoke(this);
 
@@ -374,8 +387,51 @@ public class DungeonGenerator : MonoBehaviour
         return false;
     }
 
+    private void SpawnChest()
+    {
+        if (chestPrefabs == null || chestPrefabs.Length == 0)
+        {
+            Debug.LogWarning("Walang chest prefab na naka-assign.");
+            return;
+        }
+
+        int chestsSpawned = 0;
+
+        foreach (GameObject piece in generatedPieces)
+        {
+            if (piece == null) continue;
+            if (avoidSpawnRoom && piece == spawnRoomObject) continue;
+
+            // Kunin ang chest points ng room na ito lang
+            DungeonChestPoint[] points =
+                piece.GetComponentsInChildren<DungeonChestPoint>();
+
+            // Walang point = corridor/intersection, skip
+            if (points.Length == 0) continue;
+
+            // Isang random point lang kada room
+            DungeonChestPoint chosen = points[Random.Range(0, points.Length)];
+
+            GameObject chestPrefab = GetRandomValidPrefab(chestPrefabs);
+            if (chestPrefab == null) continue;
+
+            Instantiate(
+                chestPrefab,
+                chosen.transform.position,
+                chosen.transform.rotation,
+                chosen.transform
+            );
+
+            chestsSpawned++;
+        }
+
+        if (debugGeneration)
+            Debug.Log("Chests spawned: " + chestsSpawned);
+    }
+
     private void CollectSpawnPoints()
     {
+        spawnRoomObject = null;
         spawnPoints.Clear();
 
         // Hanapin ang mga piece na may spawn marker (Dungeon Room lang)
@@ -397,10 +453,11 @@ public class DungeonGenerator : MonoBehaviour
 
         // Isang random na Dungeon Room ang pipiliin, doon lahat ang players
         GameObject spawnRoom = roomsWithSpawns[Random.Range(0, roomsWithSpawns.Count)];
+        spawnRoomObject = spawnRoom;
 
         foreach (var point in spawnRoom.GetComponentsInChildren<DungeonSpawnPoint>())
             spawnPoints.Add(point.transform);
-        
+
         Debug.Log("Spawn room: " + spawnRoom.name + " at " + spawnRoom.transform.position, spawnRoom);
     }
 
