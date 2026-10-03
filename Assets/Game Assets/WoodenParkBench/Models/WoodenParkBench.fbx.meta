@@ -1,7 +1,7 @@
 fileFormatVersion: 2
-guid: bfc412c5183b9a840affeba4689afc4e
+guid: 9a8410236c244804aab07295ef3bfa40
 ModelImporter:
-  serializedVersion: 22200
+  serializedVersion: 24501
   internalIDToNameTable: []
   externalObjects: {}
   materials:
@@ -9,6 +9,7 @@ ModelImporter:
     materialName: 0
     materialSearch: 1
     materialLocation: 1
+    searchTexturesGlobally: 0
   animations:
     legacyGenerateAnimations: 4
     bakeSimulation: 0
@@ -56,6 +57,11 @@ ModelImporter:
     maxBonesPerVertex: 4
     minBoneWeight: 0.001
     optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
+    importUVs: -1
+    importVertexColors: 1
     meshOptimizationFlags: -1
     indexFormat: 0
     secondaryUVAngleDistortion: 8
@@ -75,6 +81,7 @@ ModelImporter:
     legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
+    calculateBlendshapeNormalsDeltaFromImportedNormals: 0
   referencedClips: []
   importAnimation: 1
   humanDescription:
@@ -105,10 +112,3 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 348356
-  packageName: "Wooden Park Bench \u2013 Game Ready 3D Model"
-  packageVersion: 1.0
-  assetPath: Assets/WoodenParkBench/Models/WoodenParkBench.fbx
-  uploadId: 849116
