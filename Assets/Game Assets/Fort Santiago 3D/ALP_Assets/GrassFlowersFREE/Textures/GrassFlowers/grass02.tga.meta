@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: b3d0250e4b7a1ac4abe98a38d34d2048
+guid: cf3069941001b5c46b1f13d4551d0fd9
 TextureImporter:
   fileIDToRecycleName: {}
   externalObjects: {}
@@ -89,5 +89,5 @@ AssetOrigin:
   productId: 138810
   packageName: Grass Flowers Pack Free
   packageVersion: 1.1
-  assetPath: Assets/ALP_Assets/GrassFlowersFREE/Textures/GrassFlowers/grassFlower06.tga
+  assetPath: Assets/ALP_Assets/GrassFlowersFREE/Textures/GrassFlowers/grass02.tga
   uploadId: 850628
