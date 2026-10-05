@@ -432,6 +432,7 @@ public class DungeonGenerator : MonoBehaviour
     private void CollectSpawnPoints()
     {
         spawnRoomObject = null;
+        spawnRoomObject = null;
         spawnPoints.Clear();
 
         // Hanapin ang mga piece na may spawn marker (Dungeon Room lang)
@@ -454,9 +455,11 @@ public class DungeonGenerator : MonoBehaviour
         // Isang random na Dungeon Room ang pipiliin, doon lahat ang players
         GameObject spawnRoom = roomsWithSpawns[Random.Range(0, roomsWithSpawns.Count)];
         spawnRoomObject = spawnRoom;
+        spawnRoomObject = spawnRoom;
 
         foreach (var point in spawnRoom.GetComponentsInChildren<DungeonSpawnPoint>())
             spawnPoints.Add(point.transform);
+
 
         Debug.Log("Spawn room: " + spawnRoom.name + " at " + spawnRoom.transform.position, spawnRoom);
     }

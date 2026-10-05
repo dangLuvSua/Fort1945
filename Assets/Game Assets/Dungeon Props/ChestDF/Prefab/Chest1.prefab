@@ -24,13 +24,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8949127928184010842}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 0.6821897, z: 0, w: 0.73117524}
   m_LocalPosition: {x: -0.0186, y: -0.342, z: -0.3008}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7743639901220563549}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 86.03, z: 0}
 --- !u!1001 &6321471198057535224
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -179,7 +179,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChestLoot
   itemPrefabs:
-  - {fileID: 7847565299482210988, guid: 5833f74732685a6408f3212b7f54e357, type: 3}
+  - {fileID: 374289202576707483, guid: 78df1db2fbc8ec64f949fac0c05bf693, type: 3}
   itemSpawnPoint: {fileID: 6446990708619316521}
   spawnChance: 1
   showGizmo: 1
