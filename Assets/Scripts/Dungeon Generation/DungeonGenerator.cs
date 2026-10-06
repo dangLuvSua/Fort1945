@@ -95,6 +95,16 @@ public class DungeonGenerator : MonoBehaviour
     public bool debugGeneration = true;
 
 
+// =========================================================
+    // MULTIPLAYER SEED
+    // =========================================================
+
+    [Header("Multiplayer Seed")]
+    [Tooltip("When true, every client seeds Unity's Random from the shared session, so every client generates the exact same dungeon layout. Turn off for free single-player testing.")]
+    public bool useSessionSeed = true;
+
+    [Tooltip("Used only when useSessionSeed is false. 0 = fully random.")]
+    public int fixedSeed = 0;
     // =========================================================
     // GENERATION RETRY
     // =========================================================
@@ -133,10 +143,46 @@ public class DungeonGenerator : MonoBehaviour
 
     private void Start()
     {
+        ApplyMultiplayerSeed();
+
         if (generateOnStart)
         {
             GenerateDungeonWithRetries();
         }
+    }
+
+    // =========================================================
+    // APPLY MULTIPLAYER SEED
+    // =========================================================
+
+    [Tooltip("Seeds UnityEngine.Random with the same value on every client so procedural generation is identical.")]
+    private void ApplyMultiplayerSeed()
+    {
+        if (!useSessionSeed)
+        {
+            if (fixedSeed != 0)
+            {
+                Random.InitState(fixedSeed);
+            }
+
+            return;
+        }
+
+        if (NetworkRunnerHandler.Instance == null)
+        {
+            // Single-player / offline test.
+            return;
+        }
+
+        int seed =
+            NetworkRunnerHandler.Instance.GetSessionSeed();
+
+        Debug.Log(
+            "[DUNGEON GENERATOR] Using shared session seed: " +
+            seed
+        );
+
+        Random.InitState(seed);
     }
 
 
@@ -462,6 +508,11 @@ public class DungeonGenerator : MonoBehaviour
 
 
         Debug.Log("Spawn room: " + spawnRoom.name + " at " + spawnRoom.transform.position, spawnRoom);
+    }
+
+    public int GetSpawnCount()
+    {
+        return spawnPoints.Count;
     }
 
     public void GetSpawn(int playerIndex, out Vector3 position, out Quaternion rotation)

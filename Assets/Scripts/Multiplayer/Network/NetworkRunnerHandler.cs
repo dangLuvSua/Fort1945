@@ -21,6 +21,16 @@ public class NetworkRunnerHandler :
     [Header("Scenes")]
     [SerializeField] private int gameSceneBuildIndex = 2;
 
+    [Tooltip("Build index of the Dungeon scene used when the squad enters the dungeon.")]
+    [SerializeField] private int dungeonSceneBuildIndex = 3;
+
+    [Header("Intro Flow Assets")]
+    [Tooltip("World-space text tag prefab used by the intro flow (gate / soldier / dungeon zone labels).")]
+    [SerializeField] public GameObject worldTagPrefab;
+
+    [Tooltip("Salt used to derive the deterministic shared dungeon seed from the session name.")]
+    [SerializeField] private float dungeonSeedSalt = 19452214f;
+
 
     // =========================================================
     // RUNNERS
@@ -31,6 +41,10 @@ public class NetworkRunnerHandler :
 
     // Separate runner used ONLY for browsing lobbies.
     private NetworkRunner lobbyRunner;
+
+    // Scene manager attached to the main runner. Used to resolve
+    // scene refs by path so scene indices can never drift.
+    private NetworkSceneManagerDefault networkSceneManager;
 
     private string currentSessionName;
 
@@ -261,6 +275,8 @@ public class NetworkRunnerHandler :
                 NetworkSceneManagerDefault
             >();
 
+        networkSceneManager = sceneManager;
+
         Dictionary<string, SessionProperty>
             sessionProperties = null;
 
@@ -373,6 +389,112 @@ public class NetworkRunnerHandler :
             lobbyScene,
             LoadSceneMode.Single
         );
+    }
+
+
+    // =========================================================
+    // LOAD DUNGEON SCENE
+    // =========================================================
+
+    public void LoadDungeonScene()
+    {
+        if (runner == null)
+        {
+            Debug.LogError(
+                "[GAME] Cannot load Dungeon scene because Runner is null."
+            );
+
+            return;
+        }
+
+        if (!runner.IsSceneAuthority)
+        {
+            Debug.Log(
+                "[GAME] This client is not Scene Authority. " +
+                "Waiting for scene load."
+            );
+
+            return;
+        }
+
+        if (networkSceneManager == null)
+        {
+            Debug.LogError(
+                "[GAME] Network scene manager is missing.",
+                runner.gameObject
+            );
+
+            return;
+        }
+
+        // Resolve the Dungeon scene by PATH so the scene index
+        // never has to be synced manually.
+        SceneRef dungeonScene =
+            networkSceneManager.GetSceneRef(
+                "Assets/Scenes/Dungeon.unity"
+            );
+
+        if (dungeonScene == SceneRef.None)
+        {
+            Debug.LogWarning(
+                "[GAME] Dungeon scene not found by path. " +
+                "Falling back to build index."
+            );
+
+            dungeonScene =
+                SceneRef.FromIndex(
+                    dungeonSceneBuildIndex
+                );
+        }
+
+        Debug.Log(
+            $"[GAME] Loading Dungeon scene. SceneRef: {dungeonScene}"
+        );
+
+        runner.LoadScene(
+            dungeonScene,
+            LoadSceneMode.Single
+        );
+    }
+
+
+    // =========================================================
+    // SESSION SEED
+    // =========================================================
+
+    /// <summary>
+    /// Deterministic seed shared by every client in the session.
+    /// Derived from the session name + a salt, so no extra
+    /// networked state is needed: every client computes the same
+    /// value and therefore generates the same procedural dungeon.
+    /// </summary>
+    public int GetSessionSeed()
+    {
+        string input =
+            string.IsNullOrWhiteSpace(currentSessionName)
+                ? "Fort1945Session"
+                : currentSessionName;
+
+        // FNV-1a 32-bit hash.
+        uint hash = 2166136261;
+
+        for (int i = 0; i < input.Length; i++)
+        {
+            hash ^= (uint) input[i];
+            hash *= 16777619;
+        }
+
+        int seed =
+            (int) hash ^
+            (int) dungeonSeedSalt;
+
+        // Random.InitState(0) would disable the generator; keep it sane.
+        if (seed == 0)
+        {
+            seed = 19451945;
+        }
+
+        return Mathf.Abs(seed);
     }
 
 
