@@ -132,9 +132,9 @@ public class PlayerController : NetworkBehaviour
 
     public override void Spawned()
     {
-        Debug.Log(
-            $"[PLAYER] Spawned at {transform.position}"
-        );
+        // Debug.Log(
+        //     $"[PLAYER] Spawned at {transform.position}"
+        // );
 
         // -----------------------------------------------------
         // CHARACTER CONTROLLER
@@ -145,22 +145,22 @@ public class PlayerController : NetworkBehaviour
 
         if (characterController == null)
         {
-            Debug.LogError(
-                "[PLAYER ERROR] " +
-                "No CharacterController found on PlayerRoot!"
-            );
+            // Debug.LogError(
+            //     "[PLAYER ERROR] " +
+            //     "No CharacterController found on PlayerRoot!"
+            // );
 
             return;
         }
 
         characterController.enabled = true;
 
-        Debug.Log(
-            $"[PLAYER] CharacterController found. " +
-            $"Height={characterController.height}, " +
-            $"Radius={characterController.radius}, " +
-            $"Center={characterController.center}"
-        );
+        // Debug.Log(
+        //     $"[PLAYER] CharacterController found. " +
+        //     $"Height={characterController.height}, " +
+        //     $"Radius={characterController.radius}, " +
+        //     $"Center={characterController.center}"
+        // );
 
 
         // -----------------------------------------------------
@@ -170,14 +170,14 @@ public class PlayerController : NetworkBehaviour
         isLocal =
             Object.HasInputAuthority;
 
-        Debug.Log(
-            $"[PLAYER] Input Authority = {isLocal}"
-        );
+        // Debug.Log(
+        //     $"[PLAYER] Input Authority = {isLocal}"
+        // );
 
-        Debug.Log(
-            $"[PLAYER] Input Authority = " +
-            $"{Object.HasInputAuthority}"
-        );
+        // Debug.Log(
+        //     $"[PLAYER] Input Authority = " +
+        //     $"{Object.HasInputAuthority}"
+        // );
 
 
         // -----------------------------------------------------
@@ -265,10 +265,10 @@ public class PlayerController : NetworkBehaviour
 
         if (animator != null)
         {
-            Debug.Log(
-                $"[PLAYER] Animator found: " +
-                $"{animator.gameObject.name}"
-            );
+            // Debug.Log(
+            //     $"[PLAYER] Animator found: " +
+            //     $"{animator.gameObject.name}"
+            // );
 
             animatorSearchTimer = 0f;
         }
@@ -296,9 +296,9 @@ public class PlayerController : NetworkBehaviour
         if (!isLocal)
             return;
 
-        Debug.Log(
-            "[PLAYER] Local camera enabled."
-        );
+        // Debug.Log(
+        //     "[PLAYER] Local camera enabled."
+        // );
     }
 
 
@@ -310,11 +310,11 @@ public class PlayerController : NetworkBehaviour
     {
         if (inputActions == null)
         {
-            Debug.LogError(
-                "[INPUT ERROR] " +
-                "InputActionAsset is NOT assigned " +
-                "on PlayerController!"
-            );
+            // Debug.LogError(
+            //     "[INPUT ERROR] " +
+            //     "InputActionAsset is NOT assigned " +
+            //     "on PlayerController!"
+            // );
 
             return;
         }
@@ -361,25 +361,25 @@ public class PlayerController : NetworkBehaviour
         inputInitialized =
             true;
 
-        Debug.Log(
-            "[INPUT] Player input initialized."
-        );
+        // Debug.Log(
+        //     "[INPUT] Player input initialized."
+        // );
 
-        Debug.Log(
-            $"[INPUT] Move Action: {moveAction != null}"
-        );
+        // Debug.Log(
+        //     $"[INPUT] Move Action: {moveAction != null}"
+        // );
 
-        Debug.Log(
-            $"[INPUT] Look Action: {lookAction != null}"
-        );
+        // Debug.Log(
+        //     $"[INPUT] Look Action: {lookAction != null}"
+        // );
 
-        Debug.Log(
-            $"[INPUT] Sprint Action: {sprintAction != null}"
-        );
+        // Debug.Log(
+        //     $"[INPUT] Sprint Action: {sprintAction != null}"
+        // );
 
-        Debug.Log(
-            $"[INPUT] Jump Action: {jumpAction != null}"
-        );
+        // Debug.Log(
+        //     $"[INPUT] Jump Action: {jumpAction != null}"
+        // );
 
         LockCursor(true);
     }
@@ -397,11 +397,11 @@ public class PlayerController : NetworkBehaviour
         if (!Object.HasInputAuthority)
             return;
 
-        Debug.Log(
-            $"[PLAYER UPDATE] " +
-            $"InputAuthority={Object.HasInputAuthority} " +
-            $"Initialized={inputInitialized}"
-        );
+        // Debug.Log(
+        //     $"[PLAYER UPDATE] " +
+        //     $"InputAuthority={Object.HasInputAuthority} " +
+        //     $"Initialized={inputInitialized}"
+        // );
 
         if (Keyboard.current != null &&
             Keyboard.current.escapeKey.wasPressedThisFrame)
@@ -439,7 +439,7 @@ public class PlayerController : NetworkBehaviour
     {
         if (Keyboard.current == null)
         {
-            Debug.LogWarning("[INPUT TEST] Keyboard.current is NULL!");
+            // Debug.LogWarning("[INPUT TEST] Keyboard.current is NULL!");
             return;
         }
 
@@ -461,9 +461,9 @@ public class PlayerController : NetworkBehaviour
 
         if (moveInput.sqrMagnitude > 0.01f)
         {
-            Debug.Log(
-                $"[KEYBOARD TEST] WASD = {moveInput}"
-            );
+            // Debug.Log(
+            //     $"[KEYBOARD TEST] WASD = {moveInput}"
+            // );
         }
 
         runInput =
@@ -472,13 +472,13 @@ public class PlayerController : NetworkBehaviour
 
         if (runInput)
         {
-            Debug.Log("[KEYBOARD TEST] SPRINT = TRUE");
+            // Debug.Log("[KEYBOARD TEST] SPRINT = TRUE");
         }
 
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             jumpRequested = true;
-            Debug.Log("[KEYBOARD TEST] JUMP = TRUE");
+            // Debug.Log("[KEYBOARD TEST] JUMP = TRUE");
         }
     }
 
@@ -536,11 +536,11 @@ public override void FixedUpdateNetwork()
 
     if (transform.position.y <= fallLimit)
     {
-        Debug.Log(
-            $"[NETWORK MOVE TEST] " +
-            $"Move={moveInput}, " +
-            $"Position={transform.position}"
-        );
+        // Debug.Log(
+        //     $"[NETWORK MOVE TEST] " +
+        //     $"Move={moveInput}, " +
+        //     $"Position={transform.position}"
+        // );
     }
 
     HandleMovement();
@@ -651,11 +651,11 @@ public override void FixedUpdateNetwork()
             Runner.DeltaTime
         );
 
-        Debug.Log(
-    $"[CHARACTER MOVE TEST] " +
-    $"Velocity={currentVelocity}, " +
-    $"MoveInput={moveInput}"
-);
+//         Debug.Log(
+//     $"[CHARACTER MOVE TEST] " +
+//     $"Velocity={currentVelocity}, " +
+//     $"MoveInput={moveInput}"
+// );
 
 
         // -----------------------------------------------------
@@ -730,11 +730,11 @@ public override void FixedUpdateNetwork()
             groundLayers,
             QueryTriggerInteraction.Ignore))
         {
-            Debug.Log(
-                $"[GROUND SPAWN CHECK] " +
-                $"Ground found at {hit.point}. " +
-                $"Distance = {hit.distance:F2}"
-            );
+            // Debug.Log(
+            //     $"[GROUND SPAWN CHECK] " +
+            //     $"Ground found at {hit.point}. " +
+            //     $"Distance = {hit.distance:F2}"
+            // );
 
             Vector3 safePosition =
                 hit.point +
@@ -758,10 +758,10 @@ public override void FixedUpdateNetwork()
         }
         else
         {
-            Debug.LogWarning(
-                "[GROUND SPAWN CHECK] " +
-                "NO GROUND FOUND BELOW PLAYER!"
-            );
+            // Debug.LogWarning(
+            //     "[GROUND SPAWN CHECK] " +
+            //     "NO GROUND FOUND BELOW PLAYER!"
+            // );
         }
     }
 
@@ -775,11 +775,11 @@ public override void FixedUpdateNetwork()
         if (!isLocal)
             return;
 
-        Debug.LogWarning(
-            $"[FALL RECOVERY] " +
-            $"Player fell to Y = " +
-            $"{transform.position.y:F2}"
-        );
+        // Debug.LogWarning(
+        //     $"[FALL RECOVERY] " +
+        //     $"Player fell to Y = " +
+        //     $"{transform.position.y:F2}"
+        // );
 
         Vector3 recoveryPosition =
             FindNearestSpawnPoint();
@@ -821,10 +821,10 @@ public override void FixedUpdateNetwork()
 
         if (spawnPoints.Length == 0)
         {
-            Debug.LogWarning(
-                "[FALL RECOVERY] " +
-                "No PlayerSpawn found."
-            );
+            // Debug.LogWarning(
+            //     "[FALL RECOVERY] " +
+            //     "No PlayerSpawn found."
+            // );
 
             return Vector3.up * 5f;
         }

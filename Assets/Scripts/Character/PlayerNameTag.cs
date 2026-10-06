@@ -63,9 +63,9 @@ public class PlayerNameTag : MonoBehaviour
 
         string playerName =
             playerNetwork.PlayerName.ToString();
-        Debug.Log(
-            $"[NAME TAG] Network Name: {playerNetwork.PlayerName}"
-        );
+        // Debug.Log(
+        //     $"[NAME TAG] Network Name: {playerNetwork.PlayerName}"
+        // );
         if (string.IsNullOrWhiteSpace(playerName))
         {
             nameText.text = "Player";

@@ -115,6 +115,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c5352bfe36307b549a5129dff3881cef, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7618921837119600802}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c5352bfe36307b549a5129dff3881cef, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6653722604862738178}
   m_SourcePrefab: {fileID: 100100000, guid: c5352bfe36307b549a5129dff3881cef, type: 3}
 --- !u!4 &2609107591360032859 stripped
 Transform:
@@ -183,6 +186,19 @@ MonoBehaviour:
   itemSpawnPoint: {fileID: 6446990708619316521}
   spawnChance: 1
   showGizmo: 1
+--- !u!114 &6653722604862738178
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6591872779020676009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6917f76044ca7154a919ec2dde06aa4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChestState
+  IsOpen: 0
 --- !u!4 &7743639901220563549 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4381034839531322533, guid: c5352bfe36307b549a5129dff3881cef, type: 3}

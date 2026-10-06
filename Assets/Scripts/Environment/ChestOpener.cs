@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class ChestOpener : MonoBehaviour
 {
+    private ChestState state;
+
     [Header("Parts")]
     [Tooltip("Drag the 'top' child here.")]
     public Transform top;
@@ -35,6 +37,8 @@ public class ChestOpener : MonoBehaviour
 
     private void Awake()
     {
+        state = GetComponent<ChestState>();
+
         if (top == null)
         {
             Debug.LogError("ChestOpener: 'top' is not assigned.", this);
@@ -60,6 +64,9 @@ public class ChestOpener : MonoBehaviour
             else if (closeWhenPlayerLeaves)
                 isOpen = false;
         }
+
+        if (state != null)
+            state.IsOpen = isOpen;
 
         // Smooth na pag-rotate papunta sa target
         Quaternion target = isOpen ? openRotation : closedRotation;
