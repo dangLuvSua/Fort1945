@@ -21,11 +21,49 @@ public class LobbyUI : MonoBehaviour
 
 
     // =====================================================
+    // LOADING SCREEN
+    // =====================================================
+
+    [Header("Loading Screen")]
+    [Tooltip(
+        "Assign your existing LoadingScreenUI prefab here."
+    )]
+    [SerializeField] private LoadingProgressUI loadingScreenPrefab;
+
+
+    // =====================================================
+    // INTERNAL
+    // =====================================================
+
+    private LoadingProgressUI loadingScreenInstance;
+
+    private bool isLoading;
+
+
+    // =====================================================
     // CREATE LOBBY
     // =====================================================
 
     public void CreateLobby()
     {
+        // -------------------------------------------------
+        // Prevent multiple clicks
+        // -------------------------------------------------
+
+        if (isLoading)
+        {
+            Debug.LogWarning(
+                "[LOBBY UI] A lobby connection is already in progress."
+            );
+
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // Validate lobby name input
+        // -------------------------------------------------
+
         if (lobbyNameInput == null)
         {
             Debug.LogError(
@@ -35,8 +73,10 @@ public class LobbyUI : MonoBehaviour
             return;
         }
 
+
         string lobbyName =
             lobbyNameInput.text.Trim();
+
 
         if (string.IsNullOrEmpty(lobbyName))
         {
@@ -47,6 +87,7 @@ public class LobbyUI : MonoBehaviour
             return;
         }
 
+
         // -------------------------------------------------
         // Generate lobby code
         // -------------------------------------------------
@@ -54,14 +95,21 @@ public class LobbyUI : MonoBehaviour
         string lobbyCode =
             GenerateLobbyCode();
 
+
         // -------------------------------------------------
         // Display generated code
         // -------------------------------------------------
 
         if (lobbyCodeText != null)
         {
-            lobbyCodeText.text = lobbyCode;
+            lobbyCodeText.text =
+                lobbyCode;
         }
+
+
+        // -------------------------------------------------
+        // Debug information
+        // -------------------------------------------------
 
         Debug.Log(
             $"Creating lobby: {lobbyName}"
@@ -75,6 +123,7 @@ public class LobbyUI : MonoBehaviour
             $"Player name: {PlayerProfile.PlayerName}"
         );
 
+
         // -------------------------------------------------
         // Network Runner Handler
         // -------------------------------------------------
@@ -87,6 +136,16 @@ public class LobbyUI : MonoBehaviour
 
             return;
         }
+
+
+        // -------------------------------------------------
+        // Show loading screen
+        // -------------------------------------------------
+
+        ShowLoadingScreen(
+            "CREATING LOBBY..."
+        );
+
 
         // -------------------------------------------------
         // Send BOTH lobby code and lobby name
@@ -105,6 +164,24 @@ public class LobbyUI : MonoBehaviour
 
     public void JoinLobby()
     {
+        // -------------------------------------------------
+        // Prevent multiple clicks
+        // -------------------------------------------------
+
+        if (isLoading)
+        {
+            Debug.LogWarning(
+                "[LOBBY UI] A lobby connection is already in progress."
+            );
+
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // Validate join input
+        // -------------------------------------------------
+
         if (joinLobbyCodeInput == null)
         {
             Debug.LogError(
@@ -114,8 +191,10 @@ public class LobbyUI : MonoBehaviour
             return;
         }
 
+
         string lobbyCode =
             joinLobbyCodeInput.text.Trim();
+
 
         if (string.IsNullOrEmpty(lobbyCode))
         {
@@ -126,12 +205,14 @@ public class LobbyUI : MonoBehaviour
             return;
         }
 
+
         // -------------------------------------------------
         // Convert code to uppercase
         // -------------------------------------------------
 
         lobbyCode =
             lobbyCode.ToUpperInvariant();
+
 
         // -------------------------------------------------
         // Update input field
@@ -140,6 +221,11 @@ public class LobbyUI : MonoBehaviour
         joinLobbyCodeInput.text =
             lobbyCode;
 
+
+        // -------------------------------------------------
+        // Debug information
+        // -------------------------------------------------
+
         Debug.Log(
             $"Joining lobby: {lobbyCode}"
         );
@@ -147,6 +233,7 @@ public class LobbyUI : MonoBehaviour
         Debug.Log(
             $"Player name: {PlayerProfile.PlayerName}"
         );
+
 
         // -------------------------------------------------
         // Network Runner Handler
@@ -161,8 +248,94 @@ public class LobbyUI : MonoBehaviour
             return;
         }
 
+
+        // -------------------------------------------------
+        // Show loading screen
+        // -------------------------------------------------
+
+        ShowLoadingScreen(
+            "JOINING LOBBY..."
+        );
+
+
+        // -------------------------------------------------
+        // Join lobby
+        // -------------------------------------------------
+
         NetworkRunnerHandler.Instance.JoinGame(
             lobbyCode
+        );
+    }
+
+
+    // =====================================================
+    // SHOW LOADING SCREEN
+    // =====================================================
+
+    private void ShowLoadingScreen(
+     string message)
+    {
+        if (loadingScreenInstance != null)
+        {
+            Debug.LogWarning(
+                "[LOBBY UI] Loading screen already exists."
+            );
+
+            return;
+        }
+
+        if (loadingScreenPrefab == null)
+        {
+            Debug.LogError(
+                "[LOBBY UI] Loading Screen prefab is not assigned."
+            );
+
+            return;
+        }
+
+        isLoading = true;
+
+        loadingScreenInstance =
+            Instantiate(
+                loadingScreenPrefab
+            );
+
+        // Keep the loading screen alive while
+        // Fusion changes scenes.
+        DontDestroyOnLoad(
+            loadingScreenInstance.gameObject
+        );
+
+        loadingScreenInstance.BeginLoading(
+            message
+        );
+
+        Debug.Log(
+            $"[LOBBY UI] Loading screen shown: {message}"
+        );
+    }
+
+    // =====================================================
+    // HIDE LOADING SCREEN
+    // =====================================================
+
+    public void HideLoadingScreen()
+    {
+        isLoading = false;
+
+
+        if (loadingScreenInstance != null)
+        {
+            Destroy(
+                loadingScreenInstance.gameObject
+            );
+
+            loadingScreenInstance = null;
+        }
+
+
+        Debug.Log(
+            "[LOBBY UI] Loading screen hidden."
         );
     }
 
@@ -176,7 +349,9 @@ public class LobbyUI : MonoBehaviour
         const string characters =
             "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
+
         string code = "";
+
 
         for (int i = 0; i < 6; i++)
         {
@@ -186,8 +361,11 @@ public class LobbyUI : MonoBehaviour
                     characters.Length
                 );
 
-            code += characters[index];
+
+            code +=
+                characters[index];
         }
+
 
         return code;
     }

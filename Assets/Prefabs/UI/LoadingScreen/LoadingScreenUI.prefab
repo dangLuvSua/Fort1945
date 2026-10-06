@@ -46,9 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5e15586ef5759e4f81b6b997815631e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LoadingProgressUI
-  percentageText: {fileID: 4546133228072891856}
-  testProgress: 1
-  testDuration: 5
+  statusText: {fileID: 1700298315869882880}
 --- !u!1 &3299517272242912791
 GameObject:
   m_ObjectHideFlags: 0
@@ -204,7 +202,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6159619133023390899
 RectTransform:
   m_ObjectHideFlags: 0
@@ -254,15 +252,15 @@ MonoBehaviour:
       m_Calls: []
   m_text: 100%
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8148b26a75138cd4c95adfe1930587a9, type: 2}
-  m_sharedMaterial: {fileID: -4872034478727773571, guid: 8148b26a75138cd4c95adfe1930587a9, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 67a1f2b2a596bad41a6655a3596d101e, type: 2}
+  m_sharedMaterial: {fileID: 6102132331762098321, guid: 67a1f2b2a596bad41a6655a3596d101e, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4293388263
-  m_fontColor: {r: 0.9056604, g: 0.9056604, b: 0.9056604, a: 1}
+    rgba: 4278190335
+  m_fontColor: {r: 1, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 1
   m_colorMode: 3
   m_fontColorGradient:
@@ -587,15 +585,15 @@ MonoBehaviour:
       m_Calls: []
   m_text: Loading
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8148b26a75138cd4c95adfe1930587a9, type: 2}
-  m_sharedMaterial: {fileID: -4872034478727773571, guid: 8148b26a75138cd4c95adfe1930587a9, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 67a1f2b2a596bad41a6655a3596d101e, type: 2}
+  m_sharedMaterial: {fileID: 6102132331762098321, guid: 67a1f2b2a596bad41a6655a3596d101e, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4293388263
-  m_fontColor: {r: 0.9056604, g: 0.9056604, b: 0.9056604, a: 1}
+    rgba: 4278190335
+  m_fontColor: {r: 1, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 1
   m_colorMode: 3
   m_fontColorGradient:

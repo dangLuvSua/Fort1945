@@ -91990,11 +91990,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoldierGuidePrompt
   range: 15
-  tagOffset: {x: 0, y: 5, z: 0}
+  tagOffset: {x: 0, y: 5.5, z: 0}
   worldTagPrefab: {fileID: 1000000001, guid: aabbccddeeff00112233445566778899, type: 3}
   promptText: Follow the soldier
   promptColor: {r: 1, g: 0.13774192, b: 0, a: 1}
-  fontSize: 10
+  fontSize: 5
 --- !u!4 &1612597599 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6363763960395533779, guid: db33afc785db21f42a1705e597f8e1ba, type: 3}

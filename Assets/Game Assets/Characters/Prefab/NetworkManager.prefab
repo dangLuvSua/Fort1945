@@ -50,3 +50,5 @@ MonoBehaviour:
   gameSceneBuildIndex: 1
   dungeonSceneBuildIndex: 3
   worldTagPrefab: {fileID: 1000000001, guid: aabbccddeeff00112233445566778899, type: 3}
+  dungeonSeedSalt: 19452214
+  loadingScreenPrefab: {fileID: 7885835413758152394, guid: 763183617ae077140807d8f9574359be, type: 3}

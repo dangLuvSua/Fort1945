@@ -1,59 +1,32 @@
-using System.Collections;
 using TMPro;
 using UnityEngine;
 
 public class LoadingProgressUI : MonoBehaviour
 {
     [Header("UI")]
-    [SerializeField] private TMP_Text percentageText;
+    [SerializeField] private TMP_Text statusText;
 
-    [Header("Testing")]
-    [SerializeField] private bool testProgress = true;
-    [SerializeField] private float testDuration = 5f;
-
-    private float currentProgress;
-
-    private void Start()
+    private void Awake()
     {
-        SetProgress(0f);
+        SetStatus("LOADING...");
+    }
 
-        // TEMPORARY:
-        // Simulates loading from 0% to 100%.
-        if (testProgress)
+    public void BeginLoading(string message)
+    {
+        gameObject.SetActive(true);
+        SetStatus(message);
+    }
+
+    public void SetStatus(string message)
+    {
+        if (statusText != null)
         {
-            StartCoroutine(TestLoadingProgress());
+            statusText.text = message;
         }
     }
 
-    public void SetProgress(float progress)
+    public void CompleteLoading()
     {
-        currentProgress = Mathf.Clamp01(progress);
-
-        int percentage =
-            Mathf.RoundToInt(currentProgress * 100f);
-
-        if (percentageText != null)
-        {
-            percentageText.text = percentage + "%";
-        }
-    }
-
-    private IEnumerator TestLoadingProgress()
-    {
-        float elapsedTime = 0f;
-
-        while (elapsedTime < testDuration)
-        {
-            elapsedTime += Time.deltaTime;
-
-            float progress =
-                elapsedTime / testDuration;
-
-            SetProgress(progress);
-
-            yield return null;
-        }
-
-        SetProgress(1f);
+        SetStatus("READY");
     }
 }
