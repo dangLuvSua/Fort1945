@@ -3227,6 +3227,7 @@ MonoBehaviour:
   lobbyNameInput: {fileID: 153352622}
   lobbyCodeText: {fileID: 718665565}
   joinLobbyCodeInput: {fileID: 558734197}
+  loadingScreenPrefab: {fileID: 7885835413758152394, guid: 763183617ae077140807d8f9574359be, type: 3}
 --- !u!1 &381059837
 GameObject:
   m_ObjectHideFlags: 0
@@ -5943,7 +5944,7 @@ PrefabInstance:
       value: 18
       objectReference: {fileID: 0}
     - target: {fileID: 268878347071510516, guid: 1ff8c60e93140b74ebd4ecf0fa5950dc, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 6d651432a81446144ac3be037cc4baa7, type: 2}
     - target: {fileID: 919132149155446097, guid: 1ff8c60e93140b74ebd4ecf0fa5950dc, type: 3}
