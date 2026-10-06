@@ -1,22 +1,7 @@
 using Fusion;
 using UnityEngine;
 
-/// <summary>
-/// Multiplayer spawner for the Dungeon scene.
-///
-/// The dungeon is procedurally generated (DungeonGenerator), so the
-/// player cannot spawn until generation finishes. This component:
-/// 1. Waits until DungeonGenerator.IsGenerated.
-/// 2. Spawns the LOCAL player's PlayerRoot at the generated entrance.
-/// 3. If the local player already has a PlayerRoot (e.g. the fallback
-///    spawn on scene load by NetworkRunnerHandler), it teleports that
-///    object to the dungeon entrance instead of double-spawning.
-///
-/// Mirrors Assets/Scripts/Multiplayer/PlayerSpawner.cs.
-/// </summary>
-public class DungeonPlayerSpawner :
-    SimulationBehaviour,
-    IPlayerJoined
+public class DungeonPlayerSpawner : MonoBehaviour
 {
     [Header("Player")]
     [SerializeField]
@@ -27,150 +12,300 @@ public class DungeonPlayerSpawner :
     private DungeonGenerator dungeon;
 
     [Header("Ground Check")]
+    [Tooltip(
+        "Only objects on this layer will be considered valid dungeon ground."
+    )]
+    [SerializeField]
+    private LayerMask groundLayer;
+
+    [Tooltip(
+        "How far above the generated spawn point the ground raycast begins."
+    )]
     [SerializeField]
     private float groundCheckHeight = 10f;
 
+    [Tooltip(
+        "Maximum distance of the downward ground raycast."
+    )]
     [SerializeField]
     private float groundCheckDistance = 50f;
 
-    [SerializeField]
-    private float playerHeightOffset = 1.1f;
+    private NetworkRunner runner;
 
     private bool hasSpawnedLocalPlayer;
+    private float debugTimer;
 
-
-    // =========================================================
-    // UNITY
-    // =========================================================
-
-    // Handles the case where the player joined the session
-    // before this scene finished loading.
-    private void OnEnable()
+    private void Awake()
     {
-        TrySpawnLocalPlayer();
+        Debug.Log(
+            "[DUNGEON SPAWN] DungeonPlayerSpawner Awake.",
+            this
+        );
+
+        Debug.Log(
+            $"[DUNGEON SPAWN] GameObject: {gameObject.name}",
+            this
+        );
+
+        Debug.Log(
+            $"[DUNGEON SPAWN] Enabled: {enabled}",
+            this
+        );
+
+        Debug.Log(
+            $"[DUNGEON SPAWN] Active In Hierarchy: {gameObject.activeInHierarchy}",
+            this
+        );
+
+        Debug.Log(
+            $"[DUNGEON SPAWN] Player Prefab: " +
+            $"{(playerPrefab != null ? playerPrefab.name : "NULL")}",
+            this
+        );
+
+        Debug.Log(
+            $"[DUNGEON SPAWN] Dungeon Reference: " +
+            $"{(dungeon != null ? dungeon.name : "NULL")}",
+            this
+        );
+
+        Debug.Log(
+            $"[DUNGEON SPAWN] Ground Layer Mask: {groundLayer.value}",
+            this
+        );
+
+        FindRunner();
     }
 
-    // Called by Fusion when a player joins.
-    public void PlayerJoined(PlayerRef player)
+    private void Start()
     {
-        if (player != Runner.LocalPlayer)
-        {
-            return;
-        }
+        Debug.Log(
+            "[DUNGEON SPAWN] DungeonPlayerSpawner Start.",
+            this
+        );
 
+        FindRunner();
         TrySpawnLocalPlayer();
     }
 
     private void Update()
     {
-        // Generation may finish after our first attempts;
-        // keep polling until we succeed.
+        if (hasSpawnedLocalPlayer)
+            return;
+
+        FindRunner();
+
+        debugTimer += Time.deltaTime;
+
         TrySpawnLocalPlayer();
+
+        if (debugTimer >= 2f)
+        {
+            debugTimer = 0f;
+            PrintStatus();
+        }
     }
 
+    private void FindRunner()
+    {
+        if (runner != null)
+            return;
 
-    // =========================================================
-    // SPAWN
-    // =========================================================
+        NetworkRunner[] runners =
+            FindObjectsByType<NetworkRunner>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None
+            );
+
+        foreach (NetworkRunner foundRunner in runners)
+        {
+            if (foundRunner == null)
+                continue;
+
+            if (!foundRunner.IsRunning)
+                continue;
+
+            runner = foundRunner;
+
+            Debug.Log(
+                $"[DUNGEON SPAWN] Found active NetworkRunner: {runner.name}",
+                this
+            );
+
+            return;
+        }
+    }
+
+    private void PrintStatus()
+    {
+        Debug.Log(
+            "[DUNGEON SPAWN STATUS]\n" +
+            $"Runner: {(runner != null ? runner.name : "NULL")}\n" +
+            $"Runner Running: {(runner != null && runner.IsRunning)}\n" +
+            $"LocalPlayer: {(runner != null ? runner.LocalPlayer.ToString() : "N/A")}\n" +
+            $"Dungeon: {(dungeon != null ? dungeon.name : "NULL")}\n" +
+            $"Dungeon Generated: {(dungeon != null && dungeon.IsGenerated)}\n" +
+            $"Player Prefab: {(playerPrefab != null ? playerPrefab.name : "NULL")}\n" +
+            $"Has Spawned: {hasSpawnedLocalPlayer}"
+        );
+    }
 
     private void TrySpawnLocalPlayer()
     {
         if (hasSpawnedLocalPlayer)
-        {
             return;
-        }
 
-        if (Runner == null)
-        {
+        if (runner == null)
             return;
-        }
+
+        if (!runner.IsRunning)
+            return;
 
         PlayerRef localPlayer =
-            Runner.LocalPlayer;
+            runner.LocalPlayer;
 
         if (!localPlayer.IsValid)
         {
+            Debug.LogWarning(
+                "[DUNGEON SPAWN] LocalPlayer is not valid yet."
+            );
+
             return;
         }
 
         if (dungeon == null)
         {
             dungeon =
-                FindAnyObjectByType<DungeonGenerator>();
-        }
+                FindFirstObjectByType<DungeonGenerator>();
 
-        if (dungeon == null ||
-            !dungeon.IsGenerated)
-        {
+            if (dungeon == null)
+                return;
+
             Debug.Log(
-                "[DUNGEON SPAWN] Waiting for dungeon generation..."
+                $"[DUNGEON SPAWN] Found DungeonGenerator automatically: {dungeon.name}"
             );
-
-            return;
         }
 
-        if (dungeon.GetSpawnCount() == 0)
+        if (!dungeon.IsGenerated)
+            return;
+
+        Debug.Log(
+            "[DUNGEON SPAWN] Dungeon generation confirmed."
+        );
+
+        int spawnCount =
+            dungeon.GetSpawnCount();
+
+        if (spawnCount <= 0)
         {
             Debug.LogWarning(
-                "[DUNGEON SPAWN] Dungeon has no spawn points yet."
+                "[DUNGEON SPAWN] Dungeon has no spawn points."
             );
 
             return;
         }
 
-        if (playerPrefab == null)
+        Debug.Log(
+            $"[DUNGEON SPAWN] Dungeon spawn count: {spawnCount}"
+        );
+
+        NetworkObject existingPlayer =
+            runner.GetPlayerObject(localPlayer);
+
+        if (existingPlayer != null)
+        {
+            Debug.Log(
+                $"[DUNGEON SPAWN] Existing PlayerRoot found: " +
+                $"{existingPlayer.name}"
+            );
+        }
+        else
+        {
+            Debug.Log(
+                "[DUNGEON SPAWN] No existing PlayerRoot found."
+            );
+        }
+
+        if (existingPlayer == null &&
+            playerPrefab == null)
         {
             Debug.LogError(
-                "[DUNGEON SPAWN] Player Prefab is not assigned!",
-                this
+                "[DUNGEON SPAWN] Player Prefab is NULL. " +
+                "Assign the same PlayerRoot NetworkObject prefab " +
+                "used by NetworkRunnerHandler."
             );
 
             return;
         }
 
-        SpawnOrTeleportPlayer(localPlayer);
+        bool success =
+            SpawnOrTeleportPlayer(
+                localPlayer,
+                existingPlayer
+            );
+
+        if (!success)
+        {
+            Debug.LogWarning(
+                "[DUNGEON SPAWN] Spawn/teleport attempt failed."
+            );
+
+            return;
+        }
 
         hasSpawnedLocalPlayer = true;
+
+        Debug.Log(
+            "[DUNGEON SPAWN] " +
+            "Local player dungeon placement complete."
+        );
     }
 
-    private void SpawnOrTeleportPlayer(PlayerRef player)
+    private bool SpawnOrTeleportPlayer(
+        PlayerRef player,
+        NetworkObject existingPlayer)
     {
         Vector3 spawnPosition;
         Quaternion spawnRotation;
 
         if (!TryGetDungeonSpawn(
             player,
+            existingPlayer,
             out spawnPosition,
             out spawnRotation))
         {
-            return;
+            Debug.LogWarning(
+                "[DUNGEON SPAWN] " +
+                "Failed to calculate dungeon spawn."
+            );
+
+            return false;
         }
 
-        NetworkObject existing =
-            Runner.GetPlayerObject(player);
-
-        // ------------------------------------------------
-        // Already spawned (fallback spawn on scene load):
-        // just teleport into the dungeon.
-        // ------------------------------------------------
-
-        if (existing != null)
+        if (existingPlayer != null)
         {
             TeleportPlayer(
-                existing,
+                existingPlayer,
                 spawnPosition,
                 spawnRotation
             );
 
-            return;
+            Debug.Log(
+                $"[DUNGEON SPAWN] " +
+                $"Teleported existing player {player} " +
+                $"to {spawnPosition}"
+            );
+
+            return true;
         }
 
-        // ------------------------------------------------
-        // Fresh spawn.
-        // ------------------------------------------------
+        Debug.Log(
+            $"[DUNGEON SPAWN] " +
+            $"Spawning new PlayerRoot at {spawnPosition}"
+        );
 
         NetworkObject playerObject =
-            Runner.Spawn(
+            runner.Spawn(
                 playerPrefab,
                 spawnPosition,
                 spawnRotation,
@@ -180,29 +315,29 @@ public class DungeonPlayerSpawner :
         if (playerObject == null)
         {
             Debug.LogError(
-                "[DUNGEON SPAWN] Failed to spawn PlayerRoot."
+                "[DUNGEON SPAWN] " +
+                "Runner.Spawn returned NULL."
             );
 
-            return;
+            return false;
         }
 
-        Runner.SetPlayerObject(
+        runner.SetPlayerObject(
             player,
             playerObject
         );
 
         Debug.Log(
-            $"[DUNGEON SPAWN] SPAWNED {player} at {spawnPosition}"
+            $"[DUNGEON SPAWN] " +
+            $"Spawned PlayerRoot for {player}."
         );
+
+        return true;
     }
-
-
-    // =========================================================
-    // SPAWN POINT
-    // =========================================================
 
     private bool TryGetDungeonSpawn(
         PlayerRef player,
+        NetworkObject playerObject,
         out Vector3 position,
         out Quaternion rotation)
     {
@@ -211,12 +346,27 @@ public class DungeonPlayerSpawner :
 
         if (dungeon == null)
         {
+            Debug.LogWarning(
+                "[DUNGEON SPAWN] Dungeon reference is NULL."
+            );
+
+            return false;
+        }
+
+        int spawnCount =
+            dungeon.GetSpawnCount();
+
+        if (spawnCount <= 0)
+        {
+            Debug.LogWarning(
+                "[DUNGEON SPAWN] GetSpawnCount returned 0."
+            );
+
             return false;
         }
 
         int index =
-            (int) player.RawEncoded %
-            dungeon.GetSpawnCount();
+            (int)player.RawEncoded % spawnCount;
 
         dungeon.GetSpawn(
             index,
@@ -224,46 +374,121 @@ public class DungeonPlayerSpawner :
             out rotation
         );
 
+        Debug.Log(
+            $"[DUNGEON SPAWN] " +
+            $"Raw dungeon spawn position: {position}"
+        );
+
         position =
-            TryGetGroundPosition(position);
+            GetCorrectGroundPosition(
+                position,
+                playerObject
+            );
+
+        Debug.Log(
+            $"[DUNGEON SPAWN] " +
+            $"Final dungeon player position: {position}"
+        );
 
         return true;
     }
-    private Vector3 TryGetGroundPosition(
-        Vector3 origin)
+
+    private Vector3 GetCorrectGroundPosition(
+        Vector3 origin,
+        NetworkObject playerObject)
     {
         Vector3 rayOrigin =
             origin +
-            Vector3.up * groundCheckHeight;
+            Vector3.up *
+            groundCheckHeight;
+
+        Debug.DrawRay(
+            rayOrigin,
+            Vector3.down *
+            groundCheckDistance,
+            Color.red,
+            10f
+        );
 
         if (Physics.Raycast(
             rayOrigin,
             Vector3.down,
             out RaycastHit hit,
             groundCheckDistance,
-            ~0,
+            groundLayer,
             QueryTriggerInteraction.Ignore))
         {
-            return
-                hit.point +
-                Vector3.up * playerHeightOffset;
+            Debug.Log(
+                $"[DUNGEON SPAWN] " +
+                $"Ground detected at {hit.point} " +
+                $"on {hit.collider.name}"
+            );
+
+            CharacterController cc =
+                null;
+
+            if (playerObject != null)
+            {
+                cc =
+                    playerObject.GetComponent<CharacterController>();
+            }
+
+            if (cc != null)
+            {
+                float bottomOffset =
+                    cc.height * 0.5f -
+                    cc.center.y;
+
+                Vector3 finalPosition =
+                    hit.point +
+                    Vector3.up *
+                    bottomOffset;
+
+                Debug.Log(
+                    $"[DUNGEON SPAWN] " +
+                    $"CharacterController Height: {cc.height}"
+                );
+
+                Debug.Log(
+                    $"[DUNGEON SPAWN] " +
+                    $"CharacterController Center: {cc.center}"
+                );
+
+                Debug.Log(
+                    $"[DUNGEON SPAWN] " +
+                    $"Bottom Offset: {bottomOffset}"
+                );
+
+                return finalPosition;
+            }
+
+            return hit.point + Vector3.up;
         }
 
-        return
-            origin +
-            Vector3.up * playerHeightOffset;
+        Debug.LogWarning(
+            "[DUNGEON SPAWN] " +
+            $"No ground detected below {origin} " +
+            $"using Ground Layer mask {groundLayer.value}."
+        );
+
+        return origin;
     }
-
-
-    // =========================================================
-    // TELEPORT
-    // =========================================================
 
     private void TeleportPlayer(
         NetworkObject playerObject,
         Vector3 position,
         Quaternion rotation)
     {
+        if (playerObject == null)
+        {
+            Debug.LogWarning(
+                "[DUNGEON SPAWN] " +
+                "Cannot teleport. PlayerObject is NULL."
+            );
+
+            return;
+        }
+
         PlayerController controller =
             playerObject.GetComponent<PlayerController>();
 
@@ -275,8 +500,8 @@ public class DungeonPlayerSpawner :
             );
 
             Debug.Log(
-                "[DUNGEON SPAWN] Teleported existing player " +
-                "to dungeon entrance."
+                "[DUNGEON SPAWN] " +
+                "Existing PlayerController teleported."
             );
 
             return;
@@ -288,8 +513,9 @@ public class DungeonPlayerSpawner :
         );
 
         Debug.Log(
-            "[DUNGEON SPAWN] Moved fallback player object " +
-            "to dungeon entrance."
+            "[DUNGEON SPAWN] " +
+            "PlayerController not found. " +
+            "Moved PlayerRoot directly."
         );
     }
 }

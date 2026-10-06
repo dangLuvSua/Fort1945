@@ -3460,7 +3460,7 @@ public class NetworkGameManager : NetworkBehaviour
             origin +
             Vector3.up * 3f,
 
-            "PING!",
+            "",
 
             new Color(
                 1f,

@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dungeon Interogation
       objectReference: {fileID: 0}
+    - target: {fileID: 7639206482952786660, guid: c148e54f7ae147a48850c6a8cc3a5bb4, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: -259972160606440404, guid: c148e54f7ae147a48850c6a8cc3a5bb4, type: 3}
