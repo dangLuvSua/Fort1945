@@ -21,7 +21,8 @@ public class NetworkGameManager : NetworkBehaviour
     [Networked]
     public GameDifficulty Difficulty { get; private set; }
         = GameDifficulty.Normal;
-
+    [Networked]
+    public PlayerRef HostPlayer { get; set; }
     public void SetDifficulty(GameDifficulty difficulty)
     {
         if (!networkStateReady)
@@ -467,6 +468,7 @@ public class NetworkGameManager : NetworkBehaviour
 
         if (Object.HasStateAuthority)
         {
+            HostPlayer = Runner.LocalPlayer;
             GameStarted = false;
             LobbyLocked = false;
 
@@ -784,6 +786,9 @@ public class NetworkGameManager : NetworkBehaviour
 
         SoldierStarted = true;
 
+        // Tell ALL clients to hide their dialogue panel
+        RPC_HideSoldierDialogue();
+
         Debug.Log(
             "[SOLDIER] Dialogue finished."
         );
@@ -791,6 +796,35 @@ public class NetworkGameManager : NetworkBehaviour
         Debug.Log(
             "[SOLDIER] Soldier is now starting to walk."
         );
+    }
+
+    [Rpc(
+    RpcSources.StateAuthority,
+    RpcTargets.All
+)]
+    private void RPC_HideSoldierDialogue(
+    RpcInfo info = default)
+    {
+        SoldierDialogueController dialogue =
+            FindFirstObjectByType<SoldierDialogueController>(
+                FindObjectsInactive.Include
+            );
+
+        if (dialogue != null)
+        {
+            dialogue.HideDialogue();
+
+            Debug.Log(
+                "[SOLDIER] Dialogue panel hidden."
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[SOLDIER] SoldierDialogueController " +
+                "was not found when hiding dialogue."
+            );
+        }
     }
 
 
