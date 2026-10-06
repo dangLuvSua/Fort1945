@@ -230,6 +230,8 @@ MonoBehaviour:
   dungeonY: 0
   generateOnStart: 1
   debugGeneration: 1
+  useSessionSeed: 1
+  fixedSeed: 0
   maxGenerationRetries: 20
 --- !u!1 &1110306078
 GameObject:
@@ -257,14 +259,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1110306078}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f60718293a4b5c6d7e8f90, type: 3}
+  m_Script: {fileID: 11500000, guid: 61ea2c208001c8b4fafdcacf0fe598f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DungeonPlayerSpawner
   playerPrefab: {fileID: 2481270183145079181, guid: ddc5dfc990d6831408c4d5f15c7b31fe, type: 3}
   dungeon: {fileID: 749619190}
-  groundCheckHeight: 10
-  groundCheckDistance: 50
-  playerHeightOffset: 1.1
 --- !u!4 &1110306080
 Transform:
   m_ObjectHideFlags: 0
