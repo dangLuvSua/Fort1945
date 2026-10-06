@@ -868,11 +868,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25a4c7455af635a478452b00d6ab75a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkRunnerHandler
---- !u!4 &99763009 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4008110030164130486, guid: 3dc4d88131d55b248b20e994899dd266, type: 3}
-  m_PrefabInstance: {fileID: 1438928840}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &112997934
 GameObject:
   m_ObjectHideFlags: 0
@@ -14610,7 +14605,6 @@ Transform:
   m_Children:
   - {fileID: 657143015}
   - {fileID: 1533302475}
-  - {fileID: 99763009}
   - {fileID: 294697038}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -15269,15 +15263,15 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1376755444}
+    m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 4008110030164130486, guid: 3dc4d88131d55b248b20e994899dd266, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -473.99103
+      value: 586.61664
       objectReference: {fileID: 0}
     - target: {fileID: 4008110030164130486, guid: 3dc4d88131d55b248b20e994899dd266, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -321.3481
+      value: 137.21793
       objectReference: {fileID: 0}
     - target: {fileID: 4008110030164130486, guid: 3dc4d88131d55b248b20e994899dd266, type: 3}
       propertyPath: m_LocalPosition.z
@@ -23580,6 +23574,7 @@ PrefabInstance:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 1438928840}
   - {fileID: 1227655552}
   - {fileID: 308184465}
   - {fileID: 918642044}

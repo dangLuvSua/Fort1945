@@ -114,37 +114,46 @@ public class NetworkRunnerHandler :
     // UNITY
     // =========================================================
 
-    private void Awake()
+private void Awake()
+{
+    Debug.Log(
+        $"[RUNNER HANDLER] Awake: {gameObject.name}",
+        this
+    );
+
+    if (Instance != null && Instance != this)
     {
-        if (Instance != null &&
-            Instance != this)
-        {
-            Debug.LogWarning(
-                "[RUNNER HANDLER] Duplicate NetworkRunnerHandler found. " +
-                "Destroying duplicate.",
-                this
-            );
-
-            Destroy(gameObject);
-
-            return;
-        }
-
-
-        Instance = this;
-
-
-        DontDestroyOnLoad(
-            gameObject
+        Debug.LogWarning(
+            "[RUNNER HANDLER] Duplicate NetworkRunnerHandler found. Destroying duplicate.",
+            this
         );
 
-
-        Debug.Log(
-            "[RUNNER HANDLER] Initialized."
-        );
+        Destroy(gameObject);
+        return;
     }
 
+    Instance = this;
 
+    DontDestroyOnLoad(gameObject);
+
+    Debug.Log(
+        "[RUNNER HANDLER] Instance assigned successfully.",
+        this
+    );
+}
+
+private void OnEnable()
+{
+    if (Instance == null)
+    {
+        Instance = this;
+
+        Debug.Log(
+            "[RUNNER HANDLER] Instance restored in OnEnable.",
+            this
+        );
+    }
+}
     private void OnDestroy()
     {
         if (Instance == this)
@@ -1197,29 +1206,42 @@ public class NetworkRunnerHandler :
     // =========================================================
 
     public void OnShutdown(
-        NetworkRunner callbackRunner,
-        ShutdownReason shutdownReason)
+     NetworkRunner callbackRunner,
+     ShutdownReason shutdownReason)
     {
         Debug.Log(
             $"[NETWORK] Runner shutdown: " +
             $"{shutdownReason}"
         );
 
+        // ---------------------------------------------------------
+        // LOBBY BROWSER RUNNER
+        // ---------------------------------------------------------
 
         if (callbackRunner == lobbyRunner)
         {
             lobbyRunner = null;
+            return;
         }
 
+        // ---------------------------------------------------------
+        // MAIN GAME RUNNER
+        // ---------------------------------------------------------
 
         if (callbackRunner == runner)
         {
+            runner = null;
+
+            // The handler may already be in the process of being
+            // destroyed when Fusion invokes this callback.
+            if (this == null || gameObject == null)
+            {
+                return;
+            }
+
             LoadingFailed(
                 "NETWORK SHUTDOWN"
             );
-
-
-            runner = null;
         }
     }
 
