@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class KeyPickup : MonoBehaviour
 {
+    public ItemData item;
     public ChestState chest; // pwedeng i-set ng spawner
 
     public bool CanCollect
@@ -16,7 +17,6 @@ public class KeyPickup : MonoBehaviour
     public void Collect(PlayerInventory inv)
     {
         if (!CanCollect) return;
-        inv.AddKey();
-        Destroy(gameObject);
+        if (inv.TryAdd(item)) Destroy(gameObject); // hindi mawawala ang item kapag puno
     }
 }

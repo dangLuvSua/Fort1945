@@ -27,6 +27,7 @@ public class PlayerController : NetworkBehaviour
 
     [SerializeField] private float jumpHeight = 1.0f;
     [SerializeField] private float gravity = -20f;
+    [SerializeField] private PlayerStamina stamina;
 
 
     // =========================================================
@@ -486,65 +487,65 @@ public class PlayerController : NetworkBehaviour
     // MOUSE LOOK
     // =========================================================
 
-   private void HandleLook()
-{
-    if (lookAction == null)
-        return;
-
-    Vector2 look =
-        lookAction.ReadValue<Vector2>() *
-        mouseSensitivity;
-
-    // Store horizontal rotation
-    yaw += look.x;
-
-    // Vertical camera rotation
-    pitch = Mathf.Clamp(
-        pitch - look.y,
-        -maxLookUp,
-        maxLookDown
-    );
-
-    // Camera only handles up/down here
-    if (cameraHolder != null)
+    private void HandleLook()
     {
-        cameraHolder.localRotation =
-            Quaternion.Euler(
-                pitch,
-                0f,
-                0f
-            );
+        if (lookAction == null)
+            return;
+
+        Vector2 look =
+            lookAction.ReadValue<Vector2>() *
+            mouseSensitivity;
+
+        // Store horizontal rotation
+        yaw += look.x;
+
+        // Vertical camera rotation
+        pitch = Mathf.Clamp(
+            pitch - look.y,
+            -maxLookUp,
+            maxLookDown
+        );
+
+        // Camera only handles up/down here
+        if (cameraHolder != null)
+        {
+            cameraHolder.localRotation =
+                Quaternion.Euler(
+                    pitch,
+                    0f,
+                    0f
+                );
+        }
     }
-}
 
 
     // =========================================================
     // FIXED NETWORK UPDATE
     // =========================================================
-public override void FixedUpdateNetwork()
-{
-    if (!Object.HasStateAuthority)
-        return;
-
-    // Apply horizontal player rotation
-    transform.rotation =
-        Quaternion.Euler(
-            0f,
-            yaw,
-            0f
-        );
-
-    if (transform.position.y <= fallLimit)
+    public override void FixedUpdateNetwork()
     {
-        // Debug.Log(
-        //     $"[NETWORK MOVE TEST] " +
-        //     $"Move={moveInput}, " +
-        //     $"Position={transform.position}"
-        // );
-    }
+        if (!Object.HasStateAuthority)
+            return;
 
-    HandleMovement();
-}
+        // Apply horizontal player rotation
+        transform.rotation =
+            Quaternion.Euler(
+                0f,
+                yaw,
+                0f
+            );
+
+        if (transform.position.y <= fallLimit)
+        {
+            // Debug.Log(
+            //     $"[NETWORK MOVE TEST] " +
+            //     $"Move={moveInput}, " +
+            //     $"Position={transform.position}"
+            // );
+        }
+
+        HandleMovement();
+    }
 
 
     // =========================================================
@@ -566,9 +567,14 @@ public override void FixedUpdateNetwork()
                 1f
             );
 
-        bool isRunning =
+        bool wantsRun =
             runInput &&
             moveInput.magnitude > 0.01f;
+
+        bool isRunning =
+            stamina != null
+                ? stamina.Tick(wantsRun, Runner.DeltaTime)
+                : wantsRun;
 
         float targetSpeed =
             isRunning
@@ -651,11 +657,11 @@ public override void FixedUpdateNetwork()
             Runner.DeltaTime
         );
 
-//         Debug.Log(
-//     $"[CHARACTER MOVE TEST] " +
-//     $"Velocity={currentVelocity}, " +
-//     $"MoveInput={moveInput}"
-// );
+        //         Debug.Log(
+        //     $"[CHARACTER MOVE TEST] " +
+        //     $"Velocity={currentVelocity}, " +
+        //     $"MoveInput={moveInput}"
+        // );
 
 
         // -----------------------------------------------------

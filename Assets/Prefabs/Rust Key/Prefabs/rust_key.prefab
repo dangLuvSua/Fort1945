@@ -127,6 +127,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19bd67040ac1e684990869e88245bc34, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KeyPickup
+  item: {fileID: 11400000, guid: 83911e1fa10d6b546a50ebe92b8da173, type: 2}
+  chest: {fileID: 0}
 --- !u!114 &2202455475185941744
 MonoBehaviour:
   m_ObjectHideFlags: 0
