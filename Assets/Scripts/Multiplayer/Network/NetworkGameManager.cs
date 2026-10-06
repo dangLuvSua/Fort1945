@@ -21,7 +21,8 @@ public class NetworkGameManager : NetworkBehaviour
     [Networked]
     public GameDifficulty Difficulty { get; private set; }
         = GameDifficulty.Normal;
-
+    [Networked]
+    public PlayerRef HostPlayer { get; set; }
     public void SetDifficulty(GameDifficulty difficulty)
     {
         if (!networkStateReady)
@@ -319,7 +320,10 @@ public class NetworkGameManager : NetworkBehaviour
         "Seconds the zone stays GREEN before teleport."
     )]
     [SerializeField]
-    private float teleportDelaySeconds = 2.5f;
+    private float teleportDelaySeconds = 5f;
+
+    [SerializeField] private Transform worldTagPoint;
+    [SerializeField] private Transform gateTagPoint;
 
 
     // =========================================================
@@ -333,6 +337,8 @@ public class NetworkGameManager : NetworkBehaviour
 
     private GameObject zoneVisual;
     private GameObject zoneTag;
+
+    private DungeonZoneVisual dungeonZoneVisual;
 
     private bool soldierVisualBuilt;
     private bool pathDotsBuilt;
@@ -462,6 +468,7 @@ public class NetworkGameManager : NetworkBehaviour
 
         if (Object.HasStateAuthority)
         {
+            HostPlayer = Runner.LocalPlayer;
             GameStarted = false;
             LobbyLocked = false;
 
@@ -779,6 +786,9 @@ public class NetworkGameManager : NetworkBehaviour
 
         SoldierStarted = true;
 
+        // Tell ALL clients to hide their dialogue panel
+        RPC_HideSoldierDialogue();
+
         Debug.Log(
             "[SOLDIER] Dialogue finished."
         );
@@ -786,6 +796,35 @@ public class NetworkGameManager : NetworkBehaviour
         Debug.Log(
             "[SOLDIER] Soldier is now starting to walk."
         );
+    }
+
+    [Rpc(
+    RpcSources.StateAuthority,
+    RpcTargets.All
+)]
+    private void RPC_HideSoldierDialogue(
+    RpcInfo info = default)
+    {
+        SoldierDialogueController dialogue =
+            FindFirstObjectByType<SoldierDialogueController>(
+                FindObjectsInactive.Include
+            );
+
+        if (dialogue != null)
+        {
+            dialogue.HideDialogue();
+
+            Debug.Log(
+                "[SOLDIER] Dialogue panel hidden."
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[SOLDIER] SoldierDialogueController " +
+                "was not found when hiding dialogue."
+            );
+        }
     }
 
 
@@ -845,16 +884,15 @@ public class NetworkGameManager : NetworkBehaviour
 
         if (gateTag == null)
         {
-            gateTag =
-                CreateWorldTag(
-                    gateCenter + Vector3.up * 3.5f,
-                    "",
-                    new Color(1f, 1f, 0.4f, 1f),
-                    40f,
-                    0f
-                );
-        }
 
+            gateTag = CreateWorldTag(
+                gateTagPoint.position,
+                "",
+                new Color(1f, 1f, 0.4f, 1f),
+                18f,
+                0.25f
+            );
+        }
         if (gateTag != null)
         {
             WorldTag tagScript =
@@ -956,6 +994,45 @@ public class NetworkGameManager : NetworkBehaviour
         );
 
         RPC_OnAllPlayersEntered();
+    }
+
+    // =========================================================
+    // COUNT PLAYERS INSIDE GATE
+    // =========================================================
+
+    private void CountPlayersInside(
+        Vector3 center,
+        Vector3 halfExtents,
+        out int totalOut,
+        out int insideOut)
+    {
+        totalOut = 0;
+        insideOut = 0;
+
+        if (Runner == null)
+            return;
+
+        foreach (PlayerRef player in Runner.ActivePlayers)
+        {
+            NetworkObject playerObject =
+                Runner.GetPlayerObject(player);
+
+            if (playerObject == null)
+                continue;
+
+            totalOut++;
+
+            Vector3 delta =
+                playerObject.transform.position -
+                center;
+
+            if (Mathf.Abs(delta.x) <= halfExtents.x &&
+                Mathf.Abs(delta.y) <= halfExtents.y &&
+                Mathf.Abs(delta.z) <= halfExtents.z)
+            {
+                insideOut++;
+            }
+        }
     }
 
 
@@ -1660,22 +1737,68 @@ public class NetworkGameManager : NetworkBehaviour
 
     private void UpdateZonePhase()
     {
-        if (ZoneActive && !ZoneGreen)
+        if (!ZoneActive)
         {
-            if (zoneVisual == null)
-            {
-                BuildZoneVisual();
-            }
+            return;
+        }
 
-            int totalPlayers = 0;
-            int playersInsideZone = 0;
+        // ---------------------------------------------------------
+        // FIND ZONE VISUAL
+        // ---------------------------------------------------------
 
-            CountPlayersInside(
-                GetZoneCenter(),
-                zoneHalfExtents,
-                out totalPlayers,
-                out playersInsideZone
+        FindDungeonZoneVisual();
+
+        if (dungeonZoneVisual != null)
+        {
+            dungeonZoneVisual.SetActive(true);
+        }
+
+        // ---------------------------------------------------------
+        // LEGACY / EXISTING ZONE VISUAL
+        // ---------------------------------------------------------
+
+        if (zoneVisual == null)
+        {
+            BuildZoneVisual();
+        }
+
+        // =========================================================
+        // COUNT PLAYERS
+        // =========================================================
+
+        int totalPlayers = 0;
+        int playersInsideZone = 0;
+
+        CountPlayersInsideZone(
+     out totalPlayers,
+     out playersInsideZone
+ );
+
+        // =========================================================
+        // IMPORTANT:
+        // STATE AUTHORITY CONTROLS THE NETWORKED ZONE STATE.
+        // =========================================================
+
+        if (!Object.HasStateAuthority)
+        {
+            // Remote clients only update their local visual.
+            UpdateZoneTag(
+                playersInsideZone,
+                totalPlayers,
+                ZoneGreen
             );
+
+            return;
+        }
+
+        // =========================================================
+        // SAFETY
+        // =========================================================
+
+        if (totalPlayers < 1)
+        {
+            ZoneGreen = false;
+            TeleportCountdown = 0f;
 
             UpdateZoneTag(
                 playersInsideZone,
@@ -1683,26 +1806,56 @@ public class NetworkGameManager : NetworkBehaviour
                 false
             );
 
-            if (!Object.HasStateAuthority)
-                return;
+            return;
+        }
 
-            if (totalPlayers < 1 ||
-                playersInsideZone < totalPlayers)
+        // =========================================================
+        // NOT GREEN YET
+        // =========================================================
+
+        if (!ZoneGreen)
+        {
+            if (playersInsideZone < totalPlayers)
             {
+                TeleportCountdown = 0f;
+
+                if (dungeonZoneVisual != null)
+                {
+                    dungeonZoneVisual.SetRed();
+                }
+
+                UpdateZoneTag(
+                    playersInsideZone,
+                    totalPlayers,
+                    false
+                );
+
                 return;
             }
 
+            // -----------------------------------------------------
+            // EVERYONE IS INSIDE
+            // -----------------------------------------------------
+
             ZoneGreen = true;
 
-            TeleportCountdown =
-                Mathf.Max(
-                    0f,
-                    teleportDelaySeconds
-                );
+            TeleportCountdown = Mathf.Max(
+                0f,
+                teleportDelaySeconds
+            );
+
+            if (dungeonZoneVisual != null)
+            {
+                dungeonZoneVisual.SetGreen();
+            }
 
             Debug.Log(
-                "[GAME MANAGER] All players inside the zone. " +
-                "Zone turned GREEN."
+                "[DUNGEON ZONE] ALL PLAYERS ARE INSIDE."
+            );
+
+            Debug.Log(
+                $"[DUNGEON ZONE] Zone turned GREEN. " +
+                $"Countdown: {TeleportCountdown:F0}s"
             );
 
             RPC_OnZoneGreen();
@@ -1710,50 +1863,122 @@ public class NetworkGameManager : NetworkBehaviour
             return;
         }
 
-        if (!ZoneGreen ||
-            TeleportStarted)
+        // =========================================================
+        // ZONE IS GREEN
+        // =========================================================
+
+        // If ANY player leaves, immediately reset.
+        if (playersInsideZone < totalPlayers)
+        {
+            ZoneGreen = false;
+
+            TeleportCountdown = 0f;
+
+            if (dungeonZoneVisual != null)
+            {
+                dungeonZoneVisual.SetRed();
+            }
+
+            Debug.Log(
+                "[DUNGEON ZONE] A player left the zone."
+            );
+
+            Debug.Log(
+                "[DUNGEON ZONE] Zone turned RED. " +
+                "Countdown reset."
+            );
+
+            RPC_OnZoneReset();
+
+            UpdateZoneTag(
+                playersInsideZone,
+                totalPlayers,
+                false
+            );
+
+            return;
+        }
+
+        // =========================================================
+        // EVERYONE IS STILL INSIDE
+        // =========================================================
+
+        UpdateZoneTag(
+            playersInsideZone,
+            totalPlayers,
+            true
+        );
+
+        // ---------------------------------------------------------
+        // COUNTDOWN
+        // ---------------------------------------------------------
+
+        if (TeleportCountdown > 0f)
+        {
+            TeleportCountdown = Mathf.Max(
+                0f,
+                TeleportCountdown - Time.deltaTime
+            );
+
+            return;
+        }
+
+        // =========================================================
+        // COUNTDOWN FINISHED
+        // =========================================================
+
+        TeleportStarted = true;
+
+        Debug.Log(
+            "[DUNGEON ZONE] 5 SECOND COUNTDOWN COMPLETE."
+        );
+
+        Debug.Log(
+            "[DUNGEON ZONE] ALL PLAYERS WILL BE TELEPORTED."
+        );
+
+        if (NetworkRunnerHandler.Instance != null)
+        {
+            NetworkRunnerHandler.Instance.LoadDungeonScene();
+        }
+    }
+
+    [Rpc(
+    RpcSources.StateAuthority,
+    RpcTargets.All
+)]
+    private void RPC_OnZoneReset(
+    RpcInfo info = default)
+    {
+        Debug.Log(
+            "[DUNGEON ZONE] Zone reset to RED."
+        );
+
+        if (zoneTag == null)
         {
             return;
         }
 
-        UpdateZoneTag(
-            0,
-            0,
-            true
+        WorldTag tagScript =
+            zoneTag.GetComponent<WorldTag>();
+
+        if (tagScript == null)
+        {
+            return;
+        }
+
+        tagScript.SetColor(
+            new Color(
+                1f,
+                0.15f,
+                0.15f,
+                1f
+            )
         );
 
-        // -------------------------------------------------
-        // Host countdown
-        // -------------------------------------------------
-
-        if (Object.HasStateAuthority)
-        {
-            if (TeleportCountdown > 0f)
-            {
-                TeleportCountdown =
-                    Mathf.Max(
-                        0f,
-                        TeleportCountdown -
-                        Time.deltaTime
-                    );
-            }
-
-            if (TeleportCountdown > 0f)
-                return;
-
-            TeleportStarted =
-                true;
-
-            Debug.Log(
-                "[GAME MANAGER] Teleporting the squad " +
-                "to the dungeon!"
-            );
-
-            if (NetworkRunnerHandler.Instance != null)
-            {
-                NetworkRunnerHandler.Instance.LoadDungeonScene();
-            }
-        }
+        tagScript.SetMessage(
+            "ENTER THE ZONE"
+        );
     }
 
 
@@ -1782,35 +2007,34 @@ public class NetworkGameManager : NetworkBehaviour
     // =========================================================
 
     [Rpc(
-        RpcSources.StateAuthority,
-        RpcTargets.All
-    )]
+     RpcSources.StateAuthority,
+     RpcTargets.All
+ )]
     private void RPC_OnZoneGreen(
-        RpcInfo info = default)
+     RpcInfo info = default)
     {
         Debug.Log(
             "[GAME MANAGER] Zone is GREEN!"
         );
 
-        CreateWorldTag(
-            GetZoneCenter() +
-            Vector3.up * 5f,
-
-            "TO THE DUNGEON!",
-
-            new Color(
-                0.2f,
-                1f,
-                0.4f,
-                1f
-            ),
-
-            64f,
-
-            teleportDelaySeconds
+        UpdateZoneTag(
+            GetPlayerCountInsideZone(),
+            GetPlayerCount(),
+            true
         );
     }
+    private int GetPlayerCountInsideZone()
+    {
+        int totalPlayers;
+        int playersInsideZone;
 
+        CountPlayersInsideZone(
+            out totalPlayers,
+            out playersInsideZone
+        );
+
+        return playersInsideZone;
+    }
 
     // =========================================================
     // ROUTE
@@ -2042,11 +2266,9 @@ public class NetworkGameManager : NetworkBehaviour
     // COUNT PLAYERS INSIDE AREA
     // =========================================================
 
-    private void CountPlayersInside(
-        Vector3 center,
-        Vector3 halfExtents,
-        out int totalOut,
-        out int insideOut)
+    private void CountPlayersInsideZone(
+     out int totalOut,
+     out int insideOut)
     {
         totalOut = 0;
         insideOut = 0;
@@ -2054,35 +2276,73 @@ public class NetworkGameManager : NetworkBehaviour
         if (Runner == null)
             return;
 
-        foreach (PlayerRef player
-                 in Runner.ActivePlayers)
+        GameObject zoneObject = GetDungeonEntryZoneObject();
+
+        if (zoneObject == null)
+        {
+            Debug.LogWarning(
+                "[DUNGEON ZONE] DungeonEntryZone was not found."
+            );
+
+            return;
+        }
+
+        BoxCollider boxCollider =
+            zoneObject.GetComponent<BoxCollider>();
+
+        if (boxCollider == null)
+        {
+            Debug.LogError(
+                "[DUNGEON ZONE] DungeonEntryZone does not have a BoxCollider."
+            );
+
+            return;
+        }
+
+        foreach (PlayerRef player in Runner.ActivePlayers)
         {
             NetworkObject playerObject =
-                Runner.GetPlayerObject(
-                    player
-                );
+                Runner.GetPlayerObject(player);
 
             if (playerObject == null)
                 continue;
 
             totalOut++;
 
-            Vector3 delta =
-                playerObject.transform.position -
-                center;
+            // Convert player position into the collider's local space.
+            Vector3 localPosition =
+                boxCollider.transform.InverseTransformPoint(
+                    playerObject.transform.position
+                );
 
-            if (Mathf.Abs(delta.x) <=
-                    halfExtents.x &&
-                Mathf.Abs(delta.y) <=
-                    halfExtents.y &&
-                Mathf.Abs(delta.z) <=
-                    halfExtents.z)
+            // Account for the BoxCollider's center offset.
+            localPosition -= boxCollider.center;
+
+            Vector3 halfSize =
+                boxCollider.size * 0.5f;
+
+            bool inside =
+                Mathf.Abs(localPosition.x) <= halfSize.x &&
+                Mathf.Abs(localPosition.y) <= halfSize.y &&
+                Mathf.Abs(localPosition.z) <= halfSize.z;
+
+            if (inside)
             {
                 insideOut++;
             }
         }
     }
 
+    private GameObject GetDungeonEntryZoneObject()
+    {
+        if (cachedZoneObject == null)
+        {
+            cachedZoneObject =
+                GameObject.Find(dungeonEntryZoneName);
+        }
+
+        return cachedZoneObject;
+    }
 
     // =========================================================
     // PATH DOTS
@@ -2652,23 +2912,102 @@ public class NetworkGameManager : NetworkBehaviour
     // ZONE VISUAL
     // =========================================================
 
+    // =========================================================
+    // ZONE VISUAL
+    // =========================================================
+
     private void BuildZoneVisual()
     {
+        // ---------------------------------------------------------
+        // Already built
+        // ---------------------------------------------------------
+
         if (zoneVisualBuilt)
             return;
 
-        zoneVisualBuilt =
-            true;
+        // ---------------------------------------------------------
+        // Find actual DungeonEntryZone
+        // ---------------------------------------------------------
+
+        GameObject zoneObject =
+            GetDungeonEntryZoneObject();
+
+        if (zoneObject == null)
+        {
+            Debug.LogWarning(
+                "[DUNGEON ZONE] Cannot build zone visual. " +
+                "DungeonEntryZone was not found."
+            );
+
+            return;
+        }
+
+        // ---------------------------------------------------------
+        // Get actual BoxCollider
+        // ---------------------------------------------------------
+
+        BoxCollider boxCollider =
+            zoneObject.GetComponent<BoxCollider>();
+
+        if (boxCollider == null)
+        {
+            Debug.LogError(
+                "[DUNGEON ZONE] Cannot build zone visual. " +
+                "DungeonEntryZone does not have a BoxCollider."
+            );
+
+            return;
+        }
+
+        // ---------------------------------------------------------
+        // Get collider center in WORLD SPACE
+        // ---------------------------------------------------------
 
         Vector3 center =
-            GetZoneCenter();
+            zoneObject.transform.TransformPoint(
+                boxCollider.center
+            );
+
+        // ---------------------------------------------------------
+        // Get collider size in WORLD SPACE
+        // ---------------------------------------------------------
+        //
+        // This accounts for the GameObject's scale.
+        //
+        // The visual is intended for an axis-aligned zone.
+        // If the DungeonEntryZone is rotated, see the note below.
+        // ---------------------------------------------------------
+
+        Vector3 worldSize =
+            Vector3.Scale(
+                boxCollider.size,
+                zoneObject.transform.lossyScale
+            );
 
         Vector3 half =
-            zoneHalfExtents;
+            worldSize * 0.5f;
 
-        // -------------------------------------------------
+        // ---------------------------------------------------------
+        // Mark as successfully built
+        // ---------------------------------------------------------
+
+        zoneVisualBuilt = true;
+
+        Debug.Log(
+            "[DUNGEON ZONE] Building zone visual from actual BoxCollider."
+        );
+
+        Debug.Log(
+            $"[DUNGEON ZONE] Center: {center}"
+        );
+
+        Debug.Log(
+            $"[DUNGEON ZONE] Size: {worldSize}"
+        );
+
+        // =========================================================
         // 8 CORNER POSTS
-        // -------------------------------------------------
+        // =========================================================
 
         for (int i = 0;
              i < 8;
@@ -2705,9 +3044,9 @@ public class NetworkGameManager : NetworkBehaviour
             );
         }
 
-        // -------------------------------------------------
+        // =========================================================
         // FLOOR FRAME LEFT
-        // -------------------------------------------------
+        // =========================================================
 
         CreateDot(
             center +
@@ -2724,9 +3063,9 @@ public class NetworkGameManager : NetworkBehaviour
             Vector3.zero
         );
 
-        // -------------------------------------------------
+        // =========================================================
         // FLOOR FRAME RIGHT
-        // -------------------------------------------------
+        // =========================================================
 
         CreateDot(
             center +
@@ -2743,9 +3082,9 @@ public class NetworkGameManager : NetworkBehaviour
             Vector3.zero
         );
 
-        // -------------------------------------------------
+        // =========================================================
         // FLOOR FRAME BACK
-        // -------------------------------------------------
+        // =========================================================
 
         CreateDot(
             center +
@@ -2762,9 +3101,9 @@ public class NetworkGameManager : NetworkBehaviour
             Vector3.zero
         );
 
-        // -------------------------------------------------
+        // =========================================================
         // FLOOR FRAME FRONT
-        // -------------------------------------------------
+        // =========================================================
 
         CreateDot(
             center +
@@ -2781,54 +3120,83 @@ public class NetworkGameManager : NetworkBehaviour
             Vector3.zero
         );
 
-        // -------------------------------------------------
+        // =========================================================
         // ZONE TAG
-        // -------------------------------------------------
-
-        zoneTag =
-            CreateWorldTag(
-                center +
-                Vector3.up *
-                (half.y + 2.5f),
-
+        // =========================================================
+        if (zoneTag == null && worldTagPoint != null)
+        {
+            zoneTag = CreateWorldTag(
+                worldTagPoint.position,
                 "DUNGEON ENTRY",
-
-                new Color(
-                    1f,
-                    0.15f,
-                    0.15f,
-                    1f
-                ),
-
-                40f,
-
-                0f
+                new Color(1f, 0.15f, 0.15f, 1f),
+                18f,
+                0.25f
             );
+        }
+
+        Debug.Log(
+            "[DUNGEON ZONE] Zone visual successfully created."
+        );
     }
 
+
+    private void FindDungeonZoneVisual()
+    {
+        if (dungeonZoneVisual != null)
+            return;
+
+        GameObject zoneObject =
+            GetDungeonEntryZoneObject();
+
+        if (zoneObject == null)
+            return;
+
+        dungeonZoneVisual =
+            zoneObject.GetComponent<DungeonZoneVisual>();
+
+        if (dungeonZoneVisual == null)
+        {
+            Debug.LogWarning(
+                "[DUNGEON ZONE] DungeonZoneVisual component was not found."
+            );
+
+            return;
+        }
+
+        Debug.Log(
+            "[DUNGEON ZONE] DungeonZoneVisual found."
+        );
+    }
 
     // =========================================================
     // ZONE TAG
     // =========================================================
-
     private void UpdateZoneTag(
         int inside,
         int total,
         bool zoneIsGreen)
     {
         if (zoneTag == null)
+        {
             return;
+        }
 
         WorldTag tagScript =
             zoneTag.GetComponent<WorldTag>();
 
         if (tagScript == null)
+        {
             return;
+        }
+
+        // =========================================================
+        // GREEN
+        // =========================================================
 
         if (zoneIsGreen)
         {
             int secondsLeft =
-                (int)Mathf.Ceil(
+                Mathf.CeilToInt(
                     Mathf.Max(
                         0f,
                         TeleportCountdown
@@ -2836,7 +3204,8 @@ public class NetworkGameManager : NetworkBehaviour
                 );
 
             tagScript.SetMessage(
-                "TO THE DUNGEON!  (" +
+                "TO THE DUNGEON!  " +
+                "(" +
                 secondsLeft +
                 ")"
             );
@@ -2852,6 +3221,10 @@ public class NetworkGameManager : NetworkBehaviour
 
             return;
         }
+
+        // =========================================================
+        // RED
+        // =========================================================
 
         tagScript.SetMessage(
             "ENTER THE ZONE  (" +
@@ -2875,45 +3248,91 @@ public class NetworkGameManager : NetworkBehaviour
     // =========================================================
     // WORLD TAG
     // =========================================================
-
     private GameObject CreateWorldTag(
-        Vector3 worldPosition,
-        string message,
-        Color color,
-        float fontSize,
-        float lifeSeconds)
+     Vector3 position,
+     string message,
+     Color color,
+     float fontSize,
+     float scale,
+     Transform parent = null)
     {
-        if (NetworkRunnerHandler.Instance == null)
-            return null;
+        NetworkRunnerHandler handler =
+            NetworkRunnerHandler.Instance;
 
-        GameObject tagPrefab =
-            NetworkRunnerHandler.Instance.worldTagPrefab;
+        if (handler == null)
+        {
+            handler =
+                FindFirstObjectByType<NetworkRunnerHandler>();
 
-        if (tagPrefab == null)
-            return null;
+            if (handler == null)
+            {
+                Debug.LogError(
+                    "[WORLD TAG] NetworkRunnerHandler could not be found."
+                );
 
-        GameObject tag =
-            Instantiate(
-                tagPrefab
+                return null;
+            }
+        }
+
+        if (handler.worldTagPrefab == null)
+        {
+            Debug.LogError(
+                "[WORLD TAG] WorldTag Prefab is not assigned."
             );
 
-        tag.transform.position =
-            worldPosition;
+            return null;
+        }
 
-        WorldTag tagScript =
-            tag.GetComponent<WorldTag>();
+        GameObject tagObject;
 
-        if (tagScript != null)
+        if (parent != null)
         {
-            tagScript.Configure(
-                message,
-                color,
-                fontSize,
-                lifeSeconds
+            tagObject = Instantiate(
+                handler.worldTagPrefab,
+                parent
+            );
+
+            tagObject.transform.localPosition = position;
+            tagObject.transform.localRotation = Quaternion.identity;
+        }
+        else
+        {
+            tagObject = Instantiate(
+                handler.worldTagPrefab,
+                position,
+                Quaternion.identity
             );
         }
 
-        return tag;
+        WorldTag tag =
+            tagObject.GetComponent<WorldTag>();
+
+        if (tag == null)
+        {
+            tag =
+                tagObject.GetComponentInChildren<WorldTag>();
+        }
+
+        if (tag == null)
+        {
+            Debug.LogError(
+                "[WORLD TAG] WorldTag component not found."
+            );
+
+            Destroy(tagObject);
+            return null;
+        }
+
+        tag.Configure(
+            message,
+            color,
+            fontSize,
+            0f
+        );
+
+        tag.SetScale(scale);
+
+        return tagObject;
     }
 
 
@@ -3041,7 +3460,7 @@ public class NetworkGameManager : NetworkBehaviour
             origin +
             Vector3.up * 3f,
 
-            "PING!",
+            "",
 
             new Color(
                 1f,
@@ -3055,7 +3474,7 @@ public class NetworkGameManager : NetworkBehaviour
             1.2f
         );
     }
-    
+
     // =========================================================
     // GET SOLDIER MODEL
     // =========================================================

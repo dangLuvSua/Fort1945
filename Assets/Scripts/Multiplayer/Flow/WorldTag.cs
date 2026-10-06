@@ -83,6 +83,10 @@ public class WorldTag : MonoBehaviour
             text.text = message;
         }
     }
+    public void SetScale(float scale)
+    {
+        transform.localScale = Vector3.one * scale;
+    }
 
 
     /// <summary>

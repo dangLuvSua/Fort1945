@@ -116,34 +116,44 @@ public class NetworkRunnerHandler :
 
     private void Awake()
     {
-        if (Instance != null &&
-            Instance != this)
+        Debug.Log(
+            $"[RUNNER HANDLER] Awake: {gameObject.name}",
+            this
+        );
+
+        if (Instance != null && Instance != this)
         {
             Debug.LogWarning(
-                "[RUNNER HANDLER] Duplicate NetworkRunnerHandler found. " +
-                "Destroying duplicate.",
+                "[RUNNER HANDLER] Duplicate NetworkRunnerHandler found. Destroying duplicate.",
                 this
             );
 
             Destroy(gameObject);
-
             return;
         }
 
-
         Instance = this;
 
-
-        DontDestroyOnLoad(
-            gameObject
-        );
-
+        DontDestroyOnLoad(gameObject);
 
         Debug.Log(
-            "[RUNNER HANDLER] Initialized."
+            "[RUNNER HANDLER] Instance assigned successfully.",
+            this
         );
     }
 
+    private void OnEnable()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+
+            Debug.Log(
+                "[RUNNER HANDLER] Instance restored in OnEnable.",
+                this
+            );
+        }
+    }
 
     private void OnDestroy()
     {
@@ -151,6 +161,16 @@ public class NetworkRunnerHandler :
         {
             Instance = null;
         }
+    }
+
+
+    // =========================================================
+    // DUNGEON SCENE CHECK
+    // =========================================================
+
+    private bool IsDungeonScene()
+    {
+        return SceneManager.GetActiveScene().name == "Dungeon";
     }
 
 
@@ -177,6 +197,7 @@ public class NetworkRunnerHandler :
     // =========================================================
     // LOADING SCREEN - BEGIN
     // =========================================================
+
     private void BeginLoading(string message)
     {
         LoadingProgressUI ui = GetLoadingScreen();
@@ -194,6 +215,7 @@ public class NetworkRunnerHandler :
 
         Debug.Log($"[LOADING] {message}");
     }
+
 
     // =========================================================
     // LOADING SCREEN - CONNECTING
@@ -227,6 +249,7 @@ public class NetworkRunnerHandler :
 
         Debug.Log("[LOADING] Fusion connection established.");
     }
+
 
     // =========================================================
     // LOADING SCREEN - SCENE START
@@ -278,11 +301,6 @@ public class NetworkRunnerHandler :
 
         loadingScreen = null;
     }
-
-    // =========================================================
-    // HIDE LOADING SCREEN
-    // =========================================================
-
 
 
     // =========================================================
@@ -1205,21 +1223,34 @@ public class NetworkRunnerHandler :
             $"{shutdownReason}"
         );
 
+        // ---------------------------------------------------------
+        // LOBBY BROWSER RUNNER
+        // ---------------------------------------------------------
 
         if (callbackRunner == lobbyRunner)
         {
             lobbyRunner = null;
+            return;
         }
 
+        // ---------------------------------------------------------
+        // MAIN GAME RUNNER
+        // ---------------------------------------------------------
 
         if (callbackRunner == runner)
         {
+            runner = null;
+
+            // The handler may already be in the process of being
+            // destroyed when Fusion invokes this callback.
+            if (this == null || gameObject == null)
+            {
+                return;
+            }
+
             LoadingFailed(
                 "NETWORK SHUTDOWN"
             );
-
-
-            runner = null;
         }
     }
 
@@ -1313,17 +1344,14 @@ public class NetworkRunnerHandler :
     // SCENE LOAD DONE
     // =========================================================
 
-    // =========================================================
-    // SCENE LOAD DONE
-    // =========================================================
-
     public void OnSceneLoadDone(
-    NetworkRunner callbackRunner)
+        NetworkRunner callbackRunner)
     {
         Debug.Log(
             $"[SCENE] Scene loading completed. " +
             $"Runner = {callbackRunner.name}"
         );
+
 
         // ---------------------------------------------------------
         // IGNORE OTHER RUNNERS
@@ -1339,6 +1367,50 @@ public class NetworkRunnerHandler :
             return;
         }
 
+
+        // ---------------------------------------------------------
+        // DUNGEON SCENE
+        // ---------------------------------------------------------
+        //
+        // IMPORTANT:
+        // Do NOT use the normal SpawnPlayer() system here.
+        //
+        // The Dungeon scene is procedurally generated, so there
+        // are no static PlayerSpawn objects to use.
+        //
+        // DungeonPlayerSpawner is responsible for:
+        //
+        // 1. Waiting for DungeonGenerator.IsGenerated.
+        // 2. Getting the procedural dungeon spawn.
+        // 3. Teleporting the existing PlayerRoot, OR
+        // 4. Spawning a PlayerRoot if one does not exist.
+        //
+        // This prevents the old fallback:
+        //
+        //       (0, 10, 0)
+        //
+        // from being used in the Dungeon.
+        // ---------------------------------------------------------
+
+        if (IsDungeonScene())
+        {
+            Debug.Log(
+                "[DUNGEON] Dungeon scene detected."
+            );
+
+            Debug.Log(
+                "[DUNGEON] Skipping normal PlayerSpawn system. " +
+                "DungeonPlayerSpawner will handle player placement."
+            );
+
+            StartCoroutine(
+                WaitForDungeonPlayer()
+            );
+
+            return;
+        }
+
+
         // ---------------------------------------------------------
         // CHECK LOCAL PLAYER
         // ---------------------------------------------------------
@@ -1353,6 +1425,7 @@ public class NetworkRunnerHandler :
             return;
         }
 
+
         // ---------------------------------------------------------
         // CHECK IF PLAYER ALREADY EXISTS
         // ---------------------------------------------------------
@@ -1361,6 +1434,7 @@ public class NetworkRunnerHandler :
             callbackRunner.GetPlayerObject(
                 callbackRunner.LocalPlayer
             );
+
 
         // ---------------------------------------------------------
         // SPAWN PLAYER IF NECESSARY
@@ -1373,16 +1447,19 @@ public class NetworkRunnerHandler :
                 "Spawning..."
             );
 
+
             SpawnPlayer(
                 callbackRunner,
                 callbackRunner.LocalPlayer
             );
+
 
             localPlayer =
                 callbackRunner.GetPlayerObject(
                     callbackRunner.LocalPlayer
                 );
         }
+
 
         // ---------------------------------------------------------
         // VERIFY PLAYER SPAWN
@@ -1398,9 +1475,11 @@ public class NetworkRunnerHandler :
             return;
         }
 
+
         Debug.Log(
             $"[SPAWN] Local player confirmed: {localPlayer.name}"
         );
+
 
         // ---------------------------------------------------------
         // PLAYER IS NOW IN THE GAME
@@ -1408,6 +1487,108 @@ public class NetworkRunnerHandler :
 
         CompleteLoading();
     }
+
+
+    // =========================================================
+    // WAIT FOR DUNGEON PLAYER
+    // =========================================================
+    //
+    // DungeonPlayerSpawner is responsible for the actual
+    // procedural spawn/teleport.
+    //
+    // This coroutine only waits for that process to finish
+    // before removing the loading screen.
+    // =========================================================
+
+    private System.Collections.IEnumerator WaitForDungeonPlayer()
+    {
+        const float timeout = 30f;
+
+        float elapsed = 0f;
+
+        Debug.Log(
+            "[DUNGEON] Waiting for DungeonPlayerSpawner " +
+            "to spawn/teleport the local player..."
+        );
+
+
+        while (elapsed < timeout)
+        {
+            // -----------------------------------------------------
+            // Make sure the runner still exists.
+            // -----------------------------------------------------
+
+            if (runner == null)
+            {
+                Debug.LogWarning(
+                    "[DUNGEON] Runner became null while waiting " +
+                    "for Dungeon player."
+                );
+
+                yield break;
+            }
+
+
+            // -----------------------------------------------------
+            // Make sure we have a valid LocalPlayer.
+            // -----------------------------------------------------
+
+            if (runner.LocalPlayer != PlayerRef.None)
+            {
+                NetworkObject playerObject =
+                    runner.GetPlayerObject(
+                        runner.LocalPlayer
+                    );
+
+
+                // -------------------------------------------------
+                // DungeonPlayerSpawner has successfully created
+                // or assigned the player's NetworkObject.
+                // -------------------------------------------------
+
+                if (playerObject != null)
+                {
+                    Debug.Log(
+                        "[DUNGEON] Local player confirmed after " +
+                        "DungeonPlayerSpawner."
+                    );
+
+                    Debug.Log(
+                        $"[DUNGEON] Player object: " +
+                        $"{playerObject.name}"
+                    );
+
+
+                    CompleteLoading();
+
+                    yield break;
+                }
+            }
+
+
+            elapsed += Time.deltaTime;
+
+            yield return null;
+        }
+
+
+        // ---------------------------------------------------------
+        // TIMEOUT
+        // ---------------------------------------------------------
+
+        Debug.LogError(
+            "[DUNGEON] Timed out waiting for " +
+            "DungeonPlayerSpawner to create the local player."
+        );
+
+        Debug.LogError(
+            "[DUNGEON] Check that DungeonPlayerSpawner exists " +
+            "in the Dungeon scene and that its Player Prefab " +
+            "is assigned."
+        );
+    }
+
+
     // =========================================================
     // AREA OF INTEREST
     // =========================================================

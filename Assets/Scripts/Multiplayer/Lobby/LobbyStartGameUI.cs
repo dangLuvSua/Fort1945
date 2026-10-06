@@ -1,4 +1,5 @@
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,6 +20,12 @@ public class LobbyStartGameUI : MonoBehaviour
         if (manager == null)
             return;
 
+        // Hide lobby ready count once the game starts
+        if (readyCountText != null)
+        {
+            readyCountText.gameObject.SetActive(!manager.GameStarted);
+        }
+
         bool isHost = manager.IsHost;
         bool allReady = manager.AreAllPlayersReady();
 
@@ -38,6 +45,15 @@ public class LobbyStartGameUI : MonoBehaviour
     {
         if (readyCountText == null)
             return;
+
+        if (manager.GameStarted)
+        {
+            readyCountText.gameObject.SetActive(false);
+            hostStatusText.gameObject.SetActive(false);
+            return;
+        }
+
+        readyCountText.gameObject.SetActive(true);
 
         readyCountText.text =
             $"{manager.GetReadyPlayerCount()} / {manager.GetPlayerCount()} READY";
