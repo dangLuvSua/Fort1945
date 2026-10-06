@@ -3,10 +3,60 @@ using Fusion;
 using UnityEngine;
 using UnityEngine.AI;
 
+public enum GameDifficulty
+{
+    Easy,
+    Normal,
+    Difficult
+}
 public class NetworkGameManager : NetworkBehaviour
 {
     public static NetworkGameManager Instance { get; private set; }
 
+    [Networked]
+    public GameDifficulty Difficulty { get; private set; }
+           = GameDifficulty.Normal;
+
+    public void SetDifficulty(GameDifficulty difficulty)
+    {
+        if (!networkStateReady)
+        {
+            Debug.LogWarning(
+                "[DIFFICULTY] Cannot set difficulty yet. " +
+                "NetworkGameManager has not been spawned."
+            );
+
+            return;
+        }
+
+        if (!IsHost)
+        {
+            Debug.LogWarning(
+                "[DIFFICULTY] Only the host can change the difficulty."
+            );
+
+            return;
+        }
+
+        if (GameStarted)
+        {
+            Debug.LogWarning(
+                "[DIFFICULTY] Cannot change difficulty because the game has already started."
+            );
+
+            return;
+        }
+
+        Difficulty = difficulty;
+
+        Debug.Log(
+            $"[DIFFICULTY] Difficulty has been set to: {Difficulty}"
+        );
+    }
+    public string GetDifficultyName()
+    {
+        return Difficulty.ToString();
+    }
     [Networked]
     public NetworkBool GameStarted { get; private set; }
 
@@ -16,6 +66,9 @@ public class NetworkGameManager : NetworkBehaviour
     [Header("Soldier Navigation")]
     [SerializeField] private Transform soldierVisual;
     [SerializeField] private NavMeshAgent soldierAgent;
+    private bool networkStateReady;
+
+    public bool IsNetworkStateReady => networkStateReady;
 
     // =========================================================
     // INTRO FLOW STATE
@@ -329,6 +382,8 @@ public class NetworkGameManager : NetworkBehaviour
 
     private void OnDestroy()
     {
+        networkStateReady = false;
+
         if (Instance == this)
         {
             Instance = null;
@@ -342,21 +397,12 @@ public class NetworkGameManager : NetworkBehaviour
 
     public override void Spawned()
     {
-        Debug.Log(
-            "[GAME MANAGER] Spawned."
-        );
+        Debug.Log("[GAME MANAGER] Spawned.");
+        Debug.Log($"[GAME MANAGER] State Authority: {Object.HasStateAuthority}");
+        Debug.Log($"[GAME MANAGER] Is Shared Master: {IsHost}");
 
-        Debug.Log(
-            $"[GAME MANAGER] State Authority: " +
-            $"{Object.HasStateAuthority}"
-        );
+        networkStateReady = true;
 
-        Debug.Log(
-            $"[GAME MANAGER] Is Shared Master: {IsHost}"
-        );
-
-        // Only the State Authority is allowed to initialize
-        // Networked properties.
         if (Object.HasStateAuthority)
         {
             GameStarted = false;
@@ -374,12 +420,10 @@ public class NetworkGameManager : NetworkBehaviour
             TeleportCountdown = 0f;
             DungeonSeed = 0;
 
-            Debug.Log(
-                "[GAME MANAGER] Network state initialized."
-            );
+            Debug.Log("[GAME MANAGER] Network state initialized.");
+            Debug.Log($"[DIFFICULTY] Current difficulty: {Difficulty}");
         }
     }
-
 
     // =========================================================
     // HOST CHECK
@@ -475,13 +519,12 @@ public class NetworkGameManager : NetworkBehaviour
         GameStarted = true;
         LobbyLocked = true;
 
-        Debug.Log(
-            "[GAME MANAGER] GAME STARTED."
-        );
+        Debug.Log($"[GAME] GAME STARTED.");
+        Debug.Log($"[DIFFICULTY] Game starting with difficulty: {Difficulty}");
+        Debug.Log("[GAME] Lobby locked.");
 
-        Debug.Log(
-            "[GAME MANAGER] Lobby locked."
-        );
+
+
     }
 
 
@@ -2447,125 +2490,125 @@ public class NetworkGameManager : NetworkBehaviour
         return dot;
     }
 
-private GameObject CreateAttachedDot(
-    Transform parent,
-    Vector3 localPosition,
-    float scale,
-    float pulseCyclesPerSecond,
-    float swell,
-    float lifeSeconds,
-    Vector3 velocity)
-{
-    GameObject dot =
-        new GameObject(
-            "GhostDot"
+    private GameObject CreateAttachedDot(
+        Transform parent,
+        Vector3 localPosition,
+        float scale,
+        float pulseCyclesPerSecond,
+        float swell,
+        float lifeSeconds,
+        Vector3 velocity)
+    {
+        GameObject dot =
+            new GameObject(
+                "GhostDot"
+            );
+
+
+        dot.transform.SetParent(
+            parent,
+            false
         );
 
 
-    dot.transform.SetParent(
-        parent,
-        false
-    );
+        dot.transform.localPosition =
+            localPosition;
 
 
-    dot.transform.localPosition =
-        localPosition;
+        GhostDot dotScript =
+            dot.AddComponent<GhostDot>();
 
 
-    GhostDot dotScript =
-        dot.AddComponent<GhostDot>();
+        dotScript.Configure(
+            velocity,
+            lifeSeconds,
+            pulseCyclesPerSecond,
+            swell,
+            scale
+        );
 
 
-    dotScript.Configure(
-        velocity,
-        lifeSeconds,
-        pulseCyclesPerSecond,
-        swell,
-        scale
-    );
-
-
-    return dot;
-}
+        return dot;
+    }
     // =========================================================
     // PING
     // =========================================================
 
-// =========================================================
-// PING
-// =========================================================
+    // =========================================================
+    // PING
+    // =========================================================
 
-private void TriggerLocalPing()
-{
-    Vector3 origin =
-        GetLocalPlayerPosition();
-
-
-    const int dotCount = 20;
-
-
-    for (int i = 0;
-         i < dotCount;
-         i++)
+    private void TriggerLocalPing()
     {
-        float angle =
-            (i / (float)dotCount) *
-            Mathf.PI *
-            2f;
+        Vector3 origin =
+            GetLocalPlayerPosition();
 
 
-        Vector3 direction =
-            new Vector3(
-                Mathf.Cos(angle),
-                0f,
-                Mathf.Sin(angle)
+        const int dotCount = 20;
+
+
+        for (int i = 0;
+             i < dotCount;
+             i++)
+        {
+            float angle =
+                (i / (float)dotCount) *
+                Mathf.PI *
+                2f;
+
+
+            Vector3 direction =
+                new Vector3(
+                    Mathf.Cos(angle),
+                    0f,
+                    Mathf.Sin(angle)
+                );
+
+
+            CreateDot(
+                origin +
+                direction *
+                (
+                    0.6f +
+                    (i % 3) *
+                    0.25f
+                ),
+
+                0.28f,
+
+                6f,
+
+                0.35f,
+
+                1.1f,
+
+                direction * 16f
             );
+        }
 
 
-        CreateDot(
+        // =========================================================
+        // PING WORLD TAG
+        // =========================================================
+
+        CreateWorldTag(
             origin +
-            direction *
-            (
-                0.6f +
-                (i % 3) *
-                0.25f
+            Vector3.up * 3f,
+
+            "PING!",
+
+            new Color(
+                1f,
+                1f,
+                1f,
+                1f
             ),
 
-            0.28f,
+            56f,
 
-            6f,
-
-            0.35f,
-
-            1.1f,
-
-            direction * 16f
+            1.2f
         );
     }
-
-
-    // =========================================================
-    // PING WORLD TAG
-    // =========================================================
-
-    CreateWorldTag(
-        origin +
-        Vector3.up * 3f,
-
-        "PING!",
-
-        new Color(
-            1f,
-            1f,
-            1f,
-            1f
-        ),
-
-        56f,
-
-        1.2f
-    );
-}
     // =========================================================
     // SOLDIER MODEL
     // =========================================================

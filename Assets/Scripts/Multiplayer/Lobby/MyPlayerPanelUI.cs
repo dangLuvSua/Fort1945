@@ -20,6 +20,11 @@ public class MyPlayerPanelUI : MonoBehaviour
     private LobbyPlayerState localPlayerState;
     private NetworkRunner runner;
 
+
+    // =====================================================
+    // UNITY
+    // =====================================================
+
     private void Start()
     {
         Debug.Log(
@@ -44,17 +49,30 @@ public class MyPlayerPanelUI : MonoBehaviour
         FindLocalPlayer();
     }
 
+
     private void Update()
     {
+        // -------------------------------------------------
+        // Find Runner
+        // -------------------------------------------------
+
         if (runner == null)
         {
             FindRunner();
         }
 
+        // -------------------------------------------------
+        // Find Local Player
+        // -------------------------------------------------
+
         if (localPlayerState == null)
         {
             FindLocalPlayer();
         }
+
+        // -------------------------------------------------
+        // Update Player Information
+        // -------------------------------------------------
 
         if (localPlayerState != null)
         {
@@ -65,6 +83,11 @@ public class MyPlayerPanelUI : MonoBehaviour
             UpdateReadyFromProfileFallback();
         }
     }
+
+
+    // =====================================================
+    // FIND NETWORK RUNNER
+    // =====================================================
 
     private void FindRunner()
     {
@@ -78,6 +101,11 @@ public class MyPlayerPanelUI : MonoBehaviour
             );
         }
     }
+
+
+    // =====================================================
+    // FIND LOCAL PLAYER
+    // =====================================================
 
     private void FindLocalPlayer()
     {
@@ -118,9 +146,17 @@ public class MyPlayerPanelUI : MonoBehaviour
         }
     }
 
+
+    // =====================================================
+    // PLAYER PROFILE
+    // =====================================================
+
     private void UpdateFromPlayerProfile()
     {
+        // -------------------------------------------------
         // PLAYER NAME
+        // -------------------------------------------------
+
         if (playerNameText != null)
         {
             string playerName =
@@ -135,19 +171,32 @@ public class MyPlayerPanelUI : MonoBehaviour
                 playerName;
         }
 
+
+        // -------------------------------------------------
         // CHARACTER AVATAR
+        // -------------------------------------------------
+
         string characterId =
             PlayerProfile.SelectedCharacter;
 
         SetCharacterAvatar(characterId);
     }
 
+
+    // =====================================================
+    // NETWORK PLAYER STATE
+    // =====================================================
+
     private void UpdateFromNetworkState()
     {
         if (localPlayerState == null)
             return;
 
+
+        // -------------------------------------------------
         // PLAYER NAME
+        // -------------------------------------------------
+
         if (playerNameText != null)
         {
             string playerName =
@@ -168,7 +217,11 @@ public class MyPlayerPanelUI : MonoBehaviour
                 playerName;
         }
 
+
+        // -------------------------------------------------
         // CHARACTER
+        // -------------------------------------------------
+
         string characterId =
             localPlayerState.SelectedCharacter.ToString();
 
@@ -180,12 +233,42 @@ public class MyPlayerPanelUI : MonoBehaviour
 
         SetCharacterAvatar(characterId);
 
-        // READY
+
+        // -------------------------------------------------
+        // READY / IN-GAME
+        // -------------------------------------------------
+
         UpdateReadyUI();
     }
 
+
+    // =====================================================
+    // FALLBACK READY UI
+    // =====================================================
+
     private void UpdateReadyFromProfileFallback()
     {
+        // If the NetworkGameManager exists and the game
+        // has already started, show In-Game instead.
+        NetworkGameManager manager =
+            NetworkGameManager.Instance;
+
+        if (manager != null &&
+            manager.IsNetworkStateReady &&
+            manager.GameStarted)
+        {
+            SetInGameUI();
+            return;
+        }
+
+
+        // Normal lobby fallback.
+        if (readyButton != null)
+        {
+            readyButton.gameObject.SetActive(true);
+            readyButton.interactable = true;
+        }
+
         if (readyButtonText != null)
         {
             readyButtonText.text =
@@ -199,10 +282,49 @@ public class MyPlayerPanelUI : MonoBehaviour
         }
     }
 
+
+    // =====================================================
+    // READY UI
+    // =====================================================
+
     private void UpdateReadyUI()
     {
+        if (localPlayerState == null)
+            return;
+
+
+        // -------------------------------------------------
+        // IMPORTANT:
+        // Check GameStarted only after the manager has
+        // completed Fusion Spawned().
+        // -------------------------------------------------
+
+        NetworkGameManager manager =
+            NetworkGameManager.Instance;
+
+        if (manager != null &&
+            manager.IsNetworkStateReady &&
+            manager.GameStarted)
+        {
+            SetInGameUI();
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // GAME HAS NOT STARTED
+        // -------------------------------------------------
+
+        if (readyButton != null)
+        {
+            readyButton.gameObject.SetActive(true);
+            readyButton.interactable = true;
+        }
+
+
         bool isReady =
             localPlayerState.IsReady;
+
 
         if (readyButtonText != null)
         {
@@ -212,6 +334,7 @@ public class MyPlayerPanelUI : MonoBehaviour
                     : "READY";
         }
 
+
         if (readyStatusText != null)
         {
             readyStatusText.text =
@@ -220,6 +343,39 @@ public class MyPlayerPanelUI : MonoBehaviour
                     : "NOT READY";
         }
     }
+
+
+    // =====================================================
+    // IN-GAME UI
+    // =====================================================
+
+    private void SetInGameUI()
+    {
+        // -------------------------------------------------
+        // Hide Ready button
+        // -------------------------------------------------
+
+        if (readyButton != null)
+        {
+            readyButton.gameObject.SetActive(false);
+        }
+
+
+        // -------------------------------------------------
+        // Change status
+        // -------------------------------------------------
+
+        if (readyStatusText != null)
+        {
+            readyStatusText.text =
+                "IN-GAME";
+        }
+    }
+
+
+    // =====================================================
+    // CHARACTER AVATAR
+    // =====================================================
 
     private void SetCharacterAvatar(
         string characterId)
@@ -249,6 +405,7 @@ public class MyPlayerPanelUI : MonoBehaviour
             );
         }
     }
+
 
     private Sprite GetCharacterAvatar(
         string characterId)
@@ -293,10 +450,40 @@ public class MyPlayerPanelUI : MonoBehaviour
         return characterAvatars[index];
     }
 
+
+    // =====================================================
+    // READY BUTTON
+    // =====================================================
+
     public void ToggleReady()
     {
         FindRunner();
         FindLocalPlayer();
+
+
+        // -------------------------------------------------
+        // Do not allow Ready after game starts.
+        // -------------------------------------------------
+
+        NetworkGameManager manager =
+            NetworkGameManager.Instance;
+
+        if (manager != null &&
+            manager.IsNetworkStateReady &&
+            manager.GameStarted)
+        {
+            Debug.Log(
+                "[MY PLAYER PANEL] " +
+                "Cannot toggle Ready. Game is already in-game."
+            );
+
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // Find player state
+        // -------------------------------------------------
 
         if (localPlayerState == null)
         {
@@ -309,12 +496,18 @@ public class MyPlayerPanelUI : MonoBehaviour
             return;
         }
 
+
+        // -------------------------------------------------
+        // Toggle Ready
+        // -------------------------------------------------
+
         bool newReadyState =
             !localPlayerState.IsReady;
 
         localPlayerState.SetReady(
             newReadyState
         );
+
 
         Debug.Log(
             $"[MY PLAYER PANEL] " +

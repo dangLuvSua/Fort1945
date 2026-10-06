@@ -219,21 +219,13 @@ public class SoldierGuidePrompt : MonoBehaviour
         NetworkGameManager manager =
             NetworkGameManager.Instance;
 
-
-        if (manager == null)
+        if (manager == null ||
+            !manager.IsNetworkStateReady)
         {
             return false;
         }
 
-
-        // -----------------------------------------------------
-        // Prompt appears only while the soldier-follow phase
-        // is active and before teleportation begins.
-        // -----------------------------------------------------
-
-        return
-            manager.SoldierStarted &&
-            !manager.TeleportStarted;
+        return manager.SoldierStarted;
     }
 
 
