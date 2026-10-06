@@ -4,46 +4,38 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // =========================================================
-//  MissionPanel  —  MonoBehaviour
-//  Owns and drives all UI elements of the mission-objective
-//  panel.  Supports an optional Animator for transitions;
-//  falls back to instant show/hide if none is assigned.
-//
-//  Driven externally by MissionManager — do not call
-//  Show/Hide directly from gameplay code; use the static
-//  MissionManager API instead.
+//  MissionPanel — Mission Objective UI
 // =========================================================
 
-/// <summary>
-/// Controls the visibility and content of the mission-objective
-/// HUD panel.  Attach this component to the root Canvas GameObject
-/// that contains the panel UI.
-/// </summary>
 public class MissionPanel : MonoBehaviour
 {
     // =========================================================
-    //  Inspector Fields — References
+    // Inspector Fields — References
     // =========================================================
 
     [Header("References")]
 
-    [Tooltip("The root GameObject of the panel. Activated/deactivated to show or hide the panel.")]
+    [Tooltip("The root GameObject of the panel.")]
     [SerializeField] private GameObject panelRoot;
 
     [Tooltip("TextMeshPro label used for the mission title.")]
     [SerializeField] private TMP_Text titleText;
 
-    [Tooltip("TextMeshPro label used for the mission description body.")]
+    [Tooltip("TextMeshPro label used for the mission description.")]
     [SerializeField] private TMP_Text descriptionText;
 
-    [Tooltip("Image component used to display the optional mission icon sprite.")]
-    [SerializeField] private Image iconImage;          // Can be null
+    [Tooltip("Image component used for the optional mission icon.")]
+    [SerializeField] private Image iconImage;
 
-    [Tooltip("Container GameObject that wraps the icon — hidden when no icon is provided.")]
-    [SerializeField] private GameObject iconContainer; // Hidden when no icon
+    [Tooltip("Container GameObject that wraps the icon.")]
+    [SerializeField] private GameObject iconContainer;
+
+    [Tooltip("Button used to acknowledge and close the mission panel.")]
+    [SerializeField] private Button okButton;
+
 
     // =========================================================
-    //  Inspector Fields — Animation
+    // Inspector Fields — Animation
     // =========================================================
 
     [Header("Animation")]
@@ -57,8 +49,9 @@ public class MissionPanel : MonoBehaviour
     [Tooltip("Animator trigger parameter name used to play the hide animation.")]
     [SerializeField] private string hideTrigger = "Hide";
 
+
     // =========================================================
-    //  Inspector Fields — Auto-hide
+    // Inspector Fields — Auto-hide
     // =========================================================
 
     [Header("Auto-hide")]
@@ -66,80 +59,131 @@ public class MissionPanel : MonoBehaviour
     [Tooltip("Seconds before auto-hiding. Overridden per-call. 0 = persistent.")]
     [SerializeField] private float defaultDuration = 0f;
 
+
     // =========================================================
-    //  Internal State
+    // Internal State
     // =========================================================
 
-    /// <summary>Reference to the running auto-hide coroutine, if any.</summary>
     private Coroutine autoHideCoroutine;
-
-    /// <summary>Whether the panel is currently in the shown state.</summary>
     private bool isShowing;
 
+
     // =========================================================
-    //  Unity Lifecycle
+    // Unity Lifecycle
     // =========================================================
 
     private void Awake()
     {
         if (panelRoot == null)
         {
-            Debug.LogError("[MISSION PANEL] panelRoot is not assigned! Panel will not function correctly.");
+            Debug.LogError(
+                "[MISSION PANEL] panelRoot is not assigned! Panel will not function correctly."
+            );
+
             return;
         }
 
-        // Always start hidden so the panel does not flash on scene load.
+        // Start hidden.
         panelRoot.SetActive(false);
         isShowing = false;
+
+        // Connect OK button automatically.
+        if (okButton != null)
+        {
+            okButton.onClick.RemoveListener(OnOkButtonClicked);
+            okButton.onClick.AddListener(OnOkButtonClicked);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[MISSION PANEL] OK Button is not assigned."
+            );
+        }
     }
 
+
+    private void OnDestroy()
+    {
+        if (okButton != null)
+        {
+            okButton.onClick.RemoveListener(OnOkButtonClicked);
+        }
+    }
+
+
     // =========================================================
-    //  Public API — Show
+    // OK Button
     // =========================================================
 
     /// <summary>
-    /// Populates all panel UI elements and makes the panel visible.
-    /// If the panel is already showing, the content is replaced and
-    /// the auto-hide timer (if any) is restarted.
+    /// Called when the player presses the OK button.
     /// </summary>
-    /// <param name="title">Heading text.</param>
-    /// <param name="description">Body/description text.</param>
-    /// <param name="icon">Optional icon sprite; pass null to hide the icon container.</param>
-    /// <param name="duration">Seconds before auto-hide; 0 = persistent until manually hidden.</param>
-    /// <param name="titleColor">Color applied to the title label.</param>
-    /// <param name="descColor">Color applied to the description label.</param>
-    public void Show(string title, string description, Sprite icon, float duration, Color titleColor, Color descColor)
+    private void OnOkButtonClicked()
     {
-        // ---- Stop any pending auto-hide ----
+        Debug.Log("[MISSION PANEL] OK button pressed.");
+
+        MissionManager.Hide();
+    }
+
+
+    // =========================================================
+    // Public API — Show
+    // =========================================================
+
+    public void Show(
+        string title,
+        string description,
+        Sprite icon,
+        float duration,
+        Color titleColor,
+        Color descColor)
+    {
+        // Stop previous auto-hide.
         if (autoHideCoroutine != null)
         {
             StopCoroutine(autoHideCoroutine);
             autoHideCoroutine = null;
         }
 
-        // ---- Populate title ----
+
+        // -----------------------------------------------------
+        // Title
+        // -----------------------------------------------------
+
         if (titleText != null)
         {
-            titleText.text  = title;
+            titleText.text = title;
             titleText.color = titleColor;
         }
         else
         {
-            Debug.LogWarning("[MISSION PANEL] titleText reference is not assigned.");
+            Debug.LogWarning(
+                "[MISSION PANEL] titleText reference is not assigned."
+            );
         }
 
-        // ---- Populate description ----
+
+        // -----------------------------------------------------
+        // Description
+        // -----------------------------------------------------
+
         if (descriptionText != null)
         {
-            descriptionText.text  = description;
+            descriptionText.text = description;
             descriptionText.color = descColor;
         }
         else
         {
-            Debug.LogWarning("[MISSION PANEL] descriptionText reference is not assigned.");
+            Debug.LogWarning(
+                "[MISSION PANEL] descriptionText reference is not assigned."
+            );
         }
 
-        // ---- Icon ----
+
+        // -----------------------------------------------------
+        // Icon
+        // -----------------------------------------------------
+
         if (iconImage != null)
         {
             if (icon != null)
@@ -151,57 +195,78 @@ public class MissionPanel : MonoBehaviour
             }
             else
             {
-                // No icon provided — hide the container so layout stays clean.
                 if (iconContainer != null)
                     iconContainer.SetActive(false);
             }
         }
 
-        // ---- Activate panel root ----
+
+        // -----------------------------------------------------
+        // Show Panel
+        // -----------------------------------------------------
+
         if (panelRoot != null)
             panelRoot.SetActive(true);
 
-        // ---- Trigger show animation (if Animator is assigned) ----
+
+        // -----------------------------------------------------
+        // Show Animation
+        // -----------------------------------------------------
+
         if (panelAnimator != null)
             panelAnimator.SetTrigger(showTrigger);
 
+
         isShowing = true;
 
-        // ---- Schedule auto-hide (use per-call duration; fall back to inspector default) ----
-        float effectiveDuration = duration > 0f ? duration : defaultDuration;
+
+        // -----------------------------------------------------
+        // Auto Hide
+        // -----------------------------------------------------
+
+        float effectiveDuration =
+            duration > 0f ? duration : defaultDuration;
+
         if (effectiveDuration > 0f)
-            autoHideCoroutine = StartCoroutine(AutoHideCoroutine(effectiveDuration));
+        {
+            autoHideCoroutine =
+                StartCoroutine(AutoHideCoroutine(effectiveDuration));
+        }
+
 
         Debug.Log("[MISSION PANEL] Showing: " + title);
     }
 
+
     // =========================================================
-    //  Public API — Hide
+    // Public API — Hide
     // =========================================================
 
-    /// <summary>
-    /// Hides the mission panel.  If an Animator is assigned the hide
-    /// trigger is fired and the panel root is deactivated after a short
-    /// delay to allow the animation to finish; otherwise it is
-    /// deactivated immediately.
-    /// </summary>
     public void Hide()
     {
         if (!isShowing)
             return;
 
-        // ---- Stop any pending auto-hide ----
+
+        // Stop auto-hide.
         if (autoHideCoroutine != null)
         {
             StopCoroutine(autoHideCoroutine);
             autoHideCoroutine = null;
         }
 
-        // ---- Play hide animation or deactivate immediately ----
+
+        // -----------------------------------------------------
+        // Hide Animation
+        // -----------------------------------------------------
+
         if (panelAnimator != null)
         {
             panelAnimator.SetTrigger(hideTrigger);
-            StartCoroutine(DeactivateAfterDelay(0.5f));
+
+            StartCoroutine(
+                DeactivateAfterDelay(0.5f)
+            );
         }
         else
         {
@@ -209,28 +274,25 @@ public class MissionPanel : MonoBehaviour
                 panelRoot.SetActive(false);
         }
 
+
         isShowing = false;
+
         Debug.Log("[MISSION PANEL] Hidden.");
     }
 
+
     // =========================================================
-    //  Private Coroutines
+    // Coroutines
     // =========================================================
 
-    /// <summary>
-    /// Waits for <paramref name="delay"/> seconds then calls <see cref="Hide"/>.
-    /// </summary>
     private IEnumerator AutoHideCoroutine(float delay)
     {
         yield return new WaitForSeconds(delay);
+
         Hide();
     }
 
-    /// <summary>
-    /// Waits for <paramref name="delay"/> seconds then deactivates
-    /// <see cref="panelRoot"/>. Used to let the hide animation finish
-    /// before the GameObject is turned off.
-    /// </summary>
+
     private IEnumerator DeactivateAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);

@@ -9,13 +9,18 @@ public enum GameDifficulty
     Normal,
     Difficult
 }
+
 public class NetworkGameManager : NetworkBehaviour
 {
     public static NetworkGameManager Instance { get; private set; }
 
+    // =========================================================
+    // DIFFICULTY
+    // =========================================================
+
     [Networked]
     public GameDifficulty Difficulty { get; private set; }
-           = GameDifficulty.Normal;
+        = GameDifficulty.Normal;
 
     public void SetDifficulty(GameDifficulty difficulty)
     {
@@ -53,36 +58,47 @@ public class NetworkGameManager : NetworkBehaviour
             $"[DIFFICULTY] Difficulty has been set to: {Difficulty}"
         );
     }
+
     public string GetDifficultyName()
     {
+        if (!networkStateReady)
+            return GameDifficulty.Normal.ToString();
+
         return Difficulty.ToString();
     }
+
+
+    // =========================================================
+    // NETWORK GAME STATE
+    // =========================================================
+
     [Networked]
     public NetworkBool GameStarted { get; private set; }
 
     [Networked]
     public NetworkBool LobbyLocked { get; private set; }
 
+
+    // =========================================================
+    // SOLDIER NAVIGATION REFERENCES
+    // =========================================================
+
     [Header("Soldier Navigation")]
-    [SerializeField] private Transform soldierVisual;
-    [SerializeField] private NavMeshAgent soldierAgent;
+    [SerializeField]
+    private Transform soldierVisual;
+
+    [SerializeField]
+    private NavMeshAgent soldierAgent;
+
     private bool networkStateReady;
 
-    public bool IsNetworkStateReady => networkStateReady;
+    public bool IsNetworkStateReady =>
+        networkStateReady;
+
 
     // =========================================================
     // INTRO FLOW STATE
     // =========================================================
-    // The "intro flow" is the ceremonial start of a run:
-    //   all ready -> host starts -> gate opens -> everyone enters
-    //   -> PING! -> soldier guide walks the ghost path through the
-    //   dungeon door -> players step into the RED zone in front of
-    //   the door -> it turns GREEN -> countdown -> teleport to the
-    //   procedurally generated dungeon scene.
-    //
-    // The HOST (State Authority) is the source of truth for every
-    // transition below. Clients read the replicated state and render
-    // the world-space visuals locally.
 
     [Networked]
     public NetworkBool AllPlayersEnteredGate { get; private set; }
@@ -101,6 +117,28 @@ public class NetworkGameManager : NetworkBehaviour
 
     [Networked]
     public NetworkBool TeleportStarted { get; private set; }
+
+
+    // =========================================================
+    // SOLDIER INTERACTION / DIALOGUE
+    // =========================================================
+
+    [Networked]
+    public NetworkBool SoldierInteractionStarted { get; private set; }
+
+    [Networked]
+    public NetworkBool SoldierDialogueActive { get; private set; }
+
+    [Header("Soldier Dialogue")]
+    [SerializeField]
+    private float soldierDialogueDuration = 3f;
+
+    private float soldierDialogueTimer;
+
+
+    // =========================================================
+    // REPLICATED SOLDIER STATE
+    // =========================================================
 
     [Networked]
     public Vector3 SoldierPosition { get; private set; }
@@ -130,8 +168,7 @@ public class NetworkGameManager : NetworkBehaviour
     [Tooltip(
         "Optional. Add an empty GameObject named " +
         "(default) DungeonEntryZone in Fort2 and move it in front " +
-        "of the dungeon door. The flow will use its position as the " +
-        "zone centre. If missing, zoneFallbackOffset from the gate is used."
+        "of the dungeon door."
     )]
     [SerializeField]
     private string dungeonEntryZoneName = "DungeonEntryZone";
@@ -166,71 +203,77 @@ public class NetworkGameManager : NetworkBehaviour
 
     [Tooltip(
         "Optional. Name of a scene object that should visually " +
-        "represent the guide soldier. Example: SoldierGuideModel."
+        "represent the guide soldier."
     )]
     [SerializeField]
     private string soldierModelObjectName =
         "SoldierGuideModel";
 
     [Tooltip(
-        "How fast the soldier guide walks the route (world units / second)."
+        "How fast the soldier guide walks the route."
     )]
     [SerializeField]
     private float soldierWalkSpeed = 2.8f;
 
     [Tooltip(
-        "Spacing of the glowing ghost-path dots (world units)."
+        "Spacing of the glowing ghost-path dots."
     )]
     [SerializeField]
     private float ghostPathSpacing = 1.4f;
 
     [Tooltip(
         "Start the walk route exactly where the SoldierGuideModel " +
-        "object sits in the scene instead of the derived gate offset."
+        "object sits in the scene."
     )]
     [SerializeField]
     private bool startFromModelPosition = true;
 
     [Tooltip(
-        "Degrees added to the model's yaw so it faces the travel " +
-        "direction. 0 = model's forward is +Z."
+        "Degrees added to the model's yaw."
     )]
     [SerializeField]
     private float soldierModelForwardYawOffset = 0f;
 
     [Tooltip(
-        "Optional scene object used as the exact NavMesh destination. " +
-        "Create an empty GameObject named SoldierDungeonDestination and " +
-        "place it just before the dungeon entrance. If empty, the manager " +
-        "uses a point in front of DungeonEntryZone."
+        "Optional scene object used as the exact NavMesh destination."
     )]
     [SerializeField]
     private string soldierDestinationObjectName =
         "SoldierDungeonDestination";
 
     [Tooltip(
-        "NavMesh movement speed. This replaces the old straight-line route movement."
+        "NavMesh movement speed."
     )]
     [SerializeField]
     private float soldierNavSpeed = 1.8f;
 
-    [Tooltip("NavMesh acceleration used for smooth starts and stops.")]
+    [Tooltip(
+        "NavMesh acceleration."
+    )]
     [SerializeField]
     private float soldierNavAcceleration = 6f;
 
-    [Tooltip("How close the soldier must get to the destination.")]
+    [Tooltip(
+        "How close the soldier must get to the destination."
+    )]
     [SerializeField]
     private float soldierNavStoppingDistance = 1f;
 
-    [Tooltip("How quickly the soldier turns while following the NavMesh path.")]
+    [Tooltip(
+        "How quickly the soldier turns."
+    )]
     [SerializeField]
     private float soldierNavAngularSpeed = 360f;
 
-    [Tooltip("How quickly remote clients interpolate toward the replicated soldier position.")]
+    [Tooltip(
+        "How quickly remote clients interpolate."
+    )]
     [SerializeField]
     private float soldierNetworkLerpSpeed = 12f;
 
-    [Tooltip("Automatically rebuild the visible ghost dots from the NavMesh path.")]
+    [Tooltip(
+        "Automatically rebuild visible ghost dots from the NavMesh path."
+    )]
     [SerializeField]
     private bool useNavMeshPathDots = true;
 
@@ -242,15 +285,13 @@ public class NetworkGameManager : NetworkBehaviour
     [Header("Soldier Animation")]
 
     [Tooltip(
-        "Float Animator parameter used for walking. " +
-        "Recommended: Speed."
+        "Float Animator parameter used for walking."
     )]
     [SerializeField]
     private string soldierSpeedParameter = "Speed";
 
     [Tooltip(
-        "Optional Bool Animator parameter. " +
-        "Used if IsWalking exists on the Animator."
+        "Optional Bool Animator parameter."
     )]
     [SerializeField]
     private string soldierWalkingParameter = "IsWalking";
@@ -262,7 +303,7 @@ public class NetworkGameManager : NetworkBehaviour
     private float soldierAnimationSpeed = 1f;
 
     [Tooltip(
-        "Artificial vertical bob. Set to 0 when using a real walking animation."
+        "Artificial vertical bob."
     )]
     [SerializeField]
     private float soldierBobAmount = 0f;
@@ -275,36 +316,30 @@ public class NetworkGameManager : NetworkBehaviour
     [Header("Intro Flow - Zone Transition")]
 
     [Tooltip(
-        "Seconds the zone stays GREEN before the squad is teleported."
+        "Seconds the zone stays GREEN before teleport."
     )]
     [SerializeField]
     private float teleportDelaySeconds = 2.5f;
 
 
     // =========================================================
-    // INTRO FLOW LOCAL VISUALS
+    // LOCAL VISUALS
     // =========================================================
 
     private GameObject gateTag;
-
 
     private readonly List<GameObject> pathDots =
         new List<GameObject>();
 
     private GameObject zoneVisual;
-
     private GameObject zoneTag;
 
     private bool soldierVisualBuilt;
-
     private bool pathDotsBuilt;
-
     private bool zoneVisualBuilt;
 
     private GameObject cachedGateObject;
-
     private GameObject cachedZoneObject;
-
     private GameObject cachedSoldierModel;
 
     private Vector3 soldierModelStartPosition =
@@ -313,6 +348,9 @@ public class NetworkGameManager : NetworkBehaviour
     private bool soldierModelStartPositionSet;
 
 
+    // =========================================================
+    // NAVMESH INTERNAL STATE
+    // =========================================================
 
     private NavMeshPath soldierNavPath;
 
@@ -321,7 +359,6 @@ public class NetworkGameManager : NetworkBehaviour
     private Vector3 soldierDestinationPosition;
 
     private bool soldierDestinationSet;
-
     private bool soldierNavStarted;
 
     private float soldierInitialPathDistance;
@@ -330,14 +367,21 @@ public class NetworkGameManager : NetworkBehaviour
 
 
     // =========================================================
-    // SOLDIER ANIMATION INTERNALS
+    // ANIMATION INTERNALS
     // =========================================================
 
     private Animator soldierAnimator;
 
     private bool soldierAnimatorInitialized;
-
     private bool soldierAnimatorWarningShown;
+
+
+    // =========================================================
+    // REMOTE SOLDIER ROTATION
+    // =========================================================
+
+    private Vector3 lastSoldierNetworkPosition;
+    private bool hasLastSoldierNetworkPosition;
 
 
     // =========================================================
@@ -355,7 +399,7 @@ public class NetworkGameManager : NetworkBehaviour
 
 
     // =========================================================
-    // UNITY
+    // UNITY - AWAKE
     // =========================================================
 
     private void Awake()
@@ -380,6 +424,10 @@ public class NetworkGameManager : NetworkBehaviour
     }
 
 
+    // =========================================================
+    // UNITY - DESTROY
+    // =========================================================
+
     private void OnDestroy()
     {
         networkStateReady = false;
@@ -392,14 +440,23 @@ public class NetworkGameManager : NetworkBehaviour
 
 
     // =========================================================
-    // FUSION
+    // FUSION - SPAWNED
     // =========================================================
 
     public override void Spawned()
     {
-        Debug.Log("[GAME MANAGER] Spawned.");
-        Debug.Log($"[GAME MANAGER] State Authority: {Object.HasStateAuthority}");
-        Debug.Log($"[GAME MANAGER] Is Shared Master: {IsHost}");
+        Debug.Log(
+            "[GAME MANAGER] Spawned."
+        );
+
+        Debug.Log(
+            $"[GAME MANAGER] State Authority: " +
+            $"{Object.HasStateAuthority}"
+        );
+
+        Debug.Log(
+            $"[GAME MANAGER] Is Shared Master: {IsHost}"
+        );
 
         networkStateReady = true;
 
@@ -409,21 +466,43 @@ public class NetworkGameManager : NetworkBehaviour
             LobbyLocked = false;
 
             AllPlayersEnteredGate = false;
+
+            // -------------------------------------------------
+            // SOLDIER FLOW
+            // -------------------------------------------------
+
+            SoldierInteractionStarted = false;
+            SoldierDialogueActive = false;
             SoldierStarted = false;
             SoldierReachedDoor = false;
+
+            // -------------------------------------------------
+            // ZONE FLOW
+            // -------------------------------------------------
+
             ZoneActive = false;
             ZoneGreen = false;
             TeleportStarted = false;
+
+            // -------------------------------------------------
+            // REPLICATED VALUES
+            // -------------------------------------------------
 
             SoldierPosition = Vector3.zero;
             SoldierProgress = 0f;
             TeleportCountdown = 0f;
             DungeonSeed = 0;
 
-            Debug.Log("[GAME MANAGER] Network state initialized.");
-            Debug.Log($"[DIFFICULTY] Current difficulty: {Difficulty}");
+            Debug.Log(
+                "[GAME MANAGER] Network state initialized."
+            );
+
+            Debug.Log(
+                $"[DIFFICULTY] Current difficulty: {Difficulty}"
+            );
         }
     }
+
 
     // =========================================================
     // HOST CHECK
@@ -499,9 +578,7 @@ public class NetworkGameManager : NetworkBehaviour
         }
 
         if (GameStarted)
-        {
             return;
-        }
 
         Debug.Log(
             "[GAME MANAGER] Checking whether all players are ready..."
@@ -510,7 +587,8 @@ public class NetworkGameManager : NetworkBehaviour
         if (!AreAllPlayersReady())
         {
             Debug.LogWarning(
-                "[GAME MANAGER] Cannot start. Not all players are ready."
+                "[GAME MANAGER] Cannot start. " +
+                "Not all players are ready."
             );
 
             return;
@@ -519,17 +597,200 @@ public class NetworkGameManager : NetworkBehaviour
         GameStarted = true;
         LobbyLocked = true;
 
-        Debug.Log($"[GAME] GAME STARTED.");
-        Debug.Log($"[DIFFICULTY] Game starting with difficulty: {Difficulty}");
-        Debug.Log("[GAME] Lobby locked.");
+        Debug.Log(
+            "[GAME] GAME STARTED."
+        );
 
+        Debug.Log(
+            $"[DIFFICULTY] Game starting with difficulty: {Difficulty}"
+        );
 
-
+        Debug.Log(
+            "[GAME] Lobby locked."
+        );
     }
 
 
     // =========================================================
-    // INTRO FLOW
+    // SOLDIER INTERACTION
+    // =========================================================
+
+    public void RequestSoldierInteraction()
+    {
+        if (Runner == null)
+        {
+            Debug.LogWarning(
+                "[SOLDIER] Cannot interact. Runner is null."
+            );
+
+            return;
+        }
+
+        if (!networkStateReady)
+        {
+            Debug.LogWarning(
+                "[SOLDIER] NetworkGameManager is not spawned yet."
+            );
+
+            return;
+        }
+
+        if (!AllPlayersEnteredGate)
+        {
+            Debug.LogWarning(
+                "[SOLDIER] Players have not entered the gate yet."
+            );
+
+            return;
+        }
+
+        if (SoldierInteractionStarted)
+        {
+            Debug.Log(
+                "[SOLDIER] Soldier has already been interacted with."
+            );
+
+            return;
+        }
+
+        if (!IsHost)
+        {
+            Debug.Log(
+                "[SOLDIER] Only the host can initiate " +
+                "the soldier interaction."
+            );
+
+            return;
+        }
+
+        Debug.Log(
+            "[SOLDIER] Host requested soldier interaction."
+        );
+
+        RPC_RequestSoldierInteraction();
+    }
+
+
+    [Rpc(
+        RpcSources.All,
+        RpcTargets.StateAuthority
+    )]
+    private void RPC_RequestSoldierInteraction(
+        RpcInfo info = default)
+    {
+        if (!Object.HasStateAuthority)
+            return;
+
+        if (SoldierInteractionStarted)
+            return;
+
+        if (!AllPlayersEnteredGate)
+            return;
+
+        // -------------------------------------------------
+        // Only Shared Mode Master Client may trigger.
+        // -------------------------------------------------
+
+        if (info.Source != Runner.LocalPlayer)
+        {
+            Debug.LogWarning(
+                "[SOLDIER] Non-host attempted to interact " +
+                "with the soldier."
+            );
+
+            return;
+        }
+
+        SoldierInteractionStarted = true;
+        SoldierDialogueActive = true;
+
+        soldierDialogueTimer = 0f;
+
+        Debug.Log(
+            "[SOLDIER] HOST INTERACTED WITH SOLDIER."
+        );
+
+        Debug.Log(
+            "[SOLDIER] Dialogue started for all players."
+        );
+
+        RPC_StartSoldierDialogue();
+    }
+
+
+    // =========================================================
+    // SOLDIER DIALOGUE RPC
+    // =========================================================
+
+    [Rpc(
+        RpcSources.StateAuthority,
+        RpcTargets.All
+    )]
+    private void RPC_StartSoldierDialogue(
+        RpcInfo info = default)
+    {
+        Debug.Log(
+            "[SOLDIER] Showing dialogue to local player."
+        );
+
+        SoldierDialogueController dialogue =
+            FindFirstObjectByType<SoldierDialogueController>(
+                FindObjectsInactive.Include
+            );
+
+        if (dialogue != null)
+        {
+            dialogue.ShowDialogue(
+                "Excuse me sir, how do we get out of this place?"
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[SOLDIER] SoldierDialogueController was not found."
+            );
+        }
+    }
+
+
+    // =========================================================
+    // SOLDIER DIALOGUE PROGRESSION
+    // =========================================================
+
+    private void UpdateSoldierDialogue()
+    {
+        if (!Object.HasStateAuthority)
+            return;
+
+        if (!SoldierDialogueActive)
+            return;
+
+        soldierDialogueTimer += Time.deltaTime;
+
+        if (soldierDialogueTimer <
+            soldierDialogueDuration)
+        {
+            return;
+        }
+
+        soldierDialogueTimer = 0f;
+
+        SoldierDialogueActive = false;
+
+        SoldierStarted = true;
+
+        Debug.Log(
+            "[SOLDIER] Dialogue finished."
+        );
+
+        Debug.Log(
+            "[SOLDIER] Soldier is now starting to walk."
+        );
+    }
+
+
+    // =========================================================
+    // MAIN UPDATE
     // =========================================================
 
     private void Update()
@@ -537,16 +798,21 @@ public class NetworkGameManager : NetworkBehaviour
         if (Runner == null)
             return;
 
-        if (!GameStarted)
-        {
+        if (!networkStateReady)
             return;
-        }
+
+        if (!GameStarted)
+            return;
 
         if (TeleportStarted)
             return;
 
         UpdateGatePhase();
+
+        UpdateSoldierDialogue();
+
         UpdateSoldierPhase();
+
         UpdateZonePhase();
     }
 
@@ -563,10 +829,6 @@ public class NetworkGameManager : NetworkBehaviour
         Vector3 gateCenter =
             GetGateCenter();
 
-        // ------------------------------------------------
-        // Show / refresh the gate tag.
-        // ------------------------------------------------
-
         int totalPlayers = 0;
         int playersInsideGate = 0;
 
@@ -576,6 +838,10 @@ public class NetworkGameManager : NetworkBehaviour
             out totalPlayers,
             out playersInsideGate
         );
+
+        // -------------------------------------------------
+        // Gate world tag
+        // -------------------------------------------------
 
         if (gateTag == null)
         {
@@ -606,9 +872,9 @@ public class NetworkGameManager : NetworkBehaviour
             }
         }
 
-        // ------------------------------------------------
-        // Host: decide when everyone is inside the gate.
-        // ------------------------------------------------
+        // -------------------------------------------------
+        // Only State Authority decides completion.
+        // -------------------------------------------------
 
         if (!Object.HasStateAuthority)
             return;
@@ -619,23 +885,61 @@ public class NetworkGameManager : NetworkBehaviour
             return;
         }
 
-        AllPlayersEnteredGate = true;
-        SoldierStarted = true;
+        // -------------------------------------------------
+        // Everyone entered.
+        // -------------------------------------------------
 
-        // Reset local NavMesh state. The State Authority will start the
-        // agent on the next UpdateSoldierPhase call.
+        AllPlayersEnteredGate = true;
+
+        // IMPORTANT:
+        // Soldier does NOT start here.
+        //
+        // The soldier now waits for:
+        //
+        // Host → E → Dialogue → SoldierStarted
+        //
+
+        SoldierInteractionStarted = false;
+        SoldierDialogueActive = false;
+        SoldierStarted = false;
+
+        SoldierReachedDoor = false;
+
         soldierNavStarted = false;
         soldierDestinationSet = false;
         soldierInitialPathDistance = 0f;
 
-        // Anchor the replicated guide position at the scene model start.
-        SoldierPosition =
-            soldierModelStartPositionSet
-                ? soldierModelStartPosition
-                : PointAlongRoute(
+        // -------------------------------------------------
+        // Set initial replicated position.
+        // -------------------------------------------------
+
+        if (!soldierModelStartPositionSet)
+        {
+            BuildSoldierVisual();
+        }
+
+        if (soldierModelStartPositionSet)
+        {
+            SoldierPosition =
+                soldierModelStartPosition;
+        }
+        else if (soldierAgent != null)
+        {
+            SoldierPosition =
+                soldierAgent.transform.position;
+        }
+        else
+        {
+            SoldierPosition =
+                PointAlongRoute(
                     GetSoldierRoute(),
                     0f
                 );
+        }
+
+        // -------------------------------------------------
+        // Dungeon seed
+        // -------------------------------------------------
 
         if (NetworkRunnerHandler.Instance != null)
         {
@@ -644,8 +948,11 @@ public class NetworkGameManager : NetworkBehaviour
         }
 
         Debug.Log(
-            "[GAME MANAGER] All players entered the gate. " +
-            "Soldier guide starting."
+            "[GAME MANAGER] All players entered the gate."
+        );
+
+        Debug.Log(
+            "[GAME MANAGER] Mission: Find the Soldier."
         );
 
         RPC_OnAllPlayersEntered();
@@ -661,27 +968,69 @@ public class NetworkGameManager : NetworkBehaviour
         if (!AllPlayersEnteredGate)
             return;
 
+        // -------------------------------------------------
+        // Make sure soldier exists.
+        // -------------------------------------------------
+
         BuildSoldierVisual();
-        BuildPathDots();
 
         if (soldierVisual == null)
             return;
+
+        // -------------------------------------------------
+        // Soldier becomes visible after gate completion.
+        // -------------------------------------------------
 
         if (!soldierVisual.gameObject.activeSelf)
         {
             soldierVisual.gameObject.SetActive(true);
         }
 
+        // -------------------------------------------------
+        // WAIT FOR HOST INTERACTION
+        // -------------------------------------------------
+        //
+        // Soldier is visible but completely stationary.
+        //
+        // No path dots.
+        // No NavMesh movement.
+        //
 
-        // ------------------------------------------------
+        if (!SoldierInteractionStarted)
+        {
+            UpdateSoldierAnimation();
+
+            return;
+        }
+
+        // -------------------------------------------------
+        // WAIT FOR DIALOGUE TO FINISH
+        // -------------------------------------------------
+
+        if (!SoldierStarted)
+        {
+            UpdateSoldierAnimation();
+
+            return;
+        }
+
+        // -------------------------------------------------
+        // SOLDIER HAS STARTED
+        // -------------------------------------------------
+        //
+        // Ghost path dots are created only now.
+        //
+
+        BuildPathDots();
+
+        // -------------------------------------------------
         // HOST / STATE AUTHORITY
-        // ------------------------------------------------
-        // The NavMeshAgent is the ONLY thing allowed to move the
-        // soldier on the State Authority. This prevents the old
-        // route movement and the NavMeshAgent from fighting each other.
+        // -------------------------------------------------
+
         if (Object.HasStateAuthority)
         {
-            if (SoldierStarted && !SoldierReachedDoor)
+            if (SoldierStarted &&
+                !SoldierReachedDoor)
             {
                 StartSoldierNavMeshIfNeeded();
 
@@ -689,7 +1038,6 @@ public class NetworkGameManager : NetworkBehaviour
                     soldierAgent.enabled &&
                     soldierAgent.isOnNavMesh)
                 {
-                    // Read the position AFTER NavMeshAgent has moved.
                     SoldierPosition =
                         soldierAgent.transform.position;
 
@@ -698,13 +1046,14 @@ public class NetworkGameManager : NetworkBehaviour
                     if (ReachedSoldierDestination())
                     {
                         soldierAgent.isStopped = true;
+
                         SoldierReachedDoor = true;
                         ZoneActive = true;
                         SoldierProgress = 1f;
 
                         Debug.Log(
-                            "[GAME MANAGER] Soldier guide reached the dungeon door. " +
-                            "Zone active."
+                            "[GAME MANAGER] Soldier guide reached " +
+                            "the dungeon door. Zone active."
                         );
                     }
                 }
@@ -712,12 +1061,12 @@ public class NetworkGameManager : NetworkBehaviour
         }
         else
         {
-            // ------------------------------------------------
-            // REMOTE CLIENTS
-            // ------------------------------------------------
-            // Remote clients do NOT run their own NavMeshAgent.
-            // They smoothly follow the replicated host position.
-            if (soldierAgent != null && soldierAgent.enabled)
+            // -------------------------------------------------
+            // REMOTE CLIENT
+            // -------------------------------------------------
+
+            if (soldierAgent != null &&
+                soldierAgent.enabled)
             {
                 soldierAgent.enabled = false;
             }
@@ -740,13 +1089,20 @@ public class NetworkGameManager : NetworkBehaviour
                 );
         }
 
-        // The NavMeshAgent handles rotation on the host.
-        // Remote clients smoothly face the replicated travel direction.
+        // -------------------------------------------------
+        // Remote rotation
+        // -------------------------------------------------
+
         if (!Object.HasStateAuthority)
         {
-            FaceSoldierAlongRoute(soldierRoot: soldierVisual.transform.parent != null
-                ? soldierVisual.transform.parent
-                : soldierVisual.transform);
+            Transform soldierRoot =
+                soldierVisual.transform.parent != null
+                    ? soldierVisual.transform.parent
+                    : soldierVisual.transform;
+
+            FaceSoldierAlongRoute(
+                soldierRoot
+            );
         }
 
         UpdateSoldierAnimation();
@@ -754,31 +1110,25 @@ public class NetworkGameManager : NetworkBehaviour
 
 
     // =========================================================
-    // SOLDIER NAVMESH
-    // =========================================================
-
-    // =========================================================
-    // SOLDIER NAVMESH AGENT INITIALIZATION
-    // =========================================================
-
-    // =========================================================
-    // SOLDIER NAVMESH AGENT INITIALIZATION
+    // SOLDIER NAVMESH INITIALIZATION
     // =========================================================
 
     private void InitializeSoldierAgent()
     {
-        // =====================================================
-        // 1. Already assigned in Inspector
-        // =====================================================
+        // -------------------------------------------------
+        // 1. Inspector assignment
+        // -------------------------------------------------
+
         if (soldierAgent != null)
         {
             ConfigureSoldierAgent();
             return;
         }
 
-        // =====================================================
-        // 2. Find SoldierGuideController, including inactive objects
-        // =====================================================
+        // -------------------------------------------------
+        // 2. SoldierGuideController
+        // -------------------------------------------------
+
         SoldierGuideController controller =
             FindFirstObjectByType<SoldierGuideController>(
                 FindObjectsInactive.Include
@@ -786,26 +1136,31 @@ public class NetworkGameManager : NetworkBehaviour
 
         if (controller != null)
         {
-            // Agent may be on the same GameObject
-            soldierAgent = controller.GetComponent<NavMeshAgent>();
+            soldierAgent =
+                controller.GetComponent<NavMeshAgent>();
 
-            // Or somewhere in the parent hierarchy
             if (soldierAgent == null)
             {
-                soldierAgent = controller.GetComponentInParent<NavMeshAgent>(true);
+                soldierAgent =
+                    controller.GetComponentInParent<NavMeshAgent>(
+                        true
+                    );
             }
 
-            // Or somewhere in the children
             if (soldierAgent == null)
             {
-                soldierAgent = controller.GetComponentInChildren<NavMeshAgent>(true);
+                soldierAgent =
+                    controller.GetComponentInChildren<NavMeshAgent>(
+                        true
+                    );
             }
 
             if (soldierAgent != null)
             {
                 Debug.Log(
-                    $"[GAME MANAGER] Found SoldierGuide through SoldierGuideController: " +
-                    $"{soldierAgent.gameObject.name}"
+                    "[GAME MANAGER] Found SoldierGuide through " +
+                    "SoldierGuideController: " +
+                    soldierAgent.gameObject.name
                 );
 
                 ConfigureSoldierAgent();
@@ -813,9 +1168,10 @@ public class NetworkGameManager : NetworkBehaviour
             }
         }
 
-        // =====================================================
-        // 3. Find SoldierGuide root, including inactive objects
-        // =====================================================
+        // -------------------------------------------------
+        // 3. Find SoldierGuide root
+        // -------------------------------------------------
+
         GameObject soldierRoot = null;
 
         GameObject[] allObjects =
@@ -835,25 +1191,30 @@ public class NetworkGameManager : NetworkBehaviour
 
         if (soldierRoot != null)
         {
-            soldierAgent = soldierRoot.GetComponent<NavMeshAgent>();
+            soldierAgent =
+                soldierRoot.GetComponent<NavMeshAgent>();
 
             if (soldierAgent == null)
             {
                 soldierAgent =
-                    soldierRoot.GetComponentInChildren<NavMeshAgent>(true);
+                    soldierRoot.GetComponentInChildren<NavMeshAgent>(
+                        true
+                    );
             }
 
             if (soldierAgent == null)
             {
                 soldierAgent =
-                    soldierRoot.GetComponentInParent<NavMeshAgent>(true);
+                    soldierRoot.GetComponentInParent<NavMeshAgent>(
+                        true
+                    );
             }
 
             if (soldierAgent != null)
             {
                 Debug.Log(
-                    $"[GAME MANAGER] Found SoldierGuide NavMeshAgent on: " +
-                    $"{soldierAgent.gameObject.name}"
+                    "[GAME MANAGER] Found SoldierGuide NavMeshAgent on: " +
+                    soldierAgent.gameObject.name
                 );
 
                 ConfigureSoldierAgent();
@@ -867,26 +1228,21 @@ public class NetworkGameManager : NetworkBehaviour
             return;
         }
 
-        // =====================================================
-        // 4. Nothing found yet
-        // =====================================================
         Debug.LogWarning(
             "[GAME MANAGER] SoldierGuide root not found yet. " +
             "Waiting for SoldierGuide to spawn."
         );
     }
+
+
     // =========================================================
-    // CONFIGURE SOLDIER NAVMESH AGENT
+    // CONFIGURE SOLDIER NAVMESH
     // =========================================================
 
     private void ConfigureSoldierAgent()
     {
         if (soldierAgent == null)
             return;
-
-        // ---------------------------------------------------------
-        // MOVEMENT
-        // ---------------------------------------------------------
 
         soldierAgent.speed =
             soldierNavSpeed;
@@ -903,30 +1259,34 @@ public class NetworkGameManager : NetworkBehaviour
         soldierAgent.autoBraking =
             true;
 
-        // ---------------------------------------------------------
-        // TRANSFORM CONTROL
-        // ---------------------------------------------------------
-
         soldierAgent.updatePosition =
             true;
 
         soldierAgent.updateRotation =
             true;
 
-        // Don't force isStopped = false if the manager hasn't
-        // actually started the soldier yet.
-        //
-        // StartSoldierNavMeshIfNeeded() should control this.
-        // ---------------------------------------------------------
-
         Debug.Log(
             "[GAME MANAGER] Soldier NavMeshAgent ready: " +
             soldierAgent.gameObject.name
         );
     }
+
+
+    // =========================================================
+    // START SOLDIER NAVMESH
+    // =========================================================
+
     private void StartSoldierNavMeshIfNeeded()
     {
         if (soldierNavStarted)
+            return;
+
+        // Safety:
+        // Never start movement before host interaction.
+        if (!SoldierInteractionStarted)
+            return;
+
+        if (!SoldierStarted)
             return;
 
         if (soldierAgent == null)
@@ -939,16 +1299,16 @@ public class NetworkGameManager : NetworkBehaviour
         {
             Debug.LogWarning(
                 "[GAME MANAGER] Soldier NavMeshAgent is disabled. " +
-                "Enabling it on the State Authority."
+                "Enabling it on State Authority."
             );
 
             soldierAgent.enabled = true;
         }
 
-        // ---------------------------------------------------------
-        // The NavMeshAgent is on SoldierGuide. Never use the child
-        // SoldierGuideModel transform as the movement root.
-        // ---------------------------------------------------------
+        // -------------------------------------------------
+        // Start position
+        // -------------------------------------------------
+
         Vector3 agentStartPosition =
             soldierAgent.transform.position;
 
@@ -961,23 +1321,17 @@ public class NetworkGameManager : NetworkBehaviour
         {
             Debug.LogError(
                 "[GAME MANAGER] SoldierGuide could not find a NavMesh " +
-                "near its starting position. Make sure the blue NavMesh " +
-                "covers the SoldierGuide root. " +
+                "near its starting position. " +
                 $"Start: {agentStartPosition}"
             );
 
             return;
         }
 
-        // ---------------------------------------------------------
-        // Attach the agent to the NavMesh.
-        //
-        // We deliberately avoid Warp here because the previous setup
-        // was returning false even though SamplePosition could find a
-        // NavMesh. Disabling the agent, moving the movement root, and
-        // re-enabling it lets Unity initialize the agent at the sampled
-        // NavMesh position.
-        // ---------------------------------------------------------
+        // -------------------------------------------------
+        // Attach agent to NavMesh
+        // -------------------------------------------------
+
         if (!soldierAgent.isOnNavMesh)
         {
             Debug.Log(
@@ -986,25 +1340,27 @@ public class NetworkGameManager : NetworkBehaviour
             );
 
             soldierAgent.enabled = false;
-            soldierAgent.transform.position = navStart;
+
+            soldierAgent.transform.position =
+                navStart;
+
             soldierAgent.enabled = true;
 
             if (!soldierAgent.isOnNavMesh)
             {
                 Debug.LogError(
-                    "[GAME MANAGER] SoldierGuide could not attach to the " +
-                    "NavMesh after repositioning. Check the NavMeshSurface " +
-                    "Agent Type, the SoldierGuide Agent Type, and the blue " +
-                    "NavMesh under the SoldierGuide root."
+                    "[GAME MANAGER] SoldierGuide could not attach " +
+                    "to the NavMesh after repositioning."
                 );
 
                 return;
             }
         }
 
-        // ---------------------------------------------------------
-        // Resolve destination.
-        // ---------------------------------------------------------
+        // -------------------------------------------------
+        // Destination
+        // -------------------------------------------------
+
         Vector3 destination =
             GetSoldierDestination();
 
@@ -1013,40 +1369,66 @@ public class NetworkGameManager : NetworkBehaviour
                 out navDestination))
         {
             Debug.LogError(
-                "[GAME MANAGER] Soldier destination is not on or near " +
-                "the NavMesh. Make sure SoldierDungeonDestination is on " +
-                "the blue NavMesh."
+                "[GAME MANAGER] Soldier destination is not on " +
+                "or near the NavMesh."
             );
 
             return;
         }
 
-        soldierDestinationPosition = navDestination;
-        soldierDestinationSet = true;
+        soldierDestinationPosition =
+            navDestination;
 
-        // Capture the actual movement-root position once.
+        soldierDestinationSet =
+            true;
+
+        // -------------------------------------------------
+        // Capture starting position
+        // -------------------------------------------------
+
         if (!soldierModelStartPositionSet)
         {
             soldierModelStartPosition =
                 soldierAgent.transform.position;
 
-            soldierModelStartPositionSet = true;
+            soldierModelStartPositionSet =
+                true;
         }
 
         SoldierPosition =
             soldierAgent.transform.position;
 
-        // ---------------------------------------------------------
-        // Configure and start path.
-        // ---------------------------------------------------------
-        soldierAgent.speed = soldierNavSpeed;
-        soldierAgent.acceleration = soldierNavAcceleration;
-        soldierAgent.angularSpeed = soldierNavAngularSpeed;
-        soldierAgent.stoppingDistance = soldierNavStoppingDistance;
-        soldierAgent.autoBraking = true;
-        soldierAgent.updatePosition = true;
-        soldierAgent.updateRotation = true;
-        soldierAgent.isStopped = false;
+        // -------------------------------------------------
+        // Configure movement
+        // -------------------------------------------------
+
+        soldierAgent.speed =
+            soldierNavSpeed;
+
+        soldierAgent.acceleration =
+            soldierNavAcceleration;
+
+        soldierAgent.angularSpeed =
+            soldierNavAngularSpeed;
+
+        soldierAgent.stoppingDistance =
+            soldierNavStoppingDistance;
+
+        soldierAgent.autoBraking =
+            true;
+
+        soldierAgent.updatePosition =
+            true;
+
+        soldierAgent.updateRotation =
+            true;
+
+        soldierAgent.isStopped =
+            false;
+
+        // -------------------------------------------------
+        // Set destination
+        // -------------------------------------------------
 
         bool pathStarted =
             soldierAgent.SetDestination(
@@ -1056,7 +1438,8 @@ public class NetworkGameManager : NetworkBehaviour
         if (!pathStarted)
         {
             Debug.LogError(
-                "[GAME MANAGER] NavMeshAgent failed to set the soldier destination."
+                "[GAME MANAGER] NavMeshAgent failed to set " +
+                "the soldier destination."
             );
 
             return;
@@ -1066,18 +1449,20 @@ public class NetworkGameManager : NetworkBehaviour
             NavMeshPathStatus.PathInvalid)
         {
             Debug.LogError(
-                "[GAME MANAGER] Soldier NavMesh path is invalid. " +
-                "Check that the blue NavMesh is continuous from SoldierGuide " +
-                "to SoldierDungeonDestination and that both use the Humanoid " +
-                "agent type."
+                "[GAME MANAGER] Soldier NavMesh path is invalid."
             );
 
-            soldierAgent.isStopped = true;
+            soldierAgent.isStopped =
+                true;
+
             return;
         }
 
-        soldierNavStarted = true;
-        soldierLastHostPosition = soldierAgent.transform.position;
+        soldierNavStarted =
+            true;
+
+        soldierLastHostPosition =
+            soldierAgent.transform.position;
 
         soldierInitialPathDistance =
             Mathf.Max(
@@ -1095,6 +1480,10 @@ public class NetworkGameManager : NetworkBehaviour
     }
 
 
+    // =========================================================
+    // SAMPLE NAVMESH
+    // =========================================================
+
     private bool TryGetNearestNavMeshPoint(
         Vector3 position,
         out Vector3 result)
@@ -1110,9 +1499,14 @@ public class NetworkGameManager : NetworkBehaviour
         }
 
         result = position;
+
         return false;
     }
 
+
+    // =========================================================
+    // SOLDIER DESTINATION
+    // =========================================================
 
     private Vector3 GetSoldierDestination()
     {
@@ -1129,8 +1523,13 @@ public class NetworkGameManager : NetworkBehaviour
             return cachedSoldierDestination.transform.position;
         }
 
-        // Fallback: stop a little before the dungeon-entry zone.
-        Vector3 zone = GetZoneCenter();
+        // -------------------------------------------------
+        // Fallback
+        // -------------------------------------------------
+
+        Vector3 zone =
+            GetZoneCenter();
+
         Vector3 start =
             soldierModelStartPositionSet
                 ? soldierModelStartPosition
@@ -1138,17 +1537,27 @@ public class NetworkGameManager : NetworkBehaviour
                     ? soldierAgent.transform.position
                     : GetGateCenter();
 
-        Vector3 direction = zone - start;
+        Vector3 direction =
+            zone - start;
+
         direction.y = 0f;
 
         if (direction.sqrMagnitude < 0.01f)
-            direction = Vector3.forward;
+        {
+            direction =
+                Vector3.forward;
+        }
 
         direction.Normalize();
 
-        return zone - direction * 2.2f;
+        return zone -
+               direction * 2.2f;
     }
 
+
+    // =========================================================
+    // DESTINATION CHECK
+    // =========================================================
 
     private bool ReachedSoldierDestination()
     {
@@ -1173,6 +1582,10 @@ public class NetworkGameManager : NetworkBehaviour
     }
 
 
+    // =========================================================
+    // SOLDIER PROGRESS
+    // =========================================================
+
     private void UpdateSoldierProgressFromAgent()
     {
         if (soldierAgent == null ||
@@ -1192,7 +1605,9 @@ public class NetworkGameManager : NetworkBehaviour
 
         SoldierProgress =
             Mathf.Clamp01(
-                1f - remaining / total
+                1f -
+                remaining /
+                total
             );
 
         soldierLastHostPosition =
@@ -1200,12 +1615,17 @@ public class NetworkGameManager : NetworkBehaviour
     }
 
 
+    // =========================================================
+    // BUILD NAVMESH PATH
+    // =========================================================
+
     private bool BuildNavMeshPath(
         Vector3 start,
         Vector3 destination,
         out NavMeshPath path)
     {
-        path = new NavMeshPath();
+        path =
+            new NavMeshPath();
 
         if (!NavMesh.SamplePosition(
                 start,
@@ -1290,19 +1710,21 @@ public class NetworkGameManager : NetworkBehaviour
             return;
         }
 
-        if (!ZoneGreen || TeleportStarted)
+        if (!ZoneGreen ||
+            TeleportStarted)
+        {
             return;
+        }
 
-        // Every client refreshes the green tag + countdown text.
         UpdateZoneTag(
             0,
             0,
             true
         );
 
-        // ------------------------------------------------
-        // Host: countdown then teleport.
-        // ------------------------------------------------
+        // -------------------------------------------------
+        // Host countdown
+        // -------------------------------------------------
 
         if (Object.HasStateAuthority)
         {
@@ -1311,17 +1733,20 @@ public class NetworkGameManager : NetworkBehaviour
                 TeleportCountdown =
                     Mathf.Max(
                         0f,
-                        TeleportCountdown - Time.deltaTime
+                        TeleportCountdown -
+                        Time.deltaTime
                     );
             }
 
             if (TeleportCountdown > 0f)
                 return;
 
-            TeleportStarted = true;
+            TeleportStarted =
+                true;
 
             Debug.Log(
-                "[GAME MANAGER] Teleporting the squad to the dungeon!"
+                "[GAME MANAGER] Teleporting the squad " +
+                "to the dungeon!"
             );
 
             if (NetworkRunnerHandler.Instance != null)
@@ -1333,39 +1758,28 @@ public class NetworkGameManager : NetworkBehaviour
 
 
     // =========================================================
-    // INTRO FLOW RPCS
+    // ALL PLAYERS ENTERED RPC
     // =========================================================
 
-    [Rpc(
-        RpcSources.StateAuthority,
-        RpcTargets.All
-    )]
-    private void RPC_OnAllPlayersEntered(
-        RpcInfo info = default)
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_OnAllPlayersEntered()
     {
-        Debug.Log(
-            "[GAME MANAGER] PING: all players entered the gate!"
-        );
+        Debug.Log("[GAME] All players entered the gate.");
 
-        if (gateTag != null)
-        {
-            Destroy(gateTag);
-            gateTag = null;
-        }
-
-        // PING ring around the local player.
+        // Existing world tag / ping
         TriggerLocalPing();
 
-        // Big callout above the gate.
-        CreateWorldTag(
-            GetGateCenter() + Vector3.up * 4f,
-            "ALL PLAYERS ENTERED!",
-            new Color(1f, 1f, 1f, 1f),
-            72f,
-            2.4f
+        // Existing Mission System
+        MissionManager.ShowRaw(
+            "FIND THE SOLDIER",
+            "Find the soldier and ask him how to get out of Fort Santiago.",
+            0f
         );
     }
 
+    // =========================================================
+    // ZONE GREEN RPC
+    // =========================================================
 
     [Rpc(
         RpcSources.StateAuthority,
@@ -1379,23 +1793,39 @@ public class NetworkGameManager : NetworkBehaviour
         );
 
         CreateWorldTag(
-            GetZoneCenter() + Vector3.up * 5f,
+            GetZoneCenter() +
+            Vector3.up * 5f,
+
             "TO THE DUNGEON!",
-            new Color(0.2f, 1f, 0.4f, 1f),
+
+            new Color(
+                0.2f,
+                1f,
+                0.4f,
+                1f
+            ),
+
             64f,
+
             teleportDelaySeconds
         );
     }
 
 
     // =========================================================
-    // ROUTE / SOLDIER MOVEMENT
+    // ROUTE
     // =========================================================
 
     private void AdvanceSoldier()
     {
-        // Kept for compatibility with the previous intro-flow structure.
-        // Soldier movement is now owned exclusively by NavMeshAgent.
+        // Kept for compatibility.
+        //
+        // Soldier movement is now controlled exclusively
+        // by the NavMeshAgent.
+
+        if (!SoldierStarted)
+            return;
+
         StartSoldierNavMeshIfNeeded();
     }
 
@@ -1421,13 +1851,15 @@ public class NetworkGameManager : NetworkBehaviour
 
         if (toZone.sqrMagnitude < 0.01f)
         {
-            toZone = Vector3.forward;
+            toZone =
+                Vector3.forward;
         }
 
         toZone.Normalize();
 
         Vector3 stopInFront =
-            zone - toZone * 2.2f;
+            zone -
+            toZone * 2.2f;
 
         if (useModelStart)
         {
@@ -1447,7 +1879,8 @@ public class NetworkGameManager : NetworkBehaviour
         }
 
         Vector3 startBehind =
-            start - toZone * 4f;
+            start -
+            toZone * 4f;
 
         Vector3 halfwayToZone =
             Vector3.Lerp(
@@ -1477,7 +1910,9 @@ public class NetworkGameManager : NetworkBehaviour
 
         float length = 0f;
 
-        for (int i = 1; i < route.Length; i++)
+        for (int i = 1;
+             i < route.Length;
+             i++)
         {
             length +=
                 Vector3.Distance(
@@ -1515,7 +1950,9 @@ public class NetworkGameManager : NetworkBehaviour
 
         float walked = 0f;
 
-        for (int i = 1; i < route.Length; i++)
+        for (int i = 1;
+             i < route.Length;
+             i++)
         {
             Vector3 from =
                 route[i - 1];
@@ -1529,11 +1966,15 @@ public class NetworkGameManager : NetworkBehaviour
                     to
                 );
 
-            if (walked + segmentLength >= targetDistance)
+            if (walked + segmentLength >=
+                targetDistance)
             {
                 float local =
                     segmentLength > 0f
-                        ? (targetDistance - walked) /
+                        ? (
+                            targetDistance -
+                            walked
+                          ) /
                           segmentLength
                         : 0f;
 
@@ -1544,15 +1985,18 @@ public class NetworkGameManager : NetworkBehaviour
                 );
             }
 
-            walked += segmentLength;
+            walked +=
+                segmentLength;
         }
 
-        return route[route.Length - 1];
+        return route[
+            route.Length - 1
+        ];
     }
 
 
     // =========================================================
-    // ZONES
+    // GATE / ZONE CENTERS
     // =========================================================
 
     private Vector3 GetGateCenter()
@@ -1594,6 +2038,10 @@ public class NetworkGameManager : NetworkBehaviour
     }
 
 
+    // =========================================================
+    // COUNT PLAYERS INSIDE AREA
+    // =========================================================
+
     private void CountPlayersInside(
         Vector3 center,
         Vector3 halfExtents,
@@ -1606,10 +2054,13 @@ public class NetworkGameManager : NetworkBehaviour
         if (Runner == null)
             return;
 
-        foreach (PlayerRef player in Runner.ActivePlayers)
+        foreach (PlayerRef player
+                 in Runner.ActivePlayers)
         {
             NetworkObject playerObject =
-                Runner.GetPlayerObject(player);
+                Runner.GetPlayerObject(
+                    player
+                );
 
             if (playerObject == null)
                 continue;
@@ -1620,9 +2071,12 @@ public class NetworkGameManager : NetworkBehaviour
                 playerObject.transform.position -
                 center;
 
-            if (Mathf.Abs(delta.x) <= halfExtents.x &&
-                Mathf.Abs(delta.y) <= halfExtents.y &&
-                Mathf.Abs(delta.z) <= halfExtents.z)
+            if (Mathf.Abs(delta.x) <=
+                    halfExtents.x &&
+                Mathf.Abs(delta.y) <=
+                    halfExtents.y &&
+                Mathf.Abs(delta.z) <=
+                    halfExtents.z)
             {
                 insideOut++;
             }
@@ -1631,20 +2085,31 @@ public class NetworkGameManager : NetworkBehaviour
 
 
     // =========================================================
-    // VISUALS - PATH
+    // PATH DOTS
     // =========================================================
 
     private void BuildPathDots()
     {
+        // -------------------------------------------------
+        // Important:
+        // This function is only called after:
+        //
+        // SoldierInteractionStarted == true
+        // SoldierStarted == true
+        //
+        // Therefore dots do NOT appear when the gate opens.
+        // -------------------------------------------------
+
         if (pathDotsBuilt)
             return;
 
+        if (!SoldierInteractionStarted)
+            return;
+
+        if (!SoldierStarted)
+            return;
+
         pathDotsBuilt = true;
-
-
-        // =========================================================
-        // START POSITION
-        // =========================================================
 
         Vector3 start =
             soldierModelStartPositionSet
@@ -1653,18 +2118,12 @@ public class NetworkGameManager : NetworkBehaviour
                     ? soldierAgent.transform.position
                     : GetGateCenter();
 
-
-        // =========================================================
-        // DESTINATION
-        // =========================================================
-
         Vector3 destination =
             GetSoldierDestination();
 
-
-        // =========================================================
-        // BUILD NAVMESH PATH
-        // =========================================================
+        // -------------------------------------------------
+        // Try NavMesh path
+        // -------------------------------------------------
 
         if (!useNavMeshPathDots ||
             !BuildNavMeshPath(
@@ -1672,40 +2131,22 @@ public class NetworkGameManager : NetworkBehaviour
                 destination,
                 out NavMeshPath navPath))
         {
-            // Keep the existing fallback behavior.
             BuildFallbackPathDots();
-
             return;
         }
-
-
-        // =========================================================
-        // VALIDATE PATH
-        // =========================================================
 
         if (navPath.corners == null ||
             navPath.corners.Length < 2)
         {
             BuildFallbackPathDots();
-
             return;
         }
-
-
-        // =========================================================
-        // DOT SPACING
-        // =========================================================
 
         float spacing =
             Mathf.Max(
                 0.5f,
                 ghostPathSpacing
             );
-
-
-        // =========================================================
-        // SOLDIER REFERENCE
-        // =========================================================
 
         Transform soldierTransform = null;
 
@@ -1720,10 +2161,9 @@ public class NetworkGameManager : NetworkBehaviour
                 soldierVisual.root;
         }
 
-
-        // =========================================================
-        // BUILD DOTS ALONG NAVMESH ROUTE
-        // =========================================================
+        // -------------------------------------------------
+        // Create dots
+        // -------------------------------------------------
 
         for (int i = 1;
              i < navPath.corners.Length;
@@ -1735,13 +2175,11 @@ public class NetworkGameManager : NetworkBehaviour
             Vector3 to =
                 navPath.corners[i];
 
-
             float length =
                 Vector3.Distance(
                     from,
                     to
                 );
-
 
             int steps =
                 Mathf.Max(
@@ -1752,7 +2190,6 @@ public class NetworkGameManager : NetworkBehaviour
                     )
                 );
 
-
             for (int step = 1;
                  step <= steps;
                  step++)
@@ -1761,22 +2198,12 @@ public class NetworkGameManager : NetworkBehaviour
                     step /
                     (float)steps;
 
-
                 Vector3 position =
                     Vector3.Lerp(
                         from,
                         to,
                         t
                     );
-
-
-                // =================================================
-                // CREATE DOT
-                // =================================================
-                //
-                // The +1.6 Y offset makes the marker float above
-                // the ground.
-                //
 
                 GameObject dot =
                     CreateDot(
@@ -1795,22 +2222,14 @@ public class NetworkGameManager : NetworkBehaviour
                         Vector3.zero
                     );
 
-
                 if (dot == null)
                     continue;
-
-
-                // =================================================
-                // CONFIGURE SOLDIER PATH DOT
-                // =================================================
 
                 GhostDot ghostDot =
                     dot.GetComponent<GhostDot>();
 
-
                 if (ghostDot != null)
                 {
-                    // Green soldier path marker.
                     ghostDot.dotColor =
                         new Color(
                             0f,
@@ -1819,20 +2238,12 @@ public class NetworkGameManager : NetworkBehaviour
                             1f
                         );
 
-
-                    // Enable soldier-pass destruction.
                     ghostDot.destroyWhenSoldierPasses =
                         true;
 
-
-                    // Horizontal distance at which the
-                    // dot disappears.
                     ghostDot.soldierPassDistance =
                         0.8f;
 
-
-                    // Give the GhostDot the actual soldier
-                    // reference instead of relying on a search.
                     if (soldierTransform != null)
                     {
                         ghostDot.ConfigureSoldierPass(
@@ -1842,15 +2253,20 @@ public class NetworkGameManager : NetworkBehaviour
                     }
                 }
 
-
-                // =================================================
-                // STORE DOT
-                // =================================================
-
                 pathDots.Add(dot);
             }
         }
+
+        Debug.Log(
+            $"[SOLDIER] Built {pathDots.Count} ghost path dots."
+        );
     }
+
+
+    // =========================================================
+    // FALLBACK PATH DOTS
+    // =========================================================
+
     private void BuildFallbackPathDots()
     {
         Vector3[] route =
@@ -1863,34 +2279,103 @@ public class NetworkGameManager : NetworkBehaviour
         }
 
         float spacing =
-            Mathf.Max(0.5f, ghostPathSpacing);
+            Mathf.Max(
+                0.5f,
+                ghostPathSpacing
+            );
 
-        for (int i = 1; i < route.Length; i++)
+        Transform soldierTransform = null;
+
+        if (soldierAgent != null)
         {
-            Vector3 from = route[i - 1];
-            Vector3 to = route[i];
+            soldierTransform =
+                soldierAgent.transform;
+        }
 
-            float length = Vector3.Distance(from, to);
+        for (int i = 1;
+             i < route.Length;
+             i++)
+        {
+            Vector3 from =
+                route[i - 1];
+
+            Vector3 to =
+                route[i];
+
+            float length =
+                Vector3.Distance(
+                    from,
+                    to
+                );
 
             int steps =
                 Mathf.Max(
                     1,
-                    Mathf.CeilToInt(length / spacing)
+                    Mathf.CeilToInt(
+                        length /
+                        spacing
+                    )
                 );
 
-            for (int step = 1; step <= steps; step++)
+            for (int step = 1;
+                 step <= steps;
+                 step++)
             {
-                float t = step / (float)steps;
+                float t =
+                    step /
+                    (float)steps;
 
                 GameObject dot =
                     CreateDot(
-                        Vector3.Lerp(from, to, t) + Vector3.up * 1.6f,
+                        Vector3.Lerp(
+                            from,
+                            to,
+                            t
+                        ) +
+                        Vector3.up * 1.6f,
+
                         0.22f,
-                        2.2f + (i % 3) * 0.9f,
+
+                        2.2f +
+                        (i % 3) * 0.9f,
+
                         0.5f,
+
                         0f,
+
                         Vector3.zero
                     );
+
+                if (dot == null)
+                    continue;
+
+                GhostDot ghostDot =
+                    dot.GetComponent<GhostDot>();
+
+                if (ghostDot != null)
+                {
+                    ghostDot.dotColor =
+                        new Color(
+                            0f,
+                            1f,
+                            0.15f,
+                            1f
+                        );
+
+                    ghostDot.destroyWhenSoldierPasses =
+                        true;
+
+                    ghostDot.soldierPassDistance =
+                        0.8f;
+
+                    if (soldierTransform != null)
+                    {
+                        ghostDot.ConfigureSoldierPass(
+                            soldierTransform,
+                            0.8f
+                        );
+                    }
+                }
 
                 pathDots.Add(dot);
             }
@@ -1901,31 +2386,27 @@ public class NetworkGameManager : NetworkBehaviour
     // =========================================================
     // SOLDIER VISUAL
     // =========================================================
+
     private void BuildSoldierVisual()
     {
-        // =========================================================
-        // ALREADY BUILT
-        // =========================================================
-
         if (soldierVisualBuilt &&
             soldierVisual != null)
         {
             return;
         }
 
-        // =========================================================
-        // FIND / INITIALIZE SOLDIER ROOT
-        // =========================================================
+        // -------------------------------------------------
+        // Find / initialize NavMeshAgent
+        // -------------------------------------------------
 
         InitializeSoldierAgent();
 
-        // =========================================================
-        // FIND SOLDIER MODEL
-        // =========================================================
+        // -------------------------------------------------
+        // Find model under agent
+        // -------------------------------------------------
 
         if (soldierVisual == null)
         {
-            // First look under SoldierGuide.
             if (soldierAgent != null)
             {
                 Transform modelTransform =
@@ -1941,9 +2422,9 @@ public class NetworkGameManager : NetworkBehaviour
             }
         }
 
-        // =========================================================
-        // FALLBACK SCENE SEARCH
-        // =========================================================
+        // -------------------------------------------------
+        // Fallback scene search
+        // -------------------------------------------------
 
         if (soldierVisual == null)
         {
@@ -1959,24 +2440,25 @@ public class NetworkGameManager : NetworkBehaviour
             }
         }
 
-        // =========================================================
-        // STILL NOT FOUND
-        // =========================================================
+        // -------------------------------------------------
+        // Still not found
+        // -------------------------------------------------
 
         if (soldierVisual == null)
         {
             Debug.LogWarning(
-                "[GAME MANAGER] SoldierGuideModel is not available yet. " +
-                "Waiting for SoldierGuide."
+                "[GAME MANAGER] SoldierGuideModel is not available yet."
             );
 
-            soldierVisualBuilt = false;
+            soldierVisualBuilt =
+                false;
+
             return;
         }
 
-        // =========================================================
-        // FIND ANIMATOR
-        // =========================================================
+        // -------------------------------------------------
+        // Animator
+        // -------------------------------------------------
 
         soldierAnimator =
             soldierVisual.GetComponentInChildren<Animator>(
@@ -2003,9 +2485,9 @@ public class NetworkGameManager : NetworkBehaviour
             );
         }
 
-        // =========================================================
-        // SAVE MOVEMENT ROOT POSITION
-        // =========================================================
+        // -------------------------------------------------
+        // Save movement-root position
+        // -------------------------------------------------
 
         if (soldierAgent != null &&
             !soldierModelStartPositionSet)
@@ -2022,16 +2504,15 @@ public class NetworkGameManager : NetworkBehaviour
             );
         }
 
-        // =========================================================
-        // DONE
-        // =========================================================
-
-        soldierVisualBuilt = true;
+        soldierVisualBuilt =
+            true;
 
         Debug.Log(
             "[GAME MANAGER] Soldier visual successfully initialized."
         );
     }
+
+
     // =========================================================
     // SOLDIER ANIMATION
     // =========================================================
@@ -2043,54 +2524,82 @@ public class NetworkGameManager : NetworkBehaviour
 
         float speed = 0f;
 
-        if (Runner != null && Runner.IsServer)
+        // -------------------------------------------------
+        // State Authority
+        // -------------------------------------------------
+
+        if (Object.HasStateAuthority)
         {
             if (soldierAgent != null &&
                 soldierAgent.enabled &&
-                soldierAgent.isOnNavMesh)
+                soldierAgent.isOnNavMesh &&
+                SoldierStarted)
             {
-                speed = soldierAgent.velocity.magnitude;
+                speed =
+                    soldierAgent.velocity.magnitude;
             }
         }
         else
         {
-            // Client-side approximation from network progress
-            speed = SoldierStarted && !SoldierReachedDoor
-                ? soldierNavSpeed
-                : 0f;
+            // Client approximation
+            speed =
+                SoldierStarted &&
+                !SoldierReachedDoor
+                    ? soldierNavSpeed
+                    : 0f;
         }
 
-        if (HasAnimatorParameter("Speed", AnimatorControllerParameterType.Float))
+        // -------------------------------------------------
+        // Speed
+        // -------------------------------------------------
+
+        if (HasAnimatorParameter(
+                soldierSpeedParameter,
+                AnimatorControllerParameterType.Float))
         {
             soldierAnimator.SetFloat(
-                "Speed",
+                soldierSpeedParameter,
                 speed,
                 0.1f,
                 Time.deltaTime
             );
         }
 
-        if (HasAnimatorParameter("IsWalking", AnimatorControllerParameterType.Bool))
+        // -------------------------------------------------
+        // IsWalking
+        // -------------------------------------------------
+
+        if (HasAnimatorParameter(
+                soldierWalkingParameter,
+                AnimatorControllerParameterType.Bool))
         {
             soldierAnimator.SetBool(
-                "IsWalking",
+                soldierWalkingParameter,
                 speed > 0.1f
             );
         }
     }
 
+
+    // =========================================================
+    // ANIMATOR PARAMETER CHECK
+    // =========================================================
+
     private bool HasAnimatorParameter(
-    string parameterName,
-    AnimatorControllerParameterType type)
+        string parameterName,
+        AnimatorControllerParameterType type)
     {
         if (soldierAnimator == null)
             return false;
 
-        foreach (AnimatorControllerParameter parameter
-                 in soldierAnimator.parameters)
+        foreach (
+            AnimatorControllerParameter parameter
+            in soldierAnimator.parameters)
         {
-            if (parameter.name == parameterName &&
-                parameter.type == type)
+            if (parameter.name ==
+                    parameterName &&
+                parameter.type ==
+                    type)
             {
                 return true;
             }
@@ -2098,6 +2607,11 @@ public class NetworkGameManager : NetworkBehaviour
 
         return false;
     }
+
+
+    // =========================================================
+    // LOG ANIMATOR PARAMETERS
+    // =========================================================
 
     private void LogSoldierAnimatorParameters()
     {
@@ -2121,10 +2635,12 @@ public class NetworkGameManager : NetworkBehaviour
             "[GAME MANAGER] Soldier Animator parameters:"
         );
 
-        for (int i = 0; i < parameters.Length; i++)
+        for (int i = 0;
+             i < parameters.Length;
+             i++)
         {
             Debug.Log(
-                $"[GAME MANAGER] - " +
+                "[GAME MANAGER] - " +
                 $"{parameters[i].name} " +
                 $"({parameters[i].type})"
             );
@@ -2136,17 +2652,13 @@ public class NetworkGameManager : NetworkBehaviour
     // ZONE VISUAL
     // =========================================================
 
-    // =========================================================
-    // ZONE VISUAL
-    // =========================================================
-
     private void BuildZoneVisual()
     {
         if (zoneVisualBuilt)
             return;
 
-        zoneVisualBuilt = true;
-
+        zoneVisualBuilt =
+            true;
 
         Vector3 center =
             GetZoneCenter();
@@ -2154,12 +2666,13 @@ public class NetworkGameManager : NetworkBehaviour
         Vector3 half =
             zoneHalfExtents;
 
-
-        // =========================================================
+        // -------------------------------------------------
         // 8 CORNER POSTS
-        // =========================================================
+        // -------------------------------------------------
 
-        for (int i = 0; i < 8; i++)
+        for (int i = 0;
+             i < 8;
+             i++)
         {
             float sx =
                 (i & 1) == 0
@@ -2176,7 +2689,6 @@ public class NetworkGameManager : NetworkBehaviour
                     ? -1f
                     : 1f;
 
-
             CreateDot(
                 center +
                 new Vector3(
@@ -2186,21 +2698,16 @@ public class NetworkGameManager : NetworkBehaviour
                 ),
 
                 0.4f,
-
                 2f,
-
                 0.4f,
-
                 0f,
-
                 Vector3.zero
             );
         }
 
-
-        // =========================================================
-        // FLOOR FRAME - LEFT
-        // =========================================================
+        // -------------------------------------------------
+        // FLOOR FRAME LEFT
+        // -------------------------------------------------
 
         CreateDot(
             center +
@@ -2211,20 +2718,15 @@ public class NetworkGameManager : NetworkBehaviour
             ),
 
             0.3f,
-
             4f,
-
             0.5f,
-
             0f,
-
             Vector3.zero
         );
 
-
-        // =========================================================
-        // FLOOR FRAME - RIGHT
-        // =========================================================
+        // -------------------------------------------------
+        // FLOOR FRAME RIGHT
+        // -------------------------------------------------
 
         CreateDot(
             center +
@@ -2235,20 +2737,15 @@ public class NetworkGameManager : NetworkBehaviour
             ),
 
             0.3f,
-
             4f,
-
             0.5f,
-
             0f,
-
             Vector3.zero
         );
 
-
-        // =========================================================
-        // FLOOR FRAME - BACK
-        // =========================================================
+        // -------------------------------------------------
+        // FLOOR FRAME BACK
+        // -------------------------------------------------
 
         CreateDot(
             center +
@@ -2259,20 +2756,15 @@ public class NetworkGameManager : NetworkBehaviour
             ),
 
             0.3f,
-
             4f,
-
             0.5f,
-
             0f,
-
             Vector3.zero
         );
 
-
-        // =========================================================
-        // FLOOR FRAME - FRONT
-        // =========================================================
+        // -------------------------------------------------
+        // FLOOR FRAME FRONT
+        // -------------------------------------------------
 
         CreateDot(
             center +
@@ -2283,20 +2775,15 @@ public class NetworkGameManager : NetworkBehaviour
             ),
 
             0.3f,
-
             4f,
-
             0.5f,
-
             0f,
-
             Vector3.zero
         );
 
-
-        // =========================================================
-        // ZONE WORLD TAG
-        // =========================================================
+        // -------------------------------------------------
+        // ZONE TAG
+        // -------------------------------------------------
 
         zoneTag =
             CreateWorldTag(
@@ -2318,26 +2805,25 @@ public class NetworkGameManager : NetworkBehaviour
                 0f
             );
     }
+
+
+    // =========================================================
+    // ZONE TAG
+    // =========================================================
+
     private void UpdateZoneTag(
-      int inside,
-      int total,
-      bool zoneIsGreen)
+        int inside,
+        int total,
+        bool zoneIsGreen)
     {
         if (zoneTag == null)
             return;
 
-
         WorldTag tagScript =
             zoneTag.GetComponent<WorldTag>();
 
-
         if (tagScript == null)
             return;
-
-
-        // =========================================================
-        // GREEN / READY STATE
-        // =========================================================
 
         if (zoneIsGreen)
         {
@@ -2349,13 +2835,11 @@ public class NetworkGameManager : NetworkBehaviour
                     )
                 );
 
-
             tagScript.SetMessage(
                 "TO THE DUNGEON!  (" +
                 secondsLeft +
                 ")"
             );
-
 
             tagScript.SetColor(
                 new Color(
@@ -2366,14 +2850,8 @@ public class NetworkGameManager : NetworkBehaviour
                 )
             );
 
-
             return;
         }
-
-
-        // =========================================================
-        // NORMAL STATE
-        // =========================================================
 
         tagScript.SetMessage(
             "ENTER THE ZONE  (" +
@@ -2382,7 +2860,6 @@ public class NetworkGameManager : NetworkBehaviour
             total +
             ")"
         );
-
 
         tagScript.SetColor(
             new Color(
@@ -2393,9 +2870,7 @@ public class NetworkGameManager : NetworkBehaviour
             )
         );
     }
-    // =========================================================
-    // WORLD TAG
-    // =========================================================
+
 
     // =========================================================
     // WORLD TAG
@@ -2411,28 +2886,22 @@ public class NetworkGameManager : NetworkBehaviour
         if (NetworkRunnerHandler.Instance == null)
             return null;
 
-
         GameObject tagPrefab =
             NetworkRunnerHandler.Instance.worldTagPrefab;
 
-
         if (tagPrefab == null)
             return null;
-
 
         GameObject tag =
             Instantiate(
                 tagPrefab
             );
 
-
         tag.transform.position =
             worldPosition;
 
-
         WorldTag tagScript =
             tag.GetComponent<WorldTag>();
-
 
         if (tagScript != null)
         {
@@ -2444,13 +2913,9 @@ public class NetworkGameManager : NetworkBehaviour
             );
         }
 
-
         return tag;
     }
 
-    // =========================================================
-    // DOT
-    // =========================================================
 
     // =========================================================
     // DOT
@@ -2469,14 +2934,11 @@ public class NetworkGameManager : NetworkBehaviour
                 "GhostDot"
             );
 
-
         dot.transform.position =
             worldPosition;
 
-
         GhostDot dotScript =
             dot.AddComponent<GhostDot>();
-
 
         dotScript.Configure(
             velocity,
@@ -2486,9 +2948,9 @@ public class NetworkGameManager : NetworkBehaviour
             scale
         );
 
-
         return dot;
     }
+
 
     private GameObject CreateAttachedDot(
         Transform parent,
@@ -2504,20 +2966,16 @@ public class NetworkGameManager : NetworkBehaviour
                 "GhostDot"
             );
 
-
         dot.transform.SetParent(
             parent,
             false
         );
 
-
         dot.transform.localPosition =
             localPosition;
 
-
         GhostDot dotScript =
             dot.AddComponent<GhostDot>();
-
 
         dotScript.Configure(
             velocity,
@@ -2527,15 +2985,12 @@ public class NetworkGameManager : NetworkBehaviour
             scale
         );
 
-
         return dot;
     }
-    // =========================================================
-    // PING
-    // =========================================================
+
 
     // =========================================================
-    // PING
+    // LOCAL PING
     // =========================================================
 
     private void TriggerLocalPing()
@@ -2543,9 +2998,7 @@ public class NetworkGameManager : NetworkBehaviour
         Vector3 origin =
             GetLocalPlayerPosition();
 
-
         const int dotCount = 20;
-
 
         for (int i = 0;
              i < dotCount;
@@ -2556,14 +3009,12 @@ public class NetworkGameManager : NetworkBehaviour
                 Mathf.PI *
                 2f;
 
-
             Vector3 direction =
                 new Vector3(
                     Mathf.Cos(angle),
                     0f,
                     Mathf.Sin(angle)
                 );
-
 
             CreateDot(
                 origin +
@@ -2586,11 +3037,6 @@ public class NetworkGameManager : NetworkBehaviour
             );
         }
 
-
-        // =========================================================
-        // PING WORLD TAG
-        // =========================================================
-
         CreateWorldTag(
             origin +
             Vector3.up * 3f,
@@ -2609,24 +3055,24 @@ public class NetworkGameManager : NetworkBehaviour
             1.2f
         );
     }
+    
     // =========================================================
-    // SOLDIER MODEL
+    // GET SOLDIER MODEL
     // =========================================================
 
     private GameObject GetSoldierModel()
     {
-        // Already cached
         if (cachedSoldierModel != null)
             return cachedSoldierModel;
 
-        // Inspector-assigned visual
         if (soldierVisual != null)
         {
-            cachedSoldierModel = soldierVisual.gameObject;
+            cachedSoldierModel =
+                soldierVisual.gameObject;
+
             return cachedSoldierModel;
         }
 
-        // Search through the SoldierGuideController
         SoldierGuideController controller =
             FindFirstObjectByType<SoldierGuideController>(
                 FindObjectsInactive.Include
@@ -2642,12 +3088,13 @@ public class NetworkGameManager : NetworkBehaviour
 
             if (model != null)
             {
-                cachedSoldierModel = model.gameObject;
+                cachedSoldierModel =
+                    model.gameObject;
+
                 return cachedSoldierModel;
             }
         }
 
-        // Search through the NavMeshAgent root
         if (soldierAgent != null)
         {
             Transform model =
@@ -2658,7 +3105,9 @@ public class NetworkGameManager : NetworkBehaviour
 
             if (model != null)
             {
-                cachedSoldierModel = model.gameObject;
+                cachedSoldierModel =
+                    model.gameObject;
+
                 return cachedSoldierModel;
             }
         }
@@ -2666,18 +3115,26 @@ public class NetworkGameManager : NetworkBehaviour
         return null;
     }
 
+
+    // =========================================================
+    // FIND CHILD RECURSIVELY
+    // =========================================================
+
     private Transform FindChildRecursive(
         Transform parent,
-        string targetName
-    )
+        string targetName)
     {
         if (parent.name == targetName)
             return parent;
 
-        foreach (Transform child in parent)
+        foreach (Transform child
+                 in parent)
         {
             Transform result =
-                FindChildRecursive(child, targetName);
+                FindChildRecursive(
+                    child,
+                    targetName
+                );
 
             if (result != null)
                 return result;
@@ -2686,16 +3143,31 @@ public class NetworkGameManager : NetworkBehaviour
         return null;
     }
 
-    // Keeps the guide model hidden until the walk begins.
+
+    // =========================================================
+    // GUIDE MODEL VISIBILITY
+    // =========================================================
+    //
+    // Kept for compatibility with the previous structure.
+    //
+    // The new flow intentionally keeps the soldier visible after
+    // everyone enters the gate, because the mission is:
+    //
+    // "Find the Soldier"
+    //
+    // Therefore this is NOT called automatically to hide him.
+    //
+
     private void UpdateGuideModelVisibility()
     {
         if (soldierVisual == null)
             return;
 
         bool shouldBeVisible =
-            SoldierStarted;
+            AllPlayersEnteredGate;
 
-        if (soldierVisual.gameObject.activeSelf != shouldBeVisible)
+        if (soldierVisual.gameObject.activeSelf !=
+            shouldBeVisible)
         {
             soldierVisual.gameObject.SetActive(
                 shouldBeVisible
@@ -2703,62 +3175,81 @@ public class NetworkGameManager : NetworkBehaviour
         }
     }
 
-    private Vector3 lastSoldierNetworkPosition;
-    private bool hasLastSoldierNetworkPosition;
+
     // =========================================================
     // SOLDIER ROTATION
     // =========================================================
 
-    private void FaceSoldierAlongRoute(Transform soldierRoot)
+    private void FaceSoldierAlongRoute(
+        Transform soldierRoot)
     {
         if (soldierRoot == null)
             return;
 
-        // Host uses the NavMeshAgent's own rotation.
-        if (Runner != null && Runner.IsServer)
+        // -------------------------------------------------
+        // State Authority
+        // -------------------------------------------------
+
+        if (Object.HasStateAuthority)
         {
             if (soldierAgent != null &&
                 soldierAgent.enabled &&
                 soldierAgent.isOnNavMesh)
             {
-                soldierRoot.rotation = soldierAgent.transform.rotation;
+                soldierRoot.rotation =
+                    soldierAgent.transform.rotation;
             }
 
             return;
         }
 
-        // =====================================================
-        // CLIENT: determine direction from network movement
-        // =====================================================
+        // -------------------------------------------------
+        // Client
+        // -------------------------------------------------
 
-        Vector3 currentPosition = SoldierPosition;
+        Vector3 currentPosition =
+            SoldierPosition;
 
         if (!hasLastSoldierNetworkPosition)
         {
-            lastSoldierNetworkPosition = currentPosition;
-            hasLastSoldierNetworkPosition = true;
+            lastSoldierNetworkPosition =
+                currentPosition;
+
+            hasLastSoldierNetworkPosition =
+                true;
+
             return;
         }
 
         Vector3 direction =
-            currentPosition - lastSoldierNetworkPosition;
+            currentPosition -
+            lastSoldierNetworkPosition;
 
         direction.y = 0f;
 
-        if (direction.sqrMagnitude > 0.001f)
+        if (direction.sqrMagnitude >
+            0.001f)
         {
             Quaternion targetRotation =
-                Quaternion.LookRotation(direction.normalized, Vector3.up);
+                Quaternion.LookRotation(
+                    direction.normalized,
+                    Vector3.up
+                );
 
-            soldierRoot.rotation = Quaternion.Slerp(
-                soldierRoot.rotation,
-                targetRotation,
-                10f * Time.deltaTime
-            );
+            soldierRoot.rotation =
+                Quaternion.Slerp(
+                    soldierRoot.rotation,
+                    targetRotation,
+                    10f *
+                    Time.deltaTime
+                );
         }
 
-        lastSoldierNetworkPosition = currentPosition;
+        lastSoldierNetworkPosition =
+            currentPosition;
     }
+
+
     // =========================================================
     // SOLDIER BOB
     // =========================================================
@@ -2818,12 +3309,15 @@ public class NetworkGameManager : NetworkBehaviour
         int playerCount = 0;
         int readyCount = 0;
 
-        foreach (PlayerRef player in Runner.ActivePlayers)
+        foreach (PlayerRef player
+                 in Runner.ActivePlayers)
         {
             playerCount++;
 
             NetworkObject playerObject =
-                Runner.GetPlayerObject(player);
+                Runner.GetPlayerObject(
+                    player
+                );
 
             if (playerObject == null)
             {
@@ -2862,11 +3356,12 @@ public class NetworkGameManager : NetworkBehaviour
         }
 
         Debug.Log(
-            $"[GAME MANAGER] Ready check: " +
+            "[GAME MANAGER] Ready check: " +
             $"{readyCount}/{playerCount}"
         );
 
-        return readyCount == playerCount;
+        return readyCount ==
+               playerCount;
     }
 
 
@@ -2881,7 +3376,8 @@ public class NetworkGameManager : NetworkBehaviour
 
         int count = 0;
 
-        foreach (PlayerRef player in Runner.ActivePlayers)
+        foreach (PlayerRef player
+                 in Runner.ActivePlayers)
         {
             count++;
         }
@@ -2901,10 +3397,13 @@ public class NetworkGameManager : NetworkBehaviour
 
         int readyCount = 0;
 
-        foreach (PlayerRef player in Runner.ActivePlayers)
+        foreach (PlayerRef player
+                 in Runner.ActivePlayers)
         {
             NetworkObject playerObject =
-                Runner.GetPlayerObject(player);
+                Runner.GetPlayerObject(
+                    player
+                );
 
             if (playerObject == null)
                 continue;
@@ -2921,4 +3420,7 @@ public class NetworkGameManager : NetworkBehaviour
 
         return readyCount;
     }
+
+
 }
+
