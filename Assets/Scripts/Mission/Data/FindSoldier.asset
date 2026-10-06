@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f319dd85a07a6844ac0bd9072925ed2, type: 3}
+  m_Name: FindSoldier
+  m_EditorClassIdentifier: Assembly-CSharp::MissionData
+  title: FIND THE SOLDIER
+  description: Explore Fort Santiago and find a soldier to ask how to get out of
+    Fort Santiago.
+  icon: {fileID: 21300000, guid: 06e4b214a13e9cd41afa33019fa31ee9, type: 3}
+  autoDuration: 0
+  titleColor: {r: 0.9622642, g: 0, b: 0, a: 1}
+  descriptionColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
