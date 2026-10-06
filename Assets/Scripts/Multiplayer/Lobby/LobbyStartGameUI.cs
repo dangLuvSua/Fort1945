@@ -1,7 +1,6 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Fusion;
 
 public class LobbyStartGameUI : MonoBehaviour
 {
@@ -9,10 +8,9 @@ public class LobbyStartGameUI : MonoBehaviour
     [SerializeField] private Button startGameButton;
     [SerializeField] private TMP_Text readyCountText;
     [SerializeField] private TMP_Text hostStatusText;
-
+    [SerializeField] private TMP_Dropdown difficultyDropdown;
 
     private NetworkGameManager manager;
-
 
     private void Update()
     {
@@ -21,116 +19,146 @@ public class LobbyStartGameUI : MonoBehaviour
         if (manager == null)
             return;
 
+        bool isHost = manager.IsHost;
+        bool allReady = manager.AreAllPlayersReady();
 
-        int playerCount =
-            manager.GetPlayerCount();
-
-        int readyCount =
-            manager.GetReadyPlayerCount();
-
-        bool isHost =
-            manager.IsHost;
-
-        bool allReady =
-            manager.AreAllPlayersReady();
-
-
-        if (readyCountText != null)
-        {
-            readyCountText.text =
-                $"{readyCount} / {playerCount} READY";
-        }
-
-
-        if (startGameButton != null)
-        {
-            bool showStartButton =
-                isHost &&
-                allReady &&
-                !manager.GameStarted;
-
-            // Hide the button entirely unless the host can
-            // actually start the game (all players ready).
-            startGameButton.gameObject.SetActive(
-                showStartButton
-            );
-
-            startGameButton.interactable =
-                showStartButton;
-        }
-
-
-        if (hostStatusText != null)
-        {
-            if (!isHost)
-            {
-                hostStatusText.text =
-                    "WAITING FOR HOST...";
-            }
-            else if (manager.GameStarted)
-            {
-                hostStatusText.text =
-                    "GAME STARTED";
-            }
-            else if (!allReady)
-            {
-                hostStatusText.text =
-                    "WAITING FOR ALL PLAYERS TO BE READY";
-            }
-            else
-            {
-                hostStatusText.text =
-                    "ALL PLAYERS ARE READY";
-            }
-        }
+        UpdateReadyCount();
+        UpdateDifficulty(isHost);
+        UpdateStartButton(isHost, allReady);
+        UpdateHostStatus(isHost, allReady);
     }
-
 
     private void FindManager()
     {
-        if (manager != null)
-            return;
-
-
-        manager =
-            FindAnyObjectByType<NetworkGameManager>();
+        if (manager == null)
+            manager = FindAnyObjectByType<NetworkGameManager>();
     }
 
+    private void UpdateReadyCount()
+    {
+        if (readyCountText == null)
+            return;
+
+        readyCountText.text =
+            $"{manager.GetReadyPlayerCount()} / {manager.GetPlayerCount()} READY";
+    }
+
+    private void UpdateDifficulty(bool isHost)
+    {
+        if (difficultyDropdown == null)
+            return;
+
+        // Only the host can see/change difficulty.
+        difficultyDropdown.gameObject.SetActive(isHost);
+
+        if (!isHost)
+            return;
+
+        difficultyDropdown.SetValueWithoutNotify(
+            (int)manager.Difficulty
+        );
+
+        difficultyDropdown.interactable =
+            !manager.GameStarted;
+    }
+
+    private void UpdateStartButton(bool isHost, bool allReady)
+    {
+        if (startGameButton == null)
+            return;
+
+        bool canStart =
+            isHost &&
+            allReady &&
+            !manager.GameStarted;
+
+        startGameButton.gameObject.SetActive(canStart);
+        startGameButton.interactable = canStart;
+    }
+
+    private void UpdateHostStatus(bool isHost, bool allReady)
+    {
+        if (hostStatusText == null)
+            return;
+
+        if (!isHost)
+            hostStatusText.text = "WAITING FOR HOST...";
+        else if (manager.GameStarted)
+            hostStatusText.text = "GAME STARTED";
+        else if (!allReady)
+            hostStatusText.text =
+                "WAITING FOR ALL PLAYERS TO BE READY";
+        else
+            hostStatusText.text = "ALL PLAYERS ARE READY";
+    }
+
+    public void OnDifficultyChanged(int value)
+    {
+        NetworkGameManager manager =
+            NetworkGameManager.Instance;
+
+        if (manager == null)
+        {
+            Debug.LogWarning(
+                "[DIFFICULTY UI] NetworkGameManager not found."
+            );
+
+            return;
+        }
+
+        if (!manager.IsNetworkStateReady)
+        {
+            Debug.LogWarning(
+                "[DIFFICULTY UI] NetworkGameManager is not spawned yet."
+            );
+
+            return;
+        }
+
+        if (!manager.IsHost)
+        {
+            Debug.LogWarning(
+                "[DIFFICULTY UI] Only the host can change difficulty."
+            );
+
+            return;
+        }
+
+        GameDifficulty selectedDifficulty =
+            (GameDifficulty)value;
+
+        Debug.Log(
+            $"[DIFFICULTY UI] Host selected: {selectedDifficulty}"
+        );
+
+        manager.SetDifficulty(selectedDifficulty);
+    }
 
     public void StartGame()
     {
         if (manager == null)
         {
             Debug.LogWarning(
-                "[LOBBY START] " +
-                "NetworkGameManager not found."
+                "[LOBBY START] NetworkGameManager not found."
             );
-
             return;
         }
-
 
         if (!manager.IsHost)
         {
             Debug.LogWarning(
-                "[LOBBY START] " +
-                "Only the host can start the game."
+                "[LOBBY START] Only the host can start the game."
             );
-
             return;
         }
-
 
         if (!manager.AreAllPlayersReady())
         {
             Debug.LogWarning(
-                "[LOBBY START] " +
-                "Not all players are ready."
+                "[LOBBY START] Not all players are ready."
             );
-
             return;
         }
-
 
         manager.RequestStartGame();
     }

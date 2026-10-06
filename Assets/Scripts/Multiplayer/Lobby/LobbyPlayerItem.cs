@@ -1,3 +1,4 @@
+using Fusion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,6 +15,10 @@ public class LobbyPlayerItem : MonoBehaviour
 
     private LobbyPlayerState playerState;
 
+
+    // =====================================================
+    // SETUP
+    // =====================================================
 
     public void Setup(
         LobbyPlayerState state,
@@ -35,6 +40,10 @@ public class LobbyPlayerItem : MonoBehaviour
     }
 
 
+    // =====================================================
+    // UPDATE DISPLAY
+    // =====================================================
+
     public void UpdateDisplay(
         Sprite characterAvatar)
     {
@@ -54,15 +63,36 @@ public class LobbyPlayerItem : MonoBehaviour
 
 
         // ==========================================
-        // READY STATUS
+        // CHECK GAME STATE
+        // ==========================================
+
+        NetworkGameManager manager =
+            NetworkGameManager.Instance;
+
+        bool gameStarted =
+            manager != null &&
+            manager.IsNetworkStateReady &&
+            manager.GameStarted;
+
+
+        // ==========================================
+        // READY / IN-GAME STATUS
         // ==========================================
 
         if (readyStatusText != null)
         {
-            readyStatusText.text =
-                playerState.IsReady
-                    ? "READY"
-                    : "NOT READY";
+            if (gameStarted)
+            {
+                readyStatusText.text =
+                    "IN-GAME";
+            }
+            else
+            {
+                readyStatusText.text =
+                    playerState.IsReady
+                        ? "READY"
+                        : "NOT READY";
+            }
         }
 
 
@@ -90,11 +120,13 @@ public class LobbyPlayerItem : MonoBehaviour
                 characterAvatarImage.sprite =
                     characterAvatar;
 
-                characterAvatarImage.enabled = true;
+                characterAvatarImage.enabled =
+                    true;
             }
             else
             {
-                characterAvatarImage.enabled = false;
+                characterAvatarImage.enabled =
+                    false;
             }
         }
     }
