@@ -44,14 +44,19 @@ public class LobbyStartGameUI : MonoBehaviour
 
         if (startGameButton != null)
         {
-            startGameButton.gameObject.SetActive(
-                isHost
-            );
-
-            startGameButton.interactable =
+            bool showStartButton =
                 isHost &&
                 allReady &&
                 !manager.GameStarted;
+
+            // Hide the button entirely unless the host can
+            // actually start the game (all players ready).
+            startGameButton.gameObject.SetActive(
+                showStartButton
+            );
+
+            startGameButton.interactable =
+                showStartButton;
         }
 
 
