@@ -1,6 +1,7 @@
 using Fusion;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class MyPlayerPanelUI : MonoBehaviour
@@ -8,14 +9,17 @@ public class MyPlayerPanelUI : MonoBehaviour
     [Header("Player Information")]
     [SerializeField] private TMP_Text playerNameText;
 
+
     [Header("Character Avatar")]
     [SerializeField] private Image characterAvatarImage;
     [SerializeField] private Sprite[] characterAvatars;
+
 
     [Header("Ready")]
     [SerializeField] private Button readyButton;
     [SerializeField] private TMP_Text readyButtonText;
     [SerializeField] private TMP_Text readyStatusText;
+
 
     private LobbyPlayerState localPlayerState;
     private NetworkRunner runner;
@@ -31,10 +35,13 @@ public class MyPlayerPanelUI : MonoBehaviour
             "[MY PLAYER PANEL] Started."
         );
 
+
         Debug.Log(
             $"[MY PLAYER PANEL] " +
-            $"PlayerProfile Name: {PlayerProfile.PlayerName}"
+            $"PlayerProfile Name: " +
+            $"{PlayerProfile.PlayerName}"
         );
+
 
         Debug.Log(
             $"[MY PLAYER PANEL] " +
@@ -42,8 +49,10 @@ public class MyPlayerPanelUI : MonoBehaviour
             $"{PlayerProfile.SelectedCharacter}"
         );
 
+
         // Display local saved data immediately.
         UpdateFromPlayerProfile();
+
 
         FindRunner();
         FindLocalPlayer();
@@ -61,6 +70,7 @@ public class MyPlayerPanelUI : MonoBehaviour
             FindRunner();
         }
 
+
         // -------------------------------------------------
         // Find Local Player
         // -------------------------------------------------
@@ -69,6 +79,7 @@ public class MyPlayerPanelUI : MonoBehaviour
         {
             FindLocalPlayer();
         }
+
 
         // -------------------------------------------------
         // Update Player Information
@@ -94,10 +105,12 @@ public class MyPlayerPanelUI : MonoBehaviour
         runner =
             FindAnyObjectByType<NetworkRunner>();
 
+
         if (runner != null)
         {
             Debug.Log(
-                "[MY PLAYER PANEL] NetworkRunner found."
+                "[MY PLAYER PANEL] " +
+                "NetworkRunner found."
             );
         }
     }
@@ -112,8 +125,10 @@ public class MyPlayerPanelUI : MonoBehaviour
         if (runner == null)
             return;
 
+
         if (!runner.LocalPlayer.IsValid)
             return;
+
 
         if (!runner.TryGetPlayerObject(
             runner.LocalPlayer,
@@ -122,8 +137,10 @@ public class MyPlayerPanelUI : MonoBehaviour
             return;
         }
 
+
         localPlayerState =
             playerObject.GetComponent<LobbyPlayerState>();
+
 
         if (localPlayerState != null)
         {
@@ -132,11 +149,13 @@ public class MyPlayerPanelUI : MonoBehaviour
                 "Local LobbyPlayerState found."
             );
 
+
             Debug.Log(
                 $"[MY PLAYER PANEL] " +
                 $"Network Name: " +
                 $"{localPlayerState.PlayerName}"
             );
+
 
             Debug.Log(
                 $"[MY PLAYER PANEL] " +
@@ -162,10 +181,12 @@ public class MyPlayerPanelUI : MonoBehaviour
             string playerName =
                 PlayerProfile.PlayerName;
 
+
             if (string.IsNullOrWhiteSpace(playerName))
             {
                 playerName = "Player";
             }
+
 
             playerNameText.text =
                 playerName;
@@ -178,6 +199,7 @@ public class MyPlayerPanelUI : MonoBehaviour
 
         string characterId =
             PlayerProfile.SelectedCharacter;
+
 
         SetCharacterAvatar(characterId);
     }
@@ -202,16 +224,19 @@ public class MyPlayerPanelUI : MonoBehaviour
             string playerName =
                 localPlayerState.PlayerName.ToString();
 
+
             if (string.IsNullOrWhiteSpace(playerName))
             {
                 playerName =
                     PlayerProfile.PlayerName;
             }
 
+
             if (string.IsNullOrWhiteSpace(playerName))
             {
                 playerName = "Player";
             }
+
 
             playerNameText.text =
                 playerName;
@@ -225,11 +250,13 @@ public class MyPlayerPanelUI : MonoBehaviour
         string characterId =
             localPlayerState.SelectedCharacter.ToString();
 
+
         if (string.IsNullOrWhiteSpace(characterId))
         {
             characterId =
                 PlayerProfile.SelectedCharacter;
         }
+
 
         SetCharacterAvatar(characterId);
 
@@ -243,15 +270,40 @@ public class MyPlayerPanelUI : MonoBehaviour
 
 
     // =====================================================
+    // CHECK DUNGEON
+    // =====================================================
+
+    private bool IsDungeonScene()
+    {
+        return SceneManager.GetActiveScene().name ==
+               "Dungeon";
+    }
+
+
+    // =====================================================
     // FALLBACK READY UI
     // =====================================================
 
     private void UpdateReadyFromProfileFallback()
     {
-        // If the NetworkGameManager exists and the game
-        // has already started, show In-Game instead.
+        // -------------------------------------------------
+        // DUNGEON
+        // -------------------------------------------------
+
+        if (IsDungeonScene())
+        {
+            SetInGameUI();
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // GAME STARTED
+        // -------------------------------------------------
+
         NetworkGameManager manager =
             NetworkGameManager.Instance;
+
 
         if (manager != null &&
             manager.IsNetworkStateReady &&
@@ -262,18 +314,23 @@ public class MyPlayerPanelUI : MonoBehaviour
         }
 
 
-        // Normal lobby fallback.
+        // -------------------------------------------------
+        // NORMAL LOBBY FALLBACK
+        // -------------------------------------------------
+
         if (readyButton != null)
         {
             readyButton.gameObject.SetActive(true);
             readyButton.interactable = true;
         }
 
+
         if (readyButtonText != null)
         {
             readyButtonText.text =
                 "READY";
         }
+
 
         if (readyStatusText != null)
         {
@@ -294,13 +351,23 @@ public class MyPlayerPanelUI : MonoBehaviour
 
 
         // -------------------------------------------------
-        // IMPORTANT:
-        // Check GameStarted only after the manager has
-        // completed Fusion Spawned().
+        // DUNGEON
+        // -------------------------------------------------
+
+        if (IsDungeonScene())
+        {
+            SetInGameUI();
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // GAME STARTED
         // -------------------------------------------------
 
         NetworkGameManager manager =
             NetworkGameManager.Instance;
+
 
         if (manager != null &&
             manager.IsNetworkStateReady &&
@@ -383,8 +450,10 @@ public class MyPlayerPanelUI : MonoBehaviour
         if (characterAvatarImage == null)
             return;
 
+
         Sprite avatar =
             GetCharacterAvatar(characterId);
+
 
         if (avatar != null)
         {
@@ -398,6 +467,7 @@ public class MyPlayerPanelUI : MonoBehaviour
         {
             characterAvatarImage.enabled =
                 false;
+
 
             Debug.LogWarning(
                 $"[MY PLAYER PANEL] " +
@@ -416,8 +486,10 @@ public class MyPlayerPanelUI : MonoBehaviour
             return null;
         }
 
+
         if (string.IsNullOrWhiteSpace(characterId))
             return null;
+
 
         if (!characterId.StartsWith(
             "Character"))
@@ -425,11 +497,13 @@ public class MyPlayerPanelUI : MonoBehaviour
             return null;
         }
 
+
         string numberPart =
             characterId.Replace(
                 "Character",
                 ""
             );
+
 
         if (!int.TryParse(
             numberPart,
@@ -438,14 +512,17 @@ public class MyPlayerPanelUI : MonoBehaviour
             return null;
         }
 
+
         int index =
             characterNumber - 1;
+
 
         if (index < 0 ||
             index >= characterAvatars.Length)
         {
             return null;
         }
+
 
         return characterAvatars[index];
     }
@@ -462,11 +539,27 @@ public class MyPlayerPanelUI : MonoBehaviour
 
 
         // -------------------------------------------------
+        // Do not allow Ready in Dungeon.
+        // -------------------------------------------------
+
+        if (IsDungeonScene())
+        {
+            Debug.Log(
+                "[MY PLAYER PANEL] " +
+                "Cannot toggle Ready in Dungeon."
+            );
+
+            return;
+        }
+
+
+        // -------------------------------------------------
         // Do not allow Ready after game starts.
         // -------------------------------------------------
 
         NetworkGameManager manager =
             NetworkGameManager.Instance;
+
 
         if (manager != null &&
             manager.IsNetworkStateReady &&
@@ -474,7 +567,8 @@ public class MyPlayerPanelUI : MonoBehaviour
         {
             Debug.Log(
                 "[MY PLAYER PANEL] " +
-                "Cannot toggle Ready. Game is already in-game."
+                "Cannot toggle Ready. " +
+                "Game is already in-game."
             );
 
             return;
@@ -503,6 +597,7 @@ public class MyPlayerPanelUI : MonoBehaviour
 
         bool newReadyState =
             !localPlayerState.IsReady;
+
 
         localPlayerState.SetReady(
             newReadyState

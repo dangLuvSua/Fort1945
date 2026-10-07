@@ -482,6 +482,7 @@ MonoBehaviour:
   - {fileID: 3643735531675794319}
   - {fileID: -2516544739770729294}
   - {fileID: 7925084007181689668}
+  - {fileID: 264984566483249543}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &1612331710460718894
 MonoBehaviour:
@@ -623,6 +624,7 @@ MonoBehaviour:
   regenDelay: 1
   regenPerSecond: 10
   minToStartSprint: 10
+  _NetworkCurrent: 0
 --- !u!1 &3812555787650489551
 GameObject:
   m_ObjectHideFlags: 0

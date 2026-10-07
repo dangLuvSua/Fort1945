@@ -1,6 +1,7 @@
 using Fusion;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class LobbyPlayerItem : MonoBehaviour
@@ -10,10 +11,24 @@ public class LobbyPlayerItem : MonoBehaviour
     [SerializeField] private TMP_Text readyStatusText;
     [SerializeField] private TMP_Text hostText;
 
+
     [Header("Character Avatar")]
     [SerializeField] private Image characterAvatarImage;
 
+
+    [Header("Player Stats")]
+    [SerializeField] private Slider staminaSlider;
+
+
+    // =====================================================
+    // REFERENCES
+    // =====================================================
+
     private LobbyPlayerState playerState;
+
+    // Cached reference to the actual networked player's
+    // stamina component.
+    private PlayerStamina playerStamina;
 
 
     // =====================================================
@@ -26,6 +41,11 @@ public class LobbyPlayerItem : MonoBehaviour
     {
         playerState = state;
 
+        // Reset cached reference when this UI item is
+        // reused for another player.
+        playerStamina = null;
+
+
         if (playerState == null)
         {
             Debug.LogWarning(
@@ -36,7 +56,150 @@ public class LobbyPlayerItem : MonoBehaviour
             return;
         }
 
+
         UpdateDisplay(characterAvatar);
+
+
+        // Try immediately.
+        FindPlayerStamina();
+    }
+
+
+    // =====================================================
+    // UPDATE
+    // =====================================================
+
+    private void Update()
+    {
+        if (playerState == null)
+            return;
+
+
+        // The actual player object can spawn slightly later
+        // than LobbyPlayerState.
+        if (playerStamina == null)
+        {
+            FindPlayerStamina();
+        }
+
+
+        UpdateStaminaDisplay();
+    }
+
+
+    // =====================================================
+    // FIND PLAYER STAMINA
+    // =====================================================
+
+    private void FindPlayerStamina()
+    {
+        if (playerState == null)
+            return;
+
+        if (playerState.Object == null)
+            return;
+
+
+        NetworkRunner runner =
+            playerState.Runner;
+
+        if (runner == null)
+            return;
+
+
+        PlayerRef targetPlayer =
+            playerState.Object.InputAuthority;
+
+
+        // Ask Fusion for the actual network player object.
+        if (!runner.TryGetPlayerObject(
+            targetPlayer,
+            out NetworkObject playerObject))
+        {
+            return;
+        }
+
+
+        if (playerObject == null)
+            return;
+
+
+        // PlayerStamina should be on the networked
+        // player prefab.
+        PlayerStamina stamina =
+            playerObject.GetComponent<PlayerStamina>();
+
+
+        // Also support PlayerStamina being on a child.
+        if (stamina == null)
+        {
+            stamina =
+                playerObject.GetComponentInChildren<PlayerStamina>(
+                    true
+                );
+        }
+
+
+        if (stamina == null)
+        {
+            return;
+        }
+
+
+        playerStamina = stamina;
+
+
+        Debug.Log(
+            $"[LOBBY PLAYER ITEM] " +
+            $"Connected stamina for " +
+            $"{playerState.PlayerName} " +
+            $"({targetPlayer})"
+        );
+
+
+        // -------------------------------------------------
+        // Initialize slider
+        // -------------------------------------------------
+
+        if (staminaSlider != null)
+        {
+            staminaSlider.minValue = 0f;
+            staminaSlider.maxValue =
+                playerStamina.Max;
+
+            staminaSlider.value =
+                playerStamina.Current;
+        }
+    }
+
+
+    // =====================================================
+    // STAMINA DISPLAY
+    // =====================================================
+
+    private void UpdateStaminaDisplay()
+    {
+        if (staminaSlider == null)
+            return;
+
+
+        if (playerStamina == null)
+            return;
+
+
+        // Keep slider range synchronized with the
+        // player's configured maximum.
+        staminaSlider.minValue = 0f;
+
+        staminaSlider.maxValue =
+            playerStamina.Max;
+
+
+        // IMPORTANT:
+        // Current is now [Networked], so this value can be
+        // read by other players.
+        staminaSlider.value =
+            playerStamina.Current;
     }
 
 
@@ -69,10 +232,16 @@ public class LobbyPlayerItem : MonoBehaviour
         NetworkGameManager manager =
             NetworkGameManager.Instance;
 
+
         bool gameStarted =
             manager != null &&
             manager.IsNetworkStateReady &&
             manager.GameStarted;
+
+
+        bool dungeonScene =
+            SceneManager.GetActiveScene().name ==
+            "Dungeon";
 
 
         // ==========================================
@@ -81,7 +250,14 @@ public class LobbyPlayerItem : MonoBehaviour
 
         if (readyStatusText != null)
         {
-            if (gameStarted)
+            // Dungeon players are always shown as
+            // IN-GAME.
+            if (dungeonScene)
+            {
+                readyStatusText.text =
+                    "IN-GAME";
+            }
+            else if (gameStarted)
             {
                 readyStatusText.text =
                     "IN-GAME";
