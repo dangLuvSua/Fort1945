@@ -587,6 +587,10 @@ MonoBehaviour:
   dropOrigin: {fileID: 5854169451270767622}
   throwForce: 2.75
   throwUp: 1.5
+  itemCatalog:
+  - {fileID: 11400000, guid: 83911e1fa10d6b546a50ebe92b8da173, type: 2}
+  - {fileID: 11400000, guid: d98faaf2d5a8a2b46adbd30d840696f4, type: 2}
+  _SelectedSlot: 0
 --- !u!114 &7925084007181689668
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -624,7 +628,7 @@ MonoBehaviour:
   regenDelay: 1
   regenPerSecond: 10
   minToStartSprint: 10
-  _NetworkCurrent: 0
+  _Current: 0
 --- !u!1 &3812555787650489551
 GameObject:
   m_ObjectHideFlags: 0

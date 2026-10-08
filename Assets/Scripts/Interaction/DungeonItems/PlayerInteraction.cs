@@ -4,43 +4,84 @@ using UnityEngine.InputSystem;
 
 public class PlayerInteractor : NetworkBehaviour
 {
-    [SerializeField] Camera cam;
-    [SerializeField] PlayerInventory inventory;
-    [SerializeField] GameObject uiRoot;      // yung Canvas
-    [SerializeField] GameObject promptText;  // yung "Press E" text
-    [SerializeField] float range = 3f;
-    [SerializeField] LayerMask mask = ~0;
+    [Header("Interaction")]
+    [SerializeField] private Camera cam;
+    [SerializeField] private PlayerInventory inventory;
+    [SerializeField] private GameObject uiRoot;
+    [SerializeField] private GameObject promptText;
 
-    bool isLocal;
+    [SerializeField] private float range = 3f;
+    [SerializeField] private LayerMask mask = ~0;
+
+    private bool isLocal;
 
     public override void Spawned()
     {
-        isLocal = HasInputAuthority;
-        if (uiRoot) uiRoot.SetActive(isLocal); // sa sarili mo lang lalabas ang crosshair
-        if (promptText) promptText.SetActive(false);
+        isLocal = Object.HasStateAuthority;
+
+        if (uiRoot != null)
+            uiRoot.SetActive(isLocal);
+
+        if (promptText != null)
+            promptText.SetActive(false);
     }
 
-    void Update()
+    private void Update()
     {
-        if (!isLocal) return;
+        if (!isLocal)
+            return;
 
-        Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-        Debug.DrawRay(ray.origin, ray.direction * range, Color.red);
+        if (cam == null)
+            return;
+
+        if (inventory == null)
+            return;
+
+        Ray ray =
+            cam.ViewportPointToRay(
+                new Vector3(0.5f, 0.5f, 0f)
+            );
+
+        Debug.DrawRay(
+            ray.origin,
+            ray.direction * range,
+            Color.red
+        );
 
         KeyPickup target = null;
 
-        if (Physics.Raycast(ray, out RaycastHit hit, range, mask, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(
+            ray,
+            out RaycastHit hit,
+            range,
+            mask,
+            QueryTriggerInteraction.Ignore))
         {
-            var k = hit.collider.GetComponentInParent<KeyPickup>();
-            if (k != null && k.CanCollect) target = k;
+            KeyPickup pickup =
+                hit.collider.GetComponentInParent<KeyPickup>();
+
+            if (pickup != null &&
+                pickup.CanCollect)
+            {
+                target = pickup;
+            }
         }
 
-        promptText.SetActive(target != null);
-
-        if (target != null && Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
+        if (promptText != null)
         {
-            target.Collect(inventory);
-            promptText.SetActive(false);
+            promptText.SetActive(
+                target != null
+            );
+        }
+
+        if (target != null &&
+            Keyboard.current != null &&
+            Keyboard.current.eKey.wasPressedThisFrame)
+        {
+            target.RequestCollect();
+
+            if (promptText != null)
+                promptText.SetActive(false);
         }
     }
 }

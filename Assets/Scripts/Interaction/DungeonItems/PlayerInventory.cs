@@ -1,3 +1,4 @@
+using System;
 using Fusion;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -6,109 +7,395 @@ public class PlayerInventory : NetworkBehaviour
 {
     public const int SlotCount = 8;
 
-    [SerializeField] Transform holdPoint;
+    [Header("Player Visual")]
+    [SerializeField] private Transform holdPoint;
 
-    [SerializeField] Transform dropOrigin; // Main Camera
+    [Header("Drop")]
+    [SerializeField] private Transform dropOrigin;
+    [SerializeField] private float throwForce = 4f;
+    [SerializeField] private float throwUp = 1.5f;
 
-    ItemData[] slots = new ItemData[SlotCount];
-    int selected = 0;
-    GameObject heldObject;
-    bool isLocal;
+    [Header("Item Database")]
+    [Tooltip("Assign every ItemData used by this game.")]
+    [SerializeField] private ItemData[] itemCatalog;
+
+    // 0 = empty slot
+    // > 0 = ItemData.itemId
+    [Networked, Capacity(SlotCount)]
+    private NetworkArray<int> NetworkSlots => default;
+
+    [Networked]
+    public int SelectedSlot { get; private set; }
+
+    private GameObject heldObject;
+
+    private int lastInventoryHash = int.MinValue;
+
+    public event Action InventoryChanged;
 
     public override void Spawned()
     {
-        isLocal = HasInputAuthority;
+        if (Object.HasStateAuthority)
+        {
+            SelectedSlot = 0;
+        }
+
+        RefreshHeldVisual();
+        lastInventoryHash = CalculateInventoryHash();
+
+        InventoryChanged?.Invoke();
     }
 
-    void Update()
+    private void Update()
     {
-        if (!isLocal || Keyboard.current == null) return;
+        if (!Object.HasStateAuthority)
+            return;
 
+        if (Keyboard.current == null)
+            return;
+
+        // Select slots 1-8
         for (int i = 0; i < SlotCount; i++)
         {
-            var key = (Key)((int)Key.Digit1 + i);
+            Key key = (Key)((int)Key.Digit1 + i);
+
             if (Keyboard.current[key].wasPressedThisFrame)
             {
                 Select(i);
                 break;
             }
         }
-        if (Keyboard.current.gKey.wasPressedThisFrame) Drop();
+
+        // Drop selected item
+        if (Keyboard.current.gKey.wasPressedThisFrame)
+        {
+            RequestDrop();
+        }
     }
 
-    [SerializeField] float throwForce = 4f;
-    [SerializeField] float throwUp = 1.5f;
-
-    void Drop()
+    public override void Render()
     {
-        var item = slots[selected];
-        if (item == null || item.worldPrefab == null) return;
+        int currentHash = CalculateInventoryHash();
 
-        Vector3 pos = dropOrigin.position + dropOrigin.forward * 0.8f;
-        var obj = Instantiate(item.worldPrefab, pos, Quaternion.Euler(0f, dropOrigin.eulerAngles.y, 0f));
+        if (currentHash != lastInventoryHash)
+        {
+            lastInventoryHash = currentHash;
 
-        // kailangan convex ang MeshCollider bago lagyan ng Rigidbody
-        foreach (var mc in obj.GetComponentsInChildren<MeshCollider>()) mc.convex = true;
+            RefreshHeldVisual();
 
-        var rb = obj.AddComponent<Rigidbody>();
-        rb.mass = 0.2f;
-        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-        rb.AddForce(dropOrigin.forward * throwForce + Vector3.up * throwUp, ForceMode.VelocityChange);
-        rb.AddTorque(Random.insideUnitSphere * 3f, ForceMode.VelocityChange);
-
-        // para hindi tumama sa sarili mong collider
-        foreach (var a in obj.GetComponentsInChildren<Collider>())
-            foreach (var b in GetComponentsInChildren<Collider>())
-                Physics.IgnoreCollision(a, b);
-
-        slots[selected] = null;
-        Refresh();
+            InventoryChanged?.Invoke();
+        }
     }
 
-    public bool TryAdd(ItemData item)
+    // =========================================================
+    // NETWORKED INVENTORY
+    // =========================================================
+
+    public bool TryAddNetworkedById(int itemId)
     {
+        if (!Object.HasStateAuthority)
+            return false;
+
+        ItemData item = GetItemData(itemId);
+
+        if (item == null)
+        {
+            Debug.LogError(
+                $"[INVENTORY] Item ID {itemId} was not found."
+            );
+
+            return false;
+        }
+
         for (int i = 0; i < SlotCount; i++)
         {
-            if (slots[i] == null)
+            if (NetworkSlots.Get(i) == 0)
             {
-                slots[i] = item;
-                Debug.Log($"{item.itemName} napunta sa slot {i + 1}");
-                if (i == selected) Refresh();
+                NetworkSlots.Set(i, itemId);
+
+                Debug.Log(
+                    $"[INVENTORY] " +
+                    $"{item.itemName} added to slot {i + 1}."
+                );
+
                 return true;
             }
         }
 
-        Debug.Log("Puno na ang inventory!");
+        Debug.Log(
+            "[INVENTORY] Inventory is full."
+        );
+
         return false;
     }
 
     public bool Has(ItemData item)
     {
-        foreach (var s in slots)
-            if (s == item) return true;
+        if (item == null)
+            return false;
+
+        return HasItemId(item.itemId);
+    }
+
+    public bool HasItemId(int itemId)
+    {
+        if (itemId <= 0)
+            return false;
+
+        for (int i = 0; i < SlotCount; i++)
+        {
+            if (NetworkSlots.Get(i) == itemId)
+                return true;
+        }
+
         return false;
     }
 
-    void Select(int index)
+    // =========================================================
+    // SELECT
+    // =========================================================
+
+    private void Select(int index)
     {
-        if (index == selected) return;
-        selected = index;
-        Refresh();
+        if (!Object.HasStateAuthority)
+            return;
+
+        if (index < 0 || index >= SlotCount)
+            return;
+
+        if (SelectedSlot == index)
+            return;
+
+        SelectedSlot = index;
+
+        Debug.Log(
+            $"[INVENTORY] Selected slot {index + 1}"
+        );
     }
 
-    void Refresh()
+    // =========================================================
+    // DROP
+    // =========================================================
+
+    private void RequestDrop()
     {
-        if (heldObject != null) Destroy(heldObject);
+        if (!Object.HasStateAuthority)
+            return;
 
-        var item = slots[selected];
-        if (item == null || item.heldPrefab == null) return;
+        DropAuthoritative(SelectedSlot);
+    }
 
-        heldObject = Instantiate(item.heldPrefab, holdPoint);
-        heldObject.transform.localPosition = Vector3.zero;
-        heldObject.transform.localRotation = Quaternion.identity;
+    private void DropAuthoritative(int slotIndex)
+    {
+        if (!Object.HasStateAuthority)
+            return;
 
-        // visual lang ito, kaya alisin ang collider at pickup script
-        foreach (var c in heldObject.GetComponentsInChildren<Collider>()) Destroy(c);
-        foreach (var p in heldObject.GetComponentsInChildren<KeyPickup>()) Destroy(p);
+        if (slotIndex < 0 || slotIndex >= SlotCount)
+            return;
+
+        int itemId = NetworkSlots.Get(slotIndex);
+
+        if (itemId == 0)
+            return;
+
+        ItemData item = GetItemData(itemId);
+
+        if (item == null)
+        {
+            Debug.LogError(
+                $"[INVENTORY] Cannot drop unknown item ID {itemId}."
+            );
+
+            return;
+        }
+
+        if (item.worldPrefab == null)
+        {
+            Debug.LogError(
+                $"[INVENTORY] {item.itemName} " +
+                "does not have a NetworkObject worldPrefab."
+            );
+
+            return;
+        }
+
+        Vector3 spawnPosition;
+
+        if (dropOrigin != null)
+        {
+            spawnPosition =
+                dropOrigin.position +
+                dropOrigin.forward * 0.8f;
+        }
+        else
+        {
+            spawnPosition =
+                transform.position +
+                transform.forward * 1f +
+                Vector3.up * 1f;
+        }
+
+        Quaternion rotation =
+            Quaternion.Euler(
+                0f,
+                transform.eulerAngles.y,
+                0f
+            );
+
+        NetworkObject droppedObject =
+            Runner.Spawn(
+                item.worldPrefab,
+                spawnPosition,
+                rotation
+            );
+
+        if (droppedObject != null)
+        {
+            NetworkedDroppedItem droppedItem =
+                droppedObject.GetComponent<NetworkedDroppedItem>();
+
+            if (droppedItem != null)
+            {
+                droppedItem.Initialize(itemId);
+            }
+
+            NetworkSlots.Set(slotIndex, 0);
+
+            Debug.Log(
+                $"[INVENTORY] " +
+                $"{item.itemName} dropped from slot {slotIndex + 1}."
+            );
+        }
+    }
+
+    // =========================================================
+    // ITEM LOOKUP
+    // =========================================================
+
+    public ItemData GetItemData(int itemId)
+    {
+        if (itemId <= 0)
+            return null;
+
+        if (itemCatalog == null)
+            return null;
+
+        for (int i = 0; i < itemCatalog.Length; i++)
+        {
+            ItemData item = itemCatalog[i];
+
+            if (item != null &&
+                item.itemId == itemId)
+            {
+                return item;
+            }
+        }
+
+        return null;
+    }
+
+    public ItemData GetItemAt(int slotIndex)
+    {
+        if (slotIndex < 0 ||
+            slotIndex >= SlotCount)
+        {
+            return null;
+        }
+
+        int itemId =
+            NetworkSlots.Get(slotIndex);
+
+        return GetItemData(itemId);
+    }
+
+    public int GetItemIdAt(int slotIndex)
+    {
+        if (slotIndex < 0 ||
+            slotIndex >= SlotCount)
+        {
+            return 0;
+        }
+
+        return NetworkSlots.Get(slotIndex);
+    }
+
+    public int GetSlotCount()
+    {
+        return SlotCount;
+    }
+
+    // =========================================================
+    // HELD VISUAL
+    // =========================================================
+
+    private void RefreshHeldVisual()
+    {
+        if (heldObject != null)
+        {
+            Destroy(heldObject);
+            heldObject = null;
+        }
+
+        if (holdPoint == null)
+            return;
+
+        ItemData item =
+            GetItemAt(SelectedSlot);
+
+        if (item == null)
+            return;
+
+        if (item.heldPrefab == null)
+            return;
+
+        heldObject =
+            Instantiate(
+                item.heldPrefab,
+                holdPoint
+            );
+
+        heldObject.transform.localPosition =
+            Vector3.zero;
+
+        heldObject.transform.localRotation =
+            Quaternion.identity;
+
+        // Held visual only.
+        foreach (
+            Collider collider
+            in heldObject.GetComponentsInChildren<Collider>()
+        )
+        {
+            Destroy(collider);
+        }
+
+        foreach (
+            KeyPickup pickup
+            in heldObject.GetComponentsInChildren<KeyPickup>()
+        )
+        {
+            Destroy(pickup);
+        }
+    }
+
+    // =========================================================
+    // CHANGE DETECTION
+    // =========================================================
+
+    private int CalculateInventoryHash()
+    {
+        unchecked
+        {
+            int hash = SelectedSlot;
+
+            for (int i = 0; i < SlotCount; i++)
+            {
+                hash =
+                    hash * 31 +
+                    NetworkSlots.Get(i);
+            }
+
+            return hash;
+        }
     }
 }

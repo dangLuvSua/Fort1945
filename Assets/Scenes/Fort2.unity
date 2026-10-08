@@ -36503,19 +36503,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4018137305229821298, guid: 8c3f4d9577fec784f8914040e801323b, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 15
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 4018137305229821298, guid: 8c3f4d9577fec784f8914040e801323b, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -516
+      value: -501
+      objectReference: {fileID: 0}
+    - target: {fileID: 7111760732111074737, guid: 8c3f4d9577fec784f8914040e801323b, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -621
+      objectReference: {fileID: 0}
+    - target: {fileID: 7111760732111074737, guid: 8c3f4d9577fec784f8914040e801323b, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -500.71002
       objectReference: {fileID: 0}
     - target: {fileID: 7621995787411298811, guid: 8c3f4d9577fec784f8914040e801323b, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -675.6233
+      value: 685
       objectReference: {fileID: 0}
     - target: {fileID: 7621995787411298811, guid: 8c3f4d9577fec784f8914040e801323b, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -518.5698
+      value: -501
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -92917,8 +92925,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef3ab5f45fecdf548b2d8b3736fdfd6b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoldierGuidePrompt
-  range: 15
-  tagOffset: {x: 0, y: 5.5, z: 0}
+  range: 10
+  tagOffset: {x: 0, y: 3.5, z: 0}
   worldTagPrefab: {fileID: 1000000001, guid: aabbccddeeff00112233445566778899, type: 3}
   promptText: Follow the soldier
   promptColor: {r: 1, g: 0.13774192, b: 0, a: 1}
@@ -114025,11 +114033,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5991734337042542437, guid: 410b837c35583a94293b959a4133e861, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -43.07605
+      value: -0.000061035156
       objectReference: {fileID: 0}
     - target: {fileID: 5991734337042542437, guid: 410b837c35583a94293b959a4133e861, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -412.55
+      value: -385
       objectReference: {fileID: 0}
     - target: {fileID: 5991734337042542437, guid: 410b837c35583a94293b959a4133e861, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
