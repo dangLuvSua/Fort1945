@@ -219,28 +219,29 @@ public class PlayerInventory : NetworkBehaviour
             return;
         }
 
-        Vector3 spawnPosition;
+        // -----------------------------------------------------
+        // Spawn position / rotation
+        // -----------------------------------------------------
 
-        if (dropOrigin != null)
-        {
-            spawnPosition =
-                dropOrigin.position +
-                dropOrigin.forward * 0.8f;
-        }
-        else
-        {
-            spawnPosition =
-                transform.position +
-                transform.forward * 1f +
-                Vector3.up * 1f;
-        }
+        Transform aim =
+            dropOrigin != null
+                ? dropOrigin
+                : transform;
+
+        Vector3 spawnPosition =
+            aim.position +
+            aim.forward * 0.8f;
 
         Quaternion rotation =
             Quaternion.Euler(
                 0f,
-                transform.eulerAngles.y,
+                aim.eulerAngles.y,
                 0f
             );
+
+        // -----------------------------------------------------
+        // Spawn
+        // -----------------------------------------------------
 
         NetworkObject droppedObject =
             Runner.Spawn(
@@ -249,23 +250,77 @@ public class PlayerInventory : NetworkBehaviour
                 rotation
             );
 
-        if (droppedObject != null)
+        if (droppedObject == null)
         {
-            NetworkedDroppedItem droppedItem =
-                droppedObject.GetComponent<NetworkedDroppedItem>();
+            Debug.LogError(
+                "[INVENTORY] Runner.Spawn returned NULL for dropped item."
+            );
 
-            if (droppedItem != null)
+            return;
+        }
+
+        // -----------------------------------------------------
+        // Item identity
+        // -----------------------------------------------------
+
+        NetworkedDroppedItem droppedItem =
+            droppedObject.GetComponent<NetworkedDroppedItem>();
+
+        if (droppedItem != null)
+        {
+            droppedItem.Initialize(itemId);
+        }
+
+        // -----------------------------------------------------
+        // Physics throw
+        // -----------------------------------------------------
+
+        DroppedItemPhysics dropPhysics =
+            droppedObject.GetComponent<DroppedItemPhysics>();
+
+        if (dropPhysics != null)
+        {
+            Vector3 velocity =
+                aim.forward * throwForce +
+                Vector3.up * throwUp;
+
+            dropPhysics.Launch(
+                velocity,
+                UnityEngine.Random.insideUnitSphere * 3f
+            );
+
+            // Para hindi tumama sa sarili mong collider
+            Collider[] ownColliders =
+                GetComponentsInChildren<Collider>();
+
+            foreach (
+                Collider a
+                in droppedObject.GetComponentsInChildren<Collider>())
             {
-                droppedItem.Initialize(itemId);
+                foreach (Collider b in ownColliders)
+                {
+                    Physics.IgnoreCollision(a, b);
+                }
             }
-
-            NetworkSlots.Set(slotIndex, 0);
-
-            Debug.Log(
-                $"[INVENTORY] " +
-                $"{item.itemName} dropped from slot {slotIndex + 1}."
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[INVENTORY] Dropped item has no DroppedItemPhysics. " +
+                "It will stay in the air."
             );
         }
+
+        // -----------------------------------------------------
+        // Remove from inventory
+        // -----------------------------------------------------
+
+        NetworkSlots.Set(slotIndex, 0);
+
+        Debug.Log(
+            $"[INVENTORY] " +
+            $"{item.itemName} dropped from slot {slotIndex + 1}."
+        );
     }
 
     // =========================================================
@@ -360,19 +415,32 @@ public class PlayerInventory : NetworkBehaviour
         heldObject.transform.localRotation =
             Quaternion.identity;
 
-        // Held visual only.
+        // Held visual only: walang physics, collider, o pickup.
+
+        foreach (
+            DroppedItemPhysics physics
+            in heldObject.GetComponentsInChildren<DroppedItemPhysics>())
+        {
+            Destroy(physics);
+        }
+
+        foreach (
+            Rigidbody body
+            in heldObject.GetComponentsInChildren<Rigidbody>())
+        {
+            Destroy(body);
+        }
+
         foreach (
             Collider collider
-            in heldObject.GetComponentsInChildren<Collider>()
-        )
+            in heldObject.GetComponentsInChildren<Collider>())
         {
             Destroy(collider);
         }
 
         foreach (
             KeyPickup pickup
-            in heldObject.GetComponentsInChildren<KeyPickup>()
-        )
+            in heldObject.GetComponentsInChildren<KeyPickup>())
         {
             Destroy(pickup);
         }

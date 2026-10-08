@@ -2881,6 +2881,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9519b7261d71f124293bdb2d4d091f93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DungeonPlayerSpawner
+  testingMode: 1
+  testGameMode: 1
   playerPrefab: {fileID: 2481270183145079181, guid: ddc5dfc990d6831408c4d5f15c7b31fe, type: 3}
   dungeon: {fileID: 749619190}
   groundLayer:

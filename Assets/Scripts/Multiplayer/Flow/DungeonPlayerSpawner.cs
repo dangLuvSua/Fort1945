@@ -1,8 +1,22 @@
 using Fusion;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class DungeonPlayerSpawner : MonoBehaviour
 {
+    [Header("Testing")]
+    [Tooltip(
+    "Kapag naka-check at walang active na NetworkRunner (hindi galing sa MainMenu), " +
+    "gagawa ng sariling runner ang spawner para ma-Play mo agad ang scene na ito."
+)]
+    [SerializeField]
+    private bool testingMode = false;
+
+    [SerializeField]
+    private GameMode testGameMode = GameMode.Single;
+
+    private bool testRunnerStarting;
+
     [Header("Player")]
     [SerializeField]
     private NetworkObject playerPrefab;
@@ -95,6 +109,12 @@ public class DungeonPlayerSpawner : MonoBehaviour
 
         FindRunner();
 
+        // Testing: walang runner galing MainMenu, kaya gagawa tayo ng sarili
+        if (runner == null && testingMode && !testRunnerStarting)
+        {
+            StartTestRunner();
+        }
+
         debugTimer += Time.deltaTime;
 
         TrySpawnLocalPlayer();
@@ -133,6 +153,56 @@ public class DungeonPlayerSpawner : MonoBehaviour
             );
 
             return;
+        }
+    }
+
+    private async void StartTestRunner()
+    {
+        testRunnerStarting = true;
+
+        Debug.Log(
+            "[DUNGEON SPAWN] Testing mode: no runner found, starting a test runner.",
+            this
+        );
+
+        GameObject runnerObject = new GameObject("TestNetworkRunner");
+
+        NetworkRunner testRunner =
+            runnerObject.AddComponent<NetworkRunner>();
+
+        testRunner.ProvideInput = true;
+
+        NetworkSceneManagerDefault sceneManager =
+            runnerObject.AddComponent<NetworkSceneManagerDefault>();
+
+        StartGameResult result =
+            await testRunner.StartGame(new StartGameArgs
+            {
+                GameMode = testGameMode,
+                SessionName = "TestSession",
+                Scene = SceneRef.FromIndex(
+                    SceneManager.GetActiveScene().buildIndex
+                ),
+                SceneManager = sceneManager
+            });
+
+        if (result.Ok)
+        {
+            runner = testRunner;
+
+            Debug.Log(
+                "[DUNGEON SPAWN] Test runner started.",
+                this
+            );
+        }
+        else
+        {
+            Debug.LogError(
+                $"[DUNGEON SPAWN] Test runner failed: {result.ShutdownReason}",
+                this
+            );
+
+            Destroy(runnerObject);
         }
     }
 

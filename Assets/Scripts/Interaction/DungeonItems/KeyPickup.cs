@@ -1,7 +1,7 @@
 using Fusion;
 using UnityEngine;
 
-public class KeyPickup : NetworkBehaviour
+public class KeyPickup : NetworkBehaviour, IInteractable
 {
     // =========================================================
     // SCENE / DEFAULT ITEM
@@ -81,6 +81,21 @@ public class KeyPickup : NetworkBehaviour
     public int NetworkItemId => ItemId;
 
     public ItemData SceneItem => sceneItem;
+
+    // =========================================================
+    // INTERACTION (IInteractable)
+    // =========================================================
+
+    public string Prompt => "Press E to collect";
+
+    public bool CanInteract => CanCollect;
+
+    public int Priority => 1; // inuuna ang key kaysa chest
+
+    public void Interact(PlayerInventory inv)
+    {
+        RequestCollect(); // dumadaan sa RPC mo, hindi na direktang Collect
+    }
 
 
     // =========================================================

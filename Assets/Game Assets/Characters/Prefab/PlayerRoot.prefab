@@ -96,7 +96,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Press E to Collect
+  m_text: '[E] to interact'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -607,6 +607,7 @@ MonoBehaviour:
   inventory: {fileID: -2516544739770729294}
   uiRoot: {fileID: 3812555787650489551}
   promptText: {fileID: 1077293605373510396}
+  promptLabel: {fileID: 2851211722900687721}
   range: 2
   mask:
     serializedVersion: 2

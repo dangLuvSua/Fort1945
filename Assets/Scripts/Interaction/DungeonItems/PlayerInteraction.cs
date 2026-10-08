@@ -1,6 +1,7 @@
 using Fusion;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using TMPro;
 
 public class PlayerInteractor : NetworkBehaviour
 {
@@ -9,7 +10,7 @@ public class PlayerInteractor : NetworkBehaviour
     [SerializeField] private PlayerInventory inventory;
     [SerializeField] private GameObject uiRoot;
     [SerializeField] private GameObject promptText;
-
+    [SerializeField] TMP_Text promptLabel; // yung TMP component ng PromptText
     [SerializeField] private float range = 3f;
     [SerializeField] private LayerMask mask = ~0;
 
@@ -23,65 +24,40 @@ public class PlayerInteractor : NetworkBehaviour
             uiRoot.SetActive(isLocal);
 
         if (promptText != null)
-            promptText.SetActive(false);
+            promptLabel.gameObject.SetActive(false);
     }
 
-    private void Update()
+    void Update()
     {
-        if (!isLocal)
-            return;
+        if (!isLocal) return;
 
-        if (cam == null)
-            return;
+        Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
 
-        if (inventory == null)
-            return;
+        IInteractable target = null;
+        int bestPriority = int.MinValue;
+        float bestDist = float.MaxValue;
 
-        Ray ray =
-            cam.ViewportPointToRay(
-                new Vector3(0.5f, 0.5f, 0f)
-            );
-
-        Debug.DrawRay(
-            ray.origin,
-            ray.direction * range,
-            Color.red
-        );
-
-        KeyPickup target = null;
-
-        if (Physics.Raycast(
-            ray,
-            out RaycastHit hit,
-            range,
-            mask,
-            QueryTriggerInteraction.Ignore))
+        var hits = Physics.RaycastAll(ray, range, mask, QueryTriggerInteraction.Ignore);
+        foreach (var h in hits)
         {
-            KeyPickup pickup =
-                hit.collider.GetComponentInParent<KeyPickup>();
+            var it = h.collider.GetComponentInParent<IInteractable>();
+            if (it == null || !it.CanInteract) continue;
 
-            if (pickup != null &&
-                pickup.CanCollect)
+            if (it.Priority > bestPriority ||
+                (it.Priority == bestPriority && h.distance < bestDist))
             {
-                target = pickup;
+                target = it;
+                bestPriority = it.Priority;
+                bestDist = h.distance;
             }
         }
 
-        if (promptText != null)
-        {
-            promptText.SetActive(
-                target != null
-            );
-        }
+        promptLabel.gameObject.SetActive(target != null);
+        if (target != null) promptLabel.text = target.Prompt;
 
-        if (target != null &&
-            Keyboard.current != null &&
-            Keyboard.current.eKey.wasPressedThisFrame)
+        if (target != null && Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
         {
-            target.RequestCollect();
-
-            if (promptText != null)
-                promptText.SetActive(false);
+            target.Interact(inventory);
         }
     }
 }
