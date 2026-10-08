@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 725809533646966427}
   - component: {fileID: 4448796092264448318}
   - component: {fileID: 1898754534080083444}
-  - component: {fileID: 7161514750288029891}
   - component: {fileID: -6735551664110462989}
+  - component: {fileID: 6450927012689302471}
   m_Layer: 0
   m_Name: Tree_24
   m_TagString: Untagged
@@ -93,28 +93,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &7161514750288029891
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 97187209201767457}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -640511079574247494, guid: a79a4def4d6b38b4ebc2df43af669e72, type: 3}
 --- !u!205 &-6735551664110462989
 LODGroup:
   m_ObjectHideFlags: 0
@@ -140,3 +118,26 @@ LODGroup:
     renderers: []
   m_Enabled: 1
   m_GlobalIlluminationLOD: 0
+--- !u!136 &6450927012689302471
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 97187209201767457}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 1.3168526
+  m_Height: 60.607918
+  m_Direction: 1
+  m_Center: {x: 0, y: 30.303959, z: 0}
