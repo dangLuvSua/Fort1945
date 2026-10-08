@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dffecc99a2dea9b439750e0edf8e7d7b, type: 3}
+  m_Name: Salt
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemId: 202
+  itemName: Salt
+  icon: {fileID: 21300000, guid: 81292d95424ba7e4693eeeb506487eab, type: 3}
+  description: A handful of blessed salt said to repel the restless dead. Scatter
+    it near the creature, and the darkness will be forced to retreat.
+  category: 0
+  heldPrefab: {fileID: 0}
+  worldPrefab: {fileID: 0}
