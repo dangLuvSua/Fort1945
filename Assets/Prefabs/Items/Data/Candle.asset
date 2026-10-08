@@ -18,5 +18,5 @@ MonoBehaviour:
   description: A flickering flame that pierces the darkness. Its warm light reveals
     what hides in the shadows and guides the lost back to safety.
   category: 0
-  heldPrefab: {fileID: 0}
-  worldPrefab: {fileID: 0}
+  heldPrefab: {fileID: 7291370189084888473, guid: e2cbe4269d319954089126c69336f77a, type: 3}
+  worldPrefab: {fileID: 5623200731129152687, guid: e2cbe4269d319954089126c69336f77a, type: 3}

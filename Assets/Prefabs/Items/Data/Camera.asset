@@ -17,5 +17,5 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 1b57798a9a3caa24ea5aab83cb4f3cca, type: 3}
   description: An old camera capable of capturing what the human eye cannot.
   category: 0
-  heldPrefab: {fileID: 0}
-  worldPrefab: {fileID: 0}
+  heldPrefab: {fileID: 1294585307656218199, guid: 6dc38db2972c23e45b29a8a34ddc4bea, type: 3}
+  worldPrefab: {fileID: 2587628045654804508, guid: 6dc38db2972c23e45b29a8a34ddc4bea, type: 3}

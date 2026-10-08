@@ -18,5 +18,5 @@ MonoBehaviour:
   description: A handful of blessed salt said to repel the restless dead. Scatter
     it near the creature, and the darkness will be forced to retreat.
   category: 0
-  heldPrefab: {fileID: 0}
-  worldPrefab: {fileID: 0}
+  heldPrefab: {fileID: 2016071694760240322, guid: 14c5b4cded3bf514881e9ba9614c8135, type: 3}
+  worldPrefab: {fileID: 3177405149189825546, guid: 14c5b4cded3bf514881e9ba9614c8135, type: 3}
