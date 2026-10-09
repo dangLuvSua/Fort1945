@@ -8,7 +8,7 @@ public enum ItemCategory
     PuzzlePiece
 }
 
-[CreateAssetMenu(menuName = "Game/Item")]
+[CreateAssetMenu(menuName = "Fort1945/Item")]
 public class ItemData : ScriptableObject
 {
     [Header("Network Identity")]

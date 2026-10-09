@@ -78,8 +78,7 @@ public class CandleLifeUI : MonoBehaviour
             int seconds = totalSeconds % 60;
 
             candleLifeText.text =
-                $"CANDLE {percent * 100f:0}%  " +
-                $"{minutes:00}:{seconds:00}";
+                $" {percent * 100f:0}%  ";
         }
     }
 
