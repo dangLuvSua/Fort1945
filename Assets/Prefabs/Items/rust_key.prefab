@@ -12,13 +12,13 @@ GameObject:
   - component: {fileID: 5634532462982891454}
   - component: {fileID: 2093443782267337543}
   - component: {fileID: 4097195505043946274}
-  - component: {fileID: -982173670744522598}
   - component: {fileID: 2202455475185941744}
   - component: {fileID: 1434193415856722423}
   - component: {fileID: 5852417909908370098}
   - component: {fileID: -2145847062549365548}
   - component: {fileID: -8939684089351205044}
   - component: {fileID: -7875714470961507226}
+  - component: {fileID: -6903810946642302680}
   m_Layer: 8
   m_Name: rust_key
   m_TagString: Untagged
@@ -120,21 +120,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -1215533875317036940, guid: 0669f3d8f4b119f418a4bbe061cc198f, type: 3}
---- !u!114 &-982173670744522598
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 374289202576707483}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 19bd67040ac1e684990869e88245bc34, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KeyPickup
-  sceneItem: {fileID: 0}
-  chest: {fileID: 0}
-  _ItemId: 101
 --- !u!114 &2202455475185941744
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -171,9 +156,9 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: -8939684089351205044}
-  - {fileID: -982173670744522598}
   - {fileID: -2145847062549365548}
   - {fileID: -7875714470961507226}
+  - {fileID: -6903810946642302680}
   ForceRemoteRenderTimeframe: 0
 --- !u!54 &5852417909908370098
 Rigidbody:
@@ -268,3 +253,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkedDroppedItem
   _ItemId: 0
+  _HasCandleState:
+    RawValue: 0
+  _CandleRemaining: 0
+  _CandleMaxLife: 0
+  _CandleWasLit:
+    RawValue: 0
+--- !u!114 &-6903810946642302680
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 374289202576707483}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a857c0596b2e2b42a36a5dc55a5d766, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
+  itemData: {fileID: 11400000, guid: 83911e1fa10d6b546a50ebe92b8da173, type: 2}
+  sourceChest: {fileID: 0}
+  _ItemId: 101
