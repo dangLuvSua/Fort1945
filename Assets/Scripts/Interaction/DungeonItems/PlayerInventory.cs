@@ -1,4 +1,3 @@
-
 using System;
 using Fusion;
 using UnityEngine;
@@ -6,75 +5,77 @@ using UnityEngine.InputSystem;
 
 public class PlayerInventory : NetworkBehaviour
 {
+    // Keep the old constant available for existing scripts.
     public const int SlotCount = 8;
 
-    // =========================================================
-    // PLAYER VISUAL
-    // =========================================================
+    public const int QuickBarSlotCount = 8;
+    public const int SlotsPerCategory = 24;
+    public const int StorageSlotCount = SlotsPerCategory * 3;
+
+    // Storage ranges:
+    // Items:  0-23
+    // Puzzle: 24-47
+    // Gallery: 48-71
 
     [Header("Player Visual")]
     [SerializeField] private Transform holdPoint;
-    [SerializeField] private string networkHoldPointName = "NetworkHoldPoint";
+    [SerializeField]
+    private string networkHoldPointName =
+        "NetworkHoldPoint";
 
     private Transform networkHoldPoint;
     private Transform currentCharacterRoot;
     private GameObject heldObject;
     private GameObject networkHeldObject;
 
-    // =========================================================
-    // DROP
-    // =========================================================
-
     [Header("Drop")]
     [SerializeField] private Transform dropOrigin;
     [SerializeField] private float throwForce = 4f;
     [SerializeField] private float throwUp = 1.5f;
 
-    // =========================================================
-    // ITEM DATABASE
-    // =========================================================
-
     [Header("Item Database")]
     [SerializeField] private ItemData[] itemCatalog;
 
-    // =========================================================
-    // NETWORKED INVENTORY
-    // =========================================================
-
-    // 0 = empty; positive values = ItemData.itemId
-    [Networked, Capacity(SlotCount)]
+    // NetworkSlots contains the actual stored items.
+    // 0 = empty; positive values = ItemData.itemId.
+    [Networked, Capacity(StorageSlotCount)]
     private NetworkArray<int> NetworkSlots => default;
 
+    // Quick-bar entries encode storage index + 1.
+    // 0 = empty; 1 = storage index 0; 72 = storage index 71.
+    [Networked, Capacity(QuickBarSlotCount)]
+    private NetworkArray<int> NetworkQuickBar => default;
+
+    // SelectedSlot is a QUICK-BAR index, or -1 for no selection.
     [Networked]
     public int SelectedSlot { get; private set; }
 
-    // Candle life is stored per inventory slot.
-    [Networked, Capacity(SlotCount)]
+    // Candle data is associated with STORAGE slots.
+    [Networked, Capacity(StorageSlotCount)]
     private NetworkArray<float> CandleLifeBySlot => default;
 
-    [Networked, Capacity(SlotCount)]
+    [Networked, Capacity(StorageSlotCount)]
     private NetworkArray<float> CandleMaxLifeBySlot => default;
 
-    [Networked, Capacity(SlotCount)]
+    [Networked, Capacity(StorageSlotCount)]
     private NetworkArray<NetworkBool> CandleInitializedBySlot => default;
-
-    // =========================================================
-    // CHANGE DETECTION
-    // =========================================================
 
     private int lastInventoryHash = int.MinValue;
 
     public event Action InventoryChanged;
 
-    // =========================================================
-    // SPAWNED
-    // =========================================================
-
+    public bool IsInventorySpawned { get; private set; }
     public override void Spawned()
     {
+        // Mark the inventory ready only after Fusion calls Spawned().
+        IsInventorySpawned = true;
+
         if (Object.HasStateAuthority)
         {
-            SelectedSlot = 0;
+            SelectedSlot = -1;
+
+            for (int i = 0; i < QuickBarSlotCount; i++)
+                NetworkQuickBar.Set(i, 0);
         }
 
         FindNetworkHoldPoint();
@@ -82,11 +83,12 @@ public class PlayerInventory : NetworkBehaviour
 
         lastInventoryHash = CalculateInventoryHash();
         InventoryChanged?.Invoke();
-    }
 
-    // =========================================================
-    // UPDATE
-    // =========================================================
+        Debug.Log(
+            $"[INVENTORY] Spawned and ready. " +
+            $"StateAuthority={Object.HasStateAuthority}"
+        );
+    }
 
     private void Update()
     {
@@ -96,8 +98,8 @@ public class PlayerInventory : NetworkBehaviour
         if (Keyboard.current == null)
             return;
 
-        // Select inventory slots 1-8.
-        for (int i = 0; i < SlotCount; i++)
+        // Number keys 1-8 select QUICK-BAR positions.
+        for (int i = 0; i < QuickBarSlotCount; i++)
         {
             Key key = (Key)((int)Key.Digit1 + i);
 
@@ -108,16 +110,9 @@ public class PlayerInventory : NetworkBehaviour
             }
         }
 
-        // Drop the selected item.
         if (Keyboard.current.gKey.wasPressedThisFrame)
-        {
             RequestDrop();
-        }
     }
-
-    // =========================================================
-    // RENDER
-    // =========================================================
 
     public override void Render()
     {
@@ -127,9 +122,7 @@ public class PlayerInventory : NetworkBehaviour
         bool holdPointWasMissing = networkHoldPoint == null;
 
         if (!Object.HasInputAuthority)
-        {
             FindNetworkHoldPoint();
-        }
 
         bool networkHoldPointChanged =
             !Object.HasInputAuthority &&
@@ -137,7 +130,6 @@ public class PlayerInventory : NetworkBehaviour
             networkHoldPoint != null;
 
         int currentHash = CalculateInventoryHash();
-
         bool inventoryChanged = currentHash != lastInventoryHash;
 
         if (inventoryChanged || networkHoldPointChanged)
@@ -146,9 +138,44 @@ public class PlayerInventory : NetworkBehaviour
             RefreshHeldVisual();
 
             if (inventoryChanged)
-            {
                 InventoryChanged?.Invoke();
-            }
+        }
+    }
+
+    // =========================================================
+    // STORAGE CATEGORY RANGES
+    // =========================================================
+
+    private bool TryGetCategoryRange(
+        ItemCategory category,
+        out int start,
+        out int end)
+    {
+        start = 0;
+        end = 0;
+
+        switch (category)
+        {
+            case ItemCategory.Item:
+                start = 0;
+                end = SlotsPerCategory;
+                return true;
+
+            case ItemCategory.PuzzlePiece:
+                start = SlotsPerCategory;
+                end = SlotsPerCategory * 2;
+                return true;
+
+            case ItemCategory.Gallery:
+                start = SlotsPerCategory * 2;
+                end = StorageSlotCount;
+                return true;
+
+            default:
+                Debug.LogWarning(
+                    $"[INVENTORY] Unsupported item category: {category}"
+                );
+                return false;
         }
     }
 
@@ -178,7 +205,6 @@ public class PlayerInventory : NetworkBehaviour
         );
     }
 
-    // Use this overload when transferring a dropped candle.
     public bool TryAddNetworkedById(
         int itemId,
         float candleRemaining,
@@ -201,19 +227,21 @@ public class PlayerInventory : NetworkBehaviour
             return false;
         }
 
-        bool isCandle = IsCandleItem(item);
+        if (!TryGetCategoryRange(item.category, out int start, out int end))
+            return false;
 
-        for (int i = 0; i < SlotCount; i++)
+        // Each category has its own 24-slot storage capacity.
+        for (int i = start; i < end; i++)
         {
             if (NetworkSlots.Get(i) != 0)
                 continue;
 
             NetworkSlots.Set(i, itemId);
-
-            // Never let an old slot's candle state leak into a new item.
             ClearCandleState(i);
 
-            if (isCandle && candleInitialized && candleMaxLife > 0f)
+            if (IsCandleItem(item) &&
+                candleInitialized &&
+                candleMaxLife > 0f)
             {
                 float maxLife = Mathf.Max(0f, candleMaxLife);
 
@@ -227,19 +255,198 @@ public class PlayerInventory : NetworkBehaviour
 
             addedSlot = i;
 
+            // Items and puzzle pieces can be assigned to the quick bar.
+            // Gallery photographs are stored only in Gallery.
+            if (item.category != ItemCategory.Gallery)
+                TryEquipItemToQuickBar(itemId);
+
             Debug.Log(
-                $"[INVENTORY] {item.itemName} added to slot {i + 1}."
+                $"[INVENTORY] {item.itemName} added to storage slot {i + 1}."
             );
 
             return true;
         }
 
-        Debug.Log("[INVENTORY] Inventory is full.");
+        Debug.Log(
+            $"[INVENTORY] The {item.category} storage tab is full."
+        );
+
         return false;
     }
 
     // =========================================================
+    // QUICK BAR EQUIP / REMOVE
+    // =========================================================
+
+    public bool TryEquipItemToQuickBar(int itemId)
+    {
+        if (Object == null || !Object.HasStateAuthority)
+            return false;
+
+        ItemData item = GetItemData(itemId);
+
+        if (item == null || item.category == ItemCategory.Gallery)
+            return false;
+
+        int storageIndex = FindStorageIndex(itemId);
+
+        if (storageIndex < 0)
+        {
+            Debug.LogWarning(
+                "[INVENTORY] Cannot equip an item that is not stored."
+            );
+            return false;
+        }
+
+        // Do not assign the same stored item more than once.
+        for (int i = 0; i < QuickBarSlotCount; i++)
+        {
+            if (GetQuickBarStorageIndex(i) == storageIndex)
+                return true;
+        }
+
+        // Assign to the first empty quick-bar slot.
+        for (int i = 0; i < QuickBarSlotCount; i++)
+        {
+            if (NetworkQuickBar.Get(i) != 0)
+                continue;
+
+            NetworkQuickBar.Set(i, storageIndex + 1);
+
+            // Automatically select the newly collected item.
+            SelectedSlot = i;
+
+            Debug.Log(
+                $"[INVENTORY] {item.itemName} equipped in quick slot {i + 1}."
+            );
+
+            return true;
+        }
+
+        Debug.Log("[INVENTORY] Quick bar is full.");
+        return false;
+    }
+
+    public bool RemoveItemFromQuickBar(int itemId)
+    {
+        if (Object == null || !Object.HasStateAuthority)
+            return false;
+
+        int storageIndex = FindStorageIndex(itemId);
+
+        if (storageIndex < 0)
+            return false;
+
+        for (int i = 0; i < QuickBarSlotCount; i++)
+        {
+            if (GetQuickBarStorageIndex(i) != storageIndex)
+                continue;
+
+            NetworkQuickBar.Set(i, 0);
+
+            if (SelectedSlot == i)
+                SelectedSlot = -1;
+
+            Debug.Log(
+                $"[INVENTORY] Removed item ID {itemId} from the quick bar. " +
+                "The stored item was kept."
+            );
+
+            return true;
+        }
+
+        return false;
+    }
+
+
+    public bool RemoveItemCompletely(int itemId)
+    {
+        if (Object == null || !Object.HasStateAuthority)
+            return false;
+
+        if (itemId <= 0)
+            return false;
+
+        int storageIndex = FindStorageIndex(itemId);
+
+        if (storageIndex < 0)
+            return false;
+
+        // Remove all quickbar references to this stored item.
+        for (int i = 0; i < QuickBarSlotCount; i++)
+        {
+            if (GetQuickBarStorageIndex(i) != storageIndex)
+                continue;
+
+            NetworkQuickBar.Set(i, 0);
+
+            if (SelectedSlot == i)
+                SelectedSlot = -1;
+        }
+
+        // Permanently remove the item from storage.
+        NetworkSlots.Set(storageIndex, 0);
+
+        // Clear associated candle data if applicable.
+        ClearCandleState(storageIndex);
+
+        Debug.Log(
+            $"[INVENTORY] Permanently removed item ID {itemId} " +
+            $"from storage slot {storageIndex + 1}."
+        );
+
+        return true;
+    }
+    public bool IsItemInQuickBar(int itemId)
+    {
+        int storageIndex = FindStorageIndex(itemId);
+
+        if (storageIndex < 0)
+            return false;
+
+        for (int i = 0; i < QuickBarSlotCount; i++)
+        {
+            if (GetQuickBarStorageIndex(i) == storageIndex)
+                return true;
+        }
+
+        return false;
+    }
+
+    public int GetQuickBarStorageIndex(int quickBarIndex)
+    {
+        if (quickBarIndex < 0 ||
+            quickBarIndex >= QuickBarSlotCount)
+        {
+            return -1;
+        }
+
+        int encoded = NetworkQuickBar.Get(quickBarIndex);
+
+        return encoded == 0 ? -1 : encoded - 1;
+    }
+
+    public ItemData GetQuickBarItemAt(int quickBarIndex)
+    {
+        int storageIndex = GetQuickBarStorageIndex(quickBarIndex);
+
+        return storageIndex < 0
+            ? null
+            : GetStorageItemAt(storageIndex);
+    }
+
+    public int GetQuickBarItemIdAt(int quickBarIndex)
+    {
+        int storageIndex = GetQuickBarStorageIndex(quickBarIndex);
+
+        return storageIndex < 0
+            ? 0
+            : GetStorageItemIdAt(storageIndex);
+    }
+
+    // =========================================================
     // CANDLE STATE
+    // Candle APIs use STORAGE slot indices.
     // =========================================================
 
     private bool IsCandleItem(ItemData item)
@@ -252,12 +459,12 @@ public class PlayerInventory : NetworkBehaviour
 
     public bool IsCandleSlot(int slotIndex)
     {
-        return IsCandleItem(GetItemAt(slotIndex));
+        return IsCandleItem(GetStorageItemAt(slotIndex));
     }
 
     public bool IsCandleInitialized(int slotIndex)
     {
-        if (slotIndex < 0 || slotIndex >= SlotCount)
+        if (!IsValidStorageIndex(slotIndex))
             return false;
 
         return CandleInitializedBySlot.Get(slotIndex);
@@ -265,7 +472,7 @@ public class PlayerInventory : NetworkBehaviour
 
     public float GetCandleRemaining(int slotIndex)
     {
-        if (slotIndex < 0 || slotIndex >= SlotCount)
+        if (!IsValidStorageIndex(slotIndex))
             return 0f;
 
         return CandleLifeBySlot.Get(slotIndex);
@@ -273,7 +480,7 @@ public class PlayerInventory : NetworkBehaviour
 
     public float GetCandleMaxLife(int slotIndex)
     {
-        if (slotIndex < 0 || slotIndex >= SlotCount)
+        if (!IsValidStorageIndex(slotIndex))
             return 0f;
 
         return CandleMaxLifeBySlot.Get(slotIndex);
@@ -283,8 +490,7 @@ public class PlayerInventory : NetworkBehaviour
     {
         if (Object == null ||
             !Object.HasStateAuthority ||
-            slotIndex < 0 ||
-            slotIndex >= SlotCount ||
+            !IsValidStorageIndex(slotIndex) ||
             !IsCandleSlot(slotIndex) ||
             CandleInitializedBySlot.Get(slotIndex))
         {
@@ -302,8 +508,7 @@ public class PlayerInventory : NetworkBehaviour
     {
         if (Object == null ||
             !Object.HasStateAuthority ||
-            slotIndex < 0 ||
-            slotIndex >= SlotCount ||
+            !IsValidStorageIndex(slotIndex) ||
             !IsCandleInitialized(slotIndex))
         {
             return;
@@ -319,7 +524,6 @@ public class PlayerInventory : NetworkBehaviour
         );
     }
 
-    // Used when dropping, restoring, or transferring a candle.
     public void SetCandleStateForSlot(
         int slotIndex,
         float remaining,
@@ -328,8 +532,7 @@ public class PlayerInventory : NetworkBehaviour
     {
         if (Object == null ||
             !Object.HasStateAuthority ||
-            slotIndex < 0 ||
-            slotIndex >= SlotCount)
+            !IsValidStorageIndex(slotIndex))
         {
             return;
         }
@@ -355,7 +558,7 @@ public class PlayerInventory : NetworkBehaviour
 
     private void ClearCandleState(int slotIndex)
     {
-        if (slotIndex < 0 || slotIndex >= SlotCount)
+        if (!IsValidStorageIndex(slotIndex))
             return;
 
         CandleLifeBySlot.Set(slotIndex, 0f);
@@ -374,20 +577,25 @@ public class PlayerInventory : NetworkBehaviour
 
     public bool HasItemId(int itemId)
     {
-        if (itemId <= 0)
-            return false;
+        return itemId > 0 && FindStorageIndex(itemId) >= 0;
+    }
 
-        for (int i = 0; i < SlotCount; i++)
+    private int FindStorageIndex(int itemId)
+    {
+        if (itemId <= 0)
+            return -1;
+
+        for (int i = 0; i < StorageSlotCount; i++)
         {
             if (NetworkSlots.Get(i) == itemId)
-                return true;
+                return i;
         }
 
-        return false;
+        return -1;
     }
 
     // =========================================================
-    // SELECT
+    // SELECT QUICK-BAR SLOT
     // =========================================================
 
     private void Select(int index)
@@ -395,19 +603,40 @@ public class PlayerInventory : NetworkBehaviour
         if (Object == null || !Object.HasStateAuthority)
             return;
 
-        if (index < 0 || index >= SlotCount)
+        if (index < 0 || index >= QuickBarSlotCount)
             return;
 
+        // Pressing the selected number again puts the item away.
         if (SelectedSlot == index)
+        {
+            DeselectItem();
             return;
+        }
 
         SelectedSlot = index;
 
-        Debug.Log($"[INVENTORY] Selected slot {index + 1}");
+        Debug.Log(
+            $"[INVENTORY] Selected quick-bar slot {index + 1}."
+        );
+    }
+
+    public void SelectQuickBarSlot(int index)
+    {
+        Select(index);
+    }
+
+    public void DeselectItem()
+    {
+        if (Object == null || !Object.HasStateAuthority)
+            return;
+
+        SelectedSlot = -1;
+
+        Debug.Log("[INVENTORY] Item deselected. Hand is empty.");
     }
 
     // =========================================================
-    // DROP
+    // DROP SELECTED QUICK-BAR ITEM
     // =========================================================
 
     private void RequestDrop()
@@ -418,62 +647,54 @@ public class PlayerInventory : NetworkBehaviour
         DropAuthoritative(SelectedSlot);
     }
 
-    private void DropAuthoritative(int slotIndex)
+    private void DropAuthoritative(int quickBarIndex)
     {
-        if (Object == null || !Object.HasStateAuthority)
-            return;
-
-        if (Runner == null)
+        if (Object == null ||
+            !Object.HasStateAuthority ||
+            Runner == null)
         {
-            Debug.LogError(
-                "[INVENTORY] Cannot drop item because Runner is null."
-            );
             return;
         }
 
-        if (slotIndex < 0 || slotIndex >= SlotCount)
+        if (quickBarIndex < 0 ||
+            quickBarIndex >= QuickBarSlotCount)
+        {
+            return;
+        }
+
+        int storageIndex = GetQuickBarStorageIndex(quickBarIndex);
+
+        if (storageIndex < 0)
             return;
 
-        int itemId = NetworkSlots.Get(slotIndex);
+        int itemId = NetworkSlots.Get(storageIndex);
 
         if (itemId == 0)
             return;
 
         ItemData item = GetItemData(itemId);
 
-        if (item == null)
+        if (item == null || item.worldPrefab == null)
         {
             Debug.LogError(
-                $"[INVENTORY] Cannot drop unknown item ID {itemId}."
+                $"[INVENTORY] Cannot drop item ID {itemId}. " +
+                "Check ItemData and its worldPrefab."
             );
             return;
         }
 
-        if (item.worldPrefab == null)
-        {
-            Debug.LogError(
-                $"[INVENTORY] {item.itemName} " +
-                "does not have a NetworkObject worldPrefab."
-            );
-            return;
-        }
+        bool isCandle = IsCandleSlot(storageIndex);
 
-        // Save candle state before clearing the inventory slot.
-        bool isCandle = IsCandleSlot(slotIndex);
+        float candleRemaining = isCandle
+            ? GetCandleRemaining(storageIndex)
+            : 0f;
 
-        float candleRemaining = 0f;
-        float candleMaxLife = 0f;
-        bool candleInitialized = false;
+        float candleMaxLife = isCandle
+            ? GetCandleMaxLife(storageIndex)
+            : 0f;
 
-        if (isCandle)
-        {
-            candleRemaining = GetCandleRemaining(slotIndex);
-            candleMaxLife = GetCandleMaxLife(slotIndex);
-            candleInitialized = IsCandleInitialized(slotIndex);
-
-            candleRemaining = Mathf.Max(0f, candleRemaining);
-            candleMaxLife = Mathf.Max(0f, candleMaxLife);
-        }
+        bool candleInitialized = isCandle &&
+            IsCandleInitialized(storageIndex);
 
         Transform aim = dropOrigin != null ? dropOrigin : transform;
 
@@ -499,7 +720,6 @@ public class PlayerInventory : NetworkBehaviour
             return;
         }
 
-        // Initialize the network item identity and preserve candle life.
         NetworkedDroppedItem droppedItem =
             droppedObject.GetComponent<NetworkedDroppedItem>();
 
@@ -512,7 +732,7 @@ public class PlayerInventory : NetworkBehaviour
                     candleInitialized,
                     candleRemaining,
                     candleMaxLife,
-                    false // Dropped candles are extinguished.
+                    false
                 );
             }
             else
@@ -520,29 +740,12 @@ public class PlayerInventory : NetworkBehaviour
                 droppedItem.Initialize(itemId);
             }
         }
-        else
-        {
-            Debug.LogWarning(
-                $"[INVENTORY] {item.itemName} world prefab has no " +
-                "NetworkedDroppedItem component."
-            );
-        }
 
         ItemPickup itemPickup = droppedObject.GetComponent<ItemPickup>();
 
         if (itemPickup != null)
-        {
             itemPickup.Initialize(itemId);
-        }
-        else
-        {
-            Debug.LogWarning(
-                $"[INVENTORY] {item.itemName} world prefab has no " +
-                "ItemPickup component."
-            );
-        }
 
-        // Preserve the existing throw behavior.
         DroppedItemPhysics dropPhysics =
             droppedObject.GetComponent<DroppedItemPhysics>();
 
@@ -570,34 +773,24 @@ public class PlayerInventory : NetworkBehaviour
 
                 foreach (Collider b in ownColliders)
                 {
-                    if (b == null || a == b)
-                        continue;
-
-                    Physics.IgnoreCollision(a, b, true);
+                    if (b != null && a != b)
+                        Physics.IgnoreCollision(a, b, true);
                 }
             }
         }
-        else
+
+        // Remove all quick-bar references to this stored item.
+        for (int i = 0; i < QuickBarSlotCount; i++)
         {
-            Debug.LogWarning(
-                "[INVENTORY] Dropped item has no DroppedItemPhysics."
-            );
+            if (GetQuickBarStorageIndex(i) == storageIndex)
+                NetworkQuickBar.Set(i, 0);
         }
 
-        NetworkSlots.Set(slotIndex, 0);
-        ClearCandleState(slotIndex);
+        NetworkSlots.Set(storageIndex, 0);
+        ClearCandleState(storageIndex);
+        SelectedSlot = -1;
 
-        Debug.Log(
-            $"[INVENTORY] {item.itemName} dropped from slot {slotIndex + 1}."
-        );
-
-        if (isCandle)
-        {
-            Debug.Log(
-                $"[CANDLE] Dropped with {candleRemaining:F1}s remaining " +
-                $"out of {candleMaxLife:F1}s."
-            );
-        }
+        Debug.Log($"[INVENTORY] {item.itemName} dropped.");
     }
 
     // =========================================================
@@ -618,81 +811,56 @@ public class PlayerInventory : NetworkBehaviour
         return null;
     }
 
+    // Compatibility method: gets the item assigned to a quick-bar slot.
     public ItemData GetItemAt(int slotIndex)
     {
-        if (slotIndex < 0 || slotIndex >= SlotCount)
-            return null;
-
-        return GetItemData(NetworkSlots.Get(slotIndex));
+        return GetQuickBarItemAt(slotIndex);
     }
 
     public int GetItemIdAt(int slotIndex)
     {
-        if (slotIndex < 0 || slotIndex >= SlotCount)
+        return GetQuickBarItemIdAt(slotIndex);
+    }
+
+    // Use these methods for full-inventory storage slots.
+    public ItemData GetStorageItemAt(int storageIndex)
+    {
+        if (!IsValidStorageIndex(storageIndex))
+            return null;
+
+        return GetItemData(NetworkSlots.Get(storageIndex));
+    }
+
+    public int GetStorageItemIdAt(int storageIndex)
+    {
+        if (!IsValidStorageIndex(storageIndex))
             return 0;
 
-        return NetworkSlots.Get(slotIndex);
+        return NetworkSlots.Get(storageIndex);
     }
 
     public int GetSlotCount()
     {
-        return SlotCount;
+        return QuickBarSlotCount;
     }
 
-    // =========================================================
-    // FIND NETWORK HOLD POINT
-    // =========================================================
-
-    private Transform FindNetworkHoldPoint()
+    public int GetStorageSlotCount()
     {
-        if (networkHoldPoint != null)
-            return networkHoldPoint;
-
-        Transform[] children = GetComponentsInChildren<Transform>(true);
-
-        foreach (Transform child in children)
-        {
-            if (child == transform ||
-                child.name != networkHoldPointName)
-            {
-                continue;
-            }
-
-            networkHoldPoint = child;
-            currentCharacterRoot = GetCharacterRoot(networkHoldPoint);
-
-            Debug.Log(
-                "[INVENTORY] NetworkHoldPoint found: " +
-                GetTransformPath(networkHoldPoint)
-            );
-
-            return networkHoldPoint;
-        }
-
-        return null;
+        return StorageSlotCount;
     }
 
-    // =========================================================
-    // GET CHARACTER ROOT
-    // =========================================================
-
-    private Transform GetCharacterRoot(Transform hold)
+    public int GetSelectedStorageSlot()
     {
-        if (hold == null)
-            return null;
+        return GetQuickBarStorageIndex(SelectedSlot);
+    }
 
-        Transform current = hold;
-
-        while (current.parent != null && current.parent != transform)
-        {
-            current = current.parent;
-        }
-
-        return current.parent == transform ? current : hold;
+    private bool IsValidStorageIndex(int index)
+    {
+        return index >= 0 && index < StorageSlotCount;
     }
 
     // =========================================================
-    // HELD VISUAL
+    // HELD VISUALS
     // =========================================================
 
     private void RefreshHeldVisual()
@@ -709,37 +877,37 @@ public class PlayerInventory : NetworkBehaviour
             networkHeldObject = null;
         }
 
-        ItemData item = GetItemAt(SelectedSlot);
+        ItemData item = GetQuickBarItemAt(SelectedSlot);
 
         if (item == null || item.heldPrefab == null)
             return;
 
         if (Object.HasInputAuthority)
-        {
             CreateFirstPersonHeldVisual(item);
-        }
         else
-        {
             CreateNetworkHeldVisual(item);
-        }
     }
-
-    // =========================================================
-    // FIRST PERSON HELD VISUAL
-    // =========================================================
 
     private void CreateFirstPersonHeldVisual(ItemData item)
     {
         if (holdPoint == null)
         {
             Debug.LogWarning(
-                "[INVENTORY] First-person holdPoint is not assigned."
+                "[INVENTORY] holdPoint is not assigned. " +
+                "Assign the player's first-person hand transform."
             );
+
             return;
         }
 
         if (item == null || item.heldPrefab == null)
+        {
+            Debug.LogWarning(
+                "[INVENTORY] ItemData or heldPrefab is missing."
+            );
+
             return;
+        }
 
         heldObject = Instantiate(item.heldPrefab, holdPoint);
 
@@ -748,30 +916,25 @@ public class PlayerInventory : NetworkBehaviour
         heldObject.transform.localScale = Vector3.one;
 
         CleanHeldVisual(heldObject);
-    }
 
-    // =========================================================
-    // NETWORK / THIRD PERSON HELD VISUAL
-    // =========================================================
+        Debug.Log(
+            $"[INVENTORY] Holding '{item.itemName}' " +
+            $"under '{holdPoint.name}'."
+        );
+    }
 
     private void CreateNetworkHeldVisual(ItemData item)
     {
         if (networkHoldPoint == null)
             FindNetworkHoldPoint();
 
-        if (networkHoldPoint == null)
+        if (networkHoldPoint == null || item == null ||
+            item.heldPrefab == null)
         {
-            Debug.LogWarning(
-                $"[INVENTORY] Could not find NetworkHoldPoint for player {Object.Id}."
-            );
             return;
         }
 
-        if (item == null || item.heldPrefab == null)
-            return;
-
         networkHeldObject = Instantiate(item.heldPrefab, networkHoldPoint);
-
         networkHeldObject.transform.localPosition = Vector3.zero;
         networkHeldObject.transform.localRotation = Quaternion.identity;
         networkHeldObject.transform.localScale = Vector3.one;
@@ -779,74 +942,79 @@ public class PlayerInventory : NetworkBehaviour
         CleanHeldVisual(networkHeldObject);
     }
 
-    // =========================================================
-    // CLEAN HELD VISUAL
-    // =========================================================
-
     private void CleanHeldVisual(GameObject visual)
     {
         if (visual == null)
             return;
 
-        foreach (DroppedItemPhysics component in
+        foreach (DroppedItemPhysics c in
                  visual.GetComponentsInChildren<DroppedItemPhysics>(true))
-        {
-            Destroy(component);
-        }
+            Destroy(c);
 
-        foreach (Rigidbody component in
+        foreach (Rigidbody c in
                  visual.GetComponentsInChildren<Rigidbody>(true))
-        {
-            Destroy(component);
-        }
+            Destroy(c);
 
-        foreach (Collider component in
+        foreach (Collider c in
                  visual.GetComponentsInChildren<Collider>(true))
-        {
-            Destroy(component);
-        }
+            Destroy(c);
 
-        foreach (KeyPickup component in
+        foreach (KeyPickup c in
                  visual.GetComponentsInChildren<KeyPickup>(true))
-        {
-            Destroy(component);
-        }
+            Destroy(c);
 
-        foreach (ItemPickup component in
+        foreach (ItemPickup c in
                  visual.GetComponentsInChildren<ItemPickup>(true))
-        {
-            Destroy(component);
-        }
+            Destroy(c);
 
-        foreach (NetworkedDroppedItem component in
+        foreach (NetworkedDroppedItem c in
                  visual.GetComponentsInChildren<NetworkedDroppedItem>(true))
-        {
-            Destroy(component);
-        }
+            Destroy(c);
     }
 
     // =========================================================
-    // INVENTORY HASH
+    // NETWORK HOLD POINT
     // =========================================================
 
-    private int CalculateInventoryHash()
+    private Transform FindNetworkHoldPoint()
     {
-        unchecked
+        if (networkHoldPoint != null)
+            return networkHoldPoint;
+
+        Transform[] children = GetComponentsInChildren<Transform>(true);
+
+        foreach (Transform child in children)
         {
-            int hash = SelectedSlot;
+            if (child == transform ||
+                child.name != networkHoldPointName)
+                continue;
 
-            for (int i = 0; i < SlotCount; i++)
-            {
-                hash = hash * 31 + NetworkSlots.Get(i);
-            }
+            networkHoldPoint = child;
+            currentCharacterRoot = GetCharacterRoot(networkHoldPoint);
 
-            return hash;
+            Debug.Log(
+                "[INVENTORY] NetworkHoldPoint found: " +
+                GetTransformPath(networkHoldPoint)
+            );
+
+            return networkHoldPoint;
         }
+
+        return null;
     }
 
-    // =========================================================
-    // TRANSFORM PATH
-    // =========================================================
+    private Transform GetCharacterRoot(Transform hold)
+    {
+        if (hold == null)
+            return null;
+
+        Transform current = hold;
+
+        while (current.parent != null && current.parent != transform)
+            current = current.parent;
+
+        return current.parent == transform ? current : hold;
+    }
 
     private string GetTransformPath(Transform target)
     {
@@ -863,5 +1031,25 @@ public class PlayerInventory : NetworkBehaviour
         }
 
         return path;
+    }
+
+    // =========================================================
+    // CHANGE DETECTION
+    // =========================================================
+
+    private int CalculateInventoryHash()
+    {
+        unchecked
+        {
+            int hash = SelectedSlot;
+
+            for (int i = 0; i < StorageSlotCount; i++)
+                hash = hash * 31 + NetworkSlots.Get(i);
+
+            for (int i = 0; i < QuickBarSlotCount; i++)
+                hash = hash * 31 + NetworkQuickBar.Get(i);
+
+            return hash;
+        }
     }
 }

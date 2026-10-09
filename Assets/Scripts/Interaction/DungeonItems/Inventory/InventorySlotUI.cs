@@ -1,83 +1,45 @@
+
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventorySlotUI : MonoBehaviour
+public class InventorySlotUI : MonoBehaviour, IPointerClickHandler
 {
     [Header("UI")]
     [SerializeField] private Image icon;
-
     [SerializeField] private TMP_Text quantityText;
-
     [SerializeField] private TMP_Text itemNameText;
 
     [Tooltip("GameObject used for the selected/highlighted state.")]
     [SerializeField] private GameObject selectedObject;
 
-
-    // =========================================================
-    // DATA
-    // =========================================================
-
     private ItemData currentItem;
-
     private Button button;
 
-
-    // =========================================================
-    // EVENTS
-    // =========================================================
-
-    /// <summary>
-    /// Fired when the player clicks this inventory slot.
-    /// The selected ItemData is passed to the inventory UI.
-    /// </summary>
     public event Action<ItemData> OnClicked;
-
-
-    // =========================================================
-    // UNITY
-    // =========================================================
+    public event Action<ItemData> OnRightClicked;
 
     private void Awake()
     {
         button = GetComponent<Button>();
 
         if (button != null)
-        {
             button.onClick.AddListener(HandleClick);
-        }
 
         Clear();
     }
 
-
     private void OnDestroy()
     {
         if (button != null)
-        {
             button.onClick.RemoveListener(HandleClick);
-        }
     }
 
-
-    // =========================================================
-    // SET ITEM
-    // =========================================================
-
-    /// <summary>
-    /// Assigns an ItemData to this UI slot.
-    /// </summary>
-    public void SetItem(
-        ItemData item,
-        bool selected = false)
+    public void SetItem(ItemData item, bool selected = false)
     {
         currentItem = item;
-
-        // -----------------------------------------------------
-        // EMPTY SLOT
-        // -----------------------------------------------------
 
         if (item == null)
         {
@@ -85,188 +47,100 @@ public class InventorySlotUI : MonoBehaviour
             return;
         }
 
-
-        // -----------------------------------------------------
-        // ICON
-        // -----------------------------------------------------
-
         if (icon != null)
         {
             icon.sprite = item.icon;
-
-            // Hide the Image completely if there is no icon.
             icon.enabled = item.icon != null;
-
-            // Make sure the icon does not retain an old color.
             icon.color = Color.white;
+            icon.preserveAspect = true;
+
+            Debug.Log(
+                $"[SLOT UI] Slot='{gameObject.name}', " +
+                $"Item='{item.itemName}', " +
+                $"Image='{icon.name}', " +
+                $"Sprite='{(icon.sprite != null ? icon.sprite.name : "NULL")}', " +
+                $"Enabled={icon.enabled}, " +
+                $"Active={icon.gameObject.activeInHierarchy}"
+            );
         }
-
-
-        // -----------------------------------------------------
-        // QUANTITY
-        // -----------------------------------------------------
+        else
+        {
+            Debug.LogError(
+                $"[SLOT UI] Icon Image is not assigned on '{gameObject.name}'. " +
+                $"Item='{item.itemName}'."
+            );
+        }
 
         if (quantityText != null)
-        {
-            // Currently items are not stackable.
             quantityText.text = "";
-        }
-
-
-        // -----------------------------------------------------
-        // ITEM NAME
-        // -----------------------------------------------------
 
         if (itemNameText != null)
-        {
             itemNameText.text = item.itemName;
-        }
-
-
-        // -----------------------------------------------------
-        // SELECTED STATE
-        // -----------------------------------------------------
 
         SetSelected(selected);
 
-
-        // -----------------------------------------------------
-        // BUTTON
-        // -----------------------------------------------------
-
         if (button != null)
-        {
             button.interactable = true;
+    }
+
+    // Left-click is handled by the Button's onClick event.
+    private void HandleClick()
+    {
+        if (currentItem == null)
+            return;
+
+        OnClicked?.Invoke(currentItem);
+    }
+
+    // Right-click is used by the quickbar to unequip an item.
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (currentItem == null || eventData == null)
+            return;
+
+        if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            OnRightClicked?.Invoke(currentItem);
         }
     }
 
-
-    // =========================================================
-    // SELECTED STATE
-    // =========================================================
-
-    /// <summary>
-    /// Changes only the selected/highlight state.
-    /// Does not change the item.
-    /// </summary>
     public void SetSelected(bool selected)
     {
         if (selectedObject != null)
-        {
-            selectedObject.SetActive(
-                selected && currentItem != null
-            );
-        }
+            selectedObject.SetActive(selected && currentItem != null);
     }
 
-
-    // =========================================================
-    // CLEAR
-    // =========================================================
-
-    /// <summary>
-    /// Completely clears this slot.
-    /// </summary>
     public void Clear()
     {
         currentItem = null;
 
-
-        // -----------------------------------------------------
-        // ICON
-        // -----------------------------------------------------
-
         if (icon != null)
         {
             icon.sprite = null;
-
-            // Completely hide the icon when empty.
             icon.enabled = false;
         }
 
-
-        // -----------------------------------------------------
-        // QUANTITY
-        // -----------------------------------------------------
-
         if (quantityText != null)
-        {
             quantityText.text = "";
-        }
-
-
-        // -----------------------------------------------------
-        // ITEM NAME
-        // -----------------------------------------------------
 
         if (itemNameText != null)
-        {
             itemNameText.text = "";
-        }
-
-
-        // -----------------------------------------------------
-        // SELECTED
-        // -----------------------------------------------------
 
         if (selectedObject != null)
-        {
             selectedObject.SetActive(false);
-        }
-
-
-        // -----------------------------------------------------
-        // BUTTON
-        // -----------------------------------------------------
 
         if (button != null)
-        {
             button.interactable = false;
-        }
     }
 
-
-    // =========================================================
-    // CLICK
-    // =========================================================
-
-    private void HandleClick()
-    {
-        // Do nothing if this slot is empty.
-        if (currentItem == null)
-            return;
-
-        // Tell PlayerInventoryUI which item was clicked.
-        OnClicked?.Invoke(currentItem);
-    }
-
-
-    // =========================================================
-    // GET CURRENT ITEM
-    // =========================================================
-
-    /// <summary>
-    /// Returns the ItemData currently displayed by this slot.
-    /// </summary>
     public ItemData GetItem()
     {
         return currentItem;
     }
 
-
-    // =========================================================
-    // OPTIONAL
-    // =========================================================
-
-    /// <summary>
-    /// Allows PlayerInventoryUI to enable/disable clicking.
-    /// </summary>
     public void SetInteractable(bool interactable)
     {
         if (button != null)
-        {
-            button.interactable =
-                interactable && currentItem != null;
-        }
+            button.interactable = interactable && currentItem != null;
     }
 }

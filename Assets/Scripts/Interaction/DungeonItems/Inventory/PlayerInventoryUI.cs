@@ -1,155 +1,128 @@
+
 using Fusion;
 using System.Collections.Generic;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class PlayerInventoryUI : MonoBehaviour
 {
-    // =========================================================
-    // INVENTORY
-    // =========================================================
-
     [Header("Inventory")]
     [SerializeField] private PlayerInventory inventory;
-
-
-    // =========================================================
-    // QUICK BAR
-    // =========================================================
 
     [Header("Quick Bar")]
     [SerializeField] private InventorySlotUI[] quickSlots;
 
-
-    // =========================================================
-    // DYNAMIC INVENTORY
-    // =========================================================
-
     [Header("Dynamic Inventory")]
-    [Tooltip("Your Inventory Slot prefab.")]
+    [Tooltip("Prefab used to generate occupied inventory slots.")]
     [SerializeField] private InventorySlotUI slotPrefab;
 
-
-    // =========================================================
-    // CATEGORY CONTENT
-    // =========================================================
-
     [Header("Category Content")]
-
-    [Tooltip("Content object inside Item Scroll View.")]
     [SerializeField] private Transform itemContent;
-
-    [Tooltip("Content object inside Gallery Scroll View.")]
     [SerializeField] private Transform galleryContent;
-
-    [Tooltip("Content object inside Puzzle Scroll View.")]
     [SerializeField] private Transform puzzleContent;
 
-
-    // =========================================================
-    // DESCRIPTION PANEL
-    // =========================================================
-
     [Header("Description Panel")]
-
     [SerializeField] private Image descriptionIcon;
-
     [SerializeField] private TMP_Text descriptionName;
-
     [SerializeField] private TMP_Text descriptionText;
-
     [SerializeField] private TMP_Text descriptionQuantity;
 
+    [Header("Item Actions")]
+    [Tooltip("Equips the selected stored item to the quickbar.")]
+    [SerializeField] private Button equipButton;
 
-    // =========================================================
-    // FULL INVENTORY PANEL
-    // =========================================================
+    [Tooltip("Removes the selected item from the quickbar only.")]
+    [SerializeField] private Button removeButton;
+
+    [Tooltip("Permanently deletes the selected item from storage.")]
+    [SerializeField] private Button deleteInventoryButton;
+
+    [Header("Gallery Photograph Preview")]
+    [SerializeField] private GameObject galleryPreviewPanel;
+    [SerializeField] private Image galleryPreviewImage;
 
     [Header("Full Inventory Panel")]
-
-    [Tooltip("The FullInventoryPanel GameObject.")]
     [SerializeField] private GameObject inventoryPanel;
-
-    [Tooltip("Should the inventory be open when the scene starts?")]
     [SerializeField] private bool openOnStart = false;
 
-
-    // =========================================================
-    // DYNAMIC SLOT LISTS
-    // =========================================================
-
     private readonly List<InventorySlotUI> itemSlots = new();
-
     private readonly List<InventorySlotUI> gallerySlots = new();
-
     private readonly List<InventorySlotUI> puzzleSlots = new();
 
-
-    // =========================================================
-    // SELECTED DESCRIPTION ITEM
-    // =========================================================
-
     private ItemData selectedItem;
-
-
-    // =========================================================
-    // LOCAL INVENTORY CONNECTION
-    // =========================================================
-
-    private bool inventorySubscribed = false;
-
-
-    // =========================================================
-    // UNITY
-    // =========================================================
+    private bool inventorySubscribed;
 
     private void Awake()
     {
-        // Start with the correct inventory panel state.
         if (inventoryPanel != null)
-        {
             inventoryPanel.SetActive(openOnStart);
-        }
 
-        // Clear description when scene starts.
+        if (galleryPreviewPanel != null)
+            galleryPreviewPanel.SetActive(false);
+
         ClearDescription();
-    }
 
+        if (equipButton != null)
+            equipButton.onClick.AddListener(EquipSelectedItem);
+
+        if (removeButton != null)
+            removeButton.onClick.AddListener(RemoveSelectedItemFromQuickBar);
+
+        if (deleteInventoryButton != null)
+            deleteInventoryButton.onClick.AddListener(DeleteSelectedItemCompletely);
+    }
 
     private void OnEnable()
     {
         TryFindLocalInventory();
-
         SubscribeToInventory();
     }
-
 
     private void OnDisable()
     {
         UnsubscribeFromInventory();
-
         UnsubscribeQuickSlots();
-
         ClearDynamicSlots();
     }
 
+    private void OnDestroy()
+    {
+        if (equipButton != null)
+            equipButton.onClick.RemoveListener(EquipSelectedItem);
+
+        if (removeButton != null)
+            removeButton.onClick.RemoveListener(RemoveSelectedItemFromQuickBar);
+
+        if (deleteInventoryButton != null)
+            deleteInventoryButton.onClick.RemoveListener(DeleteSelectedItemCompletely);
+    }
+
+    private bool IsInventoryReady()
+    {
+        return inventory != null
+            && inventory.IsInventorySpawned
+            && inventory.Object != null
+            && inventory.Object.IsValid
+            && inventory.Object.IsInSimulation;
+    }
 
     private void Update()
     {
-        // Sometimes the Canvas enables before
-        // the player's NetworkObject has spawned.
-        //
-        // Keep trying until we find the local player.
-
-        if (inventory == null)
+        // Retry when Fusion has not registered the local player yet.
+        if (!IsInventoryReady())
         {
+            if (inventorySubscribed)
+                UnsubscribeFromInventory();
+
             TryFindLocalInventory();
-
             SubscribeToInventory();
+            return;
         }
-    }
 
+        if (!inventorySubscribed)
+            SubscribeToInventory();
+    }
 
     // =========================================================
     // FIND LOCAL PLAYER INVENTORY
@@ -157,139 +130,143 @@ public class PlayerInventoryUI : MonoBehaviour
 
     private void TryFindLocalInventory()
     {
-        if (inventory != null)
-            return;
-
-        NetworkRunner runner =
-            FindAnyObjectByType<NetworkRunner>();
-
-        if (runner == null)
-            return;
-
-        if (!runner.IsRunning)
-            return;
-
-        if (!runner.TryGetPlayerObject(
-                runner.LocalPlayer,
-                out NetworkObject playerObject))
+        // Keep a valid reference only if it belongs to the local player.
+        if (inventory != null
+            && inventory.Object != null
+            && inventory.Object.IsValid
+            && inventory.Object.HasInputAuthority)
         {
             return;
         }
 
-        inventory =
-            playerObject.GetComponent<PlayerInventory>();
+        if (inventorySubscribed)
+            UnsubscribeFromInventory();
 
-        if (inventory != null)
+        inventory = null;
+
+        NetworkRunner[] runners =
+            FindObjectsByType<NetworkRunner>(FindObjectsSortMode.None);
+
+        foreach (NetworkRunner runner in runners)
         {
+            if (runner == null || !runner.IsRunning)
+                continue;
+
+            if (!runner.TryGetPlayerObject(
+                    runner.LocalPlayer,
+                    out NetworkObject playerObject))
+            {
+                continue;
+            }
+
+            if (playerObject == null || !playerObject.IsValid)
+                continue;
+
+            PlayerInventory foundInventory =
+                playerObject.GetComponent<PlayerInventory>();
+
+            if (foundInventory == null)
+            {
+                Debug.LogError(
+                    "[INVENTORY UI] Local PlayerObject has no PlayerInventory."
+                );
+                continue;
+            }
+
+            inventory = foundInventory;
+
             Debug.Log(
-                "[INVENTORY UI] Connected to local PlayerInventory."
+                $"[INVENTORY UI] Found local inventory on " +
+                $"'{playerObject.name}'. " +
+                $"Ready={inventory.IsInventorySpawned}"
             );
+
+            return;
         }
     }
 
-
     // =========================================================
-    // INVENTORY EVENT
+    // INVENTORY EVENTS
     // =========================================================
 
     private void SubscribeToInventory()
     {
-        if (inventory == null)
-            return;
-
-        if (inventorySubscribed)
-            return;
-
-        inventory.InventoryChanged += Refresh;
-
-        inventorySubscribed = true;
-
-        SubscribeQuickSlots();
-
-        Refresh();
-    }
-
-
-    private void UnsubscribeFromInventory()
-    {
-        if (inventory == null)
-            return;
-
-        if (!inventorySubscribed)
+        if (inventorySubscribed || !IsInventoryReady())
             return;
 
         inventory.InventoryChanged -= Refresh;
+        inventory.InventoryChanged += Refresh;
+        inventorySubscribed = true;
+
+        SubscribeQuickSlots();
+        Refresh();
+
+        Debug.Log(
+            $"[INVENTORY UI] Subscribed to local inventory on " +
+            $"'{inventory.gameObject.name}'."
+        );
+    }
+
+    private void UnsubscribeFromInventory()
+    {
+        if (inventory != null && inventorySubscribed)
+            inventory.InventoryChanged -= Refresh;
 
         inventorySubscribed = false;
     }
-
-
-    // =========================================================
-    // QUICK SLOT EVENTS
-    // =========================================================
 
     private void SubscribeQuickSlots()
     {
         if (quickSlots == null)
             return;
 
-        for (int i = 0; i < quickSlots.Length; i++)
+        foreach (InventorySlotUI slot in quickSlots)
         {
-            if (quickSlots[i] == null)
+            if (slot == null)
                 continue;
 
-            quickSlots[i].OnClicked += ShowDescription;
+            // Avoid duplicate event subscriptions.
+            slot.OnClicked -= ShowDescription;
+            slot.OnClicked += ShowDescription;
+
+            slot.OnRightClicked -= HandleQuickSlotRightClick;
+            slot.OnRightClicked += HandleQuickSlotRightClick;
         }
     }
-
 
     private void UnsubscribeQuickSlots()
     {
         if (quickSlots == null)
             return;
 
-        for (int i = 0; i < quickSlots.Length; i++)
+        foreach (InventorySlotUI slot in quickSlots)
         {
-            if (quickSlots[i] == null)
+            if (slot == null)
                 continue;
 
-            quickSlots[i].OnClicked -= ShowDescription;
+            slot.OnClicked -= ShowDescription;
+            slot.OnRightClicked -= HandleQuickSlotRightClick;
         }
     }
 
-
     // =========================================================
-    // REFRESH EVERYTHING
+    // REFRESH ALL INVENTORY UI
     // =========================================================
 
     public void Refresh()
     {
-        if (inventory == null)
+        if (!IsInventoryReady())
             return;
 
         RefreshQuickBar();
 
-        RefreshCategory(
-            ItemCategory.Item,
-            itemContent,
-            itemSlots
-        );
-
-        RefreshCategory(
-            ItemCategory.Gallery,
-            galleryContent,
-            gallerySlots
-        );
-
-        RefreshCategory(
-            ItemCategory.PuzzlePiece,
-            puzzleContent,
-            puzzleSlots
-        );
+        RefreshCategory(ItemCategory.Item, itemContent, itemSlots);
+        RefreshCategory(ItemCategory.PuzzlePiece, puzzleContent, puzzleSlots);
+        RefreshCategory(ItemCategory.Gallery, galleryContent, gallerySlots);
 
         ValidateSelectedDescription();
+        UpdateActionButtons();
     }
-
 
     // =========================================================
     // QUICK BAR
@@ -297,37 +274,70 @@ public class PlayerInventoryUI : MonoBehaviour
 
     private void RefreshQuickBar()
     {
-        if (quickSlots == null)
+        if (!IsInventoryReady())
             return;
+
+        if (quickSlots == null)
+        {
+            Debug.LogError(
+                "[INVENTORY UI] Quick Slots array is not assigned."
+            );
+            return;
+        }
 
         for (int i = 0; i < quickSlots.Length; i++)
         {
-            if (quickSlots[i] == null)
-                continue;
+            InventorySlotUI slot = quickSlots[i];
 
-            // More UI slots than actual inventory capacity.
-            if (i >= PlayerInventory.SlotCount)
+            if (slot == null)
             {
-                quickSlots[i].Clear();
+                Debug.LogError(
+                    $"[INVENTORY UI] Quick slot {i + 1} is not assigned."
+                );
                 continue;
             }
 
-            ItemData item =
-                inventory.GetItemAt(i);
+            if (i >= PlayerInventory.QuickBarSlotCount)
+            {
+                slot.Clear();
+                continue;
+            }
 
-            bool selected =
-                inventory.SelectedSlot == i;
+            ItemData item = inventory.GetQuickBarItemAt(i);
+            slot.SetItem(item, inventory.SelectedSlot == i);
 
-            quickSlots[i].SetItem(
-                item,
-                selected
+            Debug.Log(
+                $"[INVENTORY UI] Quick slot {i + 1}: " +
+                $"Item={(item != null ? item.itemName : "EMPTY")}, " +
+                $"ItemID={(item != null ? item.itemId : 0)}"
             );
         }
     }
 
+    private void HandleQuickSlotRightClick(ItemData item)
+    {
+        if (!IsInventoryReady() || item == null)
+            return;
+
+        // Unequip only; the stored item remains in inventory.
+        bool removed = inventory.RemoveItemFromQuickBar(item.itemId);
+
+        if (!removed)
+        {
+            Debug.LogWarning(
+                $"[INVENTORY UI] Could not unequip '{item.itemName}'."
+            );
+            return;
+        }
+
+        if (selectedItem != null && selectedItem.itemId == item.itemId)
+            ClearDescription();
+
+        Refresh();
+    }
 
     // =========================================================
-    // DYNAMIC CATEGORY
+    // DYNAMIC CATEGORY SLOTS
     // =========================================================
 
     private void RefreshCategory(
@@ -335,199 +345,152 @@ public class PlayerInventoryUI : MonoBehaviour
         Transform content,
         List<InventorySlotUI> slots)
     {
-        if (content == null)
+        if (!IsInventoryReady() || content == null)
             return;
 
         if (slotPrefab == null)
         {
             Debug.LogWarning(
-                "[INVENTORY UI] Slot Prefab is not assigned."
+                "[INVENTORY UI] Dynamic Slot Prefab is not assigned."
             );
-
             return;
         }
 
-        // Remove previously generated slots.
-        ClearSlots(
-            content,
-            slots
-        );
+        ClearSlots(content, slots);
 
+        int count = inventory.GetStorageSlotCount();
 
-        // =====================================================
-        // SEARCH NETWORKED INVENTORY
-        // =====================================================
-
-        for (int i = 0;
-             i < PlayerInventory.SlotCount;
-             i++)
+        for (int i = 0; i < count; i++)
         {
-            ItemData item =
-                inventory.GetItemAt(i);
+            ItemData item = inventory.GetStorageItemAt(i);
 
-            // Empty inventory slot.
-            if (item == null)
+            if (item == null || item.category != category)
                 continue;
 
-            // Item belongs to another category.
-            if (item.category != category)
-                continue;
+            InventorySlotUI slot = Instantiate(slotPrefab, content);
 
-
-            // =================================================
-            // CREATE SLOT
-            // =================================================
-
-            InventorySlotUI slot =
-                Instantiate(
-                    slotPrefab,
-                    content
-                );
-
-
-            // Set item visual.
-            slot.SetItem(
-                item,
-                false
-            );
-
-
-            // When player clicks this slot,
-            // show its description.
+            slot.SetItem(item, false);
             slot.OnClicked += ShowDescription;
 
-
-            // Remember generated slot.
             slots.Add(slot);
         }
     }
-
-
-    // =========================================================
-    // CLEAR DYNAMIC SLOTS
-    // =========================================================
 
     private void ClearSlots(
         Transform content,
         List<InventorySlotUI> slots)
     {
-        for (int i = 0; i < slots.Count; i++)
+        foreach (InventorySlotUI slot in slots)
         {
-            if (slots[i] == null)
+            if (slot == null)
                 continue;
 
-            // Important:
-            // Remove event subscription before destroying.
-            slots[i].OnClicked -= ShowDescription;
-
-            Destroy(
-                slots[i].gameObject
-            );
+            slot.OnClicked -= ShowDescription;
+            Destroy(slot.gameObject);
         }
 
         slots.Clear();
     }
 
-
     private void ClearDynamicSlots()
     {
         if (itemContent != null)
-        {
-            ClearSlots(
-                itemContent,
-                itemSlots
-            );
-        }
+            ClearSlots(itemContent, itemSlots);
 
         if (galleryContent != null)
-        {
-            ClearSlots(
-                galleryContent,
-                gallerySlots
-            );
-        }
+            ClearSlots(galleryContent, gallerySlots);
 
         if (puzzleContent != null)
-        {
-            ClearSlots(
-                puzzleContent,
-                puzzleSlots
-            );
-        }
+            ClearSlots(puzzleContent, puzzleSlots);
     }
 
+    // =========================================================
+    // SELECT AN ITEM / DISPLAY DESCRIPTION
+    // =========================================================
 
-    // =========================================================
-    // DESCRIPTION PANEL
-    // =========================================================
 
     public void ShowDescription(ItemData item)
     {
         if (item == null)
-        {
-            ClearDescription();
             return;
-        }
 
         selectedItem = item;
 
+        // Update quickbar selection highlights.
+        if (quickSlots != null)
+        {
+            foreach (InventorySlotUI slot in quickSlots)
+            {
+                if (slot == null)
+                    continue;
 
-        // =====================================================
-        // ICON
-        // =====================================================
+                ItemData slotItem = slot.GetItem();
+
+                slot.SetSelected(
+                    slotItem != null &&
+                    slotItem.itemId == item.itemId
+                );
+            }
+        }
+
+        // Update full inventory selection highlights.
+        UpdateCategorySelection(itemSlots);
+        UpdateCategorySelection(puzzleSlots);
+        UpdateCategorySelection(gallerySlots);
 
         if (descriptionIcon != null)
         {
-            descriptionIcon.sprite =
-                item.icon;
-
-            descriptionIcon.enabled =
-                item.icon != null;
+            descriptionIcon.sprite = item.icon;
+            descriptionIcon.enabled = item.icon != null;
+            descriptionIcon.preserveAspect = true;
         }
-
-
-        // =====================================================
-        // NAME
-        // =====================================================
 
         if (descriptionName != null)
-        {
-            descriptionName.text =
-                item.itemName;
-        }
-
-
-        // =====================================================
-        // DESCRIPTION
-        // =====================================================
+            descriptionName.text = item.itemName;
 
         if (descriptionText != null)
-        {
-            descriptionText.text =
-                item.description;
-        }
-
-
-        // =====================================================
-        // QUANTITY
-        // =====================================================
+            descriptionText.text = item.description;
 
         if (descriptionQuantity != null)
-        {
-            // Your current inventory does not stack items.
             descriptionQuantity.text = "";
+
+        if (galleryPreviewPanel != null)
+        {
+            bool isPhoto = item.category == ItemCategory.Gallery;
+            galleryPreviewPanel.SetActive(isPhoto);
+
+            if (isPhoto && galleryPreviewImage != null)
+            {
+                galleryPreviewImage.sprite = item.icon;
+                galleryPreviewImage.enabled = item.icon != null;
+                galleryPreviewImage.preserveAspect = true;
+            }
         }
+
+        UpdateActionButtons();
     }
 
+    private void UpdateCategorySelection(
+        List<InventorySlotUI> slots)
+    {
+        foreach (InventorySlotUI slot in slots)
+        {
+            if (slot == null)
+                continue;
 
-    // =========================================================
-    // CLEAR DESCRIPTION
-    // =========================================================
+            ItemData slotItem = slot.GetItem();
 
+            bool isSelected =
+                selectedItem != null &&
+                slotItem != null &&
+                slotItem.itemId == selectedItem.itemId;
+
+            slot.SetSelected(isSelected);
+        }
+    }
     public void ClearDescription()
     {
         selectedItem = null;
-
 
         if (descriptionIcon != null)
         {
@@ -535,44 +498,140 @@ public class PlayerInventoryUI : MonoBehaviour
             descriptionIcon.enabled = false;
         }
 
-
         if (descriptionName != null)
-        {
             descriptionName.text = "";
-        }
-
 
         if (descriptionText != null)
-        {
             descriptionText.text = "";
-        }
-
 
         if (descriptionQuantity != null)
-        {
             descriptionQuantity.text = "";
+
+        if (galleryPreviewPanel != null)
+            galleryPreviewPanel.SetActive(false);
+
+        if (galleryPreviewImage != null)
+        {
+            galleryPreviewImage.sprite = null;
+            galleryPreviewImage.enabled = false;
+        }
+
+        UpdateActionButtons();
+    }
+
+    // =========================================================
+    // EQUIP / UNEQUIP / DELETE
+    // =========================================================
+
+    public void EquipSelectedItem()
+    {
+        if (!IsInventoryReady() || selectedItem == null)
+            return;
+
+        if (selectedItem.category == ItemCategory.Gallery)
+        {
+            Debug.Log(
+                "[INVENTORY UI] Photographs cannot be equipped."
+            );
+            return;
+        }
+
+        bool equipped =
+            inventory.TryEquipItemToQuickBar(selectedItem.itemId);
+
+        if (equipped)
+            Refresh();
+        else
+            Debug.LogWarning(
+                "[INVENTORY UI] Could not equip item. " +
+                "The quickbar may be full or the item may not be stored."
+            );
+    }
+
+    public void RemoveSelectedItemFromQuickBar()
+    {
+        if (!IsInventoryReady() || selectedItem == null)
+            return;
+
+        bool removed =
+            inventory.RemoveItemFromQuickBar(selectedItem.itemId);
+
+        if (removed)
+            Refresh();
+        else
+            Debug.LogWarning(
+                "[INVENTORY UI] This item is not in the quickbar."
+            );
+    }
+
+    public void DeleteSelectedItemCompletely()
+    {
+        if (!IsInventoryReady() || selectedItem == null)
+            return;
+
+        int itemId = selectedItem.itemId;
+
+        bool deleted = inventory.RemoveItemCompletely(itemId);
+
+        if (deleted)
+        {
+            ClearDescription();
+            Refresh();
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"[INVENTORY UI] Could not delete item ID {itemId}."
+            );
         }
     }
 
+    private void UpdateActionButtons()
+    {
+        bool ready = IsInventoryReady();
+        bool hasSelection = ready && selectedItem != null;
 
-    // =========================================================
-    // CHECK SELECTED ITEM
-    // =========================================================
+        bool isGalleryPhoto =
+            hasSelection &&
+            selectedItem.category == ItemCategory.Gallery;
+
+        if (equipButton != null)
+        {
+            equipButton.interactable =
+                hasSelection &&
+                !isGalleryPhoto &&
+                inventory.Has(selectedItem) &&
+                !inventory.IsItemInQuickBar(selectedItem.itemId);
+        }
+
+        if (removeButton != null)
+        {
+            removeButton.interactable =
+                hasSelection &&
+                inventory.IsItemInQuickBar(selectedItem.itemId);
+        }
+
+        if (deleteInventoryButton != null)
+        {
+            deleteInventoryButton.interactable =
+                hasSelection &&
+                inventory.Has(selectedItem);
+        }
+    }
 
     private void ValidateSelectedDescription()
     {
-        if (selectedItem == null)
+        if (selectedItem == null || !IsInventoryReady())
             return;
 
         if (!inventory.Has(selectedItem))
-        {
             ClearDescription();
-        }
+        else
+            UpdateActionButtons();
     }
 
-
     // =========================================================
-    // OPEN INVENTORY
+    // OPEN / CLOSE / TOGGLE INVENTORY
     // =========================================================
 
     public void OpenInventoryPanel()
@@ -582,19 +641,12 @@ public class PlayerInventoryUI : MonoBehaviour
             Debug.LogWarning(
                 "[INVENTORY UI] Inventory Panel is not assigned."
             );
-
             return;
         }
 
         inventoryPanel.SetActive(true);
-
         Refresh();
     }
-
-
-    // =========================================================
-    // CLOSE INVENTORY
-    // =========================================================
 
     public void CloseInventoryPanel()
     {
@@ -602,14 +654,8 @@ public class PlayerInventoryUI : MonoBehaviour
             return;
 
         inventoryPanel.SetActive(false);
-
         ClearDescription();
     }
-
-
-    // =========================================================
-    // TOGGLE INVENTORY
-    // =========================================================
 
     public void ToggleInventoryPanel()
     {
@@ -618,33 +664,17 @@ public class PlayerInventoryUI : MonoBehaviour
             Debug.LogWarning(
                 "[INVENTORY UI] Inventory Panel is not assigned."
             );
-
             return;
         }
 
-        bool isOpen =
-            inventoryPanel.activeSelf;
-
-        if (isOpen)
-        {
+        if (inventoryPanel.activeSelf)
             CloseInventoryPanel();
-        }
         else
-        {
             OpenInventoryPanel();
-        }
     }
-
-
-    // =========================================================
-    // IS OPEN?
-    // =========================================================
 
     public bool IsInventoryOpen()
     {
-        if (inventoryPanel == null)
-            return false;
-
-        return inventoryPanel.activeSelf;
+        return inventoryPanel != null && inventoryPanel.activeSelf;
     }
 }
