@@ -1,617 +1,233 @@
+
 using Fusion;
 using UnityEngine;
 
 public class ItemPickup : NetworkBehaviour, IInteractable
 {
-    // =========================================================
-    // ITEM DATA
-    // =========================================================
-
     [Header("Item")]
-
-    [Tooltip(
-        "The ItemData represented by this pickup. " +
-        "Works for keys, cameras, documents, batteries, etc."
-    )]
     [SerializeField] private ItemData itemData;
 
-
-    // =========================================================
-    // OPTIONAL CHEST REQUIREMENT
-    // =========================================================
-
     [Header("Optional Source Chest")]
-
-    [Tooltip(
-        "Optional. Assign this if the item can only be collected " +
-        "after its source chest/container has been opened."
-    )]
     [SerializeField] private ChestState sourceChest;
-
-
-    // =========================================================
-    // NETWORKED DATA
-    // =========================================================
-
-    /*
-     * The actual ItemData ID.
-     *
-     * Example:
-     *
-     * 101 = Front Gate Key
-     * 102 = Prison Cell Key
-     * 103 = Camera
-     * 104 = Document
-     *
-     * The pickup prefab does NOT need to be different
-     * for every item.
-     */
 
     [Networked]
     public int ItemId { get; private set; }
 
-
-    /*
-     * If this item was generated from a networked chest,
-     * remember which chest generated it.
-     */
-
     [Networked]
     private NetworkObject SourceChestObject { get; set; }
-
-
-    /*
-     * Prevent two players from collecting the same
-     * networked item at the same time.
-     */
 
     [Networked]
     private NetworkBool IsCollecting { get; set; }
 
-
-    // =========================================================
-    // LOCAL STATE
-    // =========================================================
-
     private PlayerRef pendingCollector;
 
-
-    // =========================================================
-    // PUBLIC INFORMATION
-    // =========================================================
-
     public int NetworkItemId => ItemId;
-
     public ItemData Item => itemData;
 
-
-    // =========================================================
-    // INTERACTABLE
-    // =========================================================
-
-    public string Prompt
-    {
-        get
-        {
-            if (itemData != null &&
-                !string.IsNullOrWhiteSpace(itemData.itemName))
-            {
-                return $"Press E to collect {itemData.itemName}";
-            }
-
-            return "Press E to collect";
-        }
-    }
-
+    public string Prompt =>
+        itemData != null && !string.IsNullOrWhiteSpace(itemData.itemName)
+            ? $"Press E to collect {itemData.itemName}"
+            : "Press E to collect";
 
     public bool CanInteract => CanCollect;
-
-
-    /*
-     * Higher priority means this object is selected first
-     * if multiple IInteractable objects overlap.
-     */
-
     public int Priority => 10;
-
 
     public void Interact(PlayerInventory inventory)
     {
         RequestCollect();
     }
 
-
-    // =========================================================
-    // CAN COLLECT
-    // =========================================================
-
     public bool CanCollect
     {
         get
         {
-            // -------------------------------------------------
-            // Invalid item
-            // -------------------------------------------------
-
             if (ItemId <= 0)
-            {
                 return false;
-            }
-
-
-            // -------------------------------------------------
-            // Generated source chest
-            // -------------------------------------------------
 
             if (SourceChestObject != null)
             {
                 ChestState chest =
                     SourceChestObject.GetComponent<ChestState>();
 
-                if (chest == null)
-                {
-                    return false;
-                }
-
-                return chest.IsOpen;
+                return chest != null && chest.IsOpen;
             }
-
-
-            // -------------------------------------------------
-            // Scene-placed source chest
-            // -------------------------------------------------
 
             if (sourceChest == null)
-            {
-                sourceChest =
-                    GetComponentInParent<ChestState>();
-            }
+                sourceChest = GetComponentInParent<ChestState>();
 
-            if (sourceChest != null)
-            {
-                return sourceChest.IsOpen;
-            }
-
-
-            // -------------------------------------------------
-            // Normal item
-            //
-            // No chest requirement.
-            // -------------------------------------------------
-
-            return true;
+            return sourceChest == null || sourceChest.IsOpen;
         }
     }
-
-
-    // =========================================================
-    // SPAWNED
-    // =========================================================
 
     public override void Spawned()
     {
         if (!Object.HasStateAuthority)
             return;
 
-
-        // -----------------------------------------------------
-        // Scene-placed item
-        //
-        // If ItemId hasn't been initialized through
-        // Initialize(), use the assigned ItemData.
-        // -----------------------------------------------------
-
         if (ItemId <= 0 && itemData != null)
         {
             if (itemData.itemId <= 0)
             {
                 Debug.LogError(
-                    $"[ITEM PICKUP] " +
-                    $"{name} has invalid ItemData ID."
+                    $"[ITEM PICKUP] {name} has an invalid ItemData ID."
                 );
-
                 return;
             }
 
-            ItemId =
-                itemData.itemId;
-
-
-            Debug.Log(
-                $"[ITEM PICKUP] " +
-                $"{name} initialized from ItemData: " +
-                $"{itemData.itemName} " +
-                $"(ID {ItemId})"
-            );
+            ItemId = itemData.itemId;
         }
-
-
-        // -----------------------------------------------------
-        // Final validation
-        // -----------------------------------------------------
 
         if (ItemId <= 0)
         {
             Debug.LogError(
-                $"[ITEM PICKUP] " +
-                $"{name} has no valid Item ID. " +
-                "Assign ItemData or call Initialize()."
+                $"[ITEM PICKUP] {name} has no valid Item ID."
             );
-
-            return;
         }
     }
-
-
-    // =========================================================
-    // INITIALIZE GENERATED ITEM
-    // =========================================================
-
-    /*
-     * Use this when spawning an item through:
-     *
-     * - ChestLoot
-     * - Dungeon generation
-     * - Procedural generation
-     * - Other networked systems
-     *
-     * Example:
-     *
-     * pickup.Initialize(
-     *     item.itemId,
-     *     chestNetworkObject
-     * );
-     */
 
     public void Initialize(
         int itemId,
         NetworkObject sourceChest = null)
     {
-        if (!Object.HasStateAuthority)
+        if (Object == null || !Object.HasStateAuthority)
             return;
-
-
-        // -----------------------------------------------------
-        // Validate ID
-        // -----------------------------------------------------
 
         if (itemId <= 0)
         {
             Debug.LogError(
-                $"[ITEM PICKUP] " +
-                $"Cannot initialize {name}. " +
-                $"Invalid Item ID: {itemId}"
+                $"[ITEM PICKUP] Invalid item ID {itemId}."
             );
-
             return;
         }
 
-
-        // -----------------------------------------------------
-        // Set identity
-        // -----------------------------------------------------
-
-        ItemId =
-            itemId;
-
-
-        // -----------------------------------------------------
-        // Set source chest
-        // -----------------------------------------------------
-
-        SourceChestObject =
-            sourceChest;
-
-
-        // -----------------------------------------------------
-        // Debug
-        // -----------------------------------------------------
-
-        if (sourceChest != null)
-        {
-            Debug.Log(
-                $"[ITEM PICKUP] " +
-                $"{name} initialized with Item ID {itemId} " +
-                $"from chest {sourceChest.name}."
-            );
-        }
-        else
-        {
-            Debug.Log(
-                $"[ITEM PICKUP] " +
-                $"{name} initialized with Item ID {itemId}."
-            );
-        }
+        ItemId = itemId;
+        SourceChestObject = sourceChest;
     }
-
-
-    // =========================================================
-    // PLAYER REQUESTS PICKUP
-    // =========================================================
 
     public void RequestCollect()
     {
-        if (Object == null)
+        if (Object == null || !Object.IsValid)
             return;
-
-
-        /*
-         * Never directly modify the inventory here.
-         *
-         * The request goes to the pickup's
-         * State Authority first.
-         */
 
         RPC_RequestCollect();
     }
 
-
-    // =========================================================
-    // PLAYER -> PICKUP STATE AUTHORITY
-    // =========================================================
-
-    [Rpc(
-        RpcSources.All,
-        RpcTargets.StateAuthority
-    )]
-    private void RPC_RequestCollect(
-        RpcInfo info = default)
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_RequestCollect(RpcInfo info = default)
     {
-        // -----------------------------------------------------
-        // Prevent duplicate pickup requests
-        // -----------------------------------------------------
-
-        if (IsCollecting)
+        if (IsCollecting || ItemId <= 0 || !CanCollect)
             return;
-
-
-        // -----------------------------------------------------
-        // Validate item
-        // -----------------------------------------------------
-
-        if (ItemId <= 0)
-        {
-            Debug.LogError(
-                $"[ITEM PICKUP] " +
-                $"{name} has invalid Item ID: {ItemId}"
-            );
-
-            return;
-        }
-
-
-        // -----------------------------------------------------
-        // Validate chest requirement
-        // -----------------------------------------------------
-
-        if (!CanCollect)
-        {
-            Debug.Log(
-                $"[ITEM PICKUP] " +
-                $"{name} cannot be collected yet."
-            );
-
-            return;
-        }
-
-
-        // -----------------------------------------------------
-        // Validate player
-        // -----------------------------------------------------
 
         if (info.Source == PlayerRef.None)
             return;
 
+        pendingCollector = info.Source;
+        IsCollecting = true;
 
-        // -----------------------------------------------------
-        // Lock pickup
-        // -----------------------------------------------------
+        // Candle state is stored on the dropped world object.
+        NetworkedDroppedItem dropped =
+            GetComponent<NetworkedDroppedItem>();
 
-        pendingCollector =
-            info.Source;
+        bool hasCandleState =
+            dropped != null && dropped.HasCandleState;
 
-        IsCollecting =
-            true;
+        float remaining =
+            hasCandleState ? dropped.CandleRemaining : 0f;
 
-
-        Debug.Log(
-            $"[ITEM PICKUP] " +
-            $"Player {info.Source} requested " +
-            $"Item ID {ItemId}."
-        );
-
-
-        // -----------------------------------------------------
-        // Deliver item to player
-        // -----------------------------------------------------
+        float maxLife =
+            hasCandleState ? dropped.CandleMaxLife : 0f;
 
         RPC_DeliverItem(
             info.Source,
-            ItemId
+            ItemId,
+            hasCandleState,
+            remaining,
+            maxLife
         );
     }
 
-
-    // =========================================================
-    // PICKUP AUTHORITY -> PLAYER
-    // =========================================================
-
-    [Rpc(
-        RpcSources.StateAuthority,
-        RpcTargets.All
-    )]
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_DeliverItem(
         [RpcTarget] PlayerRef targetPlayer,
-        int itemId)
+        int itemId,
+        bool hasCandleState,
+        float remaining,
+        float maxLife)
     {
-        /*
-         * This RPC executes on all clients,
-         * but only the intended player continues.
-         */
-
         if (Runner.LocalPlayer != targetPlayer)
             return;
 
-
-        // -----------------------------------------------------
-        // Find player's NetworkObject
-        // -----------------------------------------------------
-
         if (!Runner.TryGetPlayerObject(
                 targetPlayer,
-                out NetworkObject playerObject))
-        {
-            Debug.LogError(
-                "[ITEM PICKUP] " +
-                "Could not find player NetworkObject."
-            );
-
-            RPC_CollectResult(false);
-
-            return;
-        }
-
-
-        if (playerObject == null)
+                out NetworkObject playerObject) ||
+            playerObject == null)
         {
             RPC_CollectResult(false);
-
             return;
         }
-
-
-        // -----------------------------------------------------
-        // Find PlayerInventory
-        // -----------------------------------------------------
 
         PlayerInventory inventory =
             playerObject.GetComponent<PlayerInventory>();
 
-
         if (inventory == null)
         {
             Debug.LogError(
-                "[ITEM PICKUP] " +
-                "PlayerInventory missing from player."
+                "[ITEM PICKUP] PlayerInventory is missing."
             );
-
             RPC_CollectResult(false);
-
             return;
         }
 
+        bool added;
 
-        // -----------------------------------------------------
-        // Add item to networked inventory
-        // -----------------------------------------------------
-
-        bool added =
-            inventory.TryAddNetworkedById(itemId);
-
-
-        // -----------------------------------------------------
-        // Result
-        // -----------------------------------------------------
+        if (hasCandleState)
+        {
+            added = inventory.TryAddNetworkedById(
+                itemId,
+                remaining,
+                maxLife
+            );
+        }
+        else
+        {
+            added = inventory.TryAddNetworkedById(itemId);
+        }
 
         if (added)
         {
             Debug.Log(
-                $"[ITEM PICKUP] " +
-                $"Item ID {itemId} added to " +
-                $"Player {targetPlayer}'s inventory."
+                $"[ITEM PICKUP] Item {itemId} collected by {targetPlayer}."
             );
         }
         else
         {
             Debug.Log(
-                $"[ITEM PICKUP] " +
-                $"Player {targetPlayer}'s inventory is full."
+                $"[ITEM PICKUP] Could not add item {itemId}; inventory is full."
             );
         }
-
-
-        // -----------------------------------------------------
-        // Tell pickup authority the result
-        // -----------------------------------------------------
 
         RPC_CollectResult(added);
     }
 
-
-    // =========================================================
-    // PLAYER -> PICKUP AUTHORITY
-    // =========================================================
-
-    [Rpc(
-        RpcSources.All,
-        RpcTargets.StateAuthority
-    )]
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     private void RPC_CollectResult(
         bool success,
         RpcInfo info = default)
     {
-        // -----------------------------------------------------
-        // No active pickup
-        // -----------------------------------------------------
-
-        if (!IsCollecting)
+        if (!IsCollecting || info.Source != pendingCollector)
             return;
 
-
-        // -----------------------------------------------------
-        // Only original collector can answer
-        // -----------------------------------------------------
-
-        if (info.Source != pendingCollector)
-            return;
-
-
-        // -----------------------------------------------------
-        // Unlock
-        // -----------------------------------------------------
-
-        IsCollecting =
-            false;
-
-
-        // -----------------------------------------------------
-        // Failed pickup
-        // -----------------------------------------------------
+        IsCollecting = false;
 
         if (!success)
         {
-            Debug.Log(
-                $"[ITEM PICKUP] " +
-                $"Item ID {ItemId} remains in the world. " +
-                $"Inventory is full."
-            );
-
-            pendingCollector =
-                PlayerRef.None;
-
+            pendingCollector = PlayerRef.None;
             return;
         }
 
+        pendingCollector = PlayerRef.None;
 
-        // -----------------------------------------------------
-        // Successful pickup
-        // -----------------------------------------------------
-
-        Debug.Log(
-            $"[ITEM PICKUP] " +
-            $"Item ID {ItemId} successfully collected " +
-            $"by {pendingCollector}."
-        );
-
-
-        pendingCollector =
-            PlayerRef.None;
-
-
-        // -----------------------------------------------------
-        // Despawn network item
-        // -----------------------------------------------------
-
-        Runner.Despawn(Object);
+        if (Object != null && Object.IsValid)
+            Runner.Despawn(Object);
     }
 }
