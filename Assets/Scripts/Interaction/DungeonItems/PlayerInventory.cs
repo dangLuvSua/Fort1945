@@ -1,3 +1,4 @@
+
 using System;
 using Fusion;
 using UnityEngine;
@@ -12,67 +13,50 @@ public class PlayerInventory : NetworkBehaviour
     // =========================================================
 
     [Header("Player Visual")]
-
-    [Tooltip(
-        "First-person hold point under the local player's camera. " +
-        "Used only by the local player."
-    )]
     [SerializeField] private Transform holdPoint;
-
-    [Tooltip(
-        "Name of the hold point inside the character visual prefab. " +
-        "Example: NetworkHoldPoint"
-    )]
     [SerializeField] private string networkHoldPointName = "NetworkHoldPoint";
 
-    // Automatically found inside the dynamically spawned character.
     private Transform networkHoldPoint;
-
-    // The character visual currently containing NetworkHoldPoint.
     private Transform currentCharacterRoot;
-
-    // Local first-person held object.
     private GameObject heldObject;
-
-    // Third-person/network held object.
     private GameObject networkHeldObject;
-
 
     // =========================================================
     // DROP
     // =========================================================
 
     [Header("Drop")]
-
     [SerializeField] private Transform dropOrigin;
-
     [SerializeField] private float throwForce = 4f;
-
     [SerializeField] private float throwUp = 1.5f;
-
 
     // =========================================================
     // ITEM DATABASE
     // =========================================================
 
     [Header("Item Database")]
-
-    [Tooltip("Assign every ItemData used by this game.")]
     [SerializeField] private ItemData[] itemCatalog;
-
 
     // =========================================================
     // NETWORKED INVENTORY
     // =========================================================
 
-    // 0 = empty slot
-    // > 0 = ItemData.itemId
+    // 0 = empty; positive values = ItemData.itemId
     [Networked, Capacity(SlotCount)]
     private NetworkArray<int> NetworkSlots => default;
 
     [Networked]
     public int SelectedSlot { get; private set; }
 
+    // Candle life is stored per inventory slot.
+    [Networked, Capacity(SlotCount)]
+    private NetworkArray<float> CandleLifeBySlot => default;
+
+    [Networked, Capacity(SlotCount)]
+    private NetworkArray<float> CandleMaxLifeBySlot => default;
+
+    [Networked, Capacity(SlotCount)]
+    private NetworkArray<NetworkBool> CandleInitializedBySlot => default;
 
     // =========================================================
     // CHANGE DETECTION
@@ -81,7 +65,6 @@ public class PlayerInventory : NetworkBehaviour
     private int lastInventoryHash = int.MinValue;
 
     public event Action InventoryChanged;
-
 
     // =========================================================
     // SPAWNED
@@ -94,18 +77,12 @@ public class PlayerInventory : NetworkBehaviour
             SelectedSlot = 0;
         }
 
-        // Try to find the character's NetworkHoldPoint.
         FindNetworkHoldPoint();
-
-        // Create the appropriate held visual.
         RefreshHeldVisual();
 
-        // Store current inventory state.
         lastInventoryHash = CalculateInventoryHash();
-
         InventoryChanged?.Invoke();
     }
-
 
     // =========================================================
     // UPDATE
@@ -113,16 +90,13 @@ public class PlayerInventory : NetworkBehaviour
 
     private void Update()
     {
-        if (!Object.HasStateAuthority)
+        if (Object == null || !Object.HasStateAuthority)
             return;
 
         if (Keyboard.current == null)
             return;
 
-        // -----------------------------------------------------
-        // Select slots 1-8
-        // -----------------------------------------------------
-
+        // Select inventory slots 1-8.
         for (int i = 0; i < SlotCount; i++)
         {
             Key key = (Key)((int)Key.Digit1 + i);
@@ -134,16 +108,12 @@ public class PlayerInventory : NetworkBehaviour
             }
         }
 
-        // -----------------------------------------------------
-        // Drop selected item
-        // -----------------------------------------------------
-
+        // Drop the selected item.
         if (Keyboard.current.gKey.wasPressedThisFrame)
         {
             RequestDrop();
         }
     }
-
 
     // =========================================================
     // RENDER
@@ -151,45 +121,28 @@ public class PlayerInventory : NetworkBehaviour
 
     public override void Render()
     {
-        // -----------------------------------------------------
-        // For remote players, make sure the dynamically spawned
-        // character has been found.
-        // -----------------------------------------------------
+        if (Object == null)
+            return;
 
-        bool networkHoldPointChanged = false;
+        bool holdPointWasMissing = networkHoldPoint == null;
 
         if (!Object.HasInputAuthority)
         {
-            Transform foundHoldPoint = FindNetworkHoldPoint();
-
-            if (foundHoldPoint != networkHoldPoint)
-            {
-                networkHoldPointChanged = true;
-            }
+            FindNetworkHoldPoint();
         }
 
-        // -----------------------------------------------------
-        // Check inventory state.
-        // -----------------------------------------------------
+        bool networkHoldPointChanged =
+            !Object.HasInputAuthority &&
+            holdPointWasMissing &&
+            networkHoldPoint != null;
 
         int currentHash = CalculateInventoryHash();
 
-        bool inventoryChanged =
-            currentHash != lastInventoryHash;
-
-        // -----------------------------------------------------
-        // Refresh held visual when:
-        //
-        // 1. Inventory changes
-        // 2. Selected slot changes
-        // 3. NetworkHoldPoint becomes available
-        // 4. Character visual changes
-        // -----------------------------------------------------
+        bool inventoryChanged = currentHash != lastInventoryHash;
 
         if (inventoryChanged || networkHoldPointChanged)
         {
             lastInventoryHash = currentHash;
-
             RefreshHeldVisual();
 
             if (inventoryChanged)
@@ -199,14 +152,43 @@ public class PlayerInventory : NetworkBehaviour
         }
     }
 
-
     // =========================================================
-    // NETWORKED INVENTORY
+    // ADD ITEMS
     // =========================================================
 
     public bool TryAddNetworkedById(int itemId)
     {
-        if (!Object.HasStateAuthority)
+        return TryAddNetworkedById(itemId, 0f, 0f);
+    }
+
+    // Preserves compatibility with existing pickup calls.
+    public bool TryAddNetworkedById(
+        int itemId,
+        float candleRemaining,
+        float candleMaxLife)
+    {
+        bool candleInitialized = candleMaxLife > 0f;
+
+        return TryAddNetworkedById(
+            itemId,
+            candleRemaining,
+            candleMaxLife,
+            candleInitialized,
+            out _
+        );
+    }
+
+    // Use this overload when transferring a dropped candle.
+    public bool TryAddNetworkedById(
+        int itemId,
+        float candleRemaining,
+        float candleMaxLife,
+        bool candleInitialized,
+        out int addedSlot)
+    {
+        addedSlot = -1;
+
+        if (Object == null || !Object.HasStateAuthority)
             return false;
 
         ItemData item = GetItemData(itemId);
@@ -216,36 +198,170 @@ public class PlayerInventory : NetworkBehaviour
             Debug.LogError(
                 $"[INVENTORY] Item ID {itemId} was not found."
             );
-
             return false;
         }
 
-        // -----------------------------------------------------
-        // Find first empty slot.
-        // -----------------------------------------------------
+        bool isCandle = IsCandleItem(item);
 
         for (int i = 0; i < SlotCount; i++)
         {
-            if (NetworkSlots.Get(i) == 0)
+            if (NetworkSlots.Get(i) != 0)
+                continue;
+
+            NetworkSlots.Set(i, itemId);
+
+            // Never let an old slot's candle state leak into a new item.
+            ClearCandleState(i);
+
+            if (isCandle && candleInitialized && candleMaxLife > 0f)
             {
-                NetworkSlots.Set(i, itemId);
+                float maxLife = Mathf.Max(0f, candleMaxLife);
 
-                Debug.Log(
-                    $"[INVENTORY] " +
-                    $"{item.itemName} added to slot {i + 1}."
+                CandleMaxLifeBySlot.Set(i, maxLife);
+                CandleLifeBySlot.Set(
+                    i,
+                    Mathf.Clamp(candleRemaining, 0f, maxLife)
                 );
-
-                return true;
+                CandleInitializedBySlot.Set(i, true);
             }
+
+            addedSlot = i;
+
+            Debug.Log(
+                $"[INVENTORY] {item.itemName} added to slot {i + 1}."
+            );
+
+            return true;
         }
 
-        Debug.Log(
-            "[INVENTORY] Inventory is full."
-        );
-
+        Debug.Log("[INVENTORY] Inventory is full.");
         return false;
     }
 
+    // =========================================================
+    // CANDLE STATE
+    // =========================================================
+
+    private bool IsCandleItem(ItemData item)
+    {
+        return item != null &&
+               item.heldPrefab != null &&
+               item.heldPrefab.GetComponentInChildren<CandleVisual>(true)
+                   != null;
+    }
+
+    public bool IsCandleSlot(int slotIndex)
+    {
+        return IsCandleItem(GetItemAt(slotIndex));
+    }
+
+    public bool IsCandleInitialized(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= SlotCount)
+            return false;
+
+        return CandleInitializedBySlot.Get(slotIndex);
+    }
+
+    public float GetCandleRemaining(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= SlotCount)
+            return 0f;
+
+        return CandleLifeBySlot.Get(slotIndex);
+    }
+
+    public float GetCandleMaxLife(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= SlotCount)
+            return 0f;
+
+        return CandleMaxLifeBySlot.Get(slotIndex);
+    }
+
+    public void InitializeCandleSlot(int slotIndex, float maxLife)
+    {
+        if (Object == null ||
+            !Object.HasStateAuthority ||
+            slotIndex < 0 ||
+            slotIndex >= SlotCount ||
+            !IsCandleSlot(slotIndex) ||
+            CandleInitializedBySlot.Get(slotIndex))
+        {
+            return;
+        }
+
+        maxLife = Mathf.Max(0f, maxLife);
+
+        CandleMaxLifeBySlot.Set(slotIndex, maxLife);
+        CandleLifeBySlot.Set(slotIndex, maxLife);
+        CandleInitializedBySlot.Set(slotIndex, true);
+    }
+
+    public void SetCandleRemaining(int slotIndex, float remaining)
+    {
+        if (Object == null ||
+            !Object.HasStateAuthority ||
+            slotIndex < 0 ||
+            slotIndex >= SlotCount ||
+            !IsCandleInitialized(slotIndex))
+        {
+            return;
+        }
+
+        CandleLifeBySlot.Set(
+            slotIndex,
+            Mathf.Clamp(
+                remaining,
+                0f,
+                CandleMaxLifeBySlot.Get(slotIndex)
+            )
+        );
+    }
+
+    // Used when dropping, restoring, or transferring a candle.
+    public void SetCandleStateForSlot(
+        int slotIndex,
+        float remaining,
+        float maxLife,
+        bool initialized)
+    {
+        if (Object == null ||
+            !Object.HasStateAuthority ||
+            slotIndex < 0 ||
+            slotIndex >= SlotCount)
+        {
+            return;
+        }
+
+        if (NetworkSlots.Get(slotIndex) == 0 ||
+            !IsCandleSlot(slotIndex) ||
+            !initialized ||
+            maxLife <= 0f)
+        {
+            ClearCandleState(slotIndex);
+            return;
+        }
+
+        maxLife = Mathf.Max(0f, maxLife);
+
+        CandleMaxLifeBySlot.Set(slotIndex, maxLife);
+        CandleLifeBySlot.Set(
+            slotIndex,
+            Mathf.Clamp(remaining, 0f, maxLife)
+        );
+        CandleInitializedBySlot.Set(slotIndex, true);
+    }
+
+    private void ClearCandleState(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= SlotCount)
+            return;
+
+        CandleLifeBySlot.Set(slotIndex, 0f);
+        CandleMaxLifeBySlot.Set(slotIndex, 0f);
+        CandleInitializedBySlot.Set(slotIndex, false);
+    }
 
     // =========================================================
     // HAS ITEM
@@ -253,12 +369,8 @@ public class PlayerInventory : NetworkBehaviour
 
     public bool Has(ItemData item)
     {
-        if (item == null)
-            return false;
-
-        return HasItemId(item.itemId);
+        return item != null && HasItemId(item.itemId);
     }
-
 
     public bool HasItemId(int itemId)
     {
@@ -274,14 +386,13 @@ public class PlayerInventory : NetworkBehaviour
         return false;
     }
 
-
     // =========================================================
     // SELECT
     // =========================================================
 
     private void Select(int index)
     {
-        if (!Object.HasStateAuthority)
+        if (Object == null || !Object.HasStateAuthority)
             return;
 
         if (index < 0 || index >= SlotCount)
@@ -292,11 +403,8 @@ public class PlayerInventory : NetworkBehaviour
 
         SelectedSlot = index;
 
-        Debug.Log(
-            $"[INVENTORY] Selected slot {index + 1}"
-        );
+        Debug.Log($"[INVENTORY] Selected slot {index + 1}");
     }
-
 
     // =========================================================
     // DROP
@@ -304,17 +412,24 @@ public class PlayerInventory : NetworkBehaviour
 
     private void RequestDrop()
     {
-        if (!Object.HasStateAuthority)
+        if (Object == null || !Object.HasStateAuthority)
             return;
 
         DropAuthoritative(SelectedSlot);
     }
 
-
     private void DropAuthoritative(int slotIndex)
     {
-        if (!Object.HasStateAuthority)
+        if (Object == null || !Object.HasStateAuthority)
             return;
+
+        if (Runner == null)
+        {
+            Debug.LogError(
+                "[INVENTORY] Cannot drop item because Runner is null."
+            );
+            return;
+        }
 
         if (slotIndex < 0 || slotIndex >= SlotCount)
             return;
@@ -331,7 +446,6 @@ public class PlayerInventory : NetworkBehaviour
             Debug.LogError(
                 $"[INVENTORY] Cannot drop unknown item ID {itemId}."
             );
-
             return;
         }
 
@@ -341,71 +455,94 @@ public class PlayerInventory : NetworkBehaviour
                 $"[INVENTORY] {item.itemName} " +
                 "does not have a NetworkObject worldPrefab."
             );
-
             return;
         }
 
+        // Save candle state before clearing the inventory slot.
+        bool isCandle = IsCandleSlot(slotIndex);
 
-        // =====================================================
-        // SPAWN POSITION / ROTATION
-        // =====================================================
+        float candleRemaining = 0f;
+        float candleMaxLife = 0f;
+        bool candleInitialized = false;
 
-        Transform aim =
-            dropOrigin != null
-                ? dropOrigin
-                : transform;
+        if (isCandle)
+        {
+            candleRemaining = GetCandleRemaining(slotIndex);
+            candleMaxLife = GetCandleMaxLife(slotIndex);
+            candleInitialized = IsCandleInitialized(slotIndex);
 
-        Vector3 spawnPosition =
-            aim.position +
-            aim.forward * 0.8f;
+            candleRemaining = Mathf.Max(0f, candleRemaining);
+            candleMaxLife = Mathf.Max(0f, candleMaxLife);
+        }
 
-        Quaternion rotation =
-            Quaternion.Euler(
-                0f,
-                aim.eulerAngles.y,
-                0f
-            );
+        Transform aim = dropOrigin != null ? dropOrigin : transform;
 
+        Vector3 spawnPosition = aim.position + aim.forward * 0.8f;
 
-        // =====================================================
-        // SPAWN
-        // =====================================================
+        Quaternion rotation = Quaternion.Euler(
+            0f,
+            aim.eulerAngles.y,
+            0f
+        );
 
-        NetworkObject droppedObject =
-            Runner.Spawn(
-                item.worldPrefab,
-                spawnPosition,
-                rotation
-            );
+        NetworkObject droppedObject = Runner.Spawn(
+            item.worldPrefab,
+            spawnPosition,
+            rotation
+        );
 
         if (droppedObject == null)
         {
             Debug.LogError(
-                "[INVENTORY] Runner.Spawn returned NULL " +
-                "for dropped item."
+                "[INVENTORY] Runner.Spawn returned NULL for dropped item."
             );
-
             return;
         }
 
-
-        // =====================================================
-        // ITEM IDENTITY
-        // =====================================================
-
+        // Initialize the network item identity and preserve candle life.
         NetworkedDroppedItem droppedItem =
             droppedObject.GetComponent<NetworkedDroppedItem>();
 
         if (droppedItem != null)
         {
-            droppedItem.Initialize(itemId);
+            if (isCandle)
+            {
+                droppedItem.Initialize(
+                    itemId,
+                    candleInitialized,
+                    candleRemaining,
+                    candleMaxLife,
+                    false // Dropped candles are extinguished.
+                );
+            }
+            else
+            {
+                droppedItem.Initialize(itemId);
+            }
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"[INVENTORY] {item.itemName} world prefab has no " +
+                "NetworkedDroppedItem component."
+            );
         }
 
+        ItemPickup itemPickup = droppedObject.GetComponent<ItemPickup>();
 
-        // =====================================================
-        // PHYSICS THROW
-        // =====================================================
+        if (itemPickup != null)
+        {
+            itemPickup.Initialize(itemId);
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"[INVENTORY] {item.itemName} world prefab has no " +
+                "ItemPickup component."
+            );
+        }
 
+        // Preserve the existing throw behavior.
         DroppedItemPhysics dropPhysics =
             droppedObject.GetComponent<DroppedItemPhysics>();
 
@@ -420,45 +557,48 @@ public class PlayerInventory : NetworkBehaviour
                 UnityEngine.Random.insideUnitSphere * 3f
             );
 
-
-            // -------------------------------------------------
-            // Ignore collision with player's own colliders.
-            // -------------------------------------------------
-
             Collider[] ownColliders =
                 GetComponentsInChildren<Collider>();
 
-            foreach (
-                Collider a
-                in droppedObject.GetComponentsInChildren<Collider>())
+            Collider[] droppedColliders =
+                droppedObject.GetComponentsInChildren<Collider>();
+
+            foreach (Collider a in droppedColliders)
             {
+                if (a == null)
+                    continue;
+
                 foreach (Collider b in ownColliders)
                 {
-                    Physics.IgnoreCollision(a, b);
+                    if (b == null || a == b)
+                        continue;
+
+                    Physics.IgnoreCollision(a, b, true);
                 }
             }
         }
         else
         {
             Debug.LogWarning(
-                "[INVENTORY] Dropped item has no " +
-                "DroppedItemPhysics. It will stay in the air."
+                "[INVENTORY] Dropped item has no DroppedItemPhysics."
             );
         }
 
-
-        // =====================================================
-        // REMOVE FROM INVENTORY
-        // =====================================================
-
         NetworkSlots.Set(slotIndex, 0);
+        ClearCandleState(slotIndex);
 
         Debug.Log(
-            $"[INVENTORY] " +
-            $"{item.itemName} dropped from slot {slotIndex + 1}."
+            $"[INVENTORY] {item.itemName} dropped from slot {slotIndex + 1}."
         );
-    }
 
+        if (isCandle)
+        {
+            Debug.Log(
+                $"[CANDLE] Dropped with {candleRemaining:F1}s remaining " +
+                $"out of {candleMaxLife:F1}s."
+            );
+        }
+    }
 
     // =========================================================
     // ITEM LOOKUP
@@ -466,65 +606,38 @@ public class PlayerInventory : NetworkBehaviour
 
     public ItemData GetItemData(int itemId)
     {
-        if (itemId <= 0)
+        if (itemId <= 0 || itemCatalog == null)
             return null;
 
-        if (itemCatalog == null)
-            return null;
-
-        for (int i = 0; i < itemCatalog.Length; i++)
+        foreach (ItemData item in itemCatalog)
         {
-            ItemData item = itemCatalog[i];
-
-            if (
-                item != null &&
-                item.itemId == itemId
-            )
-            {
+            if (item != null && item.itemId == itemId)
                 return item;
-            }
         }
 
         return null;
     }
 
-
     public ItemData GetItemAt(int slotIndex)
     {
-        if (
-            slotIndex < 0 ||
-            slotIndex >= SlotCount
-        )
-        {
+        if (slotIndex < 0 || slotIndex >= SlotCount)
             return null;
-        }
 
-        int itemId =
-            NetworkSlots.Get(slotIndex);
-
-        return GetItemData(itemId);
+        return GetItemData(NetworkSlots.Get(slotIndex));
     }
-
 
     public int GetItemIdAt(int slotIndex)
     {
-        if (
-            slotIndex < 0 ||
-            slotIndex >= SlotCount
-        )
-        {
+        if (slotIndex < 0 || slotIndex >= SlotCount)
             return 0;
-        }
 
         return NetworkSlots.Get(slotIndex);
     }
-
 
     public int GetSlotCount()
     {
         return SlotCount;
     }
-
 
     // =========================================================
     // FIND NETWORK HOLD POINT
@@ -532,67 +645,32 @@ public class PlayerInventory : NetworkBehaviour
 
     private Transform FindNetworkHoldPoint()
     {
-        // -----------------------------------------------------
-        // If our cached point is still valid, use it.
-        // -----------------------------------------------------
-
         if (networkHoldPoint != null)
             return networkHoldPoint;
 
-
-        // -----------------------------------------------------
-        // Search the dynamically spawned character.
-        //
-        // PlayerNetwork creates the character visual under
-        // PlayerRoot, so this search works with:
-        //
-        // Boy1
-        // Boy2
-        // Girl1
-        // Girl2
-        //
-        // as long as they contain:
-        //
-        // RightHand
-        //     └── NetworkHoldPoint
-        // -----------------------------------------------------
-
-        Transform[] children =
-            GetComponentsInChildren<Transform>(true);
+        Transform[] children = GetComponentsInChildren<Transform>(true);
 
         foreach (Transform child in children)
         {
-            if (child == transform)
-                continue;
-
-            if (child.name == networkHoldPointName)
+            if (child == transform ||
+                child.name != networkHoldPointName)
             {
-                networkHoldPoint = child;
-
-                // The root of the currently spawned character
-                // is the direct child of PlayerRoot containing
-                // the NetworkHoldPoint.
-                currentCharacterRoot =
-                    GetCharacterRoot(networkHoldPoint);
-
-                Debug.Log(
-                    $"[INVENTORY] NetworkHoldPoint found: " +
-                    $"{GetTransformPath(networkHoldPoint)}"
-                );
-
-                return networkHoldPoint;
+                continue;
             }
+
+            networkHoldPoint = child;
+            currentCharacterRoot = GetCharacterRoot(networkHoldPoint);
+
+            Debug.Log(
+                "[INVENTORY] NetworkHoldPoint found: " +
+                GetTransformPath(networkHoldPoint)
+            );
+
+            return networkHoldPoint;
         }
-
-
-        // -----------------------------------------------------
-        // It is normal for this to happen briefly if
-        // PlayerNetwork has not instantiated the character yet.
-        // -----------------------------------------------------
 
         return null;
     }
-
 
     // =========================================================
     // GET CHARACTER ROOT
@@ -605,32 +683,13 @@ public class PlayerInventory : NetworkBehaviour
 
         Transform current = hold;
 
-        Transform playerRoot =
-            transform;
-
-        Transform previous = current;
-
-        while (
-            current != null &&
-            current.parent != null &&
-            current.parent != playerRoot
-        )
+        while (current.parent != null && current.parent != transform)
         {
-            previous = current;
             current = current.parent;
         }
 
-        if (
-            current != null &&
-            current.parent == playerRoot
-        )
-        {
-            return current;
-        }
-
-        return previous;
+        return current.parent == transform ? current : hold;
     }
-
 
     // =========================================================
     // HELD VISUAL
@@ -638,20 +697,11 @@ public class PlayerInventory : NetworkBehaviour
 
     private void RefreshHeldVisual()
     {
-        // -----------------------------------------------------
-        // Remove old local held visual.
-        // -----------------------------------------------------
-
         if (heldObject != null)
         {
             Destroy(heldObject);
             heldObject = null;
         }
-
-
-        // -----------------------------------------------------
-        // Remove old network/third-person held visual.
-        // -----------------------------------------------------
 
         if (networkHeldObject != null)
         {
@@ -659,40 +709,20 @@ public class PlayerInventory : NetworkBehaviour
             networkHeldObject = null;
         }
 
+        ItemData item = GetItemAt(SelectedSlot);
 
-        // -----------------------------------------------------
-        // Get selected item.
-        // -----------------------------------------------------
-
-        ItemData item =
-            GetItemAt(SelectedSlot);
-
-        if (item == null)
+        if (item == null || item.heldPrefab == null)
             return;
-
-        if (item.heldPrefab == null)
-            return;
-
-
-        // =====================================================
-        // LOCAL PLAYER
-        // =====================================================
 
         if (Object.HasInputAuthority)
         {
             CreateFirstPersonHeldVisual(item);
-
-            return;
         }
-
-
-        // =====================================================
-        // REMOTE PLAYER
-        // =====================================================
-
-        CreateNetworkHeldVisual(item);
+        else
+        {
+            CreateNetworkHeldVisual(item);
+        }
     }
-
 
     // =========================================================
     // FIRST PERSON HELD VISUAL
@@ -705,41 +735,20 @@ public class PlayerInventory : NetworkBehaviour
             Debug.LogWarning(
                 "[INVENTORY] First-person holdPoint is not assigned."
             );
-
             return;
         }
 
         if (item == null || item.heldPrefab == null)
             return;
 
+        heldObject = Instantiate(item.heldPrefab, holdPoint);
 
-        // -----------------------------------------------------
-        // Create item under camera hold point.
-        // -----------------------------------------------------
-
-        heldObject =
-            Instantiate(
-                item.heldPrefab,
-                holdPoint
-            );
-
-        heldObject.transform.localPosition =
-            Vector3.zero;
-
-        heldObject.transform.localRotation =
-            Quaternion.identity;
-
-        heldObject.transform.localScale =
-            Vector3.one;
-
-
-        // -----------------------------------------------------
-        // Remove gameplay components from held visual.
-        // -----------------------------------------------------
+        heldObject.transform.localPosition = Vector3.zero;
+        heldObject.transform.localRotation = Quaternion.identity;
+        heldObject.transform.localScale = Vector3.one;
 
         CleanHeldVisual(heldObject);
     }
-
 
     // =========================================================
     // NETWORK / THIRD PERSON HELD VISUAL
@@ -747,56 +756,28 @@ public class PlayerInventory : NetworkBehaviour
 
     private void CreateNetworkHeldVisual(ItemData item)
     {
-        // -----------------------------------------------------
-        // Find the NetworkHoldPoint if necessary.
-        // -----------------------------------------------------
-
         if (networkHoldPoint == null)
-        {
             FindNetworkHoldPoint();
-        }
 
         if (networkHoldPoint == null)
         {
             Debug.LogWarning(
-                "[INVENTORY] Could not find NetworkHoldPoint " +
-                $"for player {Object.Id}."
+                $"[INVENTORY] Could not find NetworkHoldPoint for player {Object.Id}."
             );
-
             return;
         }
 
         if (item == null || item.heldPrefab == null)
             return;
 
+        networkHeldObject = Instantiate(item.heldPrefab, networkHoldPoint);
 
-        // -----------------------------------------------------
-        // Create item under character's hand.
-        // -----------------------------------------------------
-
-        networkHeldObject =
-            Instantiate(
-                item.heldPrefab,
-                networkHoldPoint
-            );
-
-        networkHeldObject.transform.localPosition =
-            Vector3.zero;
-
-        networkHeldObject.transform.localRotation =
-            Quaternion.identity;
-
-        networkHeldObject.transform.localScale =
-            Vector3.one;
-
-
-        // -----------------------------------------------------
-        // Remove gameplay components.
-        // -----------------------------------------------------
+        networkHeldObject.transform.localPosition = Vector3.zero;
+        networkHeldObject.transform.localRotation = Quaternion.identity;
+        networkHeldObject.transform.localScale = Vector3.one;
 
         CleanHeldVisual(networkHeldObject);
     }
-
 
     // =========================================================
     // CLEAN HELD VISUAL
@@ -807,59 +788,42 @@ public class PlayerInventory : NetworkBehaviour
         if (visual == null)
             return;
 
-
-        // -----------------------------------------------------
-        // Remove dropped-item physics.
-        // -----------------------------------------------------
-
-        foreach (
-            DroppedItemPhysics physics
-            in visual.GetComponentsInChildren<DroppedItemPhysics>(true)
-        )
+        foreach (DroppedItemPhysics component in
+                 visual.GetComponentsInChildren<DroppedItemPhysics>(true))
         {
-            Destroy(physics);
+            Destroy(component);
         }
 
-
-        // -----------------------------------------------------
-        // Remove rigidbodies.
-        // -----------------------------------------------------
-
-        foreach (
-            Rigidbody body
-            in visual.GetComponentsInChildren<Rigidbody>(true)
-        )
+        foreach (Rigidbody component in
+                 visual.GetComponentsInChildren<Rigidbody>(true))
         {
-            Destroy(body);
+            Destroy(component);
         }
 
-
-        // -----------------------------------------------------
-        // Remove colliders.
-        // -----------------------------------------------------
-
-        foreach (
-            Collider collider
-            in visual.GetComponentsInChildren<Collider>(true)
-        )
+        foreach (Collider component in
+                 visual.GetComponentsInChildren<Collider>(true))
         {
-            Destroy(collider);
+            Destroy(component);
         }
 
-
-        // -----------------------------------------------------
-        // Remove pickup interaction.
-        // -----------------------------------------------------
-
-        foreach (
-            KeyPickup pickup
-            in visual.GetComponentsInChildren<KeyPickup>(true)
-        )
+        foreach (KeyPickup component in
+                 visual.GetComponentsInChildren<KeyPickup>(true))
         {
-            Destroy(pickup);
+            Destroy(component);
+        }
+
+        foreach (ItemPickup component in
+                 visual.GetComponentsInChildren<ItemPickup>(true))
+        {
+            Destroy(component);
+        }
+
+        foreach (NetworkedDroppedItem component in
+                 visual.GetComponentsInChildren<NetworkedDroppedItem>(true))
+        {
+            Destroy(component);
         }
     }
-
 
     // =========================================================
     // INVENTORY HASH
@@ -869,23 +833,19 @@ public class PlayerInventory : NetworkBehaviour
     {
         unchecked
         {
-            int hash =
-                SelectedSlot;
+            int hash = SelectedSlot;
 
             for (int i = 0; i < SlotCount; i++)
             {
-                hash =
-                    hash * 31 +
-                    NetworkSlots.Get(i);
+                hash = hash * 31 + NetworkSlots.Get(i);
             }
 
             return hash;
         }
     }
 
-
     // =========================================================
-    // DEBUG / TRANSFORM PATH
+    // TRANSFORM PATH
     // =========================================================
 
     private string GetTransformPath(Transform target)
@@ -893,24 +853,13 @@ public class PlayerInventory : NetworkBehaviour
         if (target == null)
             return "(null)";
 
-        string path =
-            target.name;
+        string path = target.name;
+        Transform current = target.parent;
 
-        Transform current =
-            target.parent;
-
-        while (
-            current != null &&
-            current != transform
-        )
+        while (current != null && current != transform)
         {
-            path =
-                current.name +
-                "/" +
-                path;
-
-            current =
-                current.parent;
+            path = current.name + "/" + path;
+            current = current.parent;
         }
 
         return path;

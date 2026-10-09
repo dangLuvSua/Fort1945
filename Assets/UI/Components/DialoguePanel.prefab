@@ -61,7 +61,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.2, g: 0.2, b: 0.2, a: 0.43137255}
+  m_Color: {r: 0.2, g: 0.2, b: 0.2, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -93,7 +93,6 @@ MonoBehaviour:
   dialoguePanel: {fileID: 964301916194303227}
   speakerNameText: {fileID: 3639678708936364475}
   dialogueText: {fileID: 8218863501957623067}
-  speakerName: Soldier
 --- !u!1001 &1714241293188121388
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -102,6 +101,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5991734337042542437}
     m_Modifications:
+    - target: {fileID: 2686548772178924183, guid: d09bef5486c088b449f28f9f5bedf81c, type: 3}
+      propertyPath: m_fontSize
+      value: 40
+      objectReference: {fileID: 0}
+    - target: {fileID: 2686548772178924183, guid: d09bef5486c088b449f28f9f5bedf81c, type: 3}
+      propertyPath: m_fontSizeMax
+      value: 40
+      objectReference: {fileID: 0}
     - target: {fileID: 2686548772178924183, guid: d09bef5486c088b449f28f9f5bedf81c, type: 3}
       propertyPath: m_VerticalAlignment
       value: 512
@@ -172,11 +179,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6259453962867247930, guid: d09bef5486c088b449f28f9f5bedf81c, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -683
+      value: -685
       objectReference: {fileID: 0}
     - target: {fileID: 6259453962867247930, guid: d09bef5486c088b449f28f9f5bedf81c, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -25
       objectReference: {fileID: 0}
     - target: {fileID: 6259453962867247930, guid: d09bef5486c088b449f28f9f5bedf81c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -293,7 +300,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4670286743243602493, guid: d386591344d470d46b73a482625e8c69, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -3.313
+      value: -25.313
       objectReference: {fileID: 0}
     - target: {fileID: 4670286743243602493, guid: d386591344d470d46b73a482625e8c69, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

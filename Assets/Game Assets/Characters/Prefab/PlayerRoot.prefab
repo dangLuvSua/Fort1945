@@ -371,6 +371,7 @@ GameObject:
   - component: {fileID: -2516544739770729294}
   - component: {fileID: 7925084007181689668}
   - component: {fileID: 264984566483249543}
+  - component: {fileID: 2406633155285475869}
   m_Layer: 0
   m_Name: PlayerRoot
   m_TagString: Untagged
@@ -483,6 +484,7 @@ MonoBehaviour:
   - {fileID: -2516544739770729294}
   - {fileID: 7925084007181689668}
   - {fileID: 264984566483249543}
+  - {fileID: 2406633155285475869}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &1612331710460718894
 MonoBehaviour:
@@ -584,12 +586,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInventory
   holdPoint: {fileID: 8672643985810754501}
+  networkHoldPointName: NetworkHoldPoint
   dropOrigin: {fileID: 5854169451270767622}
   throwForce: 2.75
   throwUp: 1.5
   itemCatalog:
   - {fileID: 11400000, guid: 83911e1fa10d6b546a50ebe92b8da173, type: 2}
   - {fileID: 11400000, guid: d98faaf2d5a8a2b46adbd30d840696f4, type: 2}
+  - {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
+  - {fileID: 11400000, guid: fc37cc7252e517d44b276fe898ee6a8d, type: 2}
+  - {fileID: 11400000, guid: 4e79d39b7f5292347bab8d08e48bc3ab, type: 2}
   _SelectedSlot: 0
 --- !u!114 &7925084007181689668
 MonoBehaviour:
@@ -630,6 +636,25 @@ MonoBehaviour:
   regenPerSecond: 10
   minToStartSprint: 10
   _Current: 0
+--- !u!114 &2406633155285475869
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3522006267438135775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3de6ad08f71078a4691f7560a8d2b4e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CandleController
+  toggleKey: 20
+  easyLifeMinutes: 8
+  normalLifeMinutes: 5
+  difficultLifeMinutes: 3
+  visualSearchInterval: 0.2
+  _CandleOn:
+    RawValue: 0
 --- !u!1 &3812555787650489551
 GameObject:
   m_ObjectHideFlags: 0
