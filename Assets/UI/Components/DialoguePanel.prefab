@@ -114,8 +114,8 @@ MonoBehaviour:
   m_ChildAlignment: 4
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 100, y: 100}
-  m_Spacing: {x: 35, y: 0}
+  m_CellSize: {x: 800, y: 100}
+  m_Spacing: {x: 30.3, y: 0}
   m_Constraint: 1
   m_ConstraintCount: 2
 --- !u!1001 &1714241293188121388
@@ -260,6 +260,10 @@ PrefabInstance:
       value: DialogueText
       objectReference: {fileID: 0}
     - target: {fileID: 4554955383560218560, guid: d386591344d470d46b73a482625e8c69, type: 3}
+      propertyPath: m_fontSize
+      value: 35
+      objectReference: {fileID: 0}
+    - target: {fileID: 4554955383560218560, guid: d386591344d470d46b73a482625e8c69, type: 3}
       propertyPath: m_VerticalAlignment
       value: 512
       objectReference: {fileID: 0}
@@ -341,6 +345,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4670286743243602493, guid: d386591344d470d46b73a482625e8c69, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4670286743243602493, guid: d386591344d470d46b73a482625e8c69, type: 3}
+      propertyPath: m_ConstrainProportionsScale
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

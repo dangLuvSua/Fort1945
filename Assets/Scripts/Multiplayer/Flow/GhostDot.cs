@@ -2,8 +2,6 @@ using UnityEngine;
 
 /// <summary>
 /// Procedural cube used for glowing marker visuals:
-/// - ghost walk-path dots
-/// - soldier guide beacon column
 /// - expanding ping rings
 /// - dungeon entry zone markers
 ///
@@ -11,11 +9,9 @@ using UnityEngine;
 /// - movement using velocity
 /// - pulsing scale
 /// - automatic lifetime destruction
-/// - optional destruction when the SoldierGuide walks through it
 ///
-/// Soldier-pass detection uses horizontal/XZ distance only,
-/// because soldier path dots are intentionally positioned above
-/// the ground.
+/// Generated cubes never carry a collider, so players can walk
+/// straight through them.
 /// </summary>
 public class GhostDot : MonoBehaviour
 {
@@ -37,34 +33,6 @@ public class GhostDot : MonoBehaviour
 
     [Tooltip("Seconds before the dot destroys itself. 0 = lives forever.")]
     public float lifeSeconds = 0f;
-
-
-    // =========================================================
-    // SOLDIER DETECTION
-    // =========================================================
-
-    [Header("Soldier Detection")]
-
-    [Tooltip(
-        "If enabled, this dot destroys itself when the SoldierGuide " +
-        "gets close enough."
-    )]
-    public bool destroyWhenSoldierPasses = false;
-
-    [Tooltip(
-        "Horizontal distance from the dot at which the SoldierGuide " +
-        "is considered to have walked through it."
-    )]
-    public float soldierPassDistance = 0.8f;
-
-    [Tooltip(
-        "Automatically search for the SoldierGuide if no direct " +
-        "reference was assigned."
-    )]
-    public bool autoFindSoldier = true;
-
-    [Tooltip("Optional direct reference to the SoldierGuide root.")]
-    public Transform soldierTransform;
 
 
     // =========================================================
@@ -117,8 +85,6 @@ public class GhostDot : MonoBehaviour
 
     private bool initialized;
 
-    private bool soldierSearchAttempted;
-
 
     // =========================================================
     // CONFIGURE
@@ -152,31 +118,6 @@ public class GhostDot : MonoBehaviour
 
 
     // =========================================================
-    // SOLDIER PASS CONFIGURATION
-    // =========================================================
-
-    /// <summary>
-    /// Enables destruction when the soldier reaches this dot.
-    /// </summary>
-    public void ConfigureSoldierPass(
-        Transform soldier,
-        float passDistance = 0.8f)
-    {
-        soldierTransform = soldier;
-
-        soldierPassDistance =
-            Mathf.Max(
-                0.05f,
-                passDistance
-            );
-
-        destroyWhenSoldierPasses = true;
-
-        soldierSearchAttempted = true;
-    }
-
-
-    // =========================================================
     // AWAKE
     // =========================================================
 
@@ -203,6 +144,15 @@ public class GhostDot : MonoBehaviour
         meshRenderer =
             meshInstance.GetComponent<MeshRenderer>();
 
+        // Generated cubes must never block players walking past.
+        Collider dotCollider =
+            meshInstance.GetComponent<Collider>();
+
+        if (dotCollider != null)
+        {
+            Destroy(dotCollider);
+        }
+
         // Apply color.
         if (meshRenderer != null)
         {
@@ -217,75 +167,6 @@ public class GhostDot : MonoBehaviour
         }
 
         UpdateVisual();
-    }
-
-
-    // =========================================================
-    // START
-    // =========================================================
-
-    private void Start()
-    {
-        if (!destroyWhenSoldierPasses)
-            return;
-
-        // If a soldier was already assigned,
-        // there is nothing else to search for.
-        if (soldierTransform != null)
-        {
-            soldierSearchAttempted = true;
-            return;
-        }
-
-        // Otherwise try to find the SoldierGuide automatically.
-        if (autoFindSoldier)
-        {
-            FindSoldier();
-        }
-    }
-
-
-    // =========================================================
-    // FIND SOLDIER
-    // =========================================================
-
-    private void FindSoldier()
-    {
-        if (soldierTransform != null)
-            return;
-
-        SoldierGuideController controller =
-            FindFirstObjectByType<SoldierGuideController>(
-                FindObjectsInactive.Include
-            );
-
-        if (controller != null)
-        {
-            soldierTransform =
-                controller.transform;
-
-            soldierSearchAttempted = true;
-
-            return;
-        }
-
-        // Fallback search by GameObject name.
-        GameObject soldier =
-            GameObject.Find(
-                "SoldierGuide"
-            );
-
-        if (soldier != null)
-        {
-            soldierTransform =
-                soldier.transform;
-
-            soldierSearchAttempted = true;
-
-            return;
-        }
-
-        soldierSearchAttempted = true;
     }
 
 
@@ -313,51 +194,6 @@ public class GhostDot : MonoBehaviour
             transform.position +=
                 velocity *
                 deltaTime;
-        }
-
-
-        // -----------------------------------------------------
-        // SOLDIER PASS DETECTION
-        // -----------------------------------------------------
-
-        if (destroyWhenSoldierPasses)
-        {
-            // Try to find soldier if we don't have one yet.
-            if (soldierTransform == null &&
-                autoFindSoldier &&
-                !soldierSearchAttempted)
-            {
-                FindSoldier();
-            }
-
-            if (soldierTransform != null)
-            {
-                // IMPORTANT:
-                // Ignore Y because the path dots are elevated
-                // above the ground.
-                Vector3 dotPosition =
-                    transform.position;
-
-                Vector3 soldierPosition =
-                    soldierTransform.position;
-
-                dotPosition.y = 0f;
-
-                soldierPosition.y = 0f;
-
-                float distance =
-                    Vector3.Distance(
-                        dotPosition,
-                        soldierPosition
-                    );
-
-                if (distance <= soldierPassDistance)
-                {
-                    Destroy(gameObject);
-
-                    return;
-                }
-            }
         }
 
 
