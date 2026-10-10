@@ -20,11 +20,11 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0, g: 0, b: 0, a: 1}
+  m_AmbientSkyColor: {r: 0.5471698, g: 0.5471698, b: 0.5471698, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 0.1
-  m_AmbientMode: 0
+  m_AmbientMode: 3
   m_SubtractiveShadowColor: {r: 0, g: 0.04226415, b: 0.1509434, a: 1}
   m_SkyboxMaterial: {fileID: 2100000, guid: c494c335823f54b52b2e87e1b7a63a23, type: 2}
   m_HaloStrength: 0.5
@@ -2747,6 +2747,7 @@ MonoBehaviour:
   - {fileID: 1144789961926301871, guid: d6826df0a114f81468e6431b63823fd4, type: 3}
   - {fileID: 7170047792221019372, guid: 82adff004a5667c4d91cc140578ab9d0, type: 3}
   - {fileID: 485568567402589083, guid: 610c08e356e4e32438e4c2d9cf0437b2, type: 3}
+  dungeonEntrancePrefab: {fileID: 7867403606172031607, guid: 817431ec6685a9e42b5543bd357e43a0, type: 3}
   intersectionPrefab: {fileID: 8114038213370615005, guid: 2eb08f6bedee0654fb4289afe72bf915, type: 3}
   roomPrefabs:
   - {fileID: 9126014398724148254, guid: f1672e05561df3e479686ea159439a58, type: 3}
