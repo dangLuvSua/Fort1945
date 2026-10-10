@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2f319dd85a07a6844ac0bd9072925ed2, type: 3}
-  m_Name: FindSoldier
+  m_Name: Collect 2 candles
   m_EditorClassIdentifier: Assembly-CSharp::MissionData
-  title: FIND THE SOLDIER
-  description: Explore Fort Santiago and find a soldier to ask how to get out of
-    Fort Santiago.
+  title: Collect 2 Candles
+  description: "The entrance to Fort Santiago\u2019s underground dungeon lies ahead.
+    Before venturing into the darkness, prepare yourself for what awaits within. "
   icon: {fileID: 21300000, guid: 0bf4a89b627470f4090e0ed68cb9eb15, type: 3}
   autoDuration: 0
-  titleColor: {r: 0.9622642, g: 0, b: 0, a: 1}
+  titleColor: {r: 1, g: 0, b: 0, a: 1}
   descriptionColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}

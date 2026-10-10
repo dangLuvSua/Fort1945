@@ -372,6 +372,7 @@ GameObject:
   - component: {fileID: 7925084007181689668}
   - component: {fileID: 264984566483249543}
   - component: {fileID: 2406633155285475869}
+  - component: {fileID: 2076916406607803299}
   m_Layer: 0
   m_Name: PlayerRoot
   m_TagString: Untagged
@@ -485,6 +486,7 @@ MonoBehaviour:
   - {fileID: 7925084007181689668}
   - {fileID: 264984566483249543}
   - {fileID: 2406633155285475869}
+  - {fileID: 2076916406607803299}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &1612331710460718894
 MonoBehaviour:
@@ -655,6 +657,23 @@ MonoBehaviour:
   visualSearchInterval: 0.2
   _CandleOn:
     RawValue: 0
+--- !u!114 &2076916406607803299
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3522006267438135775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f35ac20ea1172ca44ab1a5242ef3d2de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSanity
+  maxSanity: 100
+  startingSanity: 100
+  allowRecovery: 0
+  recoveryPerSecond: 2
+  _CurrentSanity: 0
 --- !u!1 &3812555787650489551
 GameObject:
   m_ObjectHideFlags: 0
