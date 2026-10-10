@@ -1,14 +1,9 @@
 fileFormatVersion: 2
-guid: 5568820f47d0b2044b36644c045e7f21
+guid: 52f2c11d7817c314b9e4372bae0a101b
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: JIGSAW
-    second: {fileID: 2100000, guid: 661f2665df804bd478ee7b52fc262de8, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0

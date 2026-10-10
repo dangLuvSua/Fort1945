@@ -1,3 +1,4 @@
+
 using Fusion;
 using TMPro;
 using UnityEngine;
@@ -5,19 +6,34 @@ using UnityEngine.UI;
 
 public class DungeonOtherPlayerItem : MonoBehaviour
 {
+    // =====================================================
+    // PLAYER INFORMATION
+    // =====================================================
+
     [Header("Player Information")]
     [SerializeField] private TMP_Text playerNameText;
 
+
+    // =====================================================
+    // CHARACTER AVATAR
+    // =====================================================
 
     [Header("Character Avatar")]
     [SerializeField] private Image characterAvatarImage;
 
 
-    [Header("Player Stats")]
-    [SerializeField] private Slider staminaSlider;
+    // =====================================================
+    // PLAYER STATS
+    // =====================================================
 
-    // Sanity temporarily disabled.
-    // [SerializeField] private Slider sanitySlider;
+    [Header("Stamina UI")]
+    [SerializeField] private Slider staminaSlider;
+    [SerializeField] private TMP_Text staminaText;
+
+
+    [Header("Sanity UI")]
+    [SerializeField] private Slider sanitySlider;
+    [SerializeField] private TMP_Text sanityText;
 
 
     // =====================================================
@@ -28,8 +44,7 @@ public class DungeonOtherPlayerItem : MonoBehaviour
 
     private PlayerStamina playerStamina;
 
-    // Sanity temporarily disabled.
-    // private PlayerSanity playerSanity;
+    private PlayerSanity playerSanity;
 
 
     // =====================================================
@@ -42,11 +57,9 @@ public class DungeonOtherPlayerItem : MonoBehaviour
     {
         playerState = state;
 
+        // Reset cached components in case this UI entry is reused.
         playerStamina = null;
-
-        // Sanity temporarily disabled.
-        // playerSanity = null;
-
+        playerSanity = null;
 
         if (playerState == null)
         {
@@ -55,13 +68,15 @@ public class DungeonOtherPlayerItem : MonoBehaviour
                 "Player state is missing."
             );
 
+            ClearStatsDisplay();
             return;
         }
-
 
         UpdateDisplay(characterAvatar);
 
         FindNetworkedStats();
+        UpdateStaminaDisplay();
+        UpdateSanityDisplay();
     }
 
 
@@ -74,19 +89,14 @@ public class DungeonOtherPlayerItem : MonoBehaviour
         if (playerState == null)
             return;
 
-
-        // The network player object might spawn
-        // slightly later than the UI item.
-        if (playerStamina == null)
+        // Player objects may spawn after the list entry.
+        if (playerStamina == null || playerSanity == null)
         {
             FindNetworkedStats();
         }
 
-
         UpdateStaminaDisplay();
-
-        // Sanity temporarily disabled.
-        // UpdateSanityDisplay();
+        UpdateSanityDisplay();
     }
 
 
@@ -99,25 +109,20 @@ public class DungeonOtherPlayerItem : MonoBehaviour
         if (playerState == null)
             return;
 
+        if (playerState.Object == null ||
+            !playerState.Object.IsValid)
+        {
+            return;
+        }
 
-        if (playerState.Object == null)
+        NetworkRunner runner = playerState.Runner;
+
+        if (runner == null || !runner.IsRunning)
             return;
 
-
-        NetworkRunner runner =
-            playerState.Runner;
-
-        if (runner == null)
-            return;
-
-
+        // Identify the player represented by this list entry.
         PlayerRef targetPlayer =
             playerState.Object.InputAuthority;
-
-
-        // -------------------------------------------------
-        // Find actual network player
-        // -------------------------------------------------
 
         if (!runner.TryGetPlayerObject(
             targetPlayer,
@@ -126,20 +131,18 @@ public class DungeonOtherPlayerItem : MonoBehaviour
             return;
         }
 
-
-        if (playerObject == null)
+        if (playerObject == null || !playerObject.IsValid)
             return;
 
 
         // -------------------------------------------------
-        // Find stamina
+        // FIND STAMINA
         // -------------------------------------------------
 
         if (playerStamina == null)
         {
             playerStamina =
                 playerObject.GetComponent<PlayerStamina>();
-
 
             if (playerStamina == null)
             {
@@ -152,16 +155,13 @@ public class DungeonOtherPlayerItem : MonoBehaviour
 
 
         // -------------------------------------------------
-        // Find sanity
+        // FIND SANITY
         // -------------------------------------------------
 
-        // Sanity temporarily disabled.
-        /*
         if (playerSanity == null)
         {
             playerSanity =
                 playerObject.GetComponent<PlayerSanity>();
-
 
             if (playerSanity == null)
             {
@@ -171,104 +171,131 @@ public class DungeonOtherPlayerItem : MonoBehaviour
                     );
             }
         }
-        */
     }
 
 
     // =====================================================
-    // STAMINA
+    // STAMINA DISPLAY
     // =====================================================
 
     private void UpdateStaminaDisplay()
     {
-        if (staminaSlider == null)
+        if (staminaSlider == null || playerStamina == null)
             return;
-
-
-        if (playerStamina == null)
-            return;
-
 
         staminaSlider.minValue = 0f;
+        staminaSlider.maxValue = Mathf.Max(
+            0.01f,
+            playerStamina.Max
+        );
 
-        staminaSlider.maxValue =
-            playerStamina.Max;
+        staminaSlider.SetValueWithoutNotify(
+            Mathf.Clamp(
+                playerStamina.Current,
+                0f,
+                playerStamina.Max
+            )
+        );
 
-        staminaSlider.value =
-            playerStamina.Current;
+        if (staminaText != null)
+        {
+            staminaText.text =
+                $"{Mathf.CeilToInt(playerStamina.Current)}" +
+                $"/{Mathf.CeilToInt(playerStamina.Max)}";
+        }
     }
 
 
     // =====================================================
-    // SANITY
+    // SANITY DISPLAY
     // =====================================================
-
-    /*
-    // Sanity temporarily disabled.
 
     private void UpdateSanityDisplay()
     {
-        if (sanitySlider == null)
+        if (sanitySlider == null || playerSanity == null)
             return;
 
-
-        if (playerSanity == null)
+        if (playerSanity.Object == null ||
+            !playerSanity.Object.IsValid ||
+            !playerSanity.Object.IsInSimulation)
+        {
             return;
+        }
 
+        float maxSanity = Mathf.Max(
+            0.01f,
+            playerSanity.MaxSanity
+        );
+
+        float currentSanity = Mathf.Clamp(
+            playerSanity.CurrentSanity,
+            0f,
+            maxSanity
+        );
 
         sanitySlider.minValue = 0f;
+        sanitySlider.maxValue = maxSanity;
 
-        sanitySlider.maxValue =
-            playerSanity.Max;
+        sanitySlider.SetValueWithoutNotify(currentSanity);
 
-        sanitySlider.value =
-            playerSanity.Current;
+        if (sanityText != null)
+        {
+            sanityText.text =
+                $"{Mathf.CeilToInt(currentSanity)}" +
+                $"/{Mathf.CeilToInt(maxSanity)}";
+        }
     }
 
-    */
-
 
     // =====================================================
-    // DISPLAY
+    // PLAYER NAME AND AVATAR
     // =====================================================
 
-    public void UpdateDisplay(
-        Sprite characterAvatar)
+    public void UpdateDisplay(Sprite characterAvatar)
     {
         if (playerState == null)
             return;
 
-
-        // -------------------------------------------------
-        // NAME
-        // -------------------------------------------------
-
+        // Player name
         if (playerNameText != null)
         {
             playerNameText.text =
                 playerState.PlayerName.ToString();
         }
 
-
-        // -------------------------------------------------
-        // AVATAR
-        // -------------------------------------------------
-
+        // Character avatar
         if (characterAvatarImage != null)
         {
             if (characterAvatar != null)
             {
-                characterAvatarImage.sprite =
-                    characterAvatar;
-
-                characterAvatarImage.enabled =
-                    true;
+                characterAvatarImage.sprite = characterAvatar;
+                characterAvatarImage.enabled = true;
             }
             else
             {
-                characterAvatarImage.enabled =
-                    false;
+                characterAvatarImage.sprite = null;
+                characterAvatarImage.enabled = false;
             }
         }
+    }
+
+
+    // =====================================================
+    // CLEAR UI
+    // =====================================================
+
+    private void ClearStatsDisplay()
+    {
+        if (staminaSlider != null)
+            staminaSlider.SetValueWithoutNotify(0f);
+
+        if (staminaText != null)
+            staminaText.text = "--";
+
+        if (sanitySlider != null)
+            sanitySlider.SetValueWithoutNotify(0f);
+
+        if (sanityText != null)
+            sanityText.text = "--";
     }
 }

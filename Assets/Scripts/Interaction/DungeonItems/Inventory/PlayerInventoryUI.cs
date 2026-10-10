@@ -51,6 +51,15 @@ public class PlayerInventoryUI : MonoBehaviour
     private readonly List<InventorySlotUI> puzzleSlots = new();
 
     private ItemData selectedItem;
+
+    // The selected item is identified by its actual storage position.
+    // This prevents two separate stacks of the same item type
+    // from being highlighted or treated as the same selection.
+    private int selectedStorageIndex = -1;
+
+    // Tracks which quickbar slot was selected, if applicable.
+    private int selectedQuickBarIndex = -1;
+
     private bool inventorySubscribed;
 
     private void Awake()
@@ -109,7 +118,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
     private void Update()
     {
-        // Retry when Fusion has not registered the local player yet.
+        // Retry while Fusion is registering the local player.
         if (!IsInventoryReady())
         {
             if (inventorySubscribed)
@@ -130,7 +139,6 @@ public class PlayerInventoryUI : MonoBehaviour
 
     private void TryFindLocalInventory()
     {
-        // Keep a valid reference only if it belongs to the local player.
         if (inventory != null
             && inventory.Object != null
             && inventory.Object.IsValid
@@ -196,6 +204,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
         inventory.InventoryChanged -= Refresh;
         inventory.InventoryChanged += Refresh;
+
         inventorySubscribed = true;
 
         SubscribeQuickSlots();
@@ -225,9 +234,9 @@ public class PlayerInventoryUI : MonoBehaviour
             if (slot == null)
                 continue;
 
-            // Avoid duplicate event subscriptions.
-            slot.OnClicked -= ShowDescription;
-            slot.OnClicked += ShowDescription;
+            // Subscribe to the new slot-aware events.
+            slot.OnSlotClicked -= HandleQuickSlotClicked;
+            slot.OnSlotClicked += HandleQuickSlotClicked;
 
             slot.OnRightClicked -= HandleQuickSlotRightClick;
             slot.OnRightClicked += HandleQuickSlotRightClick;
@@ -244,7 +253,7 @@ public class PlayerInventoryUI : MonoBehaviour
             if (slot == null)
                 continue;
 
-            slot.OnClicked -= ShowDescription;
+            slot.OnSlotClicked -= HandleQuickSlotClicked;
             slot.OnRightClicked -= HandleQuickSlotRightClick;
         }
     }
@@ -260,9 +269,23 @@ public class PlayerInventoryUI : MonoBehaviour
 
         RefreshQuickBar();
 
-        RefreshCategory(ItemCategory.Item, itemContent, itemSlots);
-        RefreshCategory(ItemCategory.PuzzlePiece, puzzleContent, puzzleSlots);
-        RefreshCategory(ItemCategory.Gallery, galleryContent, gallerySlots);
+        RefreshCategory(
+            ItemCategory.Item,
+            itemContent,
+            itemSlots
+        );
+
+        RefreshCategory(
+            ItemCategory.PuzzlePiece,
+            puzzleContent,
+            puzzleSlots
+        );
+
+        RefreshCategory(
+            ItemCategory.Gallery,
+            galleryContent,
+            gallerySlots
+        );
 
         ValidateSelectedDescription();
         UpdateActionButtons();
@@ -304,14 +327,38 @@ public class PlayerInventoryUI : MonoBehaviour
             }
 
             ItemData item = inventory.GetQuickBarItemAt(i);
-            slot.SetItem(item, inventory.SelectedSlot == i);
+            int quantity = inventory.GetQuickBarQuantityAt(i);
+            int storageIndex = inventory.GetQuickBarStorageIndex(i);
 
-            Debug.Log(
-                $"[INVENTORY UI] Quick slot {i + 1}: " +
-                $"Item={(item != null ? item.itemName : "EMPTY")}, " +
-                $"ItemID={(item != null ? item.itemId : 0)}"
+            bool selected = inventory.SelectedSlot == i;
+
+            slot.SetQuickBarItem(
+                item,
+                quantity,
+                i,
+                storageIndex,
+                selected
             );
         }
+    }
+
+    private void HandleQuickSlotClicked(InventorySlotUI slot)
+    {
+        if (!IsInventoryReady() || slot == null)
+            return;
+
+        ItemData item = slot.GetItem();
+
+        if (item == null)
+            return;
+
+        selectedItem = item;
+        selectedQuickBarIndex = slot.QuickBarIndex;
+        selectedStorageIndex = slot.StorageIndex;
+
+        UpdateDescription(item);
+        UpdateAllSelectionHighlights();
+        UpdateActionButtons();
     }
 
     private void HandleQuickSlotRightClick(ItemData item)
@@ -319,7 +366,8 @@ public class PlayerInventoryUI : MonoBehaviour
         if (!IsInventoryReady() || item == null)
             return;
 
-        // Unequip only; the stored item remains in inventory.
+        // Preserve the existing behavior: right-click unequips an item
+        // without deleting it from storage.
         bool removed = inventory.RemoveItemFromQuickBar(item.itemId);
 
         if (!removed)
@@ -330,8 +378,13 @@ public class PlayerInventoryUI : MonoBehaviour
             return;
         }
 
-        if (selectedItem != null && selectedItem.itemId == item.itemId)
+        // Clear the selection only if it refers to the same item type.
+        // Refresh will validate whether the selected storage slot remains.
+        if (selectedItem != null
+            && selectedItem.itemId == item.itemId)
+        {
             ClearDescription();
+        }
 
         Refresh();
     }
@@ -369,11 +422,46 @@ public class PlayerInventoryUI : MonoBehaviour
 
             InventorySlotUI slot = Instantiate(slotPrefab, content);
 
-            slot.SetItem(item, false);
-            slot.OnClicked += ShowDescription;
+            int quantity = inventory.GetStorageQuantityAt(i);
+
+            // Store the actual storage index in the UI slot.
+            bool selected = i == selectedStorageIndex;
+
+            slot.SetStorageItem(
+                item,
+                quantity,
+                i,
+                selected
+            );
+
+            slot.OnSlotClicked -= HandleInventorySlotClicked;
+            slot.OnSlotClicked += HandleInventorySlotClicked;
 
             slots.Add(slot);
         }
+    }
+
+    private void HandleInventorySlotClicked(InventorySlotUI slot)
+    {
+        if (!IsInventoryReady() || slot == null)
+            return;
+
+        if (!slot.HasStorageIndex)
+            return;
+
+        ItemData item = slot.GetItem();
+
+        if (item == null)
+            return;
+
+        // Select the exact stored item, not every item with the same ID.
+        selectedItem = item;
+        selectedStorageIndex = slot.StorageIndex;
+        selectedQuickBarIndex = -1;
+
+        UpdateDescription(item);
+        UpdateAllSelectionHighlights();
+        UpdateActionButtons();
     }
 
     private void ClearSlots(
@@ -385,7 +473,9 @@ public class PlayerInventoryUI : MonoBehaviour
             if (slot == null)
                 continue;
 
-            slot.OnClicked -= ShowDescription;
+
+            slot.OnSlotClicked -= HandleInventorySlotClicked;
+
             Destroy(slot.gameObject);
         }
 
@@ -408,35 +498,57 @@ public class PlayerInventoryUI : MonoBehaviour
     // SELECT AN ITEM / DISPLAY DESCRIPTION
     // =========================================================
 
-
+    // Compatibility method for existing UI buttons or scripts
+    // that call ShowDescription(ItemData).
     public void ShowDescription(ItemData item)
     {
         if (item == null)
             return;
 
-        selectedItem = item;
+        int foundIndex = -1;
 
-        // Update quickbar selection highlights.
-        if (quickSlots != null)
+        // If invoked without a specific slot, prefer the current selection
+        // if it still contains this item type.
+        if (IsInventoryReady()
+            && selectedStorageIndex >= 0
+            && selectedStorageIndex < inventory.GetStorageSlotCount())
         {
-            foreach (InventorySlotUI slot in quickSlots)
+            ItemData existing =
+                inventory.GetStorageItemAt(selectedStorageIndex);
+
+            if (existing != null && existing.itemId == item.itemId)
+                foundIndex = selectedStorageIndex;
+        }
+
+        // Otherwise, select the first matching storage entry.
+        // Slot clicks use HandleInventorySlotClicked instead and are exact.
+        if (foundIndex < 0 && IsInventoryReady())
+        {
+            for (int i = 0; i < inventory.GetStorageSlotCount(); i++)
             {
-                if (slot == null)
-                    continue;
+                ItemData stored = inventory.GetStorageItemAt(i);
 
-                ItemData slotItem = slot.GetItem();
-
-                slot.SetSelected(
-                    slotItem != null &&
-                    slotItem.itemId == item.itemId
-                );
+                if (stored != null && stored.itemId == item.itemId)
+                {
+                    foundIndex = i;
+                    break;
+                }
             }
         }
 
-        // Update full inventory selection highlights.
-        UpdateCategorySelection(itemSlots);
-        UpdateCategorySelection(puzzleSlots);
-        UpdateCategorySelection(gallerySlots);
+        selectedItem = item;
+        selectedStorageIndex = foundIndex;
+        selectedQuickBarIndex = -1;
+
+        UpdateDescription(item);
+        UpdateAllSelectionHighlights();
+        UpdateActionButtons();
+    }
+
+    private void UpdateDescription(ItemData item)
+    {
+        if (item == null)
+            return;
 
         if (descriptionIcon != null)
         {
@@ -452,7 +564,16 @@ public class PlayerInventoryUI : MonoBehaviour
             descriptionText.text = item.description;
 
         if (descriptionQuantity != null)
-            descriptionQuantity.text = "";
+        {
+            int quantity = 1;
+
+            if (IsInventoryReady() && selectedStorageIndex >= 0)
+                quantity = inventory.GetStorageQuantityAt(selectedStorageIndex);
+
+            descriptionQuantity.text = quantity > 1
+                ? $"Quantity: {quantity}"
+                : "Quantity: 1";
+        }
 
         if (galleryPreviewPanel != null)
         {
@@ -466,8 +587,38 @@ public class PlayerInventoryUI : MonoBehaviour
                 galleryPreviewImage.preserveAspect = true;
             }
         }
+    }
 
-        UpdateActionButtons();
+    private void UpdateAllSelectionHighlights()
+    {
+        UpdateCategorySelection(itemSlots);
+        UpdateCategorySelection(puzzleSlots);
+        UpdateCategorySelection(gallerySlots);
+
+        if (quickSlots == null)
+            return;
+
+        foreach (InventorySlotUI slot in quickSlots)
+        {
+            if (slot == null)
+                continue;
+
+            bool selected = false;
+
+            // If selected from a quickbar slot, highlight that exact slot.
+            if (selectedQuickBarIndex >= 0)
+            {
+                selected = slot.QuickBarIndex == selectedQuickBarIndex;
+            }
+            // Otherwise highlight a quickbar entry pointing to the selected
+            // storage index, not every entry sharing the same item ID.
+            else if (selectedStorageIndex >= 0)
+            {
+                selected = slot.StorageIndex == selectedStorageIndex;
+            }
+
+            slot.SetSelected(selected);
+        }
     }
 
     private void UpdateCategorySelection(
@@ -478,19 +629,19 @@ public class PlayerInventoryUI : MonoBehaviour
             if (slot == null)
                 continue;
 
-            ItemData slotItem = slot.GetItem();
-
             bool isSelected =
-                selectedItem != null &&
-                slotItem != null &&
-                slotItem.itemId == selectedItem.itemId;
+                selectedStorageIndex >= 0
+                && slot.StorageIndex == selectedStorageIndex;
 
             slot.SetSelected(isSelected);
         }
     }
+
     public void ClearDescription()
     {
         selectedItem = null;
+        selectedStorageIndex = -1;
+        selectedQuickBarIndex = -1;
 
         if (descriptionIcon != null)
         {
@@ -516,6 +667,7 @@ public class PlayerInventoryUI : MonoBehaviour
             galleryPreviewImage.enabled = false;
         }
 
+        UpdateAllSelectionHighlights();
         UpdateActionButtons();
     }
 
@@ -536,6 +688,8 @@ public class PlayerInventoryUI : MonoBehaviour
             return;
         }
 
+        // Existing PlayerInventory API accepts itemId, so this retains
+        // the original behavior. See the note below about duplicate IDs.
         bool equipped =
             inventory.TryEquipItemToQuickBar(selectedItem.itemId);
 
@@ -557,11 +711,16 @@ public class PlayerInventoryUI : MonoBehaviour
             inventory.RemoveItemFromQuickBar(selectedItem.itemId);
 
         if (removed)
+        {
+            selectedQuickBarIndex = -1;
             Refresh();
+        }
         else
+        {
             Debug.LogWarning(
                 "[INVENTORY UI] This item is not in the quickbar."
             );
+        }
     }
 
     public void DeleteSelectedItemCompletely()
@@ -571,6 +730,8 @@ public class PlayerInventoryUI : MonoBehaviour
 
         int itemId = selectedItem.itemId;
 
+        // Existing PlayerInventory API deletes by item ID.
+        // This preserves the existing API and behavior.
         bool deleted = inventory.RemoveItemCompletely(itemId);
 
         if (deleted)
@@ -589,16 +750,31 @@ public class PlayerInventoryUI : MonoBehaviour
     private void UpdateActionButtons()
     {
         bool ready = IsInventoryReady();
-        bool hasSelection = ready && selectedItem != null;
+        bool hasSelection =
+            ready && selectedItem != null && selectedStorageIndex >= 0;
 
         bool isGalleryPhoto =
             hasSelection &&
             selectedItem.category == ItemCategory.Gallery;
 
+        bool itemExists = false;
+
+        if (hasSelection
+            && selectedStorageIndex < inventory.GetStorageSlotCount())
+        {
+            ItemData stored =
+                inventory.GetStorageItemAt(selectedStorageIndex);
+
+            itemExists =
+                stored != null &&
+                stored.itemId == selectedItem.itemId;
+        }
+
         if (equipButton != null)
         {
             equipButton.interactable =
                 hasSelection &&
+                itemExists &&
                 !isGalleryPhoto &&
                 inventory.Has(selectedItem) &&
                 !inventory.IsItemInQuickBar(selectedItem.itemId);
@@ -608,6 +784,7 @@ public class PlayerInventoryUI : MonoBehaviour
         {
             removeButton.interactable =
                 hasSelection &&
+                itemExists &&
                 inventory.IsItemInQuickBar(selectedItem.itemId);
         }
 
@@ -615,6 +792,7 @@ public class PlayerInventoryUI : MonoBehaviour
         {
             deleteInventoryButton.interactable =
                 hasSelection &&
+                itemExists &&
                 inventory.Has(selectedItem);
         }
     }
@@ -624,10 +802,29 @@ public class PlayerInventoryUI : MonoBehaviour
         if (selectedItem == null || !IsInventoryReady())
             return;
 
-        if (!inventory.Has(selectedItem))
+        bool validIndex =
+            selectedStorageIndex >= 0 &&
+            selectedStorageIndex < inventory.GetStorageSlotCount();
+
+        if (!validIndex)
+        {
             ClearDescription();
-        else
-            UpdateActionButtons();
+            return;
+        }
+
+        ItemData stored =
+            inventory.GetStorageItemAt(selectedStorageIndex);
+
+        // Validate the exact storage slot, not merely whether the
+        // same ItemData asset exists somewhere else in the inventory.
+        if (stored == null || stored.itemId != selectedItem.itemId)
+        {
+            ClearDescription();
+            return;
+        }
+
+        UpdateDescription(stored);
+        UpdateActionButtons();
     }
 
     // =========================================================
@@ -678,3 +875,4 @@ public class PlayerInventoryUI : MonoBehaviour
         return inventoryPanel != null && inventoryPanel.activeSelf;
     }
 }
+

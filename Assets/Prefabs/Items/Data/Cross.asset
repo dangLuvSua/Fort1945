@@ -18,5 +18,7 @@ MonoBehaviour:
   description: A forgotten symbol of faith. Its presence silences the whispers and
     restores a portion of sanity.
   category: 0
-  heldPrefab: {fileID: 0}
-  worldPrefab: {fileID: 0}
+  isStackable: 1
+  maxStackSize: 2
+  heldPrefab: {fileID: 2591036016449763602, guid: 473f6b67dbeac44429477f24d8625786, type: 3}
+  worldPrefab: {fileID: -4476490725469625592, guid: 473f6b67dbeac44429477f24d8625786, type: 3}
