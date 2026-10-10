@@ -2780,6 +2780,7 @@ GameObject:
   - component: {fileID: 758525749}
   - component: {fileID: 758525750}
   - component: {fileID: 758525751}
+  - component: {fileID: 758525752}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -2957,8 +2958,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdc21eab1e600a4499f4de908e7e520d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StaminaUI
-  staminaSlider: {fileID: 1926634963}
-  staminaNumber: {fileID: 1747687901}
+  staminaSlider: {fileID: 1082341464}
+  staminaNumber: {fileID: 1860909031}
+--- !u!114 &758525752
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 758525743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89fbd0199d7a29040982701d7c5caa61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SanityUI
+  playerSanity: {fileID: 2076916406607803299, guid: ddc5dfc990d6831408c4d5f15c7b31fe, type: 3}
+  sanitySlider: {fileID: 1926634963}
+  sanityText: {fileID: 1747687901}
 --- !u!1001 &759937958
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3808,6 +3824,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1071990908}
   m_CullTransparentMesh: 1
+--- !u!114 &1082341464 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8101182895439746791, guid: 8c3f4d9577fec784f8914040e801323b, type: 3}
+  m_PrefabInstance: {fileID: 1322456066}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Slider
 --- !u!114 &1098032047 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 10919493539829193, guid: d4ff511e9f1361a4986fec72a2041712, type: 3}
@@ -6494,6 +6521,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!114 &1860909031 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 530412215338517832, guid: 8c3f4d9577fec784f8914040e801323b, type: 3}
+  m_PrefabInstance: {fileID: 1322456066}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1001 &1868982117
 PrefabInstance:
   m_ObjectHideFlags: 0
