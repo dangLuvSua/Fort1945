@@ -66,8 +66,7 @@ public class SanityUI : MonoBehaviour
         if (sanityText != null)
         {
             sanityText.text =
-                $"SANITY {Mathf.CeilToInt(playerSanity.CurrentSanity)}" +
-                $"/{Mathf.CeilToInt(playerSanity.MaxSanity)}";
+                $"{Mathf.CeilToInt(playerSanity.CurrentSanity)}";
         }
     }
 }
