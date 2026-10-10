@@ -35,8 +35,8 @@ public class DungeonGenerator : MonoBehaviour
     // =========================================================
 
     [Header("Unique Room")]
-    [Tooltip("This room can spawn ONLY ONCE per dungeon layout.")]
-    public GameObject uniqueRoomPrefab;
+    [Tooltip("Choose from these unique rooms. One spawns per dungeon layout.")]
+    public GameObject[] uniqueRoomPrefabs;
 
 
     // =========================================================
@@ -652,7 +652,10 @@ public class DungeonGenerator : MonoBehaviour
         // PLACE UNIQUE ROOM FIRST
         // -----------------------------------------------------
 
-        if (uniqueRoomPrefab != null)
+        if (
+            uniqueRoomPrefabs != null &&
+            uniqueRoomPrefabs.Length > 0
+        )
         {
             bool uniquePlaced = false;
 
@@ -1245,7 +1248,8 @@ public class DungeonGenerator : MonoBehaviour
     {
         if (
             targetExit == null ||
-            uniqueRoomPrefab == null ||
+            uniqueRoomPrefabs == null ||
+            uniqueRoomPrefabs.Length == 0 ||
             uniqueRoomCreated ||
             roomsCreated >= numberOfRooms
         )
@@ -1260,9 +1264,20 @@ public class DungeonGenerator : MonoBehaviour
             attempt++
         )
         {
+            GameObject roomPrefab =
+                GetRandomValidPrefab(
+                    uniqueRoomPrefabs
+                );
+
+            if (roomPrefab == null)
+            {
+                continue;
+            }
+
+
             GameObject room =
                 Instantiate(
-                    uniqueRoomPrefab,
+                    roomPrefab,
                     Vector3.zero,
                     Quaternion.identity,
                     transform
@@ -2220,11 +2235,13 @@ public class DungeonGenerator : MonoBehaviour
         }
 
 
-        if (uniqueRoomPrefab == null)
+        if (
+            uniqueRoomPrefabs == null ||
+            uniqueRoomPrefabs.Length == 0
+        )
         {
             Debug.LogError(
-                "Unique Room is not assigned. " +
-                "Assign Dungeon Prison."
+                "No unique room prefabs assigned."
             );
 
             return false;

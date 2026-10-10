@@ -2747,10 +2747,12 @@ MonoBehaviour:
   - {fileID: 1144789961926301871, guid: d6826df0a114f81468e6431b63823fd4, type: 3}
   - {fileID: 7170047792221019372, guid: 82adff004a5667c4d91cc140578ab9d0, type: 3}
   - {fileID: 485568567402589083, guid: 610c08e356e4e32438e4c2d9cf0437b2, type: 3}
-  intersectionPrefab: {fileID: 4678420957343006725, guid: 1cb7d44d9396f8c43941ae62972473e6, type: 3}
+  intersectionPrefab: {fileID: 8114038213370615005, guid: 2eb08f6bedee0654fb4289afe72bf915, type: 3}
   roomPrefabs:
   - {fileID: 9126014398724148254, guid: f1672e05561df3e479686ea159439a58, type: 3}
-  uniqueRoomPrefab: {fileID: 3739409803601189944, guid: f8ca09c2b7b8c0f4d8da1bb1d6106748, type: 3}
+  uniqueRoomPrefabs:
+  - {fileID: 3739409803601189944, guid: f8ca09c2b7b8c0f4d8da1bb1d6106748, type: 3}
+  - {fileID: 5427564906860841166, guid: 47a2ac7b706e9274d85a95c9fc4841fc, type: 3}
   numberOfRooms: 10
   maxCorridorsBeforeRoom: 5
   placementAttempts: 15
