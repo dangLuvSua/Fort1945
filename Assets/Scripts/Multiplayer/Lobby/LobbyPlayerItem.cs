@@ -18,6 +18,9 @@ public class LobbyPlayerItem : MonoBehaviour
 
     [Header("Player Stats")]
     [SerializeField] private Slider staminaSlider;
+    [SerializeField] private Slider sanitySlider;
+    [SerializeField] private TMP_Text staminaText;
+    [SerializeField] private TMP_Text sanityText;
 
 
     // =====================================================
@@ -30,6 +33,10 @@ public class LobbyPlayerItem : MonoBehaviour
     // stamina component.
     private PlayerStamina playerStamina;
 
+    // Cached reference to the actual networked player's
+    // sanity component.
+    private PlayerSanity playerSanity;
+
 
     // =====================================================
     // SETUP
@@ -41,9 +48,14 @@ public class LobbyPlayerItem : MonoBehaviour
     {
         playerState = state;
 
-        // Reset cached reference when this UI item is
+        // Reset cached references when this UI item is
         // reused for another player.
         playerStamina = null;
+        playerSanity = null;
+
+        // Wire any stats UI elements that were not assigned
+        // in the Inspector (found by name on this prefab).
+        ResolveStatElements();
 
 
         if (playerState == null)
@@ -82,8 +94,15 @@ public class LobbyPlayerItem : MonoBehaviour
             FindPlayerStamina();
         }
 
+        if (playerSanity == null)
+        {
+            FindPlayerSanity();
+        }
+
 
         UpdateStaminaDisplay();
+
+        UpdateSanityDisplay();
     }
 
 
@@ -174,32 +193,223 @@ public class LobbyPlayerItem : MonoBehaviour
 
 
     // =====================================================
+    // FIND PLAYER SANITY
+    // =====================================================
+
+    private void FindPlayerSanity()
+    {
+        if (playerState == null)
+            return;
+
+        if (playerState.Object == null)
+            return;
+
+
+        NetworkRunner runner =
+            playerState.Runner;
+
+        if (runner == null)
+            return;
+
+
+        PlayerRef targetPlayer =
+            playerState.Object.InputAuthority;
+
+
+        // Ask Fusion for the actual network player object.
+        if (!runner.TryGetPlayerObject(
+            targetPlayer,
+            out NetworkObject playerObject))
+        {
+            return;
+        }
+
+
+        if (playerObject == null)
+            return;
+
+
+        // PlayerSanity should be on the networked
+        // player prefab.
+        PlayerSanity sanity =
+            playerObject.GetComponent<PlayerSanity>();
+
+
+        // Also support PlayerSanity being on a child.
+        if (sanity == null)
+        {
+            sanity =
+                playerObject.GetComponentInChildren<PlayerSanity>(
+                    true
+                );
+        }
+
+
+        if (sanity == null)
+        {
+            return;
+        }
+
+
+        playerSanity = sanity;
+
+
+        Debug.Log(
+            $"[LOBBY PLAYER ITEM] " +
+            $"Connected sanity for " +
+            $"{playerState.PlayerName} " +
+            $"({targetPlayer})"
+        );
+    }
+
+
+    // =====================================================
     // STAMINA DISPLAY
     // =====================================================
 
     private void UpdateStaminaDisplay()
     {
-        if (staminaSlider == null)
-            return;
-
-
         if (playerStamina == null)
             return;
 
+        // -------------------------------------------------
+        // SLIDER
+        // -------------------------------------------------
 
-        // Keep slider range synchronized with the
-        // player's configured maximum.
-        staminaSlider.minValue = 0f;
+        if (staminaSlider != null)
+        {
+            // Keep slider range synchronized with the
+            // player's configured maximum.
+            staminaSlider.minValue = 0f;
 
-        staminaSlider.maxValue =
-            playerStamina.Max;
+            staminaSlider.maxValue =
+                playerStamina.Max;
 
 
-        // IMPORTANT:
-        // Current is now [Networked], so this value can be
-        // read by other players.
-        staminaSlider.value =
-            playerStamina.Current;
+            // IMPORTANT:
+            // Current is now [Networked], so this value can
+            // be read by other players.
+            staminaSlider.value =
+                playerStamina.Current;
+        }
+
+        // -------------------------------------------------
+        // NUMBER TEXT
+        // -------------------------------------------------
+
+        if (staminaText != null)
+        {
+            staminaText.text =
+                $"{Mathf.CeilToInt(playerStamina.Current)}";
+        }
+    }
+
+
+    // =====================================================
+    // SANITY DISPLAY
+    // =====================================================
+
+    private void UpdateSanityDisplay()
+    {
+        if (playerSanity == null)
+            return;
+
+        if (playerSanity.Object == null ||
+            !playerSanity.Object.IsValid ||
+            !playerSanity.Object.IsInSimulation)
+        {
+            return;
+        }
+
+        float maxSanity = Mathf.Max(
+            0.01f,
+            playerSanity.MaxSanity
+        );
+
+        float currentSanity = Mathf.Clamp(
+            playerSanity.CurrentSanity,
+            0f,
+            maxSanity
+        );
+
+        // -------------------------------------------------
+        // SLIDER
+        // -------------------------------------------------
+
+        if (sanitySlider != null)
+        {
+            sanitySlider.minValue = 0f;
+
+            sanitySlider.maxValue = maxSanity;
+
+            sanitySlider.SetValueWithoutNotify(currentSanity);
+        }
+
+        // -------------------------------------------------
+        // NUMBER TEXT
+        // -------------------------------------------------
+
+        if (sanityText != null)
+        {
+            sanityText.text =
+                $"{Mathf.CeilToInt(currentSanity)}";
+        }
+    }
+
+
+    // =====================================================
+    // RESOLVE STAT ELEMENTS
+    // =====================================================
+
+    private void ResolveStatElements()
+    {
+        if (staminaSlider == null)
+        {
+            Transform element =
+                transform.Find("StaminaSlider");
+
+            if (element != null)
+            {
+                staminaSlider =
+                    element.GetComponent<Slider>();
+            }
+        }
+
+        if (sanitySlider == null)
+        {
+            Transform element =
+                transform.Find("SanitySlider");
+
+            if (element != null)
+            {
+                sanitySlider =
+                    element.GetComponent<Slider>();
+            }
+        }
+
+        if (staminaText == null)
+        {
+            Transform element =
+                transform.Find("StaminaNum");
+
+            if (element != null)
+            {
+                staminaText =
+                    element.GetComponent<TMP_Text>();
+            }
+        }
+
+        if (sanityText == null)
+        {
+            Transform element =
+                transform.Find("SanityNum");
+
+            if (element != null)
+            {
+                sanityText =
+                    element.GetComponent<TMP_Text>();
+            }
+        }
     }
 
 

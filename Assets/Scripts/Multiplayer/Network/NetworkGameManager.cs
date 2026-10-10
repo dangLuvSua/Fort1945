@@ -217,12 +217,6 @@ public class NetworkGameManager : NetworkBehaviour
     private float soldierWalkSpeed = 2.8f;
 
     [Tooltip(
-        "Spacing of the glowing ghost-path dots."
-    )]
-    [SerializeField]
-    private float ghostPathSpacing = 1.4f;
-
-    [Tooltip(
         "Start the walk route exactly where the SoldierGuideModel " +
         "object sits in the scene."
     )]
@@ -271,12 +265,6 @@ public class NetworkGameManager : NetworkBehaviour
     )]
     [SerializeField]
     private float soldierNetworkLerpSpeed = 12f;
-
-    [Tooltip(
-        "Automatically rebuild visible ghost dots from the NavMesh path."
-    )]
-    [SerializeField]
-    private bool useNavMeshPathDots = true;
 
 
     // =========================================================
@@ -332,16 +320,12 @@ public class NetworkGameManager : NetworkBehaviour
 
     private GameObject gateTag;
 
-    private readonly List<GameObject> pathDots =
-        new List<GameObject>();
-
     private GameObject zoneVisual;
     private GameObject zoneTag;
 
     private DungeonZoneVisual dungeonZoneVisual;
 
     private bool soldierVisualBuilt;
-    private bool pathDotsBuilt;
     private bool zoneVisualBuilt;
 
     private GameObject cachedGateObject;
@@ -1094,11 +1078,6 @@ public class NetworkGameManager : NetworkBehaviour
         // -------------------------------------------------
         // SOLDIER HAS STARTED
         // -------------------------------------------------
-        //
-        // Ghost path dots are created only now.
-        //
-
-        BuildPathDots();
 
         // -------------------------------------------------
         // HOST / STATE AUTHORITY
@@ -1689,45 +1668,6 @@ public class NetworkGameManager : NetworkBehaviour
 
         soldierLastHostPosition =
             soldierAgent.transform.position;
-    }
-
-
-    // =========================================================
-    // BUILD NAVMESH PATH
-    // =========================================================
-
-    private bool BuildNavMeshPath(
-        Vector3 start,
-        Vector3 destination,
-        out NavMeshPath path)
-    {
-        path =
-            new NavMeshPath();
-
-        if (!NavMesh.SamplePosition(
-                start,
-                out NavMeshHit startHit,
-                3f,
-                NavMesh.AllAreas))
-        {
-            return false;
-        }
-
-        if (!NavMesh.SamplePosition(
-                destination,
-                out NavMeshHit destinationHit,
-                3f,
-                NavMesh.AllAreas))
-        {
-            return false;
-        }
-
-        return NavMesh.CalculatePath(
-            startHit.position,
-            destinationHit.position,
-            NavMesh.AllAreas,
-            path
-        );
     }
 
 
@@ -2343,305 +2283,6 @@ public class NetworkGameManager : NetworkBehaviour
 
         return cachedZoneObject;
     }
-
-    // =========================================================
-    // PATH DOTS
-    // =========================================================
-
-    private void BuildPathDots()
-    {
-        // -------------------------------------------------
-        // Important:
-        // This function is only called after:
-        //
-        // SoldierInteractionStarted == true
-        // SoldierStarted == true
-        //
-        // Therefore dots do NOT appear when the gate opens.
-        // -------------------------------------------------
-
-        if (pathDotsBuilt)
-            return;
-
-        if (!SoldierInteractionStarted)
-            return;
-
-        if (!SoldierStarted)
-            return;
-
-        pathDotsBuilt = true;
-
-        Vector3 start =
-            soldierModelStartPositionSet
-                ? soldierModelStartPosition
-                : soldierAgent != null
-                    ? soldierAgent.transform.position
-                    : GetGateCenter();
-
-        Vector3 destination =
-            GetSoldierDestination();
-
-        // -------------------------------------------------
-        // Try NavMesh path
-        // -------------------------------------------------
-
-        if (!useNavMeshPathDots ||
-            !BuildNavMeshPath(
-                start,
-                destination,
-                out NavMeshPath navPath))
-        {
-            BuildFallbackPathDots();
-            return;
-        }
-
-        if (navPath.corners == null ||
-            navPath.corners.Length < 2)
-        {
-            BuildFallbackPathDots();
-            return;
-        }
-
-        float spacing =
-            Mathf.Max(
-                0.5f,
-                ghostPathSpacing
-            );
-
-        Transform soldierTransform = null;
-
-        if (soldierAgent != null)
-        {
-            soldierTransform =
-                soldierAgent.transform;
-        }
-        else if (soldierVisual != null)
-        {
-            soldierTransform =
-                soldierVisual.root;
-        }
-
-        // -------------------------------------------------
-        // Create dots
-        // -------------------------------------------------
-
-        for (int i = 1;
-             i < navPath.corners.Length;
-             i++)
-        {
-            Vector3 from =
-                navPath.corners[i - 1];
-
-            Vector3 to =
-                navPath.corners[i];
-
-            float length =
-                Vector3.Distance(
-                    from,
-                    to
-                );
-
-            int steps =
-                Mathf.Max(
-                    1,
-                    Mathf.CeilToInt(
-                        length /
-                        spacing
-                    )
-                );
-
-            for (int step = 1;
-                 step <= steps;
-                 step++)
-            {
-                float t =
-                    step /
-                    (float)steps;
-
-                Vector3 position =
-                    Vector3.Lerp(
-                        from,
-                        to,
-                        t
-                    );
-
-                GameObject dot =
-                    CreateDot(
-                        position +
-                        Vector3.up * 1.6f,
-
-                        0.22f,
-
-                        2.2f +
-                        (i % 3) * 0.9f,
-
-                        0.5f,
-
-                        0f,
-
-                        Vector3.zero
-                    );
-
-                if (dot == null)
-                    continue;
-
-                GhostDot ghostDot =
-                    dot.GetComponent<GhostDot>();
-
-                if (ghostDot != null)
-                {
-                    ghostDot.dotColor =
-                        new Color(
-                            0f,
-                            1f,
-                            0.15f,
-                            1f
-                        );
-
-                    ghostDot.destroyWhenSoldierPasses =
-                        true;
-
-                    ghostDot.soldierPassDistance =
-                        0.8f;
-
-                    if (soldierTransform != null)
-                    {
-                        ghostDot.ConfigureSoldierPass(
-                            soldierTransform,
-                            0.8f
-                        );
-                    }
-                }
-
-                pathDots.Add(dot);
-            }
-        }
-
-        Debug.Log(
-            $"[SOLDIER] Built {pathDots.Count} ghost path dots."
-        );
-    }
-
-
-    // =========================================================
-    // FALLBACK PATH DOTS
-    // =========================================================
-
-    private void BuildFallbackPathDots()
-    {
-        Vector3[] route =
-            GetSoldierRoute();
-
-        if (route == null ||
-            route.Length < 2)
-        {
-            return;
-        }
-
-        float spacing =
-            Mathf.Max(
-                0.5f,
-                ghostPathSpacing
-            );
-
-        Transform soldierTransform = null;
-
-        if (soldierAgent != null)
-        {
-            soldierTransform =
-                soldierAgent.transform;
-        }
-
-        for (int i = 1;
-             i < route.Length;
-             i++)
-        {
-            Vector3 from =
-                route[i - 1];
-
-            Vector3 to =
-                route[i];
-
-            float length =
-                Vector3.Distance(
-                    from,
-                    to
-                );
-
-            int steps =
-                Mathf.Max(
-                    1,
-                    Mathf.CeilToInt(
-                        length /
-                        spacing
-                    )
-                );
-
-            for (int step = 1;
-                 step <= steps;
-                 step++)
-            {
-                float t =
-                    step /
-                    (float)steps;
-
-                GameObject dot =
-                    CreateDot(
-                        Vector3.Lerp(
-                            from,
-                            to,
-                            t
-                        ) +
-                        Vector3.up * 1.6f,
-
-                        0.22f,
-
-                        2.2f +
-                        (i % 3) * 0.9f,
-
-                        0.5f,
-
-                        0f,
-
-                        Vector3.zero
-                    );
-
-                if (dot == null)
-                    continue;
-
-                GhostDot ghostDot =
-                    dot.GetComponent<GhostDot>();
-
-                if (ghostDot != null)
-                {
-                    ghostDot.dotColor =
-                        new Color(
-                            0f,
-                            1f,
-                            0.15f,
-                            1f
-                        );
-
-                    ghostDot.destroyWhenSoldierPasses =
-                        true;
-
-                    ghostDot.soldierPassDistance =
-                        0.8f;
-
-                    if (soldierTransform != null)
-                    {
-                        ghostDot.ConfigureSoldierPass(
-                            soldierTransform,
-                            0.8f
-                        );
-                    }
-                }
-
-                pathDots.Add(dot);
-            }
-        }
-    }
-
 
     // =========================================================
     // SOLDIER VISUAL
