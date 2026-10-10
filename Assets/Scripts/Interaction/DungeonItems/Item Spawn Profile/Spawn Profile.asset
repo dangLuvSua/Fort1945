@@ -21,6 +21,10 @@ MonoBehaviour:
       weight: 10
       minQuantity: 1
       maxQuantity: 1
+    - item: {fileID: 11400000, guid: 49c7c78e778e32040a342553e0e83829, type: 2}
+      weight: 10
+      minQuantity: 1
+      maxQuantity: 1
   - phase: 1
     difficulty: 1
     totalItemsToSpawn: 5
@@ -29,11 +33,19 @@ MonoBehaviour:
       weight: 10
       minQuantity: 1
       maxQuantity: 1
+    - item: {fileID: 11400000, guid: 49c7c78e778e32040a342553e0e83829, type: 2}
+      weight: 10
+      minQuantity: 1
+      maxQuantity: 1
   - phase: 1
     difficulty: 2
     totalItemsToSpawn: 5
     items:
     - item: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
+      weight: 10
+      minQuantity: 1
+      maxQuantity: 1
+    - item: {fileID: 11400000, guid: 49c7c78e778e32040a342553e0e83829, type: 2}
       weight: 10
       minQuantity: 1
       maxQuantity: 1
