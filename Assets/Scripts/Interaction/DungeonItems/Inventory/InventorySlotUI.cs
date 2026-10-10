@@ -18,8 +18,26 @@ public class InventorySlotUI : MonoBehaviour, IPointerClickHandler
     private ItemData currentItem;
     private Button button;
 
+    // Identifies the exact inventory location occupied by this item.
+    // -1 means the slot has not been assigned a storage index.
+    private int storageIndex = -1;
+
+    // Identifies the quickbar location when this UI represents a quickbar slot.
+    private int quickBarIndex = -1;
+
     public event Action<ItemData> OnClicked;
     public event Action<ItemData> OnRightClicked;
+
+    // New events provide the exact clicked UI slot.
+    // Existing event subscribers can continue using the original events.
+    public event Action<InventorySlotUI> OnSlotClicked;
+    public event Action<InventorySlotUI> OnSlotRightClicked;
+
+    public int StorageIndex => storageIndex;
+    public int QuickBarIndex => quickBarIndex;
+
+    public bool HasStorageIndex => storageIndex >= 0;
+    public bool IsQuickBarSlot => quickBarIndex >= 0;
 
     private void Awake()
     {
@@ -37,7 +55,55 @@ public class InventorySlotUI : MonoBehaviour, IPointerClickHandler
             button.onClick.RemoveListener(HandleClick);
     }
 
+    // Compatibility overload for existing calls:
+    // slot.SetItem(item, selected)
     public void SetItem(ItemData item, bool selected = false)
+    {
+        SetItem(item, 1, selected);
+    }
+
+    // Compatibility overload for existing quantity-based calls:
+    // slot.SetItem(item, quantity, selected)
+    public void SetItem(
+        ItemData item,
+        int quantity,
+        bool selected = false)
+    {
+        SetItemInternal(item, quantity, selected);
+    }
+
+    // Use for a full-inventory slot.
+    // storageIndex must be the actual index in PlayerInventory.
+    public void SetStorageItem(
+        ItemData item,
+        int quantity,
+        int storageSlotIndex,
+        bool selected = false)
+    {
+        storageIndex = storageSlotIndex;
+        quickBarIndex = -1;
+
+        SetItemInternal(item, quantity, selected);
+    }
+
+    // Use for a quickbar slot.
+    public void SetQuickBarItem(
+        ItemData item,
+        int quantity,
+        int quickbarSlotIndex,
+        int correspondingStorageIndex,
+        bool selected = false)
+    {
+        storageIndex = correspondingStorageIndex;
+        quickBarIndex = quickbarSlotIndex;
+
+        SetItemInternal(item, quantity, selected);
+    }
+
+    private void SetItemInternal(
+        ItemData item,
+        int quantity,
+        bool selected)
     {
         currentItem = item;
 
@@ -53,26 +119,21 @@ public class InventorySlotUI : MonoBehaviour, IPointerClickHandler
             icon.enabled = item.icon != null;
             icon.color = Color.white;
             icon.preserveAspect = true;
-
-            Debug.Log(
-                $"[SLOT UI] Slot='{gameObject.name}', " +
-                $"Item='{item.itemName}', " +
-                $"Image='{icon.name}', " +
-                $"Sprite='{(icon.sprite != null ? icon.sprite.name : "NULL")}', " +
-                $"Enabled={icon.enabled}, " +
-                $"Active={icon.gameObject.activeInHierarchy}"
-            );
         }
         else
         {
             Debug.LogError(
-                $"[SLOT UI] Icon Image is not assigned on '{gameObject.name}'. " +
-                $"Item='{item.itemName}'."
+                $"[SLOT UI] Icon Image is not assigned on " +
+                $"'{gameObject.name}'. Item='{item.itemName}'."
             );
         }
 
         if (quantityText != null)
-            quantityText.text = "";
+        {
+            quantityText.text = quantity > 1
+                ? $"x{quantity}"
+                : "";
+        }
 
         if (itemNameText != null)
             itemNameText.text = item.itemName;
@@ -83,16 +144,18 @@ public class InventorySlotUI : MonoBehaviour, IPointerClickHandler
             button.interactable = true;
     }
 
-    // Left-click is handled by the Button's onClick event.
     private void HandleClick()
     {
         if (currentItem == null)
             return;
 
+        // Preserve existing event behavior.
         OnClicked?.Invoke(currentItem);
+
+        // Also report the exact UI slot that was clicked.
+        OnSlotClicked?.Invoke(this);
     }
 
-    // Right-click is used by the quickbar to unequip an item.
     public void OnPointerClick(PointerEventData eventData)
     {
         if (currentItem == null || eventData == null)
@@ -100,7 +163,11 @@ public class InventorySlotUI : MonoBehaviour, IPointerClickHandler
 
         if (eventData.button == PointerEventData.InputButton.Right)
         {
+            // Preserve existing event behavior.
             OnRightClicked?.Invoke(currentItem);
+
+            // Also report the exact UI slot.
+            OnSlotRightClicked?.Invoke(this);
         }
     }
 
@@ -113,6 +180,10 @@ public class InventorySlotUI : MonoBehaviour, IPointerClickHandler
     public void Clear()
     {
         currentItem = null;
+
+        // Reset slot identity so a reused UI slot cannot retain stale data.
+        storageIndex = -1;
+        quickBarIndex = -1;
 
         if (icon != null)
         {
@@ -144,3 +215,4 @@ public class InventorySlotUI : MonoBehaviour, IPointerClickHandler
             button.interactable = interactable && currentItem != null;
     }
 }
+

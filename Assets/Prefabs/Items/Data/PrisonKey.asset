@@ -19,5 +19,7 @@ MonoBehaviour:
     suggests it has been hidden away for years, but the lock it belongs to may still
     be waiting. Find it to free your teammates.
   category: 0
+  isStackable: 1
+  maxStackSize: 3
   heldPrefab: {fileID: 374289202576707483, guid: 78df1db2fbc8ec64f949fac0c05bf693, type: 3}
   worldPrefab: {fileID: 1434193415856722423, guid: 78df1db2fbc8ec64f949fac0c05bf693, type: 3}

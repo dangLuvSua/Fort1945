@@ -1,3 +1,4 @@
+
 using Fusion;
 using UnityEngine;
 
@@ -25,9 +26,20 @@ public class ItemData : ScriptableObject
     [Header("Category")]
     public ItemCategory category;
 
+    [Header("Stack Settings")]
+    [Tooltip("Enable this to allow multiple copies in one inventory slot.")]
+    public bool isStackable = false;
+
+    [Min(1)]
+    [Tooltip("Maximum number of copies in one inventory slot.")]
+    public int maxStackSize = 10;
+
     [Header("World / Player Visuals")]
     public GameObject heldPrefab;
 
     [Header("Networked World Prefab")]
     public NetworkObject worldPrefab;
+
+    public int EffectiveMaxStackSize =>
+        isStackable ? Mathf.Max(1, maxStackSize) : 1;
 }

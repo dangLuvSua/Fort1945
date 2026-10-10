@@ -59,6 +59,10 @@ public class PlayerInventory : NetworkBehaviour
 
     [Networked, Capacity(StorageSlotCount)]
     private NetworkArray<NetworkBool> CandleInitializedBySlot => default;
+    // Quantity stored in each inventory slot.
+    // Empty slots have quantity 0.
+    [Networked, Capacity(StorageSlotCount)]
+    private NetworkArray<int> NetworkQuantities => default;
 
     private int lastInventoryHash = int.MinValue;
 
@@ -188,7 +192,6 @@ public class PlayerInventory : NetworkBehaviour
         return TryAddNetworkedById(itemId, 0f, 0f);
     }
 
-    // Preserves compatibility with existing pickup calls.
     public bool TryAddNetworkedById(
         int itemId,
         float candleRemaining,
@@ -227,16 +230,70 @@ public class PlayerInventory : NetworkBehaviour
             return false;
         }
 
-        if (!TryGetCategoryRange(item.category, out int start, out int end))
+        if (!TryGetCategoryRange(
+                item.category,
+                out int start,
+                out int end))
+        {
             return false;
+        }
 
-        // Each category has its own 24-slot storage capacity.
+        // -----------------------------------------------------
+        // 1. Try adding to an existing compatible stack.
+        // -----------------------------------------------------
+
+        int maxStack = item.EffectiveMaxStackSize;
+
+        if (item.isStackable && maxStack > 1)
+        {
+            for (int i = start; i < end; i++)
+            {
+                if (NetworkSlots.Get(i) != itemId)
+                    continue;
+
+                int currentQuantity = NetworkQuantities.Get(i);
+
+                if (currentQuantity <= 0 ||
+                    currentQuantity >= maxStack)
+                {
+                    continue;
+                }
+
+                // Do not combine candles with incompatible burn states.
+                if (IsCandleItem(item) &&
+                    !CanStackCandle(
+                        i,
+                        candleInitialized,
+                        candleRemaining,
+                        candleMaxLife))
+                {
+                    continue;
+                }
+
+                NetworkQuantities.Set(i, currentQuantity + 1);
+                addedSlot = i;
+
+                Debug.Log(
+                    $"[INVENTORY] Added {item.itemName} to stack " +
+                    $"in slot {i + 1}. " +
+                    $"Quantity: {currentQuantity + 1}/{maxStack}."
+                );
+
+                return true;
+            }
+        }
+
+        // -----------------------------------------------------
+        // 2. Otherwise, find an empty slot in this category.
+        // -----------------------------------------------------
+
         for (int i = start; i < end; i++)
         {
             if (NetworkSlots.Get(i) != 0)
                 continue;
 
             NetworkSlots.Set(i, itemId);
+            NetworkQuantities.Set(i, 1);
             ClearCandleState(i);
 
             if (IsCandleItem(item) &&
@@ -246,22 +303,23 @@ public class PlayerInventory : NetworkBehaviour
                 float maxLife = Mathf.Max(0f, candleMaxLife);
 
                 CandleMaxLifeBySlot.Set(i, maxLife);
+
                 CandleLifeBySlot.Set(
                     i,
                     Mathf.Clamp(candleRemaining, 0f, maxLife)
                 );
+
                 CandleInitializedBySlot.Set(i, true);
             }
 
             addedSlot = i;
 
-            // Items and puzzle pieces can be assigned to the quick bar.
-            // Gallery photographs are stored only in Gallery.
             if (item.category != ItemCategory.Gallery)
                 TryEquipItemToQuickBar(itemId);
 
             Debug.Log(
-                $"[INVENTORY] {item.itemName} added to storage slot {i + 1}."
+                $"[INVENTORY] {item.itemName} added to storage " +
+                $"slot {i + 1}. Quantity: 1."
             );
 
             return true;
@@ -272,6 +330,68 @@ public class PlayerInventory : NetworkBehaviour
         );
 
         return false;
+    }
+
+    private bool CanStackCandle(
+        int storageIndex,
+        bool incomingInitialized,
+        float incomingRemaining,
+        float incomingMaxLife)
+    {
+        bool existingInitialized =
+            CandleInitializedBySlot.Get(storageIndex);
+
+        // Initialized and uninitialized candles are not interchangeable.
+        if (existingInitialized != incomingInitialized)
+            return false;
+
+        // Both candles have no initialized burn state.
+        if (!existingInitialized)
+            return true;
+
+        float existingRemaining =
+            CandleLifeBySlot.Get(storageIndex);
+
+        float existingMaxLife =
+            CandleMaxLifeBySlot.Get(storageIndex);
+
+        // Only combine candles with compatible remaining and maximum life.
+        const float tolerance = 0.1f;
+
+        return Mathf.Abs(existingRemaining - incomingRemaining)
+                   <= tolerance
+            && Mathf.Abs(existingMaxLife - incomingMaxLife)
+                   <= tolerance;
+    }
+
+    public int GetStorageQuantityAt(int storageIndex)
+    {
+        if (!IsValidStorageIndex(storageIndex))
+            return 0;
+
+        if (NetworkSlots.Get(storageIndex) == 0)
+            return 0;
+
+        return NetworkQuantities.Get(storageIndex);
+    }
+
+    public int GetQuickBarQuantityAt(int quickBarIndex)
+    {
+        int storageIndex =
+            GetQuickBarStorageIndex(quickBarIndex);
+
+        return storageIndex < 0
+            ? 0
+            : GetStorageQuantityAt(storageIndex);
+    }
+
+    public int GetQuantityForItemId(int itemId)
+    {
+        int storageIndex = FindStorageIndex(itemId);
+
+        return storageIndex < 0
+            ? 0
+            : GetStorageQuantityAt(storageIndex);
     }
 
     // =========================================================
@@ -386,6 +506,7 @@ public class PlayerInventory : NetworkBehaviour
 
         // Permanently remove the item from storage.
         NetworkSlots.Set(storageIndex, 0);
+        NetworkQuantities.Set(storageIndex, 0);
 
         // Clear associated candle data if applicable.
         ClearCandleState(storageIndex);
@@ -577,9 +698,20 @@ public class PlayerInventory : NetworkBehaviour
 
     public bool HasItemId(int itemId)
     {
-        return itemId > 0 && FindStorageIndex(itemId) >= 0;
-    }
+        if (itemId <= 0)
+            return false;
 
+        for (int i = 0; i < StorageSlotCount; i++)
+        {
+            if (NetworkSlots.Get(i) == itemId &&
+                NetworkQuantities.Get(i) > 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
     private int FindStorageIndex(int itemId)
     {
         if (itemId <= 0)
@@ -587,8 +719,11 @@ public class PlayerInventory : NetworkBehaviour
 
         for (int i = 0; i < StorageSlotCount; i++)
         {
-            if (NetworkSlots.Get(i) == itemId)
+            if (NetworkSlots.Get(i) == itemId &&
+                NetworkQuantities.Get(i) > 0)
+            {
                 return i;
+            }
         }
 
         return -1;
@@ -786,10 +921,37 @@ public class PlayerInventory : NetworkBehaviour
                 NetworkQuickBar.Set(i, 0);
         }
 
-        NetworkSlots.Set(storageIndex, 0);
-        ClearCandleState(storageIndex);
-        SelectedSlot = -1;
+        int quantity = NetworkQuantities.Get(storageIndex);
 
+        if (quantity > 1)
+        {
+            // Remove only one item from the stack.
+            NetworkQuantities.Set(storageIndex, quantity - 1);
+
+            Debug.Log(
+                $"[INVENTORY] Dropped one {item.itemName}. " +
+                $"Remaining quantity: {quantity - 1}."
+            );
+        }
+        else
+        {
+            // Last item in the stack: clear the storage slot.
+            NetworkSlots.Set(storageIndex, 0);
+            NetworkQuantities.Set(storageIndex, 0);
+
+            ClearCandleState(storageIndex);
+
+            // Remove quick-bar references to the now-empty slot.
+            for (int i = 0; i < QuickBarSlotCount; i++)
+            {
+                if (GetQuickBarStorageIndex(i) == storageIndex)
+                    NetworkQuickBar.Set(i, 0);
+            }
+
+            Debug.Log($"[INVENTORY] {item.itemName} dropped.");
+        }
+
+        SelectedSlot = -1;
         Debug.Log($"[INVENTORY] {item.itemName} dropped.");
     }
 
@@ -1043,11 +1205,18 @@ public class PlayerInventory : NetworkBehaviour
         {
             int hash = SelectedSlot;
 
+            // Include stored item IDs and quantities.
             for (int i = 0; i < StorageSlotCount; i++)
+            {
                 hash = hash * 31 + NetworkSlots.Get(i);
+                hash = hash * 31 + NetworkQuantities.Get(i);
+            }
 
+            // Include quick-bar storage references.
             for (int i = 0; i < QuickBarSlotCount; i++)
+            {
                 hash = hash * 31 + NetworkQuickBar.Get(i);
+            }
 
             return hash;
         }

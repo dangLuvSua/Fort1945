@@ -23,18 +23,24 @@ public class CandleController : NetworkBehaviour
     private CandleVisual currentCandleVisual;
     private float searchTimer;
 
+    private int SelectedCandleStorageSlot =>
+     inventory != null
+         ? inventory.GetSelectedStorageSlot()
+         : -1;
+
     public bool IsHoldingCandle =>
         inventory != null &&
-        inventory.IsCandleSlot(inventory.SelectedSlot);
+        SelectedCandleStorageSlot >= 0 &&
+        inventory.IsCandleSlot(SelectedCandleStorageSlot);
 
     public float RemainingSeconds =>
-        inventory != null && IsHoldingCandle
-            ? inventory.GetCandleRemaining(inventory.SelectedSlot)
+        IsHoldingCandle
+            ? inventory.GetCandleRemaining(SelectedCandleStorageSlot)
             : 0f;
 
     public float MaxCandleLife =>
-        inventory != null && IsHoldingCandle
-            ? inventory.GetCandleMaxLife(inventory.SelectedSlot)
+        IsHoldingCandle
+            ? inventory.GetCandleMaxLife(SelectedCandleStorageSlot)
             : 0f;
 
     public bool IsCandleLit =>
@@ -86,7 +92,7 @@ public class CandleController : NetworkBehaviour
             return;
         }
 
-        int slot = inventory.SelectedSlot;
+        int slot = inventory.GetSelectedStorageSlot();
 
         if (!inventory.IsCandleInitialized(slot))
         {
@@ -141,7 +147,7 @@ public class CandleController : NetworkBehaviour
             return;
         }
 
-        int slot = inventory.SelectedSlot;
+        int slot = inventory.GetSelectedStorageSlot();
 
         if (!inventory.IsCandleInitialized(slot))
         {
