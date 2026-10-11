@@ -93,7 +93,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &52808602616789159
 RectTransform:
   m_ObjectHideFlags: 0
@@ -260,7 +260,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4505443739487012904
 RectTransform:
   m_ObjectHideFlags: 0
@@ -398,7 +398,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '[E] Interact'
+  m_text: '[E] HOLD TO UNLOCK THE GATE'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 67a1f2b2a596bad41a6655a3596d101e, type: 2}
   m_sharedMaterial: {fileID: 6102132331762098321, guid: 67a1f2b2a596bad41a6655a3596d101e, type: 2}
