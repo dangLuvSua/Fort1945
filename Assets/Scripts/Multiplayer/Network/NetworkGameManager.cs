@@ -14,6 +14,10 @@ public class NetworkGameManager : NetworkBehaviour
 {
     public static NetworkGameManager Instance { get; private set; }
 
+    [Header("Fort Mission")]
+    [Tooltip("Assign the existing FortMissionItemSpawner component from its separate scene GameObject. The manager will never add a spawner component at runtime.")]
+    [SerializeField] private FortMissionItemSpawner fortMissionItemSpawner;
+
     // =========================================================
     // DIFFICULTY
     // =========================================================
@@ -118,6 +122,12 @@ public class NetworkGameManager : NetworkBehaviour
 
     [Networked]
     public NetworkBool TeleportStarted { get; private set; }
+
+    [Networked]
+    public NetworkBool MissionItemsSpawned { get; private set; }
+
+    [Networked]
+    public NetworkBool DungeonGateUnlocked { get; private set; }
 
 
     // =========================================================
@@ -315,6 +325,77 @@ public class NetworkGameManager : NetworkBehaviour
 
 
     // =========================================================
+    // FORT MISSION - PRE-DUNGEON ITEMS
+    // =========================================================
+
+    [Header("Fort Mission - Pre-Dungeon Items")]
+
+    [Tooltip(
+        "Candle ItemData asset players must collect. " +
+        "If empty, fallbackCandleItemId is used."
+    )]
+    [SerializeField]
+    private ItemData candleItem;
+
+    [Tooltip(
+        "Key ItemData asset required to unlock the dungeon gate. " +
+        "If empty, fallbackKeyItemId is used."
+    )]
+    [SerializeField]
+    private ItemData keyItem;
+
+    [Tooltip(
+        "Fallback ItemData id used when the candle asset is not assigned " +
+        "(203 = Candle)."
+    )]
+    [SerializeField, Min(1)]
+    private int fallbackCandleItemId = 203;
+
+    [Tooltip(
+        "Fallback ItemData id used when the key asset is not assigned " +
+        "(103 = Dungeon Key)."
+    )]
+    [SerializeField, Min(1)]
+    private int fallbackKeyItemId = 103;
+
+    [Tooltip(
+        "Candles each player must be carrying before the gate can be " +
+        "unlocked. Also how many candles are spawned."
+    )]
+    [SerializeField, Min(1)]
+    private int candlesRequiredPerPlayer = 2;
+
+    [Tooltip(
+        "Keys spawned for the whole squad (must be 1 for the intended design)."
+    )]
+    [SerializeField, Min(1)]
+    private int keysToSpawn = 1;
+
+    [Tooltip(
+        "Require EVERY player to have their candles before the gate unlocks."
+    )]
+    [SerializeField]
+    private bool requireAllPlayersHaveCandles = true;
+
+    [Tooltip(
+        "Optional exact ground Y values to snap spawned items to " +
+        "(e.g. the Y of existing visible items like -2.21 / 4.71). " +
+        "When empty, the Y of existing scene items and markers is used."
+    )]
+    [SerializeField]
+    private float[] manualReferenceHeights;
+
+    [Header("Fort Mission - Mission Panel")]
+
+    [Tooltip(
+        "MissionData asset shown when the fort mission starts. " +
+        "If empty, a default message is used."
+    )]
+    [SerializeField]
+    private MissionData fortMission;
+
+
+    // =========================================================
     // LOCAL VISUALS
     // =========================================================
 
@@ -350,6 +431,8 @@ public class NetworkGameManager : NetworkBehaviour
 
     private bool soldierDestinationSet;
     private bool soldierNavStarted;
+
+    private bool missionComponentsEnsured;
 
     private float soldierInitialPathDistance;
 
@@ -407,6 +490,15 @@ public class NetworkGameManager : NetworkBehaviour
         }
 
         Instance = this;
+
+        // The mission progress panel stays hidden until the fort mission starts.
+        GameObject missionProgressPanel =
+            GameObject.Find("MissionProgressPanel");
+
+        if (missionProgressPanel != null)
+        {
+            missionProgressPanel.SetActive(false);
+        }
 
         Debug.Log(
             "[GAME MANAGER] Instance assigned."
@@ -830,6 +922,21 @@ public class NetworkGameManager : NetworkBehaviour
         if (TeleportStarted)
             return;
 
+        if (SoldierReachedDoor || ZoneActive)
+        {
+            EnsureFortMissionComponents();
+
+            if (Object != null && Object.HasStateAuthority && !MissionItemsSpawned)
+            {
+                TryStartFortMission();
+            }
+        }
+
+        if (MissionItemsSpawned)
+        {
+            EnsureFortMissionPanelActive();
+        }
+
         UpdateGatePhase();
 
         UpdateSoldierDialogue();
@@ -1111,6 +1218,10 @@ public class NetworkGameManager : NetworkBehaviour
                             "[GAME MANAGER] Soldier guide reached " +
                             "the dungeon door. Zone active."
                         );
+
+                        // Pre-dungeon mission: spawn the candles & key,
+                        // show the mission panel, and arm the gate lock.
+                        TryStartFortMission();
                     }
                 }
             }
@@ -1682,6 +1793,8 @@ public class NetworkGameManager : NetworkBehaviour
             return;
         }
 
+        EnsureFortMissionComponents();
+
         // ---------------------------------------------------------
         // FIND ZONE VISUAL
         // ---------------------------------------------------------
@@ -1703,184 +1816,546 @@ public class NetworkGameManager : NetworkBehaviour
         }
 
         // =========================================================
-        // COUNT PLAYERS
+        // GATE UNLOCKED -> ENTER THE DUNGEON
         // =========================================================
 
-        int totalPlayers = 0;
-        int playersInsideZone = 0;
-
-        CountPlayersInsideZone(
-     out totalPlayers,
-     out playersInsideZone
- );
-
-        // =========================================================
-        // IMPORTANT:
-        // STATE AUTHORITY CONTROLS THE NETWORKED ZONE STATE.
-        // =========================================================
-
-        if (!Object.HasStateAuthority)
+        if (DungeonGateUnlocked)
         {
-            // Remote clients only update their local visual.
-            UpdateZoneTag(
-                playersInsideZone,
-                totalPlayers,
-                ZoneGreen
-            );
-
-            return;
-        }
-
-        // =========================================================
-        // SAFETY
-        // =========================================================
-
-        if (totalPlayers < 1)
-        {
-            ZoneGreen = false;
-            TeleportCountdown = 0f;
-
-            UpdateZoneTag(
-                playersInsideZone,
-                totalPlayers,
-                false
-            );
-
-            return;
-        }
-
-        // =========================================================
-        // NOT GREEN YET
-        // =========================================================
-
-        if (!ZoneGreen)
-        {
-            if (playersInsideZone < totalPlayers)
-            {
-                TeleportCountdown = 0f;
-
-                if (dungeonZoneVisual != null)
-                {
-                    dungeonZoneVisual.SetRed();
-                }
-
-                UpdateZoneTag(
-                    playersInsideZone,
-                    totalPlayers,
-                    false
-                );
-
-                return;
-            }
-
-            // -----------------------------------------------------
-            // EVERYONE IS INSIDE
-            // -----------------------------------------------------
-
-            ZoneGreen = true;
-
-            TeleportCountdown = Mathf.Max(
-                0f,
-                teleportDelaySeconds
-            );
-
             if (dungeonZoneVisual != null)
             {
                 dungeonZoneVisual.SetGreen();
             }
 
-            Debug.Log(
-                "[DUNGEON ZONE] ALL PLAYERS ARE INSIDE."
-            );
-
-            Debug.Log(
-                $"[DUNGEON ZONE] Zone turned GREEN. " +
-                $"Countdown: {TeleportCountdown:F0}s"
-            );
-
-            RPC_OnZoneGreen();
-
-            return;
-        }
-
-        // =========================================================
-        // ZONE IS GREEN
-        // =========================================================
-
-        // If ANY player leaves, immediately reset.
-        if (playersInsideZone < totalPlayers)
-        {
-            ZoneGreen = false;
-
-            TeleportCountdown = 0f;
-
-            if (dungeonZoneVisual != null)
+            if (Object.HasStateAuthority &&
+                !TeleportStarted)
             {
-                dungeonZoneVisual.SetRed();
+                TeleportStarted = true;
+
+                Debug.Log(
+                    "[GAME MANAGER] Gate unlocked. " +
+                    "Teleporting the squad into the dungeon."
+                );
+
+                if (NetworkRunnerHandler.Instance != null)
+                {
+                    NetworkRunnerHandler.Instance.LoadDungeonScene();
+                }
             }
 
-            Debug.Log(
-                "[DUNGEON ZONE] A player left the zone."
-            );
+            return;
+        }
 
-            Debug.Log(
-                "[DUNGEON ZONE] Zone turned RED. " +
-                "Countdown reset."
-            );
+        // =========================================================
+        // GATE IS STILL LOCKED - WAIT FOR THE KEY
+        // =========================================================
 
-            RPC_OnZoneReset();
+        if (dungeonZoneVisual != null)
+        {
+            dungeonZoneVisual.SetRed();
+        }
 
-            UpdateZoneTag(
-                playersInsideZone,
-                totalPlayers,
-                false
+        UpdateGateStatusTag();
+    }
+
+    // =========================================================
+    // FORT MISSION COMPONENTS
+    // =========================================================
+
+    private void EnsureFortMissionComponents()
+    {
+        // Resolve the existing scene component only. Never add a spawner to
+        // NetworkGameManager, because the scene spawner owns the configured
+        // ItemData assets and spawn points.
+        if (fortMissionItemSpawner == null)
+            fortMissionItemSpawner = FindFortMissionSpawner();
+
+        if (fortMissionItemSpawner == null)
+        {
+            Debug.LogError(
+                "[GAME MANAGER] FortMissionItemSpawner is not assigned and " +
+                "could not be found in the scene. Assign the existing scene " +
+                "spawner in the Inspector. No spawner was added automatically.",
+                this);
+        }
+
+        if (missionComponentsEnsured)
+            return;
+
+        missionComponentsEnsured = true;
+
+        // Hold-to-unlock gate interaction on the dungeon entrance.
+        EnsureDungeonGateUnlock();
+    }
+
+    private FortMissionItemSpawner FindFortMissionSpawner()
+    {
+        // The explicit Inspector reference always takes priority.
+        if (fortMissionItemSpawner != null)
+            return fortMissionItemSpawner;
+
+        // Find the existing scene component, including inactive scene objects.
+        // This does not create or attach any component.
+        fortMissionItemSpawner = FindFirstObjectByType<FortMissionItemSpawner>(
+            FindObjectsInactive.Include);
+
+        return fortMissionItemSpawner;
+    }
+
+    private FortMissionItemSpawner GetFortMissionSpawner()
+    {
+        FortMissionItemSpawner spawner = FindFortMissionSpawner();
+
+        if (spawner == null)
+        {
+            Debug.LogError(
+                "[GAME MANAGER] No FortMissionItemSpawner reference is available. " +
+                "Assign the existing separate scene GameObject in the Inspector. " +
+                "The manager will not create a replacement component.",
+                this);
+        }
+
+        return spawner;
+    }
+
+    private void EnsureDungeonGateUnlock()
+    {
+        GameObject zoneObject =
+            GetDungeonEntryZoneObject();
+
+        if (zoneObject == null)
+        {
+            Debug.LogWarning(
+                "[GAME MANAGER] DungeonEntryZone was not found. " +
+                "The gate unlock interaction cannot be created."
             );
 
             return;
         }
 
-        // =========================================================
-        // EVERYONE IS STILL INSIDE
-        // =========================================================
+        DungeonGateUnlock gate =
+            zoneObject.GetComponent<DungeonGateUnlock>();
 
-        UpdateZoneTag(
-            playersInsideZone,
-            totalPlayers,
-            true
+        if (gate == null)
+        {
+            gate =
+                zoneObject.AddComponent<DungeonGateUnlock>();
+        }
+
+        // Keep the required key in sync with the manager.
+        gate.SetKeyItemData(keyItem);
+    }
+
+    // =========================================================
+    // FORT MISSION - SPAWN + MISSION PANEL
+    // =========================================================
+
+
+
+
+    private void TryStartFortMission()
+    {
+        // Shared Mode host only. Runner.IsServer is not the right authority check
+        // for a Shared Mode session.
+        if (Runner == null)
+        {
+            Debug.LogWarning("[GAME MANAGER] Cannot start Fort mission: Runner is null.", this);
+            return;
+        }
+
+        if (!IsHost)
+            return;
+
+        // The manager must be a valid Fusion NetworkBehaviour.
+        if (Object == null || !Object.HasStateAuthority)
+        {
+            Debug.LogError(
+                "[GAME MANAGER] Host cannot start the Fort mission: " +
+                "NetworkGameManager has no State Authority. " +
+                "Check its NetworkObject and Fusion scene setup."
+            );
+            return;
+        }
+
+        if (MissionItemsSpawned)
+            return;
+
+        FortMissionItemSpawner spawner = GetFortMissionSpawner();
+        if (spawner == null)
+            return;
+
+        PlayerInventory localInventory = GetLocalPlayerInventory();
+        ItemData candle = ResolveCandleItem(localInventory);
+        ItemData key = ResolveKeyItem(localInventory);
+
+        bool itemsSpawned = spawner.SpawnMissionItems(
+            Runner,
+            candle,
+            key,
+            candlesRequiredPerPlayer,
+            keysToSpawn,
+            manualReferenceHeights
         );
 
-        // ---------------------------------------------------------
-        // COUNTDOWN
-        // ---------------------------------------------------------
+        Debug.Log(
+            $"[GAME MANAGER] Fort mission items spawned: {itemsSpawned}."
+        );
 
-        if (TeleportCountdown > 0f)
+        if (!itemsSpawned)
         {
-            TeleportCountdown = Mathf.Max(
-                0f,
-                TeleportCountdown - Time.deltaTime
+            Debug.LogError(
+                "[GAME MANAGER] Mission item spawning failed. " +
+                "Check the [FORT SPAWNER] logs."
+            );
+            return;
+        }
+
+        MissionItemsSpawned = true;
+        RPC_StartFortMission();
+    }
+
+    [Rpc(
+        RpcSources.StateAuthority,
+        RpcTargets.All
+    )]
+    private void RPC_StartFortMission()
+    {
+        Debug.Log("[FORT MISSION] Start RPC received; configuring local mission panel.", this);
+        FortMissionItemSpawner spawner = GetFortMissionSpawner();
+        if (spawner == null)
+            return;
+
+        PlayerInventory localInventory =
+            GetLocalPlayerInventory();
+
+        spawner.ConfigureFortMission(
+            fortMission,
+            ResolveCandleItem(localInventory),
+            ResolveKeyItem(localInventory),
+            candlesRequiredPerPlayer,
+            keysToSpawn,
+            manualReferenceHeights
+        );
+
+        spawner.SetMissionActive(true);
+        Debug.Log("[FORT MISSION] Local mission panel activation requested.", this);
+    }
+
+    public ItemData CandleItem => candleItem;
+    public ItemData KeyItem => keyItem;
+    public MissionData FortMission => fortMission;
+
+    private void EnsureFortMissionPanelActive()
+    {
+        FortMissionItemSpawner spawner = GetFortMissionSpawner();
+        if (spawner == null)
+            return;
+
+        if (!spawner.IsMissionActive && !DungeonGateUnlocked)
+        {
+            PlayerInventory localInventory =
+                GetLocalPlayerInventory();
+
+            spawner.ConfigureFortMission(
+                fortMission,
+                ResolveCandleItem(localInventory),
+                ResolveKeyItem(localInventory),
+                candlesRequiredPerPlayer,
+                keysToSpawn,
+                manualReferenceHeights
+            );
+
+            spawner.SetMissionActive(true);
+        }
+    }
+
+    // =========================================================
+    // GATE UNLOCK REQUESTS
+    // =========================================================
+
+    public void RequestDungeonGateUnlock()
+    {
+        if (Runner == null)
+        {
+            return;
+        }
+
+        RPC_RequestGateUnlock();
+    }
+
+    [Rpc(
+        RpcSources.All,
+        RpcTargets.StateAuthority
+    )]
+    private void RPC_RequestGateUnlock(
+        RpcInfo info = default)
+    {
+        if (!Object.HasStateAuthority)
+        {
+            return;
+        }
+
+        if (!MissionItemsSpawned)
+        {
+            Debug.LogWarning(
+                "[GATE] Unlock requested before the mission started."
             );
 
             return;
         }
 
-        // =========================================================
-        // COUNTDOWN FINISHED
-        // =========================================================
+        if (DungeonGateUnlocked)
+        {
+            return;
+        }
+
+        if (info.Source == PlayerRef.None)
+        {
+            return;
+        }
+
+        if (!CanPlayerUnlockGate(info.Source))
+        {
+            Debug.LogWarning(
+                $"[GATE] Player {info.Source} cannot unlock the gate " +
+                "yet (missing key or candles)."
+            );
+
+            return;
+        }
+
+        DungeonGateUnlocked = true;
+        TeleportCountdown = 0f;
+
+        Debug.Log(
+            "[GAME MANAGER] DUNGEON GATE UNLOCKED! " +
+            "Loading the Dungeon scene."
+        );
+
+        RPC_OnGateUnlocked();
 
         TeleportStarted = true;
-
-        Debug.Log(
-            "[DUNGEON ZONE] 5 SECOND COUNTDOWN COMPLETE."
-        );
-
-        Debug.Log(
-            "[DUNGEON ZONE] ALL PLAYERS WILL BE TELEPORTED."
-        );
 
         if (NetworkRunnerHandler.Instance != null)
         {
             NetworkRunnerHandler.Instance.LoadDungeonScene();
         }
+    }
+
+    [Rpc(
+        RpcSources.StateAuthority,
+        RpcTargets.All
+    )]
+    private void RPC_OnGateUnlocked()
+    {
+        Debug.Log(
+            "[GAME MANAGER] Gate unlocked. Enter the dungeon!"
+        );
+
+        FindDungeonZoneVisual();
+
+        if (dungeonZoneVisual != null)
+        {
+            dungeonZoneVisual.SetGreen();
+        }
+
+        UpdateGateStatusTag();
+
+        MissionManager.ShowRaw(
+            "GATE UNLOCKED",
+            "The dungeon gate is open. Move into the darkness!",
+            5f
+        );
+    }
+
+    private void UpdateGateStatusTag()
+    {
+        if (zoneTag == null)
+        {
+            return;
+        }
+
+        WorldTag tagScript =
+            zoneTag.GetComponent<WorldTag>();
+
+        if (tagScript == null)
+        {
+            return;
+        }
+
+        if (DungeonGateUnlocked)
+        {
+            tagScript.SetMessage(
+                "GATE UNLOCKED - ENTER THE DUNGEON"
+            );
+
+            tagScript.SetColor(
+                new Color(
+                    0.2f,
+                    1f,
+                    0.4f,
+                    1f
+                )
+            );
+        }
+        else
+        {
+            tagScript.SetMessage(
+                "GATE LOCKED - FIND THE KEY & CANDLES"
+            );
+
+            tagScript.SetColor(
+                new Color(
+                    1f,
+                    0.15f,
+                    0.15f,
+                    1f
+                )
+            );
+        }
+    }
+
+    // =========================================================
+    // GATE UNLOCK VALIDATION
+    // =========================================================
+
+    private bool CanPlayerUnlockGate(PlayerRef player)
+    {
+        if (!Runner.TryGetPlayerObject(
+                player,
+                out NetworkObject playerObject) ||
+            playerObject == null)
+        {
+            return false;
+        }
+
+        PlayerInventory inventory =
+            playerObject.GetComponent<PlayerInventory>();
+
+        if (inventory == null)
+        {
+            return false;
+        }
+
+        // -------------------------------------------------
+        // The interacting player must have the key EQUIPPED.
+        // -------------------------------------------------
+
+        int keyId = GetKeyItemId();
+
+        if (!inventory.HasItemId(keyId))
+        {
+            return false;
+        }
+
+        int selectedSlot = inventory.SelectedSlot;
+
+        if (selectedSlot < 0 ||
+            inventory.GetQuickBarItemIdAt(selectedSlot) != keyId)
+        {
+            return false;
+        }
+
+        // -------------------------------------------------
+        // Optional: every player must carry their candles.
+        // -------------------------------------------------
+
+        if (requireAllPlayersHaveCandles)
+        {
+            foreach (PlayerRef other in Runner.ActivePlayers)
+            {
+                if (!Runner.TryGetPlayerObject(
+                        other,
+                        out NetworkObject otherObject) ||
+                    otherObject == null)
+                {
+                    continue;
+                }
+
+                PlayerInventory otherInventory =
+                    otherObject.GetComponent<PlayerInventory>();
+
+                if (otherInventory == null)
+                {
+                    continue;
+                }
+
+                if (otherInventory.GetQuantityForItemId(GetCandleItemId()) <
+                    candlesRequiredPerPlayer)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // =========================================================
+    // FORT MISSION - ITEM RESOLUTION
+    // =========================================================
+
+    private ItemData ResolveCandleItem(PlayerInventory inventory)
+    {
+        if (candleItem != null)
+        {
+            return candleItem;
+        }
+
+        return inventory != null
+            ? inventory.GetItemData(fallbackCandleItemId)
+            : null;
+    }
+
+    private ItemData ResolveKeyItem(PlayerInventory inventory)
+    {
+        if (keyItem != null)
+        {
+            return keyItem;
+        }
+
+        return inventory != null
+            ? inventory.GetItemData(fallbackKeyItemId)
+            : null;
+    }
+
+    private int GetCandleItemId()
+    {
+        return candleItem != null
+            ? candleItem.itemId
+            : fallbackCandleItemId;
+    }
+
+    private int GetKeyItemId()
+    {
+        return keyItem != null
+            ? keyItem.itemId
+            : fallbackKeyItemId;
+    }
+
+    private PlayerInventory GetLocalPlayerInventory()
+    {
+        if (Runner == null)
+        {
+            return null;
+        }
+
+        PlayerRef localPlayer =
+            Runner.LocalPlayer;
+
+        if (!localPlayer.IsValid)
+        {
+            return null;
+        }
+
+        if (!Runner.TryGetPlayerObject(
+                localPlayer,
+                out NetworkObject playerObject) ||
+            playerObject == null)
+        {
+            return null;
+        }
+
+        return playerObject.GetComponent<PlayerInventory>();
     }
 
     [Rpc(
@@ -2650,117 +3125,6 @@ public class NetworkGameManager : NetworkBehaviour
         // 8 CORNER POSTS
         // =========================================================
 
-        for (int i = 0;
-             i < 8;
-             i++)
-        {
-            float sx =
-                (i & 1) == 0
-                    ? -1f
-                    : 1f;
-
-            float sy =
-                (i & 2) == 0
-                    ? -1f
-                    : 1f;
-
-            float sz =
-                (i & 4) == 0
-                    ? -1f
-                    : 1f;
-
-            CreateDot(
-                center +
-                new Vector3(
-                    sx * half.x,
-                    sy * half.y,
-                    sz * half.z
-                ),
-
-                0.4f,
-                2f,
-                0.4f,
-                0f,
-                Vector3.zero
-            );
-        }
-
-        // =========================================================
-        // FLOOR FRAME LEFT
-        // =========================================================
-
-        CreateDot(
-            center +
-            new Vector3(
-                -half.x,
-                0f,
-                0f
-            ),
-
-            0.3f,
-            4f,
-            0.5f,
-            0f,
-            Vector3.zero
-        );
-
-        // =========================================================
-        // FLOOR FRAME RIGHT
-        // =========================================================
-
-        CreateDot(
-            center +
-            new Vector3(
-                half.x,
-                0f,
-                0f
-            ),
-
-            0.3f,
-            4f,
-            0.5f,
-            0f,
-            Vector3.zero
-        );
-
-        // =========================================================
-        // FLOOR FRAME BACK
-        // =========================================================
-
-        CreateDot(
-            center +
-            new Vector3(
-                0f,
-                0f,
-                -half.z
-            ),
-
-            0.3f,
-            4f,
-            0.5f,
-            0f,
-            Vector3.zero
-        );
-
-        // =========================================================
-        // FLOOR FRAME FRONT
-        // =========================================================
-
-        CreateDot(
-            center +
-            new Vector3(
-                0f,
-                0f,
-                half.z
-            ),
-
-            0.3f,
-            4f,
-            0.5f,
-            0f,
-            Vector3.zero
-        );
-
         // =========================================================
         // ZONE TAG
         // =========================================================
@@ -2981,72 +3345,6 @@ public class NetworkGameManager : NetworkBehaviour
     // DOT
     // =========================================================
 
-    private GameObject CreateDot(
-        Vector3 worldPosition,
-        float scale,
-        float pulseCyclesPerSecond,
-        float swell,
-        float lifeSeconds,
-        Vector3 velocity)
-    {
-        GameObject dot =
-            new GameObject(
-                "GhostDot"
-            );
-
-        dot.transform.position =
-            worldPosition;
-
-        GhostDot dotScript =
-            dot.AddComponent<GhostDot>();
-
-        dotScript.Configure(
-            velocity,
-            lifeSeconds,
-            pulseCyclesPerSecond,
-            swell,
-            scale
-        );
-
-        return dot;
-    }
-
-
-    private GameObject CreateAttachedDot(
-        Transform parent,
-        Vector3 localPosition,
-        float scale,
-        float pulseCyclesPerSecond,
-        float swell,
-        float lifeSeconds,
-        Vector3 velocity)
-    {
-        GameObject dot =
-            new GameObject(
-                "GhostDot"
-            );
-
-        dot.transform.SetParent(
-            parent,
-            false
-        );
-
-        dot.transform.localPosition =
-            localPosition;
-
-        GhostDot dotScript =
-            dot.AddComponent<GhostDot>();
-
-        dotScript.Configure(
-            velocity,
-            lifeSeconds,
-            pulseCyclesPerSecond,
-            swell,
-            scale
-        );
-
-        return dot;
-    }
 
 
     // =========================================================
@@ -3076,25 +3374,7 @@ public class NetworkGameManager : NetworkBehaviour
                     Mathf.Sin(angle)
                 );
 
-            CreateDot(
-                origin +
-                direction *
-                (
-                    0.6f +
-                    (i % 3) *
-                    0.25f
-                ),
-
-                0.28f,
-
-                6f,
-
-                0.35f,
-
-                1.1f,
-
-                direction * 16f
-            );
+            
         }
 
         CreateWorldTag(

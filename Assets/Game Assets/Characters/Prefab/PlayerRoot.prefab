@@ -5496,6 +5496,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fc37cc7252e517d44b276fe898ee6a8d, type: 2}
   - {fileID: 11400000, guid: 4e79d39b7f5292347bab8d08e48bc3ab, type: 2}
   - {fileID: 11400000, guid: 49c7c78e778e32040a342553e0e83829, type: 2}
+  - {fileID: 11400000, guid: 9a368eb8725ca474c9c21303fa617951, type: 2}
   _SelectedSlot: 0
 --- !u!114 &7925084007181689668
 MonoBehaviour:
@@ -5518,6 +5519,8 @@ MonoBehaviour:
   mask:
     serializedVersion: 2
     m_Bits: 256
+  holdPrompt: {fileID: 915891558482464258, guid: f1112d93167f9034eb54d0cadb8380cf, type: 3}
+  createFallbackSlider: 1
 --- !u!114 &264984566483249543
 MonoBehaviour:
   m_ObjectHideFlags: 0

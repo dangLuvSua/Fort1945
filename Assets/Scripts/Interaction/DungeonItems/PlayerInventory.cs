@@ -270,6 +270,24 @@ public class PlayerInventory : NetworkBehaviour
                     continue;
                 }
 
+                // If this stack previously had no candle state, but the
+                // incoming candle is initialized, preserve its state on the
+                // stack. This is safe because CanStackCandle only allows this
+                // when the incoming candle is at full condition.
+                if (IsCandleItem(item) &&
+                    candleInitialized &&
+                    !CandleInitializedBySlot.Get(i) &&
+                    candleMaxLife > 0f)
+                {
+                    float maxLife = Mathf.Max(0f, candleMaxLife);
+                    CandleMaxLifeBySlot.Set(i, maxLife);
+                    CandleLifeBySlot.Set(
+                        i,
+                        Mathf.Clamp(candleRemaining, 0f, maxLife)
+                    );
+                    CandleInitializedBySlot.Set(i, true);
+                }
+
                 NetworkQuantities.Set(i, currentQuantity + 1);
                 addedSlot = i;
 
@@ -341,27 +359,37 @@ public class PlayerInventory : NetworkBehaviour
         bool existingInitialized =
             CandleInitializedBySlot.Get(storageIndex);
 
-        // Initialized and uninitialized candles are not interchangeable.
-        if (existingInitialized != incomingInitialized)
-            return false;
-
-        // Both candles have no initialized burn state.
-        if (!existingInitialized)
-            return true;
-
-        float existingRemaining =
-            CandleLifeBySlot.Get(storageIndex);
-
-        float existingMaxLife =
-            CandleMaxLifeBySlot.Get(storageIndex);
-
-        // Only combine candles with compatible remaining and maximum life.
         const float tolerance = 0.1f;
 
-        return Mathf.Abs(existingRemaining - incomingRemaining)
-                   <= tolerance
-            && Mathf.Abs(existingMaxLife - incomingMaxLife)
-                   <= tolerance;
+        // If neither candle has initialized burn data, they can stack.
+        if (!existingInitialized && !incomingInitialized)
+            return true;
+
+        // Mission-spawned candles may arrive without candle state. Treat an
+        // uninitialized candle as a fresh/full candle only when the other
+        // candle is also at 100% condition. Do not merge a fresh candle into
+        // a partly burned stack.
+        if (existingInitialized && !incomingInitialized)
+        {
+            float existingRemaining = CandleLifeBySlot.Get(storageIndex);
+            float existingMaxLife = CandleMaxLifeBySlot.Get(storageIndex);
+
+            return existingMaxLife > 0f &&
+                   Mathf.Abs(existingRemaining - existingMaxLife) <= tolerance;
+        }
+
+        if (!existingInitialized && incomingInitialized)
+        {
+            return incomingMaxLife > 0f &&
+                   Mathf.Abs(incomingRemaining - incomingMaxLife) <= tolerance;
+        }
+
+        float storedRemaining = CandleLifeBySlot.Get(storageIndex);
+        float storedMaxLife = CandleMaxLifeBySlot.Get(storageIndex);
+
+        // Initialized candles must have the same remaining and maximum life.
+        return Mathf.Abs(storedRemaining - incomingRemaining) <= tolerance
+            && Mathf.Abs(storedMaxLife - incomingMaxLife) <= tolerance;
     }
 
     public int GetStorageQuantityAt(int storageIndex)
@@ -387,11 +415,23 @@ public class PlayerInventory : NetworkBehaviour
 
     public int GetQuantityForItemId(int itemId)
     {
-        int storageIndex = FindStorageIndex(itemId);
+        if (itemId <= 0)
+            return 0;
 
-        return storageIndex < 0
-            ? 0
-            : GetStorageQuantityAt(storageIndex);
+        // Count every matching storage slot. A stack may be split across
+        // slots when a stack reaches its maximum size or has incompatible
+        // candle condition, and mission progress must count all copies.
+        int totalQuantity = 0;
+
+        for (int i = 0; i < StorageSlotCount; i++)
+        {
+            if (NetworkSlots.Get(i) != itemId)
+                continue;
+
+            totalQuantity += Mathf.Max(0, NetworkQuantities.Get(i));
+        }
+
+        return totalQuantity;
     }
 
     // =========================================================
