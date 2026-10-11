@@ -3591,6 +3591,7 @@ GameObject:
   - component: {fileID: 407074828}
   - component: {fileID: 407074827}
   - component: {fileID: 407074826}
+  - component: {fileID: 407074829}
   m_Layer: 5
   m_Name: GraphicsPanel
   m_TagString: Untagged
@@ -3678,6 +3679,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 407074824}
   m_CullTransparentMesh: 1
+--- !u!114 &407074829
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 407074824}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95c9bcf2548e02241b96c952f035f841, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PanelAnimation
+  openDuration: 0.3
+  shudderIntensity: 10
+  startDistortion: {x: 0.85, y: 1.12, z: 1}
+  openSound: {fileID: 0}
+  soundVolume: 0.6
 --- !u!1 &412243962
 GameObject:
   m_ObjectHideFlags: 0
@@ -3898,7 +3916,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ButtonHoverEffect
   buttonText: {fileID: 412243968}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverColor: {r: 0.8, g: 0.1, b: 0.1, a: 1}
+  bloodGradientTop: {r: 0.92, g: 0.92, b: 0.95, a: 1}
+  bloodGradientBottom: {r: 0.82, g: 0.08, b: 0.12, a: 1}
+  bloodGlowColor: {r: 0.95, g: 0.05, b: 0.08, a: 0.9}
+  glowPower: 0.5
+  glowOuter: 0.35
   hoverScale: 1.08
   transitionSpeed: 8
   hoverSound: {fileID: 8300000, guid: 48829c84501136041b46133c895ec054, type: 3}
@@ -5115,6 +5137,7 @@ GameObject:
   - component: {fileID: 480516618}
   - component: {fileID: 480516617}
   - component: {fileID: 480516616}
+  - component: {fileID: 480516619}
   m_Layer: 5
   m_Name: ControlsPanel
   m_TagString: Untagged
@@ -5197,6 +5220,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 480516614}
   m_CullTransparentMesh: 1
+--- !u!114 &480516619
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 480516614}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95c9bcf2548e02241b96c952f035f841, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PanelAnimation
+  openDuration: 0.3
+  shudderIntensity: 10
+  startDistortion: {x: 0.85, y: 1.12, z: 1}
+  openSound: {fileID: 0}
+  soundVolume: 0.6
 --- !u!1 &491180940
 GameObject:
   m_ObjectHideFlags: 0
@@ -8567,7 +8607,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ButtonHoverEffect
   buttonText: {fileID: 755854683}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverColor: {r: 0.8, g: 0.1, b: 0.1, a: 1}
+  bloodGradientTop: {r: 0.92, g: 0.92, b: 0.95, a: 1}
+  bloodGradientBottom: {r: 0.82, g: 0.08, b: 0.12, a: 1}
+  bloodGlowColor: {r: 0.95, g: 0.05, b: 0.08, a: 0.9}
+  glowPower: 0.5
+  glowOuter: 0.35
   hoverScale: 1.08
   transitionSpeed: 8
   hoverSound: {fileID: 8300000, guid: 48829c84501136041b46133c895ec054, type: 3}
@@ -8749,6 +8793,7 @@ GameObject:
   - component: {fileID: 814834792}
   - component: {fileID: 814834791}
   - component: {fileID: 814834790}
+  - component: {fileID: 814834793}
   m_Layer: 5
   m_Name: AudioPanel
   m_TagString: Untagged
@@ -8832,6 +8877,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 814834788}
   m_CullTransparentMesh: 1
+--- !u!114 &814834793
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 814834788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95c9bcf2548e02241b96c952f035f841, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PanelAnimation
+  openDuration: 0.3
+  shudderIntensity: 10
+  startDistortion: {x: 0.85, y: 1.12, z: 1}
+  openSound: {fileID: 0}
+  soundVolume: 0.6
 --- !u!1 &822766083
 GameObject:
   m_ObjectHideFlags: 0
@@ -10296,7 +10358,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ButtonHoverEffect
   buttonText: {fileID: 914959944}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverColor: {r: 0.8, g: 0.1, b: 0.1, a: 1}
+  bloodGradientTop: {r: 0.92, g: 0.92, b: 0.95, a: 1}
+  bloodGradientBottom: {r: 0.82, g: 0.08, b: 0.12, a: 1}
+  bloodGlowColor: {r: 0.95, g: 0.05, b: 0.08, a: 0.9}
+  glowPower: 0.5
+  glowOuter: 0.35
   hoverScale: 1.08
   transitionSpeed: 8
   hoverSound: {fileID: 8300000, guid: 48829c84501136041b46133c895ec054, type: 3}
@@ -14030,6 +14096,7 @@ GameObject:
   - component: {fileID: 1336717988}
   - component: {fileID: 1336717987}
   - component: {fileID: 1336717986}
+  - component: {fileID: 1336717989}
   m_Layer: 5
   m_Name: JoinLobbyPanel
   m_TagString: Untagged
@@ -14114,6 +14181,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1336717984}
   m_CullTransparentMesh: 1
+--- !u!114 &1336717989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1336717984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95c9bcf2548e02241b96c952f035f841, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PanelAnimation
+  openDuration: 0.3
+  shudderIntensity: 10
+  startDistortion: {x: 0.85, y: 1.12, z: 1}
+  openSound: {fileID: 0}
+  soundVolume: 0.6
 --- !u!1 &1340954591
 GameObject:
   m_ObjectHideFlags: 0
@@ -18193,7 +18277,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ButtonHoverEffect
   buttonText: {fileID: 1752572849}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverColor: {r: 0.8, g: 0.1, b: 0.1, a: 1}
+  bloodGradientTop: {r: 0.92, g: 0.92, b: 0.95, a: 1}
+  bloodGradientBottom: {r: 0.82, g: 0.08, b: 0.12, a: 1}
+  bloodGlowColor: {r: 0.95, g: 0.05, b: 0.08, a: 0.9}
+  glowPower: 0.5
+  glowOuter: 0.35
   hoverScale: 1.08
   transitionSpeed: 8
   hoverSound: {fileID: 8300000, guid: 48829c84501136041b46133c895ec054, type: 3}
@@ -18912,6 +19000,7 @@ GameObject:
   - component: {fileID: 1772367601}
   - component: {fileID: 1772367600}
   - component: {fileID: 1772367599}
+  - component: {fileID: 1772367602}
   m_Layer: 5
   m_Name: MultiplayerPanel
   m_TagString: Untagged
@@ -18997,6 +19086,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1772367597}
   m_CullTransparentMesh: 1
+--- !u!114 &1772367602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1772367597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95c9bcf2548e02241b96c952f035f841, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PanelAnimation
+  openDuration: 0.3
+  shudderIntensity: 10
+  startDistortion: {x: 0.85, y: 1.12, z: 1}
+  openSound: {fileID: 0}
+  soundVolume: 0.6
 --- !u!1001 &1792945831
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19247,6 +19353,7 @@ GameObject:
   - component: {fileID: 1838370627}
   - component: {fileID: 1838370626}
   - component: {fileID: 1838370625}
+  - component: {fileID: 1838370628}
   m_Layer: 5
   m_Name: CreateLobbyPanel
   m_TagString: Untagged
@@ -19333,6 +19440,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1838370623}
   m_CullTransparentMesh: 1
+--- !u!114 &1838370628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1838370623}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95c9bcf2548e02241b96c952f035f841, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PanelAnimation
+  openDuration: 0.3
+  shudderIntensity: 10
+  startDistortion: {x: 0.85, y: 1.12, z: 1}
+  openSound: {fileID: 0}
+  soundVolume: 0.6
 --- !u!1 &1850587848
 GameObject:
   m_ObjectHideFlags: 0
@@ -20559,7 +20683,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ButtonHoverEffect
   buttonText: {fileID: 1949766286}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverColor: {r: 0.8, g: 0.1, b: 0.1, a: 1}
+  bloodGradientTop: {r: 0.92, g: 0.92, b: 0.95, a: 1}
+  bloodGradientBottom: {r: 0.82, g: 0.08, b: 0.12, a: 1}
+  bloodGlowColor: {r: 0.95, g: 0.05, b: 0.08, a: 0.9}
+  glowPower: 0.5
+  glowOuter: 0.35
   hoverScale: 1.08
   transitionSpeed: 8
   hoverSound: {fileID: 8300000, guid: 48829c84501136041b46133c895ec054, type: 3}
@@ -21140,7 +21268,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ButtonHoverEffect
   buttonText: {fileID: 1981465414}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverColor: {r: 0.8, g: 0.1, b: 0.1, a: 1}
+  bloodGradientTop: {r: 0.92, g: 0.92, b: 0.95, a: 1}
+  bloodGradientBottom: {r: 0.82, g: 0.08, b: 0.12, a: 1}
+  bloodGlowColor: {r: 0.95, g: 0.05, b: 0.08, a: 0.9}
+  glowPower: 0.5
+  glowOuter: 0.35
   hoverScale: 1.08
   transitionSpeed: 8
   hoverSound: {fileID: 8300000, guid: 48829c84501136041b46133c895ec054, type: 3}
@@ -21827,7 +21959,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ButtonHoverEffect
   buttonText: {fileID: 2063711889}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverColor: {r: 1, g: 0, b: 0, a: 1}
+  bloodGradientTop: {r: 0.92, g: 0.92, b: 0.95, a: 1}
+  bloodGradientBottom: {r: 0.82, g: 0.08, b: 0.12, a: 1}
+  bloodGlowColor: {r: 0.95, g: 0.05, b: 0.08, a: 0.9}
+  glowPower: 0.5
+  glowOuter: 0.35
   hoverScale: 1.1
   transitionSpeed: 8
   hoverSound: {fileID: 8300000, guid: 48829c84501136041b46133c895ec054, type: 3}
@@ -22637,6 +22773,7 @@ GameObject:
   - component: {fileID: 2113165846}
   - component: {fileID: 2113165845}
   - component: {fileID: 2113165844}
+  - component: {fileID: 2113165847}
   m_Layer: 5
   m_Name: CreditsPanel
   m_TagString: Untagged
@@ -22723,6 +22860,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2113165842}
   m_CullTransparentMesh: 1
+--- !u!114 &2113165847
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2113165842}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95c9bcf2548e02241b96c952f035f841, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PanelAnimation
+  openDuration: 0.3
+  shudderIntensity: 10
+  startDistortion: {x: 0.85, y: 1.12, z: 1}
+  openSound: {fileID: 0}
+  soundVolume: 0.6
 --- !u!1001 &2145915357
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -22802,6 +22956,7 @@ GameObject:
   - component: {fileID: 2147039125}
   - component: {fileID: 2147039124}
   - component: {fileID: 2147039127}
+  - component: {fileID: 2147039128}
   m_Layer: 5
   m_Name: FindLobbyPanel
   m_TagString: Untagged
@@ -22899,6 +23054,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LobbyBrowserUI
   content: {fileID: 1353618519}
   lobbyItemPrefab: {fileID: 1265245652767717972, guid: 0adff663621725143a24e044fafec9ad, type: 3}
+--- !u!114 &2147039128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147039122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95c9bcf2548e02241b96c952f035f841, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PanelAnimation
+  openDuration: 0.3
+  shudderIntensity: 10
+  startDistortion: {x: 0.85, y: 1.12, z: 1}
+  openSound: {fileID: 0}
+  soundVolume: 0.6
 --- !u!1001 &271933614367253587
 PrefabInstance:
   m_ObjectHideFlags: 0
