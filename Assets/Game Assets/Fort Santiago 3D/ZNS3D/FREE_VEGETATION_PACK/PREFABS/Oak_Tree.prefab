@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 756893109571829}
   - component: {fileID: 7068581643040004984}
   - component: {fileID: 4515746843799790220}
-  - component: {fileID: 5719117473112639501}
   m_Layer: 0
   m_Name: Oak_Tree_Bark
   m_TagString: Untagged
@@ -91,28 +90,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &5719117473112639501
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 774627872434101370}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -8379316718924154191, guid: 10461a3c15a4b524c957e202d03033fe, type: 3}
 --- !u!1 &2257672048881164429
 GameObject:
   m_ObjectHideFlags: 0
@@ -385,6 +362,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6494039128428572657}
   - component: {fileID: 5783153514103132878}
+  - component: {fileID: 8953411282673550856}
   m_Layer: 0
   m_Name: Oak_Tree
   m_TagString: Untagged
@@ -437,6 +415,29 @@ LODGroup:
     renderers: []
   m_Enabled: 1
   m_GlobalIlluminationLOD: 0
+--- !u!136 &8953411282673550856
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7573243248953728172}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.90911925
+  m_Height: 8.521235
+  m_Direction: 1
+  m_Center: {x: -0.12380493, y: 3.7606177, z: -0.5329242}
 --- !u!1 &7785773246760331488
 GameObject:
   m_ObjectHideFlags: 0
