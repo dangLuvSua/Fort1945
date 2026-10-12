@@ -336,6 +336,57 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!1 &128731026
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 128731028}
+  - component: {fileID: 128731027}
+  m_Layer: 0
+  m_Name: EnemySpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &128731027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 128731026}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc26c6b00adf44943a1be01d106d2781, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DungeonEnemySpawner
+  dungeon: {fileID: 749619190}
+  enemyPrefabs:
+  - {fileID: 7884260556253595289, guid: 749342cc14cef6847b8105d8ed7fedae, type: 3}
+  maxEnemies: 1
+  spawnChancePerPoint: 1
+  avoidPlayerSpawnRoom: 1
+  navMeshSnapDistance: 2
+--- !u!4 &128731028
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 128731026}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -78.31211, y: 0, z: -222.10606}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &151194694 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3646093506117370643, guid: 764ceef508f898a488dc0208d15db7f0, type: 3}
@@ -1042,6 +1093,7 @@ GameObject:
   m_Component:
   - component: {fileID: 749619189}
   - component: {fileID: 749619190}
+  - component: {fileID: 749619191}
   m_Layer: 0
   m_Name: DungeonGenerator
   m_TagString: Untagged
@@ -1100,6 +1152,39 @@ MonoBehaviour:
   useSessionSeed: 1
   fixedSeed: 0
   maxGenerationRetries: 20
+  navMeshSurface: {fileID: 0}
+--- !u!114 &749619191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 749619187}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
+  m_SerializedVersion: 0
+  m_AgentTypeID: 0
+  m_CollectObjects: 2
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 12801
+  m_UseGeometry: 1
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.1
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 0}
+  m_BuildHeightMesh: 0
 --- !u!1 &758525743
 GameObject:
   m_ObjectHideFlags: 0
@@ -4806,3 +4891,4 @@ SceneRoots:
   - {fileID: 758525747}
   - {fileID: 1156263070}
   - {fileID: 352293077}
+  - {fileID: 128731028}

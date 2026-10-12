@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 8784206090834310341}
   m_Layer: 0
   m_Name: Player1
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -136,19 +136,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac430167059e08640b50ec0271202488, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  inputActions: {fileID: 0}
   walkSpeed: 3
   runSpeed: 6
   acceleration: 12
   deceleration: 14
-  rotationSpeed: 12
+  jumpHeight: 1
   gravity: -20
+  stamina: {fileID: 0}
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  fallLimit: -20
+  recoveryHeight: 1
   mouseSensitivity: 100
-  bodySmoothSpeed: 18
-  cameraSmoothSpeed: 18
   maxLookUp: 80
   maxLookDown: 80
-  maxLookLeft: 90
-  maxLookRight: 90
   playerCamera: {fileID: 1456250731809751040}
   audioListener: {fileID: 456366816188813220}
   cameraHolder: {fileID: 680699209972203130}

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
+using Unity.AI.Navigation;
 
 public class DungeonGenerator : MonoBehaviour
 {
@@ -129,6 +131,16 @@ public class DungeonGenerator : MonoBehaviour
     [Min(1)]
     public int maxGenerationRetries = 20;
 
+    // =========================================================
+    // NAVMESH
+    // =========================================================
+
+    [Header("NavMesh")]
+    [SerializeField] private NavMeshSurface navMeshSurface;
+
+    public bool NavMeshReady { get; private set; }
+    public static event System.Action<DungeonGenerator> OnNavMeshBuilt;
+
 
     // =========================================================
     // RUNTIME DATA
@@ -149,6 +161,8 @@ public class DungeonGenerator : MonoBehaviour
     public bool IsGenerated { get; private set; }
 
     private readonly List<Transform> spawnPoints = new List<Transform>();
+
+    public GameObject SpawnRoomObject => spawnRoomObject;
 
 
     // =========================================================
@@ -234,6 +248,8 @@ public class DungeonGenerator : MonoBehaviour
                         "."
                     );
                 }
+
+                StartCoroutine(BuildNavMeshRoutine());
 
                 return;
             }
@@ -2305,6 +2321,8 @@ public class DungeonGenerator : MonoBehaviour
 
         DungeonEntranceObject = null;
 
+        NavMeshReady = false;
+
 
         for (
             int i = transform.childCount - 1;
@@ -2432,5 +2450,31 @@ public class DungeonGenerator : MonoBehaviour
             roomsCreated == numberOfRooms &&
             uniqueRoomCreated &&
             (dungeonEntrancePrefab == null || entranceCreated);
+    }
+
+    private IEnumerator BuildNavMeshRoutine()
+    {
+        // Hintayin ang susunod na frame para ma-destroy na ang mga piece ng failed attempts
+        yield return null;
+        yield return new WaitForFixedUpdate();
+
+        Physics.SyncTransforms();
+
+        if (navMeshSurface == null)
+            navMeshSurface = GetComponent<NavMeshSurface>();
+
+        if (navMeshSurface == null)
+        {
+            Debug.LogError("[DUNGEON] Walang NavMeshSurface.");
+            yield break;
+        }
+
+        navMeshSurface.RemoveData();
+        navMeshSurface.BuildNavMesh();
+
+        NavMeshReady = true;
+        OnNavMeshBuilt?.Invoke(this);
+
+        Debug.Log("[DUNGEON] NavMesh built.");
     }
 }
