@@ -1422,7 +1422,7 @@ MonoBehaviour:
   photoPreviewPanel: {fileID: 1934798693}
   photoImage: {fileID: 809114790}
   closePhotoButton: {fileID: 0}
-  photoPreviewDuration: 2.5
+  photoPreviewDuration: 1.7
   flashOverlay: {fileID: 1031973685}
 --- !u!1 &789192776
 GameObject:
