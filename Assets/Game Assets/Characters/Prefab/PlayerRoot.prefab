@@ -5398,6 +5398,7 @@ GameObject:
   - component: {fileID: 2076916406607803299}
   - component: {fileID: 676268940557445744}
   - component: {fileID: 1313644337388063740}
+  - component: {fileID: 5247716031049982711}
   m_Layer: 0
   m_Name: PlayerRoot
   m_TagString: Player
@@ -5473,6 +5474,11 @@ MonoBehaviour:
   jumpHeight: 1
   gravity: -20
   stamina: {fileID: 264984566483249543}
+  lowestSanitySpeedMultiplier: 0.55
+  maximumDizzyCameraRoll: 2.5
+  dizzyCameraRollSpeed: 1.5
+  lowestSanityLookMultiplier: 0.4
+  disableSprintAtSanityPercent: 0.25
   groundLayers:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -5704,9 +5710,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSanity
   maxSanity: 100
-  startingSanity: 100
+  startingSanity: 15
   allowRecovery: 0
   recoveryPerSecond: 2
+  reviveSanity: 8
+  crossHealThresholdPercent: 0.5
+  chantSfx: {fileID: 8300000, guid: 851e4f67b9b76ca4bb34bbbff3143cae, type: 3}
+  chantMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
+  glowDuration: 5
+  reviveGlowColor: {r: 1, g: 0.8, b: 0.1, a: 1}
+  visionEffectsStartPercent: 0.612
+  visionPulseSpeed: 1.6
+  maximumRedVignette: 0.723
+  maximumBlur: 0.903
+  maximumChromaticAberration: 0.72
+  maximumDizzyDistortion: 0.308
+  whisperSfxClips:
+  - {fileID: 8300000, guid: ca3eb7c40b9f33a47856c5c8bfcc21db, type: 3}
+  - {fileID: 8300000, guid: a803ba38065670a4bbcf0a2116888664, type: 3}
+  - {fileID: 8300000, guid: 53a079bcb6ba56c4bafa9de9c8fcff59, type: 3}
+  heartbeatSfx: {fileID: 8300000, guid: 2f9e6086349ee4e44b2d81653c3924dd, type: 3}
+  lowSanityMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
+  maximumWhisperVolume: 0.45
+  maximumHeartbeatVolume: 0.65
+  lowSanityAudioFadeSpeed: 2
   _CurrentSanity: 0
 --- !u!114 &676268940557445744
 MonoBehaviour:
@@ -5751,6 +5778,19 @@ MonoBehaviour:
   photoPointRange: 30
   flashDuration: 0.12
   shutterAudio: {fileID: 6949312827365826505}
+--- !u!114 &5247716031049982711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3522006267438135775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97e2f19f7d9a48dbb6254c37d7d4ea11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CrossReviveTarget
+  holdDuration: 8
 --- !u!1 &3812555787650489551
 GameObject:
   m_ObjectHideFlags: 0

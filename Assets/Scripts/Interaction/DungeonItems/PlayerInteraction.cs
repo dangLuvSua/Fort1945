@@ -110,6 +110,9 @@ private void Update()
         IInteractable candidate =
             hit.collider.GetComponentInParent<IInteractable>();
 
+        if (candidate is IHoldInteractable candidateHold)
+            candidateHold.UpdateContext(inventory);
+
         if (candidate == null || !candidate.CanInteract)
             continue;
 
@@ -215,11 +218,11 @@ private void UpdatePrompt(
 
 private void ProcessHoldInput()
 {
-    bool ePressed =
-        Keyboard.current.eKey.wasPressedThisFrame;
-
-    bool eHeld =
-        Keyboard.current.eKey.isPressed;
+    Key holdKey = currentHoldTarget is IKeyHoldInteractable keyHold
+        ? keyHold.HoldKey
+        : Key.E;
+    bool ePressed = Keyboard.current[holdKey].wasPressedThisFrame;
+    bool eHeld = Keyboard.current[holdKey].isPressed;
 
     if (ePressed && !holdStarted)
     {
