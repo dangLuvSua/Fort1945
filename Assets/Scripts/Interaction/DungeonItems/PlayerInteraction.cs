@@ -25,6 +25,7 @@ private HoldInteractionSliderUI holdSlider;
 
 private float holdProgress;
 private bool holdStarted;
+private bool ownsHoldPrompt;
 
 public override void Spawned()
 {
@@ -48,12 +49,15 @@ public override void Spawned()
     if (promptText != null)
         promptText.SetActive(false);
 
-    if (holdPrompt == null)
+    // PlayerRoot can serialize a reference to the prompt prefab asset rather
+    // than the live prompt instance in this client's loaded scene. UI methods
+    // must target the scene instance so the prompt and slider are visible.
+    if (holdPrompt == null || !holdPrompt.gameObject.scene.IsValid())
         holdPrompt = FindInteractionPrompt();
 
     if (holdPrompt != null)
     {
-        holdPrompt.Hide();
+        ownsHoldPrompt = false;
     }
     else if (createFallbackSlider && uiRoot != null)
     {
@@ -119,6 +123,28 @@ private void Update()
         }
     }
 
+    // Locktrigger is intentionally a trigger volume and is ignored by the
+    // raycast above. Allow the gate interaction to activate from proximity
+    // while the player stands in that volume, without requiring a precise aim.
+    if (target == null)
+    {
+        DungeonGateUnlock[] gates = FindObjectsByType<DungeonGateUnlock>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None
+        );
+
+        Transform playerRoot = inventory.transform.root;
+        foreach (DungeonGateUnlock gate in gates)
+        {
+            if (gate != null && gate.CanInteract &&
+                gate.IsPlayerInsideLockTrigger(playerRoot))
+            {
+                target = gate;
+                break;
+            }
+        }
+    }
+
     IHoldInteractable holdTarget =
         target as IHoldInteractable;
 
@@ -163,12 +189,16 @@ private void UpdatePrompt(
         if (promptText != null)
             promptText.SetActive(false);
 
-        holdPrompt.Show(holdTarget.Prompt);
+        holdPrompt.ShowFor(this, holdTarget.Prompt);
+        ownsHoldPrompt = true;
         return;
     }
 
-    if (holdPrompt != null)
-        holdPrompt.Hide();
+    if (holdPrompt != null && ownsHoldPrompt)
+    {
+        holdPrompt.HideFor(this);
+        ownsHoldPrompt = false;
+    }
 
     if (promptLabel != null)
     {
@@ -200,10 +230,12 @@ private void ProcessHoldInput()
 
         if (holdPrompt != null)
         {
-            holdPrompt.ShowProgress(
+            holdPrompt.ShowProgressFor(
+                this,
                 currentHoldTarget.Prompt,
                 0f
             );
+            ownsHoldPrompt = true;
         }
         else if (holdSlider != null)
         {
@@ -231,7 +263,7 @@ private void ProcessHoldInput()
 
     if (holdPrompt != null)
     {
-        holdPrompt.SetProgress(progress);
+        holdPrompt.SetProgressFor(this, progress);
     }
     else if (holdSlider != null)
     {
@@ -247,8 +279,11 @@ private void ProcessHoldInput()
         holdProgress = 0f;
         currentHoldTarget = null;
 
-        if (holdPrompt != null)
-            holdPrompt.Hide();
+        if (holdPrompt != null && ownsHoldPrompt)
+        {
+            holdPrompt.HideFor(this);
+            ownsHoldPrompt = false;
+        }
 
         if (holdSlider != null)
             holdSlider.Hide();
@@ -266,8 +301,11 @@ private void CancelHold()
     holdProgress = 0f;
     currentHoldTarget = null;
 
-    if (holdPrompt != null)
-        holdPrompt.Hide();
+    if (holdPrompt != null && ownsHoldPrompt)
+    {
+        holdPrompt.HideFor(this);
+        ownsHoldPrompt = false;
+    }
 
     if (holdSlider != null)
         holdSlider.Hide();
@@ -302,8 +340,11 @@ private void OnDisable()
     holdProgress = 0f;
     currentHoldTarget = null;
 
-    if (holdPrompt != null)
-        holdPrompt.Hide();
+    if (holdPrompt != null && ownsHoldPrompt)
+    {
+        holdPrompt.HideFor(this);
+        ownsHoldPrompt = false;
+    }
 
     if (holdSlider != null)
         holdSlider.Hide();

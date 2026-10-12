@@ -781,6 +781,16 @@ public class FortMissionItemSpawner : MonoBehaviour
         EnsureProgressPanel();
     }
 
+    /// <summary>Called after the player acknowledges the mission briefing.</summary>
+    public void BeginProgressTracking()
+    {
+        if (missionActive)
+            return;
+
+        missionActive = true;
+        EnsureProgressPanel();
+    }
+
     /// <summary>
     /// Configures the mission and required items on each client.
     /// </summary>
@@ -837,11 +847,14 @@ public class FortMissionItemSpawner : MonoBehaviour
             return;
         }
 
-        int candleCountOwned =
-            inventory.GetQuantityForItemId(candleItemId);
+        NetworkGameManager manager = NetworkGameManager.Instance;
+        int candleCountOwned = manager != null
+            ? manager.GetTeamItemCount(candleItemId)
+            : inventory.GetQuantityForItemId(candleItemId);
 
-        int keyCountOwned =
-            inventory.GetQuantityForItemId(keyItemId);
+        int keyCountOwned = manager != null
+            ? manager.GetTeamItemCount(keyItemId)
+            : inventory.GetQuantityForItemId(keyItemId);
 
         if (!force &&
             candleCountOwned == lastCandleCount &&
