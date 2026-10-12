@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Fusion;
 using Fusion.Sockets;
@@ -10,6 +11,22 @@ public class NetworkRunnerHandler :
     MonoBehaviour,
     INetworkRunnerCallbacks
 {
+    private const int CameraPhotoPacketMagic = 0x46313945;
+    private const byte CameraPhotoUpload = 1;
+    private const byte CameraPhotoRequest = 2;
+    private const byte CameraPhotoTransfer = 3;
+
+    private sealed class SharedCameraPhoto
+    {
+        public string ContentKey;
+        public byte[] EncodedImage;
+    }
+
+    private static readonly Dictionary<int, List<SharedCameraPhoto>>
+        SharedPhotosByCameraId = new();
+
+    private static int nextCameraPhotoTransferId;
+
     public static NetworkRunnerHandler Instance { get; private set; }
 
 
@@ -1239,6 +1256,7 @@ public class NetworkRunnerHandler :
 
         if (callbackRunner == runner)
         {
+            SharedPhotosByCameraId.Clear();
             runner = null;
 
             // The handler may already be in the process of being
@@ -1299,6 +1317,241 @@ public class NetworkRunnerHandler :
         ReliableKey key,
         ReadOnlySpan<byte> data)
     {
+        if (callbackRunner != runner ||
+            !TryReadCameraPhotoPacket(data.ToArray(), out byte operation,
+                out int cameraItemId, out byte[] photoBytes))
+        {
+            return;
+        }
+
+        if (operation == CameraPhotoUpload && callbackRunner.IsSharedModeMasterClient)
+        {
+            CacheCameraPhoto(cameraItemId, photoBytes);
+        }
+        else if (operation == CameraPhotoRequest &&
+                 callbackRunner.IsSharedModeMasterClient)
+        {
+            SendCameraPhotoLibrary(callbackRunner, player, cameraItemId);
+        }
+        else if (operation == CameraPhotoTransfer)
+        {
+            StorePhotoOnLocalPlayer(callbackRunner, photoBytes);
+        }
+    }
+
+    public static bool PublishCameraPhoto(
+        NetworkRunner activeRunner,
+        int cameraItemId,
+        byte[] encodedImage)
+    {
+        if (activeRunner == null || !activeRunner.IsRunning || cameraItemId <= 0 ||
+            encodedImage == null || encodedImage.Length == 0)
+        {
+            Debug.LogWarning(
+                "[CAMERA PHOTOS] Cannot publish photo: " +
+                $"runner={(activeRunner == null ? "null" : activeRunner.IsRunning ? "running" : "stopped")}, " +
+                $"cameraItemId={cameraItemId}, " +
+                $"bytes={(encodedImage == null ? 0 : encodedImage.Length)}.");
+            return false;
+        }
+
+        if (activeRunner.IsSharedModeMasterClient)
+        {
+            CacheCameraPhoto(cameraItemId, encodedImage);
+        }
+        else
+        {
+            byte[] packet = MakeCameraPhotoPacket(
+                CameraPhotoUpload, cameraItemId, encodedImage);
+            activeRunner.SendReliableDataToServer(
+                MakeCameraPhotoKey(activeRunner, cameraItemId, CameraPhotoUpload),
+                packet);
+        }
+
+        return true;
+    }
+
+    public static void RequestCameraPhotoLibrary(
+        NetworkRunner activeRunner,
+        int cameraItemId)
+    {
+        if (activeRunner == null || !activeRunner.IsRunning || cameraItemId <= 0)
+            return;
+
+        if (activeRunner.IsSharedModeMasterClient)
+        {
+            SendCameraPhotoLibrary(
+                activeRunner, activeRunner.LocalPlayer, cameraItemId);
+            return;
+        }
+
+        activeRunner.SendReliableDataToServer(
+            MakeCameraPhotoKey(activeRunner, cameraItemId, CameraPhotoRequest),
+            MakeCameraPhotoPacket(CameraPhotoRequest, cameraItemId, null));
+    }
+
+    private static ReliableKey MakeCameraPhotoKey(
+        NetworkRunner activeRunner,
+        int cameraItemId,
+        byte operation,
+        PlayerRef target = default)
+    {
+        int playerId = target == default
+            ? activeRunner.LocalPlayer.PlayerId
+            : target.PlayerId;
+
+        return ReliableKey.FromInts(
+            cameraItemId,
+            operation,
+            ++nextCameraPhotoTransferId,
+            playerId);
+    }
+
+    private static byte[] MakeCameraPhotoPacket(
+        byte operation,
+        int cameraItemId,
+        byte[] photoBytes)
+    {
+        photoBytes ??= Array.Empty<byte>();
+        using MemoryStream stream = new();
+        using (BinaryWriter writer = new(stream))
+        {
+            writer.Write(CameraPhotoPacketMagic);
+            writer.Write(operation);
+            writer.Write(cameraItemId);
+            writer.Write(photoBytes.Length);
+            writer.Write(photoBytes);
+        }
+
+        return stream.ToArray();
+    }
+
+    private static bool TryReadCameraPhotoPacket(
+        byte[] packet,
+        out byte operation,
+        out int cameraItemId,
+        out byte[] photoBytes)
+    {
+        operation = 0;
+        cameraItemId = 0;
+        photoBytes = null;
+
+        try
+        {
+            using MemoryStream stream = new(packet, false);
+            using BinaryReader reader = new(stream);
+            if (reader.ReadInt32() != CameraPhotoPacketMagic)
+                return false;
+
+            operation = reader.ReadByte();
+            cameraItemId = reader.ReadInt32();
+            int payloadLength = reader.ReadInt32();
+            if (payloadLength < 0 || payloadLength > stream.Length - stream.Position)
+                return false;
+
+            photoBytes = reader.ReadBytes(payloadLength);
+            return photoBytes.Length == payloadLength;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"[CAMERA PHOTOS] Invalid photo packet: {exception.Message}");
+            return false;
+        }
+    }
+
+    private static void CacheCameraPhoto(int cameraItemId, byte[] encodedImage)
+    {
+        if (encodedImage == null || encodedImage.Length == 0)
+            return;
+
+        if (!SharedPhotosByCameraId.TryGetValue(cameraItemId, out List<SharedCameraPhoto> photos))
+        {
+            photos = new List<SharedCameraPhoto>();
+            SharedPhotosByCameraId.Add(cameraItemId, photos);
+        }
+
+        string contentKey = GetCameraPhotoContentKey(encodedImage);
+        foreach (SharedCameraPhoto photo in photos)
+        {
+            if (photo.ContentKey == contentKey)
+                return;
+        }
+
+        if (photos.Count >= PlayerInventory.SlotsPerCategory)
+        {
+            Debug.LogWarning(
+                $"[CAMERA PHOTOS] Camera item {cameraItemId} reached its photo limit.");
+            return;
+        }
+
+        photos.Add(new SharedCameraPhoto
+        {
+            ContentKey = contentKey,
+            EncodedImage = (byte[])encodedImage.Clone()
+        });
+
+        Debug.Log($"[CAMERA PHOTOS] Stored photo {photos.Count} for camera item {cameraItemId}.");
+    }
+
+    private static void SendCameraPhotoLibrary(
+        NetworkRunner activeRunner,
+        PlayerRef target,
+        int cameraItemId)
+    {
+        if (!SharedPhotosByCameraId.TryGetValue(cameraItemId, out List<SharedCameraPhoto> photos))
+            return;
+
+        foreach (SharedCameraPhoto photo in photos)
+        {
+            byte[] packet = MakeCameraPhotoPacket(
+                CameraPhotoTransfer, cameraItemId, photo.EncodedImage);
+
+            if (target == activeRunner.LocalPlayer)
+            {
+                StorePhotoOnLocalPlayer(activeRunner, photo.EncodedImage);
+            }
+            else
+            {
+                activeRunner.SendReliableDataToPlayer(
+                    target,
+                    MakeCameraPhotoKey(
+                        activeRunner, cameraItemId, CameraPhotoTransfer, target),
+                    packet);
+            }
+        }
+    }
+
+    private static void StorePhotoOnLocalPlayer(
+        NetworkRunner activeRunner,
+        byte[] encodedImage)
+    {
+        if (activeRunner.TryGetPlayerObject(
+                activeRunner.LocalPlayer, out NetworkObject playerObject) &&
+            playerObject != null)
+        {
+            PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
+            if (inventory != null && !inventory.StoreSharedPhoto(encodedImage))
+            {
+                Debug.LogWarning(
+                    "[CAMERA PHOTOS] Could not add a shared image to the " +
+                    "local Gallery; it may be full.");
+            }
+        }
+    }
+
+    private static string GetCameraPhotoContentKey(byte[] bytes)
+    {
+        unchecked
+        {
+            ulong hash = 14695981039346656037UL;
+            foreach (byte value in bytes)
+            {
+                hash ^= value;
+                hash *= 1099511628211UL;
+            }
+
+            return hash.ToString("X16");
+        }
     }
 
 

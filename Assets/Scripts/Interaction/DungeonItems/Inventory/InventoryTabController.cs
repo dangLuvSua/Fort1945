@@ -23,6 +23,8 @@ public class InventoryTabController : MonoBehaviour
         Puzzle
     }
 
+    public Tab CurrentTab { get; private set; }
+
     private void Awake()
     {
         if (itemButton != null)
@@ -77,6 +79,8 @@ public class InventoryTabController : MonoBehaviour
 
     public void OpenTab(Tab tab)
     {
+        CurrentTab = tab;
+
         if (itemPanel != null)
             itemPanel.SetActive(tab == Tab.Item);
 
@@ -85,5 +89,13 @@ public class InventoryTabController : MonoBehaviour
 
         if (puzzlePanel != null)
             puzzlePanel.SetActive(tab == Tab.Puzzle);
+
+        PlayerInventoryUI[] inventoryUIs =
+            FindObjectsByType<PlayerInventoryUI>(FindObjectsSortMode.None);
+        foreach (PlayerInventoryUI inventoryUI in inventoryUIs)
+        {
+            if (inventoryUI != null)
+                inventoryUI.SetGalleryTabActive(tab == Tab.Gallery);
+        }
     }
 }
