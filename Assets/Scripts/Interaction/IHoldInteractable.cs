@@ -28,3 +28,9 @@ public interface IHoldInteractable : IInteractable
     /// <summary>Called when the player held the key for the full HoldDuration.</summary>
     void HoldCompleted(PlayerInventory inv);
 }
+
+/// <summary>Optional key override for hold interactions; defaults to E.</summary>
+public interface IKeyHoldInteractable
+{
+    UnityEngine.InputSystem.Key HoldKey { get; }
+}

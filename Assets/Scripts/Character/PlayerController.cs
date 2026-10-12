@@ -29,6 +29,13 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float gravity = -20f;
     [SerializeField] private PlayerStamina stamina;
 
+    [Header("Low Sanity Movement / Camera")]
+    [SerializeField, Range(0.1f, 1f)] private float lowestSanitySpeedMultiplier = 0.55f;
+    [SerializeField, Range(0f, 8f)] private float maximumDizzyCameraRoll = 2.5f;
+    [SerializeField, Min(0f)] private float dizzyCameraRollSpeed = 1.5f;
+    [SerializeField, Range(0.1f, 1f)] private float lowestSanityLookMultiplier = 0.4f;
+    [SerializeField, Range(0f, 1f)] private float disableSprintAtSanityPercent = 0.25f;
+
 
     // =========================================================
     // GROUND / FALL SAFETY
@@ -102,6 +109,7 @@ public class PlayerController : NetworkBehaviour
 
     private Animator animator;
     private CharacterController characterController;
+    private PlayerSanity playerSanity;
 
     private InputAction moveAction;
     private InputAction lookAction;
@@ -143,6 +151,7 @@ public class PlayerController : NetworkBehaviour
 
         characterController =
             GetComponent<CharacterController>();
+        playerSanity = GetComponent<PlayerSanity>();
 
         if (characterController == null)
         {
@@ -489,12 +498,19 @@ public class PlayerController : NetworkBehaviour
 
     private void HandleLook()
     {
-        if (lookAction == null)
-            return;
+        float lookMultiplier = 1f;
+        if (playerSanity != null)
+        {
+            lookMultiplier = Mathf.Lerp(
+                1f,
+                lowestSanityLookMultiplier,
+                playerSanity.LowSanitySeverity
+            );
+        }
 
-        Vector2 look =
-            lookAction.ReadValue<Vector2>() *
-            mouseSensitivity;
+        Vector2 look = lookAction != null
+            ? lookAction.ReadValue<Vector2>() * mouseSensitivity * lookMultiplier
+            : Vector2.zero;
 
         // Store horizontal rotation
         yaw += look.x;
@@ -509,11 +525,16 @@ public class PlayerController : NetworkBehaviour
         // Camera only handles up/down here
         if (cameraHolder != null)
         {
+            float sanitySeverity = playerSanity != null
+                ? playerSanity.LowSanitySeverity
+                : 0f;
+            float dizzyRoll = Mathf.Sin(Time.time * dizzyCameraRollSpeed) *
+                              maximumDizzyCameraRoll * sanitySeverity;
             cameraHolder.localRotation =
                 Quaternion.Euler(
                     pitch,
                     0f,
-                    0f
+                    dizzyRoll
                 );
         }
     }
@@ -569,7 +590,9 @@ public class PlayerController : NetworkBehaviour
 
         bool wantsRun =
             runInput &&
-            moveInput.magnitude > 0.01f;
+            moveInput.magnitude > 0.01f &&
+            (playerSanity == null ||
+             playerSanity.SanityPercent > disableSprintAtSanityPercent);
 
         bool isRunning =
             stamina != null
@@ -580,6 +603,16 @@ public class PlayerController : NetworkBehaviour
             isRunning
                 ? runSpeed
                 : walkSpeed;
+
+        if (playerSanity != null)
+        {
+            float sanitySlow = Mathf.Lerp(
+                1f,
+                lowestSanitySpeedMultiplier,
+                playerSanity.LowSanitySeverity
+            );
+            targetSpeed *= sanitySlow;
+        }
 
         Vector3 targetVelocity =
             desiredDirection *
