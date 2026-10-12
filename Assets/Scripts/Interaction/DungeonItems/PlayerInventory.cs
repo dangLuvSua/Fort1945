@@ -158,9 +158,26 @@ public class PlayerInventory : NetworkBehaviour
 
     public event Action InventoryChanged;
 
+    private void NotifyInventoryChangedImmediately()
+    {
+        if (Object == null || !Object.IsValid || !Object.IsInSimulation)
+            return;
+
+        // Render() normally rebuilds the held model when the inventory hash
+        // changes. Since this helper advances that hash for an immediate UI
+        // refresh, do the held-model update here as well.
+        RefreshHeldVisual();
+        lastInventoryHash = CalculateInventoryHash();
+        InventoryChanged?.Invoke();
+    }
+
 
 
     public bool IsInventorySpawned { get; private set; }
+
+    public bool HasCameraInInventory =>
+        cameraItemData != null && Object != null && Object.IsValid &&
+        Object.IsInSimulation && Has(cameraItemData);
 
     public IReadOnlyList<CapturedPhoto> CapturedPhotos => capturedPhotos;
 
@@ -275,29 +292,18 @@ public class PlayerInventory : NetworkBehaviour
         return false;
     }
 
-    public void ClearCapturedPhotos()
+    public void NotifyItemCollected(int itemId)
     {
-        if (capturedPhotos.Count == 0)
-            return;
-
-        foreach (CapturedPhoto photo in capturedPhotos)
+        if (cameraItemData == null || itemId != cameraItemData.itemId ||
+            Runner == null || !Runner.IsRunning)
         {
-            if (photo == null)
-                continue;
-
-            if (photo.Item != null)
-            {
-                if (photo.Item.icon != null)
-                    Destroy(photo.Item.icon);
-                Destroy(photo.Item);
-            }
-
-            if (photo.Image != null)
-                Destroy(photo.Image);
+            return;
         }
 
-        capturedPhotos.Clear();
-        InventoryChanged?.Invoke();
+        // Rehydrate this player's local Gallery from the camera's session
+        // album as soon as pickup succeeds. Opening the viewfinder also
+        // requests the album as a fallback for cameras already in inventory.
+        NetworkRunnerHandler.RequestCameraPhotoLibrary(Runner, itemId);
     }
 
     private static string GetPhotoContentKey(byte[] bytes)
@@ -774,6 +780,7 @@ public class PlayerInventory : NetworkBehaviour
 
 
 
+                NotifyInventoryChangedImmediately();
                 return true;
 
             }
@@ -860,6 +867,7 @@ public class PlayerInventory : NetworkBehaviour
 
 
 
+            NotifyInventoryChangedImmediately();
             return true;
 
         }
@@ -1292,6 +1300,7 @@ public class PlayerInventory : NetworkBehaviour
 
 
 
+        NotifyInventoryChangedImmediately();
         return true;
 
     }
@@ -1792,6 +1801,7 @@ public class PlayerInventory : NetworkBehaviour
 
         SelectedSlot = -1;
 
+        NotifyInventoryChangedImmediately();
 
 
         Debug.Log("[INVENTORY] Item deselected. Hand is empty.");
@@ -2104,9 +2114,6 @@ public class PlayerInventory : NetworkBehaviour
 
         int quantity = NetworkQuantities.Get(storageIndex);
 
-        bool droppedLastCamera = quantity <= 1 && cameraItemData != null &&
-            item.itemId == cameraItemData.itemId;
-
         if (quantity > 1)
 
         {
@@ -2161,13 +2168,12 @@ public class PlayerInventory : NetworkBehaviour
 
         }
 
+        CompactQuickBar();
+
         SelectedSlot = -1;
 
-        // Clear only the camera's runtime photo entries, after the dropped
-        // storage slot has been updated. This keeps the gallery refresh from
-        // observing a half-completed drop; other inventory slots are untouched.
-        if (droppedLastCamera)
-            ClearCapturedPhotos();
+        NotifyInventoryChangedImmediately();
+
         Debug.Log($"[INVENTORY] {item.itemName} dropped.");
 
     }
@@ -2175,6 +2181,26 @@ public class PlayerInventory : NetworkBehaviour
 
 
     // =========================================================
+
+    private void CompactQuickBar()
+    {
+        int nextWriteIndex = 0;
+
+        for (int readIndex = 0; readIndex < QuickBarSlotCount; readIndex++)
+        {
+            int encodedStorageIndex = NetworkQuickBar.Get(readIndex);
+            if (encodedStorageIndex == 0)
+                continue;
+
+            if (nextWriteIndex != readIndex)
+                NetworkQuickBar.Set(nextWriteIndex, encodedStorageIndex);
+
+            nextWriteIndex++;
+        }
+
+        for (int i = nextWriteIndex; i < QuickBarSlotCount; i++)
+            NetworkQuickBar.Set(i, 0);
+    }
 
     // ITEM LOOKUP
 

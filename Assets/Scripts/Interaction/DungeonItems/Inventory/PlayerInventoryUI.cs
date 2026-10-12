@@ -131,9 +131,14 @@ public class PlayerInventoryUI : MonoBehaviour
 
     public void SetGalleryTabActive(bool active)
     {
+        if (galleryTabActive == active)
+            return;
+
         galleryTabActive = active;
+        // A tab represents a separate browsing context. Clear the old item
+        // selection and its preview, but leave all stored photos intact.
+        ClearDescription();
         ApplyDescriptionPanelVisibility();
-        UpdateGalleryPreview(selectedItem);
     }
 
     private void UpdateGalleryPreview(ItemData item)
@@ -141,7 +146,9 @@ public class PlayerInventoryUI : MonoBehaviour
         if (galleryPreviewImage == null)
             return;
 
-        bool showPhoto = item != null && item.category == ItemCategory.Gallery;
+        bool hasCamera = inventory != null && inventory.HasCameraInInventory;
+        bool showPhoto = hasCamera && item != null &&
+            item.category == ItemCategory.Gallery;
         galleryPreviewImage.sprite = showPhoto ? item.icon : null;
         galleryPreviewImage.enabled = showPhoto && item.icon != null;
         galleryPreviewImage.preserveAspect = true;
@@ -199,7 +206,7 @@ public class PlayerInventoryUI : MonoBehaviour
     {
         UnsubscribeFromInventory();
         UnsubscribeQuickSlots();
-        ClearDynamicSlots();
+        UnsubscribeDynamicSlotEvents();
     }
 
     private void OnDestroy()
@@ -505,7 +512,13 @@ public class PlayerInventoryUI : MonoBehaviour
         Transform content,
         List<InventorySlotUI> slots)
     {
-        if (!IsInventoryReady() || content == null)
+        if (content == null)
+        {
+            DeactivateSlots(slots, 0);
+            return;
+        }
+
+        if (!IsInventoryReady())
             return;
 
         if (slotPrefab == null)
@@ -516,7 +529,9 @@ public class PlayerInventoryUI : MonoBehaviour
             return;
         }
 
-        ClearSlots(content, slots);
+        ClearSlots(slots);
+
+        int activeSlotCount = 0;
 
         int count = inventory.GetStorageSlotCount();
 
@@ -527,7 +542,7 @@ public class PlayerInventoryUI : MonoBehaviour
             if (item == null || item.category != category)
                 continue;
 
-            InventorySlotUI slot = Instantiate(slotPrefab, content);
+            InventorySlotUI slot = GetOrCreateSlot(content, slots, activeSlotCount++);
 
             int quantity = inventory.GetStorageQuantityAt(i);
 
@@ -544,28 +559,29 @@ public class PlayerInventoryUI : MonoBehaviour
             slot.OnSlotClicked -= HandleInventorySlotClicked;
             slot.OnSlotClicked += HandleInventorySlotClicked;
 
-            slots.Add(slot);
         }
 
-        if (category == ItemCategory.Gallery)
+        if (category == ItemCategory.Gallery && inventory.HasCameraInInventory)
         {
             foreach (PlayerInventory.CapturedPhoto photo in inventory.CapturedPhotos)
             {
                 if (photo == null || photo.Item == null)
                     continue;
 
-                InventorySlotUI slot = Instantiate(slotPrefab, content);
+                InventorySlotUI slot = GetOrCreateSlot(content, slots, activeSlotCount++);
                 slot.SetItem(photo.Item, photo.Item == selectedItem);
                 slot.OnClicked -= HandleCapturedPhotoClicked;
                 slot.OnClicked += HandleCapturedPhotoClicked;
-                slots.Add(slot);
             }
         }
+
+        DeactivateSlots(slots, activeSlotCount);
     }
 
     private void HandleCapturedPhotoClicked(ItemData photo)
     {
-        if (!IsInventoryReady() || !inventory.IsCapturedPhoto(photo))
+        if (!IsInventoryReady() || !inventory.HasCameraInInventory ||
+            !inventory.IsCapturedPhoto(photo))
             return;
 
         selectedItem = photo;
@@ -600,35 +616,73 @@ public class PlayerInventoryUI : MonoBehaviour
         UpdateActionButtons();
     }
 
-    private void ClearSlots(
+    private InventorySlotUI GetOrCreateSlot(
         Transform content,
-        List<InventorySlotUI> slots)
+        List<InventorySlotUI> slots,
+        int index)
+    {
+        InventorySlotUI slot = index < slots.Count ? slots[index] : null;
+
+        if (slot == null)
+        {
+            slot = Instantiate(slotPrefab, content);
+
+            if (index < slots.Count)
+                slots[index] = slot;
+            else
+                slots.Add(slot);
+        }
+        else if (slot.transform.parent != content)
+        {
+            slot.transform.SetParent(content, false);
+        }
+
+        slot.gameObject.SetActive(true);
+        return slot;
+    }
+
+    private void ClearSlots(List<InventorySlotUI> slots)
     {
         foreach (InventorySlotUI slot in slots)
         {
             if (slot == null)
                 continue;
 
+            slot.OnSlotClicked -= HandleInventorySlotClicked;
+            slot.OnClicked -= HandleCapturedPhotoClicked;
+            slot.Clear();
+            slot.gameObject.SetActive(false);
+        }
+    }
+
+    private static void DeactivateSlots(
+        List<InventorySlotUI> slots,
+        int firstUnusedIndex)
+    {
+        for (int i = firstUnusedIndex; i < slots.Count; i++)
+        {
+            if (slots[i] != null)
+                slots[i].gameObject.SetActive(false);
+        }
+    }
+
+    private void UnsubscribeDynamicSlotEvents()
+    {
+        UnsubscribeDynamicSlotEvents(itemSlots);
+        UnsubscribeDynamicSlotEvents(gallerySlots);
+        UnsubscribeDynamicSlotEvents(puzzleSlots);
+    }
+
+    private void UnsubscribeDynamicSlotEvents(List<InventorySlotUI> slots)
+    {
+        foreach (InventorySlotUI slot in slots)
+        {
+            if (slot == null)
+                continue;
 
             slot.OnSlotClicked -= HandleInventorySlotClicked;
             slot.OnClicked -= HandleCapturedPhotoClicked;
-
-            Destroy(slot.gameObject);
         }
-
-        slots.Clear();
-    }
-
-    private void ClearDynamicSlots()
-    {
-        if (itemContent != null)
-            ClearSlots(itemContent, itemSlots);
-
-        if (galleryContent != null)
-            ClearSlots(galleryContent, gallerySlots);
-
-        if (puzzleContent != null)
-            ClearSlots(puzzleContent, puzzleSlots);
     }
 
     // =========================================================
@@ -950,6 +1004,12 @@ public class PlayerInventoryUI : MonoBehaviour
 
         if (inventory.IsCapturedPhoto(selectedItem))
         {
+            if (!inventory.HasCameraInInventory)
+            {
+                ClearDescription();
+                return;
+            }
+
             UpdateDescription(selectedItem);
             UpdateActionButtons();
             return;
@@ -1002,6 +1062,9 @@ public class PlayerInventoryUI : MonoBehaviour
     {
         if (inventoryPanel == null)
             return;
+
+        if (IsInventoryReady())
+            inventory.DeselectItem();
 
         inventoryPanel.SetActive(false);
         ClearDescription();

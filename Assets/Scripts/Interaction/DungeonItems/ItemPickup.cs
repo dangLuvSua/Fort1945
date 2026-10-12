@@ -195,6 +195,8 @@ public class ItemPickup : NetworkBehaviour, IInteractable
 
         if (added)
         {
+            inventory.NotifyItemCollected(itemId);
+
             Debug.Log(
                 $"[ITEM PICKUP] Item {itemId} collected by {targetPlayer}."
             );
