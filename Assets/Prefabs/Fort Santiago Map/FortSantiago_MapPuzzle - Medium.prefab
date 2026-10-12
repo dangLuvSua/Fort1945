@@ -50,7 +50,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 2ae65d502bff65f4e9832852c773fdff, type: 3}
       propertyPath: m_Name
-      value: FortSantiago_MapPuzzle - MEDIUM
+      value: FortSantiago_MapPuzzle - Medium
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
