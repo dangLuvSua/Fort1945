@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 using Fusion;
 
@@ -11,6 +12,20 @@ using UnityEngine.InputSystem;
 public class PlayerInventory : NetworkBehaviour
 
 {
+    public sealed class CapturedPhoto
+    {
+        public ItemData Item { get; }
+        public Texture2D Image { get; }
+        public string ContentKey { get; }
+
+        public CapturedPhoto(ItemData item, Texture2D image, string contentKey)
+        {
+            Item = item;
+            Image = image;
+            ContentKey = contentKey;
+        }
+    }
+
 
     // Keep the old constant available for existing scripts.
     public const int SlotCount = 8;
@@ -51,12 +66,13 @@ public class PlayerInventory : NetworkBehaviour
 
     private GameObject networkHeldObject;
 
+    private bool cameraHeldVisualHidden;
+
     [Header("Camera")]
     [SerializeField] private ItemData cameraItemData;
     [SerializeField] private GameObject viewfinderRoot;
 
     public bool IsViewfinderOpen { get; private set; }
-    public event Action CameraShutterPressed;
 
 
 
@@ -134,6 +150,10 @@ public class PlayerInventory : NetworkBehaviour
 
     private int lastInventoryHash = int.MinValue;
 
+    private readonly List<CapturedPhoto> capturedPhotos = new();
+
+    private int nextPhotoNumber = 1;
+
 
 
     public event Action InventoryChanged;
@@ -141,6 +161,159 @@ public class PlayerInventory : NetworkBehaviour
 
 
     public bool IsInventorySpawned { get; private set; }
+
+    public IReadOnlyList<CapturedPhoto> CapturedPhotos => capturedPhotos;
+
+    public bool IsCapturedPhoto(ItemData item)
+    {
+        if (item == null)
+            return false;
+
+        foreach (CapturedPhoto photo in capturedPhotos)
+        {
+            if (photo.Item == item)
+                return true;
+        }
+
+        return false;
+    }
+
+    public bool StoreCapturedPhoto(Texture2D source)
+    {
+        return StoreCapturedPhoto(source, null);
+    }
+
+    public bool StoreCapturedPhoto(Texture2D source, byte[] encodedPhoto)
+    {
+        if (source == null || Object == null || !Object.IsValid ||
+            !Object.IsInSimulation)
+            return false;
+
+        byte[] encoded = encodedPhoto ?? source.EncodeToJPG(80);
+        string contentKey = GetPhotoContentKey(encoded);
+
+        foreach (CapturedPhoto existingPhoto in capturedPhotos)
+        {
+            if (existingPhoto.ContentKey == contentKey)
+                return true;
+        }
+
+        int occupiedGallerySlots = capturedPhotos.Count;
+        for (int i = SlotsPerCategory * 2; i < StorageSlotCount; i++)
+        {
+            if (NetworkSlots.Get(i) != 0)
+                occupiedGallerySlots++;
+        }
+
+        if (occupiedGallerySlots >= SlotsPerCategory)
+            return false;
+
+        Texture2D imageCopy = Instantiate(source);
+        imageCopy.name = $"Captured Photo {nextPhotoNumber:00}";
+        Sprite thumbnail = Sprite.Create(
+            imageCopy,
+            new Rect(0, 0, imageCopy.width, imageCopy.height),
+            new Vector2(0.5f, 0.5f),
+            100f
+        );
+
+        ItemData photoItem = ScriptableObject.CreateInstance<ItemData>();
+        photoItem.itemId = int.MinValue + nextPhotoNumber;
+        photoItem.itemName = $"Photograph {nextPhotoNumber:00}";
+        photoItem.description = "A photograph captured with the Polaroid camera.";
+        photoItem.category = ItemCategory.Gallery;
+        photoItem.isStackable = false;
+        photoItem.icon = thumbnail;
+
+        capturedPhotos.Add(new CapturedPhoto(photoItem, imageCopy, contentKey));
+        nextPhotoNumber++;
+        InventoryChanged?.Invoke();
+        return true;
+    }
+
+    public bool StoreSharedPhoto(byte[] encodedPhoto)
+    {
+        if (encodedPhoto == null || encodedPhoto.Length == 0)
+            return false;
+
+        Texture2D decoded = new Texture2D(2, 2, TextureFormat.RGB24, false);
+        if (!decoded.LoadImage(encodedPhoto))
+        {
+            Destroy(decoded);
+            return false;
+        }
+
+        bool stored = StoreCapturedPhoto(decoded, encodedPhoto);
+        Destroy(decoded);
+        return stored;
+    }
+
+    public bool RemoveCapturedPhoto(ItemData item)
+    {
+        if (item == null)
+            return false;
+
+        for (int i = 0; i < capturedPhotos.Count; i++)
+        {
+            CapturedPhoto photo = capturedPhotos[i];
+            if (photo == null || photo.Item != item)
+                continue;
+
+            capturedPhotos.RemoveAt(i);
+
+            if (photo.Item.icon != null)
+                Destroy(photo.Item.icon);
+            Destroy(photo.Item);
+
+            if (photo.Image != null)
+                Destroy(photo.Image);
+
+            InventoryChanged?.Invoke();
+            return true;
+        }
+
+        return false;
+    }
+
+    public void ClearCapturedPhotos()
+    {
+        if (capturedPhotos.Count == 0)
+            return;
+
+        foreach (CapturedPhoto photo in capturedPhotos)
+        {
+            if (photo == null)
+                continue;
+
+            if (photo.Item != null)
+            {
+                if (photo.Item.icon != null)
+                    Destroy(photo.Item.icon);
+                Destroy(photo.Item);
+            }
+
+            if (photo.Image != null)
+                Destroy(photo.Image);
+        }
+
+        capturedPhotos.Clear();
+        InventoryChanged?.Invoke();
+    }
+
+    private static string GetPhotoContentKey(byte[] bytes)
+    {
+        unchecked
+        {
+            ulong hash = 14695981039346656037UL;
+            foreach (byte value in bytes)
+            {
+                hash ^= value;
+                hash *= 1099511628211UL;
+            }
+
+            return hash.ToString("X16");
+        }
+    }
 
     public override void Spawned()
 
@@ -198,19 +371,6 @@ public class PlayerInventory : NetworkBehaviour
 
         if (Object == null)
             return;
-
-        // Camera controls belong to the local player using this character.
-        if (Object.HasInputAuthority)
-        {
-            if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame)
-                ToggleCameraViewfinder();
-
-            if (IsViewfinderOpen && Mouse.current != null &&
-                Mouse.current.leftButton.wasPressedThisFrame)
-            {
-                CameraShutterPressed?.Invoke();
-            }
-        }
 
         // Preserve the existing authority gate for inventory and drop input.
         if (!Object.HasStateAuthority)
@@ -1944,7 +2104,8 @@ public class PlayerInventory : NetworkBehaviour
 
         int quantity = NetworkQuantities.Get(storageIndex);
 
-
+        bool droppedLastCamera = quantity <= 1 && cameraItemData != null &&
+            item.itemId == cameraItemData.itemId;
 
         if (quantity > 1)
 
@@ -2000,10 +2161,13 @@ public class PlayerInventory : NetworkBehaviour
 
         }
 
-
-
         SelectedSlot = -1;
 
+        // Clear only the camera's runtime photo entries, after the dropped
+        // storage slot has been updated. This keeps the gallery refresh from
+        // observing a half-completed drop; other inventory slots are untouched.
+        if (droppedLastCamera)
+            ClearCapturedPhotos();
         Debug.Log($"[INVENTORY] {item.itemName} dropped.");
 
     }
@@ -2150,25 +2314,24 @@ public class PlayerInventory : NetworkBehaviour
 
 
 
-    private void ToggleCameraViewfinder()
-    {
-        ItemData selectedItem = GetQuickBarItemAt(SelectedSlot);
-
-        if (cameraItemData == null || selectedItem != cameraItemData)
-            return;
-
-        IsViewfinderOpen = !IsViewfinderOpen;
-
-        if (viewfinderRoot != null)
-            viewfinderRoot.SetActive(IsViewfinderOpen);
-    }
-
     public void CloseCameraViewfinder()
     {
         IsViewfinderOpen = false;
 
         if (viewfinderRoot != null)
             viewfinderRoot.SetActive(false);
+    }
+
+    public void SetCameraHeldVisualVisible(bool visible)
+    {
+        cameraHeldVisualHidden = !visible;
+
+        ItemData selectedItem = GetQuickBarItemAt(SelectedSlot);
+        if (heldObject != null && cameraItemData != null &&
+            selectedItem != null && selectedItem.itemId == cameraItemData.itemId)
+        {
+            heldObject.SetActive(visible);
+        }
     }
 
     private void RefreshHeldVisual()
@@ -2202,6 +2365,12 @@ public class PlayerInventory : NetworkBehaviour
 
 
         ItemData item = GetQuickBarItemAt(SelectedSlot);
+
+        if (item == null || cameraItemData == null ||
+            item.itemId != cameraItemData.itemId)
+        {
+            cameraHeldVisualHidden = false;
+        }
 
 
 
@@ -2278,6 +2447,12 @@ public class PlayerInventory : NetworkBehaviour
 
 
         CleanHeldVisual(heldObject);
+
+        if (cameraHeldVisualHidden && cameraItemData != null &&
+            item.itemId == cameraItemData.itemId)
+        {
+            heldObject.SetActive(false);
+        }
 
 
 
@@ -2564,6 +2739,25 @@ public class PlayerInventory : NetworkBehaviour
 
         }
 
+    }
+
+    private void OnDestroy()
+    {
+        foreach (CapturedPhoto photo in capturedPhotos)
+        {
+            if (photo.Item != null)
+            {
+                if (photo.Item.icon != null)
+                    Destroy(photo.Item.icon);
+
+                Destroy(photo.Item);
+            }
+
+            if (photo.Image != null)
+                Destroy(photo.Image);
+        }
+
+        capturedPhotos.Clear();
     }
 
 }

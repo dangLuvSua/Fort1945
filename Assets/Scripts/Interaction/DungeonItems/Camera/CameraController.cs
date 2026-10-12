@@ -1,9 +1,9 @@
-
+using System.Collections;
 using Fusion;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
-using TMPro;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 public class CameraController : NetworkBehaviour
 {
@@ -14,120 +14,109 @@ public class CameraController : NetworkBehaviour
     [SerializeField] private Camera playerCamera;
     [SerializeField] private Camera cameraViewCamera;
 
-    [Header("Viewfinder UI")]
-    [SerializeField] private GameObject cameraPanel;
-    [SerializeField] private RawImage viewfinderImage;
-    [SerializeField] private Button shutterButton;
-    [SerializeField] private Button closeCameraButton;
-
-    [Header("Photo Preview UI")]
-    [SerializeField] private GameObject photoPreviewPanel;
-    [SerializeField] private RawImage photoImage;
-    [SerializeField] private Button closePhotoButton;
-
     [Header("Capture")]
     [SerializeField] private RenderTexture cameraViewTexture;
     [SerializeField] private RenderTexture photoRenderTexture;
 
     [Tooltip("Layer containing ghosts invisible to the normal player view.")]
     [SerializeField] private LayerMask photoGhostLayer;
+    [Tooltip("Layers checked to find a configured camera photo point.")]
+    [SerializeField] private LayerMask photoPointMask = ~0;
+    [SerializeField, Min(0.1f)] private float photoPointRange = 30f;
 
     [Header("Flash")]
-    [SerializeField] private Image flashOverlay;
     [SerializeField, Min(0.01f)] private float flashDuration = 0.12f;
     [SerializeField] private AudioSource shutterAudio;
 
     private PlayerInventory inventory;
+    private PlayerInventoryUI inventoryUI;
+    private CameraViewfinderUI viewfinderUI;
     private Texture2D capturedPhoto;
-    private float flashTimer;
+    private bool isCameraOpen;
+    private bool captureInProgress;
 
-    public bool IsCameraOpen { get; private set; }
+    public bool IsCameraOpen => isCameraOpen;
 
     private void Awake()
     {
         inventory = GetComponent<PlayerInventory>();
 
-        if (cameraPanel != null)
-            cameraPanel.SetActive(false);
-
-        if (photoPreviewPanel != null)
-            photoPreviewPanel.SetActive(false);
-
-        if (flashOverlay != null)
-        {
-            flashOverlay.gameObject.SetActive(false);
-            flashOverlay.raycastTarget = false;
-        }
-
         if (cameraViewCamera != null)
         {
             cameraViewCamera.enabled = false;
             cameraViewCamera.targetTexture = cameraViewTexture;
-            cameraViewCamera.GetComponent<AudioListener>()?.enabled.Equals(false);
+
+            AudioListener listener =
+                cameraViewCamera.GetComponent<AudioListener>();
+
+            if (listener != null)
+                listener.enabled = false;
         }
-
-        if (viewfinderImage != null && cameraViewTexture != null)
-            viewfinderImage.texture = cameraViewTexture;
-
-        if (shutterButton != null)
-            shutterButton.onClick.AddListener(TakePhoto);
-
-        if (closeCameraButton != null)
-            closeCameraButton.onClick.AddListener(CloseCamera);
-
-        if (closePhotoButton != null)
-            closePhotoButton.onClick.AddListener(ClosePhoto);
     }
 
     public override void Spawned()
     {
         inventory = GetComponent<PlayerInventory>();
 
-        // Camera controls and UI belong to the local player only.
-        if (!Object.HasInputAuthority)
-        {
-            if (cameraViewCamera != null)
-                cameraViewCamera.enabled = false;
-
-            if (cameraPanel != null)
-                cameraPanel.SetActive(false);
-
-            if (photoPreviewPanel != null)
-                photoPreviewPanel.SetActive(false);
-        }
+        if (!Object.HasInputAuthority && cameraViewCamera != null)
+            cameraViewCamera.enabled = false;
     }
 
     private void Update()
     {
-        if (!Object.HasInputAuthority)
+        if (Object == null || !Object.HasInputAuthority)
             return;
 
-        if (flashTimer > 0f)
+        if (Keyboard.current != null &&
+            Keyboard.current.xKey.wasPressedThisFrame)
         {
-            flashTimer -= Time.deltaTime;
+            Debug.Log(
+                $"[CAMERA] X pressed. Holding camera: {IsHoldingCamera()}"
+            );
 
-            if (flashTimer <= 0f && flashOverlay != null)
-                flashOverlay.gameObject.SetActive(false);
-        }
-
-        if (Keyboard.current == null)
-            return;
-
-        if (Keyboard.current.fKey.wasPressedThisFrame)
-        {
-            if (IsCameraOpen)
-            {
+            if (isCameraOpen)
                 CloseCamera();
-            }
             else if (IsHoldingCamera())
-            {
                 OpenCamera();
-            }
         }
 
-        // If the player switches away from the camera, close its UI.
-        if (IsCameraOpen && !IsHoldingCamera())
+        if (isCameraOpen && Mouse.current != null &&
+            Mouse.current.rightButton.wasPressedThisFrame)
+            TakePhoto();
+
+        // Close the viewfinder if the player switches to another item.
+        if (isCameraOpen && !IsHoldingCamera())
             CloseCamera();
+    }
+
+    private void LateUpdate()
+    {
+        if (!isCameraOpen ||
+            playerCamera == null ||
+            cameraViewCamera == null)
+        {
+            return;
+        }
+
+        SyncViewCamera();
+    }
+
+    private void SyncViewCamera()
+    {
+        if (playerCamera == null || cameraViewCamera == null)
+            return;
+
+        cameraViewCamera.transform.SetPositionAndRotation(
+            playerCamera.transform.position,
+            playerCamera.transform.rotation
+        );
+
+        cameraViewCamera.fieldOfView = playerCamera.fieldOfView;
+        cameraViewCamera.nearClipPlane = playerCamera.nearClipPlane;
+        cameraViewCamera.farClipPlane = playerCamera.farClipPlane;
+        cameraViewCamera.orthographic = playerCamera.orthographic;
+        cameraViewCamera.orthographicSize = playerCamera.orthographicSize;
+        cameraViewCamera.aspect = playerCamera.aspect;
     }
 
     private bool IsHoldingCamera()
@@ -143,95 +132,181 @@ public class CameraController : NetworkBehaviour
         if (storageSlot < 0)
             return false;
 
-        ItemData selected = inventory.GetStorageItemAt(storageSlot);
+        ItemData selectedItem =
+            inventory.GetStorageItemAt(storageSlot);
 
-        return selected != null &&
-               selected.itemId == cameraItem.itemId;
+        return selectedItem != null &&
+               selectedItem.itemId == cameraItem.itemId;
+    }
+
+    public void BindUI(CameraViewfinderUI ui)
+    {
+        viewfinderUI = ui;
+
+        if (viewfinderUI != null)
+            viewfinderUI.Bind(this, cameraViewTexture);
     }
 
     public void OpenCamera()
     {
-        if (!Object.HasInputAuthority || !IsHoldingCamera())
+        if (Object == null ||
+            !Object.HasInputAuthority ||
+            !IsHoldingCamera())
+        {
             return;
+        }
 
-        IsCameraOpen = true;
+        isCameraOpen = true;
+        SetQuickBarVisible(false);
 
-        if (cameraPanel != null)
-            cameraPanel.SetActive(true);
+        if (inventory != null)
+            inventory.SetCameraHeldVisualVisible(false);
 
-        if (photoPreviewPanel != null)
-            photoPreviewPanel.SetActive(false);
+        if (cameraItem != null)
+            NetworkRunnerHandler.RequestCameraPhotoLibrary(
+                Runner, cameraItem.itemId);
 
         if (cameraViewCamera != null)
         {
-            cameraViewCamera.enabled = true;
+            if (cameraViewTexture != null && !cameraViewTexture.IsCreated())
+                cameraViewTexture.Create();
+
             cameraViewCamera.targetTexture = cameraViewTexture;
+            cameraViewCamera.enabled = true;
         }
 
-        // Do not disable player movement or mouse-look here.
-        // Configure your UI input so the viewfinder does not block aiming.
+        if (viewfinderUI != null)
+            viewfinderUI.SetCameraOpen(true);
+
+        Debug.Log("[CAMERA] Viewfinder opened.");
     }
 
     public void CloseCamera()
     {
-        IsCameraOpen = false;
+        isCameraOpen = false;
+        SetQuickBarVisible(true);
+
+        if (inventory != null)
+            inventory.SetCameraHeldVisualVisible(true);
 
         if (cameraViewCamera != null)
             cameraViewCamera.enabled = false;
 
-        if (cameraPanel != null)
-            cameraPanel.SetActive(false);
+        if (viewfinderUI != null)
+            viewfinderUI.SetCameraOpen(false);
 
-        if (photoPreviewPanel != null)
-            photoPreviewPanel.SetActive(false);
+        Debug.Log("[CAMERA] Viewfinder closed.");
     }
 
     public void TakePhoto()
     {
-        if (!Object.HasInputAuthority ||
-            !IsCameraOpen ||
+        if (Object == null ||
+            !Object.HasInputAuthority ||
+            !isCameraOpen ||
             !IsHoldingCamera())
-            return;
-
-        if (cameraViewCamera == null || photoRenderTexture == null)
         {
-            Debug.LogError("[CAMERA] Assign the camera and photo RenderTexture.");
             return;
         }
 
-        CapturePhoto();
-
-        if (flashOverlay != null)
+        if (playerCamera == null || cameraViewCamera == null ||
+            cameraViewTexture == null || photoRenderTexture == null)
         {
-            flashOverlay.gameObject.SetActive(true);
-            flashOverlay.color = Color.white;
-            flashTimer = flashDuration;
+            Debug.LogError(
+                "[CAMERA] Assign Player Camera, Camera View Camera, " +
+                "Camera View Texture and Photo Render Texture.",
+                this
+            );
+            return;
         }
 
-        if (shutterAudio != null)
-            shutterAudio.Play();
-
-        if (photoPreviewPanel != null)
-            photoPreviewPanel.SetActive(true);
-
-        if (photoImage != null && capturedPhoto != null)
-            photoImage.texture = capturedPhoto;
+        SyncViewCamera();
+        if (!captureInProgress)
+            StartCoroutine(CaptureAfterCameraRender());
     }
 
-    private void CapturePhoto()
+    private IEnumerator CaptureAfterCameraRender()
     {
-        Camera cam = cameraViewCamera;
+        captureInProgress = true;
 
-        RenderTexture previousTarget = cam.targetTexture;
+        if (isCameraOpen && cameraViewTexture != null && photoRenderTexture != null)
+        {
+            yield return CapturePhoto();
+
+            if (capturedPhoto != null)
+            {
+                byte[] encodedPhoto = capturedPhoto.EncodeToJPG(80);
+                bool storedLocally = inventory != null &&
+                    inventory.StoreCapturedPhoto(capturedPhoto, encodedPhoto);
+                if (!storedLocally)
+                {
+                    Debug.LogWarning(
+                        "[CAMERA] Gallery is full or the local inventory is not " +
+                        "ready; photo preview is available but was not added to Gallery.", this);
+                }
+
+                if (storedLocally && cameraItem != null &&
+                    !NetworkRunnerHandler.PublishCameraPhoto(
+                        Runner, cameraItem.itemId, encodedPhoto))
+                {
+                    Debug.LogWarning(
+                        "[CAMERA] Could not share photo with other camera holders.", this);
+                }
+
+                if (shutterAudio != null)
+                    shutterAudio.Play();
+
+                if (viewfinderUI != null)
+                    viewfinderUI.ShowPhoto(capturedPhoto);
+                else
+                    Debug.LogError("[CAMERA] No viewfinder UI is bound to show the photo.", this);
+            }
+        }
+
+        captureInProgress = false;
+    }
+
+    private IEnumerator CapturePhoto()
+    {
+        if (!photoRenderTexture.IsCreated())
+            photoRenderTexture.Create();
+
+        // Configured points represent fixed evidence/photos. Any other view
+        // is captured from the live camera render below.
+        Ray ray = new Ray(cameraViewCamera.transform.position,
+            cameraViewCamera.transform.forward);
+        if (Physics.Raycast(ray, out RaycastHit hit, photoPointRange,
+                photoPointMask, QueryTriggerInteraction.Collide))
+        {
+            CameraPhotoPoint photoPoint =
+                hit.collider.GetComponentInParent<CameraPhotoPoint>();
+            if (photoPoint != null && photoPoint.Photo != null)
+            {
+                if (capturedPhoto != null)
+                    Destroy(capturedPhoto);
+                capturedPhoto = Instantiate(photoPoint.Photo);
+                yield break;
+            }
+        }
+
         RenderTexture previousActive = RenderTexture.active;
-        int previousMask = cam.cullingMask;
+        float previousAspect = cameraViewCamera.aspect;
 
         try
         {
-            // Render the ghost only into this photograph.
-            cam.cullingMask = previousMask | photoGhostLayer.value;
-            cam.targetTexture = photoRenderTexture;
-            cam.Render();
+            // Render the same scene camera directly into the photo texture.
+            // This uses URP's supported request API and gives the Polaroid a
+            // square camera projection instead of copying a possibly stale RT.
+            cameraViewCamera.aspect =
+                (float)photoRenderTexture.width / photoRenderTexture.height;
+            var request = new UniversalRenderPipeline.SingleCameraRequest
+            {
+                destination = photoRenderTexture
+            };
+            RenderPipeline.SubmitRenderRequest(cameraViewCamera, request);
+
+            // Let URP process the submitted camera render, then read its
+            // completed target texture at the end of that frame.
+            yield return new WaitForEndOfFrame();
 
             RenderTexture.active = photoRenderTexture;
 
@@ -255,31 +330,46 @@ public class CameraController : NetworkBehaviour
             );
 
             capturedPhoto.Apply();
+
+            Debug.Log($"[CAMERA] Captured photo: {width}x{height}.", this);
         }
         finally
         {
-            cam.cullingMask = previousMask;
-            cam.targetTexture = previousTarget;
+            cameraViewCamera.aspect = previousAspect;
             RenderTexture.active = previousActive;
         }
     }
 
     public void ClosePhoto()
     {
-        if (photoPreviewPanel != null)
-            photoPreviewPanel.SetActive(false);
+        if (viewfinderUI != null)
+            viewfinderUI.ClosePhoto();
+    }
+
+    private void SetQuickBarVisible(bool visible)
+    {
+        if (inventoryUI == null)
+        {
+            PlayerInventoryUI[] inventoryUIs =
+                FindObjectsByType<PlayerInventoryUI>(FindObjectsSortMode.None);
+            foreach (PlayerInventoryUI candidate in inventoryUIs)
+            {
+                if (candidate != null && candidate.IsForInventory(inventory))
+                {
+                    inventoryUI = candidate;
+                    break;
+                }
+            }
+        }
+
+        if (inventoryUI != null)
+            inventoryUI.SetQuickBarVisible(visible);
     }
 
     private void OnDestroy()
     {
-        if (shutterButton != null)
-            shutterButton.onClick.RemoveListener(TakePhoto);
-
-        if (closeCameraButton != null)
-            closeCameraButton.onClick.RemoveListener(CloseCamera);
-
-        if (closePhotoButton != null)
-            closePhotoButton.onClick.RemoveListener(ClosePhoto);
+        if (isCameraOpen)
+            SetQuickBarVisible(true);
 
         if (capturedPhoto != null)
             Destroy(capturedPhoto);

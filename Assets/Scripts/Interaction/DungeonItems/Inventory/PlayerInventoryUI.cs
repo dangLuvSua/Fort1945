@@ -12,6 +12,8 @@ public class PlayerInventoryUI : MonoBehaviour
 
     [Header("Quick Bar")]
     [SerializeField] private InventorySlotUI[] quickSlots;
+    [SerializeField] private GameObject quickBarRoot;
+    [SerializeField] private GameObject inventoryButtonRoot;
 
     [Header("Dynamic Inventory")]
     [Tooltip("Prefab used to generate occupied inventory slots.")]
@@ -23,6 +25,8 @@ public class PlayerInventoryUI : MonoBehaviour
     [SerializeField] private Transform puzzleContent;
 
     [Header("Description Panel")]
+    [Tooltip("Optional visual-only root for the item description area. Leave action buttons outside this object if they should remain available in Gallery.")]
+    [SerializeField] private GameObject descriptionPanelRoot;
     [SerializeField] private Image descriptionIcon;
     [SerializeField] private TMP_Text descriptionName;
     [SerializeField] private TMP_Text descriptionText;
@@ -39,6 +43,7 @@ public class PlayerInventoryUI : MonoBehaviour
     [SerializeField] private Button deleteInventoryButton;
 
     [Header("Gallery Photograph Preview")]
+    [Tooltip("Gallery tab container. Its visibility is controlled by InventoryTabController; the image itself is assigned to Gallery Preview Image.")]
     [SerializeField] private GameObject galleryPreviewPanel;
     [SerializeField] private Image galleryPreviewImage;
 
@@ -61,14 +66,116 @@ public class PlayerInventoryUI : MonoBehaviour
     private int selectedQuickBarIndex = -1;
 
     private bool inventorySubscribed;
+    private bool galleryTabActive;
+
+    public bool IsForInventory(PlayerInventory candidate) => inventory == candidate;
+
+    public void SetQuickBarVisible(bool visible)
+    {
+        GameObject root = quickBarRoot;
+        if (root == null && quickSlots != null && quickSlots.Length > 0 &&
+            quickSlots[0] != null && quickSlots[0].transform.parent != null)
+        {
+            Transform commonParent = quickSlots[0].transform.parent;
+            bool allShareParent = true;
+            foreach (InventorySlotUI slot in quickSlots)
+            {
+                if (slot != null && slot.transform.parent != commonParent)
+                {
+                    allShareParent = false;
+                    break;
+                }
+            }
+
+            if (allShareParent)
+                root = commonParent.gameObject;
+        }
+
+        if (root != null)
+            root.SetActive(visible);
+        else if (quickSlots != null)
+        {
+            foreach (InventorySlotUI slot in quickSlots)
+            {
+                if (slot != null)
+                    slot.gameObject.SetActive(visible);
+            }
+        }
+
+        GameObject buttonRoot = inventoryButtonRoot ?? FindInventoryButtonRoot();
+        if (buttonRoot != null && buttonRoot != root)
+            buttonRoot.SetActive(visible);
+    }
+
+    private GameObject FindInventoryButtonRoot()
+    {
+        Button[] buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        foreach (Button button in buttons)
+        {
+            if (button == null)
+                continue;
+
+            for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+            {
+                if (button.onClick.GetPersistentTarget(i) == this &&
+                    button.onClick.GetPersistentMethodName(i) == "OpenInventoryPanel")
+                {
+                    inventoryButtonRoot = button.gameObject;
+                    return inventoryButtonRoot;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public void SetGalleryTabActive(bool active)
+    {
+        galleryTabActive = active;
+        ApplyDescriptionPanelVisibility();
+        UpdateGalleryPreview(selectedItem);
+    }
+
+    private void UpdateGalleryPreview(ItemData item)
+    {
+        if (galleryPreviewImage == null)
+            return;
+
+        bool showPhoto = item != null && item.category == ItemCategory.Gallery;
+        galleryPreviewImage.sprite = showPhoto ? item.icon : null;
+        galleryPreviewImage.enabled = showPhoto && item.icon != null;
+        galleryPreviewImage.preserveAspect = true;
+    }
+
+    private void ApplyDescriptionPanelVisibility()
+    {
+        bool visible = !galleryTabActive;
+        if (descriptionPanelRoot != null)
+        {
+            descriptionPanelRoot.SetActive(visible);
+            return;
+        }
+
+        // Fallback for scenes that have not assigned the visual panel root.
+        // The delete action remains available while browsing gallery photos.
+        if (descriptionIcon != null)
+            descriptionIcon.gameObject.SetActive(visible);
+        if (descriptionName != null)
+            descriptionName.gameObject.SetActive(visible);
+        if (descriptionText != null)
+            descriptionText.gameObject.SetActive(visible);
+        if (descriptionQuantity != null)
+            descriptionQuantity.gameObject.SetActive(visible);
+        if (equipButton != null)
+            equipButton.gameObject.SetActive(visible);
+        if (removeButton != null)
+            removeButton.gameObject.SetActive(visible);
+    }
 
     private void Awake()
     {
         if (inventoryPanel != null)
             inventoryPanel.SetActive(openOnStart);
-
-        if (galleryPreviewPanel != null)
-            galleryPreviewPanel.SetActive(false);
 
         ClearDescription();
 
@@ -439,6 +546,35 @@ public class PlayerInventoryUI : MonoBehaviour
 
             slots.Add(slot);
         }
+
+        if (category == ItemCategory.Gallery)
+        {
+            foreach (PlayerInventory.CapturedPhoto photo in inventory.CapturedPhotos)
+            {
+                if (photo == null || photo.Item == null)
+                    continue;
+
+                InventorySlotUI slot = Instantiate(slotPrefab, content);
+                slot.SetItem(photo.Item, photo.Item == selectedItem);
+                slot.OnClicked -= HandleCapturedPhotoClicked;
+                slot.OnClicked += HandleCapturedPhotoClicked;
+                slots.Add(slot);
+            }
+        }
+    }
+
+    private void HandleCapturedPhotoClicked(ItemData photo)
+    {
+        if (!IsInventoryReady() || !inventory.IsCapturedPhoto(photo))
+            return;
+
+        selectedItem = photo;
+        selectedStorageIndex = -1;
+        selectedQuickBarIndex = -1;
+
+        UpdateDescription(photo);
+        UpdateAllSelectionHighlights();
+        UpdateActionButtons();
     }
 
     private void HandleInventorySlotClicked(InventorySlotUI slot)
@@ -475,6 +611,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
 
             slot.OnSlotClicked -= HandleInventorySlotClicked;
+            slot.OnClicked -= HandleCapturedPhotoClicked;
 
             Destroy(slot.gameObject);
         }
@@ -548,7 +685,10 @@ public class PlayerInventoryUI : MonoBehaviour
     private void UpdateDescription(ItemData item)
     {
         if (item == null)
+        {
+            ApplyDescriptionPanelVisibility();
             return;
+        }
 
         if (descriptionIcon != null)
         {
@@ -575,18 +715,9 @@ public class PlayerInventoryUI : MonoBehaviour
                 : "Quantity: 1";
         }
 
-        if (galleryPreviewPanel != null)
-        {
-            bool isPhoto = item.category == ItemCategory.Gallery;
-            galleryPreviewPanel.SetActive(isPhoto);
+        UpdateGalleryPreview(item);
 
-            if (isPhoto && galleryPreviewImage != null)
-            {
-                galleryPreviewImage.sprite = item.icon;
-                galleryPreviewImage.enabled = item.icon != null;
-                galleryPreviewImage.preserveAspect = true;
-            }
-        }
+        ApplyDescriptionPanelVisibility();
     }
 
     private void UpdateAllSelectionHighlights()
@@ -630,8 +761,11 @@ public class PlayerInventoryUI : MonoBehaviour
                 continue;
 
             bool isSelected =
-                selectedStorageIndex >= 0
-                && slot.StorageIndex == selectedStorageIndex;
+                (selectedStorageIndex >= 0 &&
+                 slot.StorageIndex == selectedStorageIndex) ||
+                (inventory != null &&
+                 inventory.IsCapturedPhoto(selectedItem) &&
+                 slot.GetItem() == selectedItem);
 
             slot.SetSelected(isSelected);
         }
@@ -657,9 +791,6 @@ public class PlayerInventoryUI : MonoBehaviour
 
         if (descriptionQuantity != null)
             descriptionQuantity.text = "";
-
-        if (galleryPreviewPanel != null)
-            galleryPreviewPanel.SetActive(false);
 
         if (galleryPreviewImage != null)
         {
@@ -728,6 +859,21 @@ public class PlayerInventoryUI : MonoBehaviour
         if (!IsInventoryReady() || selectedItem == null)
             return;
 
+        if (inventory.IsCapturedPhoto(selectedItem))
+        {
+            bool photoDeleted = inventory.RemoveCapturedPhoto(selectedItem);
+            if (photoDeleted)
+            {
+                ClearDescription();
+                Refresh();
+            }
+            else
+            {
+                Debug.LogWarning("[INVENTORY UI] Could not delete the selected photograph.");
+            }
+            return;
+        }
+
         int itemId = selectedItem.itemId;
 
         // Existing PlayerInventory API deletes by item ID.
@@ -750,16 +896,16 @@ public class PlayerInventoryUI : MonoBehaviour
     private void UpdateActionButtons()
     {
         bool ready = IsInventoryReady();
-        bool hasSelection =
-            ready && selectedItem != null && selectedStorageIndex >= 0;
+        bool isCapturedPhoto = ready && inventory.IsCapturedPhoto(selectedItem);
+        bool hasSelection = ready && selectedItem != null &&
+            (isCapturedPhoto || selectedStorageIndex >= 0);
 
-        bool isGalleryPhoto =
-            hasSelection &&
+        bool isGalleryPhoto = hasSelection &&
             selectedItem.category == ItemCategory.Gallery;
 
-        bool itemExists = false;
+        bool itemExists = isCapturedPhoto;
 
-        if (hasSelection
+        if (hasSelection && !isCapturedPhoto
             && selectedStorageIndex < inventory.GetStorageSlotCount())
         {
             ItemData stored =
@@ -793,7 +939,7 @@ public class PlayerInventoryUI : MonoBehaviour
             deleteInventoryButton.interactable =
                 hasSelection &&
                 itemExists &&
-                inventory.Has(selectedItem);
+                (isCapturedPhoto || inventory.Has(selectedItem));
         }
     }
 
@@ -801,6 +947,13 @@ public class PlayerInventoryUI : MonoBehaviour
     {
         if (selectedItem == null || !IsInventoryReady())
             return;
+
+        if (inventory.IsCapturedPhoto(selectedItem))
+        {
+            UpdateDescription(selectedItem);
+            UpdateActionButtons();
+            return;
+        }
 
         bool validIndex =
             selectedStorageIndex >= 0 &&
