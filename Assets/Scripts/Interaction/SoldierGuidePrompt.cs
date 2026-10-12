@@ -225,7 +225,9 @@ public class SoldierGuidePrompt : MonoBehaviour
             return false;
         }
 
-        return manager.SoldierStarted;
+        // The follow prompt is only relevant while the soldier is still
+        // leading the party. Once the destination is reached, it must stay hidden.
+        return manager.SoldierStarted && !manager.SoldierReachedDoor;
     }
 
 

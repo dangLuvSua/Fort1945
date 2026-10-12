@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -5,7 +6,7 @@ using UnityEngine;
 /// (the DungeonEntryZone object).
 ///
 /// It is added at runtime by NetworkGameManager so no scene wiring is
-/// required. The player must have the mission KEY equipped, then hold
+/// required. The player must equip the mission KEY, then hold
 /// [E] until the slider fills. On completion it asks NetworkGameManager
 /// (state authority) to unlock the gate, which then loads the Dungeon scene.
 ///
@@ -46,11 +47,11 @@ public class DungeonGateUnlock : MonoBehaviour, IHoldInteractable
     // =========================================================
 
     [Header("Interaction Collider")]
-    [Tooltip("Local position of the generated interaction box relative to this object.")]
+    [Tooltip("Unscaled offset from this object's position, in world units.")]
     [SerializeField] private Vector3 colliderLocalPosition =
         new Vector3(0f, 1.2f, 1.1f);
 
-    [Tooltip("Size of the generated interaction box (local units).")]
+    [Tooltip("World-space size of the generated interaction box.")]
     [SerializeField] private Vector3 colliderSize =
         new Vector3(2.4f, 2.8f, 1.4f);
 
@@ -61,12 +62,15 @@ public class DungeonGateUnlock : MonoBehaviour, IHoldInteractable
     // GATE FEEDBACK
     // =========================================================
 
-    [Header("Gate Feedback")]
-    [Tooltip("Optional animator played when the gate unlocks.")]
-    [SerializeField] private Animator gateAnimator;
+    [Header("Gate Rotation")]
+    [Tooltip("The door leaf or hinge pivot that should rotate open.")]
+    [SerializeField] private Transform doorToRotate;
 
-    [Tooltip("Optional Animator trigger name for the unlock animation.")]
-    [SerializeField] private string openTriggerName = "Open";
+    [Tooltip("Local Euler rotation added to the door's starting rotation when it opens.")]
+    [SerializeField] private Vector3 openRotationOffset = new Vector3(0f, 90f, 0f);
+
+    [Tooltip("Seconds taken to rotate the door open.")]
+    [SerializeField, Min(0.05f)] private float doorOpenDuration = 1.25f;
 
     [Tooltip("Optional sound played when the gate unlocks.")]
     [SerializeField] private AudioSource unlockAudio;
@@ -79,6 +83,10 @@ public class DungeonGateUnlock : MonoBehaviour, IHoldInteractable
 
     private bool interactionZoneBuilt;
     private bool gateUnlocked;
+    private Quaternion closedLocalRotation;
+    private Quaternion openLocalRotation;
+    private bool doorRotationInitialized;
+    private Collider lockTriggerCollider;
 
     // =========================================================
     // IInteractable
@@ -106,9 +114,37 @@ public class DungeonGateUnlock : MonoBehaviour, IHoldInteractable
         }
     }
 
-    public bool CanInteract => !gateUnlocked;
+    public bool CanInteract => enabled && !gateUnlocked;
 
     public int Priority => 50;
+
+    /// <summary>True when the local player's root is inside the Fort2 lock trigger.</summary>
+    public bool IsPlayerInsideLockTrigger(Transform playerRoot)
+    {
+        if (playerRoot == null)
+            return false;
+
+        if (lockTriggerCollider == null)
+        {
+            GameObject lockTrigger = GameObject.Find("Locktrigger");
+            if (lockTrigger != null)
+                lockTriggerCollider = lockTrigger.GetComponent<Collider>();
+        }
+
+        if (lockTriggerCollider == null || !lockTriggerCollider.enabled)
+            return false;
+
+        Bounds triggerBounds = lockTriggerCollider.bounds;
+        Collider[] playerColliders = playerRoot.GetComponentsInChildren<Collider>();
+        foreach (Collider playerCollider in playerColliders)
+        {
+            if (playerCollider != null && playerCollider.enabled &&
+                triggerBounds.Intersects(playerCollider.bounds))
+                return true;
+        }
+
+        return triggerBounds.Contains(playerRoot.position);
+    }
 
     public void Interact(PlayerInventory inv)
     {
@@ -172,8 +208,7 @@ public class DungeonGateUnlock : MonoBehaviour, IHoldInteractable
 
             MissionManager.ShowRaw(
                 "KEY REQUIRED",
-                $"Equip the {keyName} " +
-                "(select it in your hotbar), then hold [E] at the " +
+                $"Equip the {keyName} in your hotbar, then hold [E] at the " +
                 "gate to unlock the dungeon.",
                 4f
             );
@@ -228,16 +263,6 @@ public class DungeonGateUnlock : MonoBehaviour, IHoldInteractable
         return null;
     }
 
-    public void Configure(
-        Animator animator,
-        string openTrigger,
-        AudioSource audio)
-    {
-        gateAnimator = animator;
-        openTriggerName = openTrigger;
-        unlockAudio = audio;
-    }
-
     // =========================================================
     // UNITY
     // =========================================================
@@ -245,6 +270,10 @@ public class DungeonGateUnlock : MonoBehaviour, IHoldInteractable
     private void Awake()
     {
         BuildInteractionZone();
+        InitializeDoorRotation();
+        GameObject lockTrigger = GameObject.Find("Locktrigger");
+        if (lockTrigger != null)
+            lockTriggerCollider = lockTrigger.GetComponent<Collider>();
     }
 
     private void Update()
@@ -281,15 +310,47 @@ public class DungeonGateUnlock : MonoBehaviour, IHoldInteractable
             "[GATE] Gate unlocked locally. Playing feedback."
         );
 
-        if (gateAnimator != null)
-        {
-            gateAnimator.SetTrigger(openTriggerName);
-        }
+        if (!doorRotationInitialized)
+            InitializeDoorRotation();
+
+        if (doorToRotate != null)
+            StartCoroutine(RotateDoorOpen());
+        else
+            Debug.LogWarning("[GATE] Door To Rotate is not assigned; gate unlocked without door movement.", this);
 
         if (unlockAudio != null)
         {
             unlockAudio.Play();
         }
+    }
+
+    private void InitializeDoorRotation()
+    {
+        if (doorToRotate == null)
+            return;
+
+        closedLocalRotation = doorToRotate.localRotation;
+        openLocalRotation = closedLocalRotation * Quaternion.Euler(openRotationOffset);
+        doorRotationInitialized = true;
+    }
+
+    private IEnumerator RotateDoorOpen()
+    {
+        Quaternion start = doorToRotate.localRotation;
+        float duration = Mathf.Max(0.05f, doorOpenDuration);
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsed / duration);
+            // Smooth ease-in/ease-out motion.
+            progress = progress * progress * (3f - 2f * progress);
+            doorToRotate.localRotation = Quaternion.Slerp(start, openLocalRotation, progress);
+            yield return null;
+        }
+
+        doorToRotate.localRotation = openLocalRotation;
     }
 
     // =========================================================
@@ -316,24 +377,49 @@ public class DungeonGateUnlock : MonoBehaviour, IHoldInteractable
             return;
         }
 
-        GameObject zone =
-            new GameObject("DungeonGateUnlockZone");
+        GameObject lockTrigger = GameObject.Find("Locktrigger");
+        Collider lockTriggerCollider = lockTrigger != null
+            ? lockTrigger.GetComponent<Collider>()
+            : null;
 
+        GameObject zone = new GameObject("DungeonGateUnlockZone");
+
+        // Keep the collider beneath this interactable so GetComponentInParent
+        // can resolve DungeonGateUnlock, while cancelling the large scale on
+        // DungeonEntryZone so its offset and size remain in world units.
         zone.transform.SetParent(transform, false);
-        zone.transform.localPosition = colliderLocalPosition;
-        zone.transform.localRotation = Quaternion.identity;
-        zone.transform.localScale = Vector3.one;
+        Vector3 inheritedScale = transform.lossyScale;
+        Vector3 worldCenter = lockTriggerCollider != null
+            ? lockTriggerCollider.bounds.center
+            : transform.position + transform.rotation * colliderLocalPosition;
+        Vector3 worldSize = lockTriggerCollider != null
+            ? lockTriggerCollider.bounds.size
+            : colliderSize;
+
+        zone.transform.localPosition = transform.InverseTransformPoint(worldCenter);
+        zone.transform.localRotation = Quaternion.Inverse(transform.rotation);
+        zone.transform.localScale = DivideByScale(Vector3.one, inheritedScale);
         zone.layer = interactionLayer;
 
         BoxCollider box =
             zone.AddComponent<BoxCollider>();
 
         box.isTrigger = false;
-        box.size = colliderSize;
+        box.size = worldSize;
 
         Debug.Log(
-            "[GATE] Generated an interaction collider " +
-            "in front of the dungeon gate."
+            lockTriggerCollider != null
+                ? "[GATE] Created a solid interaction target over Locktrigger."
+                : "[GATE] Generated a solid interaction target in front of the gate."
+        );
+    }
+
+    private static Vector3 DivideByScale(Vector3 value, Vector3 scale)
+    {
+        return new Vector3(
+            Mathf.Abs(scale.x) > 0.0001f ? value.x / scale.x : value.x,
+            Mathf.Abs(scale.y) > 0.0001f ? value.y / scale.y : value.y,
+            Mathf.Abs(scale.z) > 0.0001f ? value.z / scale.z : value.z
         );
     }
 
@@ -350,17 +436,11 @@ public class DungeonGateUnlock : MonoBehaviour, IHoldInteractable
 
         ItemData key = GetResolvedKeyItem();
 
-        if (key == null ||
-            !viewerInventory.HasItemId(key.itemId))
-        {
+        if (key == null || !viewerInventory.HasItemId(key.itemId))
             return false;
-        }
 
-        int selectedSlot =
-            viewerInventory.SelectedSlot;
-
+        int selectedSlot = viewerInventory.SelectedSlot;
         return selectedSlot >= 0 &&
-               viewerInventory.GetQuickBarItemIdAt(selectedSlot) ==
-                   key.itemId;
+               viewerInventory.GetQuickBarItemIdAt(selectedSlot) == key.itemId;
     }
 }

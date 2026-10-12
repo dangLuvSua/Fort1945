@@ -1,4 +1,5 @@
 using System.Collections;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -66,6 +67,7 @@ public class MissionPanel : MonoBehaviour
 
     private Coroutine autoHideCoroutine;
     private bool isShowing;
+    private Action pendingAcknowledge;
 
 
     // =========================================================
@@ -122,7 +124,28 @@ public class MissionPanel : MonoBehaviour
     {
         Debug.Log("[MISSION PANEL] OK button pressed.");
 
+        Action acknowledge = pendingAcknowledge;
+        pendingAcknowledge = null;
+
         MissionManager.Hide();
+
+        if (acknowledge != null)
+        {
+            acknowledge.Invoke();
+            return;
+        }
+
+        // Each client starts its own local progress HUD only after
+        // acknowledging the briefing.
+        NetworkGameManager manager = NetworkGameManager.Instance;
+        if (manager == null || !manager.IsNetworkStateReady ||
+            !manager.SoldierReachedDoor || !manager.MissionItemsSpawned)
+            return;
+
+        FortMissionItemSpawner spawner =
+            FindFirstObjectByType<FortMissionItemSpawner>(FindObjectsInactive.Include);
+        if (spawner != null)
+            spawner.BeginProgressTracking();
     }
 
 
@@ -136,8 +159,10 @@ public class MissionPanel : MonoBehaviour
         Sprite icon,
         float duration,
         Color titleColor,
-        Color descColor)
+        Color descColor,
+        Action onAcknowledge = null)
     {
+        pendingAcknowledge = onAcknowledge;
         // Stop previous auto-hide.
         if (autoHideCoroutine != null)
         {
