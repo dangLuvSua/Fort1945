@@ -154,7 +154,7 @@ public class SoldierInteraction : MonoBehaviour
     {
         if (interactionPrompt != null)
         {
-            interactionPrompt.Show(interactionMessage);
+            interactionPrompt.ShowFor(this, interactionMessage);
         }
     }
 
@@ -166,7 +166,7 @@ public class SoldierInteraction : MonoBehaviour
     {
         if (interactionPrompt != null)
         {
-            interactionPrompt.Hide();
+            interactionPrompt.HideFor(this);
         }
     }
 }

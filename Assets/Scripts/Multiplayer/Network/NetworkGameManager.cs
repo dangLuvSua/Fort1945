@@ -359,8 +359,8 @@ public class NetworkGameManager : NetworkBehaviour
     private int fallbackKeyItemId = 103;
 
     [Tooltip(
-        "Candles each player must be carrying before the gate can be " +
-        "unlocked. Also how many candles are spawned."
+        "Total team candles required before the gate can be unlocked. " +
+        "This is also how many candles are spawned."
     )]
     [SerializeField, Min(1)]
     private int candlesRequiredPerPlayer = 2;
@@ -370,12 +370,6 @@ public class NetworkGameManager : NetworkBehaviour
     )]
     [SerializeField, Min(1)]
     private int keysToSpawn = 1;
-
-    [Tooltip(
-        "Require EVERY player to have their candles before the gate unlocks."
-    )]
-    [SerializeField]
-    private bool requireAllPlayersHaveCandles = true;
 
     [Tooltip(
         "Optional exact ground Y values to snap spawned items to " +
@@ -930,11 +924,6 @@ public class NetworkGameManager : NetworkBehaviour
             {
                 TryStartFortMission();
             }
-        }
-
-        if (MissionItemsSpawned)
-        {
-            EnsureFortMissionPanelActive();
         }
 
         UpdateGatePhase();
@@ -1825,23 +1814,6 @@ public class NetworkGameManager : NetworkBehaviour
             {
                 dungeonZoneVisual.SetGreen();
             }
-
-            if (Object.HasStateAuthority &&
-                !TeleportStarted)
-            {
-                TeleportStarted = true;
-
-                Debug.Log(
-                    "[GAME MANAGER] Gate unlocked. " +
-                    "Teleporting the squad into the dungeon."
-                );
-
-                if (NetworkRunnerHandler.Instance != null)
-                {
-                    NetworkRunnerHandler.Instance.LoadDungeonScene();
-                }
-            }
-
             return;
         }
 
@@ -1932,13 +1904,37 @@ public class NetworkGameManager : NetworkBehaviour
             return;
         }
 
+        // The interaction component belongs on Locktrigger. DungeonEntryZone
+        // remains the larger team-ready zone checked by the gate authority.
+        GameObject lockTriggerObject = GameObject.Find("Locktrigger");
+        GameObject interactionObject = lockTriggerObject != null
+            ? lockTriggerObject
+            : zoneObject;
+
         DungeonGateUnlock gate =
-            zoneObject.GetComponent<DungeonGateUnlock>();
+            interactionObject.GetComponent<DungeonGateUnlock>();
+
+        // Keep compatibility with scenes that still have the component on
+        // DungeonEntryZone, but do not create a second gate component.
+        if (gate == null)
+            gate = zoneObject.GetComponent<DungeonGateUnlock>();
 
         if (gate == null)
         {
             gate =
-                zoneObject.AddComponent<DungeonGateUnlock>();
+                interactionObject.AddComponent<DungeonGateUnlock>();
+        }
+
+        DungeonGateUnlock[] allGates = FindObjectsByType<DungeonGateUnlock>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
+        );
+        foreach (DungeonGateUnlock otherGate in allGates)
+        {
+            if (otherGate != null && otherGate != gate &&
+                (otherGate.gameObject == zoneObject ||
+                 otherGate.gameObject.name == "ZoneFloor"))
+                otherGate.enabled = false;
         }
 
         // Keep the required key in sync with the manager.
@@ -2036,37 +2032,18 @@ public class NetworkGameManager : NetworkBehaviour
             manualReferenceHeights
         );
 
-        spawner.SetMissionActive(true);
-        Debug.Log("[FORT MISSION] Local mission panel activation requested.", this);
+        // The briefing is shown first. MissionPanel's OK button starts the
+        // progress HUD locally after the player acknowledges it.
+        if (fortMission != null)
+            MissionManager.Show(fortMission);
+        else
+            MissionManager.ShowRaw("FORT MISSION", "Collect the required items and unlock the dungeon gate.");
+        Debug.Log("[FORT MISSION] Local briefing panel shown.", this);
     }
 
     public ItemData CandleItem => candleItem;
     public ItemData KeyItem => keyItem;
     public MissionData FortMission => fortMission;
-
-    private void EnsureFortMissionPanelActive()
-    {
-        FortMissionItemSpawner spawner = GetFortMissionSpawner();
-        if (spawner == null)
-            return;
-
-        if (!spawner.IsMissionActive && !DungeonGateUnlocked)
-        {
-            PlayerInventory localInventory =
-                GetLocalPlayerInventory();
-
-            spawner.ConfigureFortMission(
-                fortMission,
-                ResolveCandleItem(localInventory),
-                ResolveKeyItem(localInventory),
-                candlesRequiredPerPlayer,
-                keysToSpawn,
-                manualReferenceHeights
-            );
-
-            spawner.SetMissionActive(true);
-        }
-    }
 
     // =========================================================
     // GATE UNLOCK REQUESTS
@@ -2113,6 +2090,12 @@ public class NetworkGameManager : NetworkBehaviour
             return;
         }
 
+        if (!AreAllActivePlayersInDungeonEntryZone())
+        {
+            Debug.LogWarning("[GATE] Unlock blocked: every active player must stand inside the red entrance zone. See the per-player zone checks above.");
+            return;
+        }
+
         if (!CanPlayerUnlockGate(info.Source))
         {
             Debug.LogWarning(
@@ -2126,19 +2109,84 @@ public class NetworkGameManager : NetworkBehaviour
         DungeonGateUnlocked = true;
         TeleportCountdown = 0f;
 
-        Debug.Log(
-            "[GAME MANAGER] DUNGEON GATE UNLOCKED! " +
-            "Loading the Dungeon scene."
-        );
+        Debug.Log("[GAME MANAGER] DUNGEON GATE UNLOCKED! Players can walk through to the teleport trigger.");
 
         RPC_OnGateUnlocked();
+    }
+
+    /// <summary>Called by a separate scene trigger after the party walks through the open gate.</summary>
+    public bool TryLoadDungeonFromTeleportTrigger(Collider teleportTrigger)
+    {
+        if (teleportTrigger == null || Runner == null || Object == null ||
+            !Object.HasStateAuthority || !DungeonGateUnlocked || TeleportStarted)
+            return false;
+
+        foreach (PlayerRef player in Runner.ActivePlayers)
+        {
+            if (!Runner.TryGetPlayerObject(player, out NetworkObject playerObject) ||
+                playerObject == null ||
+                !PlayerOverlapsTrigger(playerObject.transform, teleportTrigger))
+                return false;
+        }
 
         TeleportStarted = true;
+        Debug.Log("[GAME MANAGER] All players reached the teleport trigger. Loading Dungeon.");
 
-        if (NetworkRunnerHandler.Instance != null)
+        if (NetworkRunnerHandler.Instance == null)
         {
-            NetworkRunnerHandler.Instance.LoadDungeonScene();
+            TeleportStarted = false;
+            Debug.LogError("[GAME MANAGER] NetworkRunnerHandler is missing; cannot load Dungeon.", this);
+            return false;
         }
+
+        NetworkRunnerHandler.Instance.LoadDungeonScene();
+        return true;
+    }
+
+    private static bool PlayerOverlapsTrigger(Transform playerRoot, Collider trigger)
+    {
+        Bounds bounds = trigger.bounds;
+        Collider[] colliders = playerRoot.GetComponentsInChildren<Collider>();
+        foreach (Collider playerCollider in colliders)
+        {
+            if (playerCollider != null && playerCollider.enabled &&
+                bounds.Intersects(playerCollider.bounds))
+                return true;
+        }
+
+        return bounds.Contains(playerRoot.position);
+    }
+
+    private bool AreAllActivePlayersInDungeonEntryZone()
+    {
+        if (Runner == null)
+            return false;
+
+        GameObject zone = GetDungeonEntryZoneObject();
+        BoxCollider box = zone != null ? zone.GetComponent<BoxCollider>() : null;
+        if (box == null)
+            return false;
+
+        int activeCount = 0;
+        foreach (PlayerRef player in Runner.ActivePlayers)
+        {
+            if (!Runner.TryGetPlayerObject(player, out NetworkObject playerObject) || playerObject == null)
+            {
+                Debug.LogWarning($"[GATE] Player {player} has no registered NetworkObject; cannot validate the entry zone.");
+                return false;
+            }
+
+            activeCount++;
+            Vector3 local = box.transform.InverseTransformPoint(playerObject.transform.position) - box.center;
+            Vector3 half = box.size * 0.5f;
+            if (Mathf.Abs(local.x) > half.x || Mathf.Abs(local.y) > half.y || Mathf.Abs(local.z) > half.z)
+            {
+                Debug.LogWarning($"[GATE] Player {player} is outside DungeonEntryZone. Player position: {playerObject.transform.position}; zone local position: {local}.");
+                return false;
+            }
+        }
+
+        return activeCount > 0;
     }
 
     [Rpc(
@@ -2163,8 +2211,20 @@ public class NetworkGameManager : NetworkBehaviour
         MissionManager.ShowRaw(
             "GATE UNLOCKED",
             "The dungeon gate is open. Move into the darkness!",
-            5f
+            0f,
+            DestroyDungeonLockTriggerAfterAcknowledgement
         );
+    }
+
+    /// <summary>Remove the local lock interaction after this client acknowledges the unlocked notice.</summary>
+    private void DestroyDungeonLockTriggerAfterAcknowledgement()
+    {
+        GameObject lockTrigger = GameObject.Find("Locktrigger");
+        if (lockTrigger != null)
+        {
+            Destroy(lockTrigger);
+            Debug.Log("[GAME MANAGER] Locktrigger destroyed after gate-unlocked acknowledgement.");
+        }
     }
 
     private void UpdateGateStatusTag()
@@ -2237,57 +2297,57 @@ public class NetworkGameManager : NetworkBehaviour
         }
 
         // -------------------------------------------------
-        // The interacting player must have the key EQUIPPED.
+        // The interacting player must have the key equipped.
         // -------------------------------------------------
 
         int keyId = GetKeyItemId();
 
         if (!inventory.HasItemId(keyId))
         {
+            Debug.LogWarning($"[GATE] Player {player} does not carry key item ID {keyId}.");
             return false;
         }
 
         int selectedSlot = inventory.SelectedSlot;
-
         if (selectedSlot < 0 ||
             inventory.GetQuickBarItemIdAt(selectedSlot) != keyId)
         {
+            Debug.LogWarning($"[GATE] Player {player} has key ID {keyId} but it is not equipped. Selected slot: {selectedSlot}.");
             return false;
         }
 
         // -------------------------------------------------
-        // Optional: every player must carry their candles.
-        // -------------------------------------------------
-
-        if (requireAllPlayersHaveCandles)
+        // Candles are a team objective. Any player can collect them; only
+        // their combined inventory total matters for unlocking the gate.
+        int teamCandles = GetTeamItemCount(GetCandleItemId());
+        if (teamCandles < candlesRequiredPerPlayer)
         {
-            foreach (PlayerRef other in Runner.ActivePlayers)
-            {
-                if (!Runner.TryGetPlayerObject(
-                        other,
-                        out NetworkObject otherObject) ||
-                    otherObject == null)
-                {
-                    continue;
-                }
-
-                PlayerInventory otherInventory =
-                    otherObject.GetComponent<PlayerInventory>();
-
-                if (otherInventory == null)
-                {
-                    continue;
-                }
-
-                if (otherInventory.GetQuantityForItemId(GetCandleItemId()) <
-                    candlesRequiredPerPlayer)
-                {
-                    return false;
-                }
-            }
+            Debug.LogWarning($"[GATE] Team has {teamCandles}/{candlesRequiredPerPlayer} required candles.");
+            return false;
         }
 
         return true;
+    }
+
+    /// <summary>Returns the total quantity held by all active players.</summary>
+    public int GetTeamItemCount(int itemId)
+    {
+        if (Runner == null || itemId <= 0)
+            return 0;
+
+        int total = 0;
+        foreach (PlayerRef player in Runner.ActivePlayers)
+        {
+            if (!Runner.TryGetPlayerObject(player, out NetworkObject playerObject) ||
+                playerObject == null)
+                continue;
+
+            PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
+            if (inventory != null)
+                total += inventory.GetQuantityForItemId(itemId);
+        }
+
+        return total;
     }
 
     // =========================================================

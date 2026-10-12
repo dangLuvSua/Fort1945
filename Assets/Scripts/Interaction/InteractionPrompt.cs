@@ -15,6 +15,10 @@ public class InteractionPrompt : MonoBehaviour
     [Tooltip("Optional slider shown while the player holds an interaction. Auto-found in children.")]
     [SerializeField] private Slider progressSlider;
 
+    // Different interactions can share one prompt instance. Only the owner
+    // currently showing it may update or hide it.
+    private object activeOwner;
+
     private void Awake()
     {
         if (progressSlider == null)
@@ -58,6 +62,15 @@ public class InteractionPrompt : MonoBehaviour
         }
     }
 
+    public void ShowFor(object owner, string message)
+    {
+        if (owner == null)
+            return;
+
+        activeOwner = owner;
+        Show(message);
+    }
+
     // =============================================================
     // HOLD PROGRESS
     // =============================================================
@@ -78,6 +91,15 @@ public class InteractionPrompt : MonoBehaviour
         }
     }
 
+    public void ShowProgressFor(object owner, string message, float progress)
+    {
+        if (owner == null)
+            return;
+
+        activeOwner = owner;
+        ShowProgress(message, progress);
+    }
+
     /// <summary>
     /// Updates only the hold-progress slider value.
     /// </summary>
@@ -89,12 +111,20 @@ public class InteractionPrompt : MonoBehaviour
         }
     }
 
+    public void SetProgressFor(object owner, float progress)
+    {
+        if (activeOwner == owner)
+            SetProgress(progress);
+    }
+
     // =============================================================
     // HIDE
     // =============================================================
 
     public void Hide()
     {
+        activeOwner = null;
+
         if (promptRoot != null)
         {
             promptRoot.SetActive(false);
@@ -105,5 +135,11 @@ public class InteractionPrompt : MonoBehaviour
             progressSlider.value = 0f;
             progressSlider.gameObject.SetActive(false);
         }
+    }
+
+    public void HideFor(object owner)
+    {
+        if (activeOwner == owner)
+            Hide();
     }
 }

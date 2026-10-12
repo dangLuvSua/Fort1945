@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 // =========================================================
@@ -106,7 +107,7 @@ public class MissionManager : MonoBehaviour
     /// <param name="title">Heading text.</param>
     /// <param name="description">Body text.</param>
     /// <param name="autoDuration">Seconds before auto-hide; 0 = persistent.</param>
-    public static void ShowRaw(string title, string description, float autoDuration = 0f)
+    public static void ShowRaw(string title, string description, float autoDuration = 0f, Action onAcknowledge = null)
     {
         if (Instance == null)
         {
@@ -126,7 +127,8 @@ public class MissionManager : MonoBehaviour
             null,
             autoDuration,
             Color.white,
-            new Color(0.85f, 0.85f, 0.85f, 1f)
+            new Color(0.85f, 0.85f, 0.85f, 1f),
+            onAcknowledge
         );
     }
 
