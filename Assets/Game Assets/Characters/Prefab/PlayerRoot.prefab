@@ -5710,7 +5710,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSanity
   maxSanity: 100
-  startingSanity: 15
+  startingSanity: 100
   allowRecovery: 0
   recoveryPerSecond: 2
   reviveSanity: 8

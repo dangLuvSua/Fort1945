@@ -253,17 +253,17 @@ public class PlayerSanity : NetworkBehaviour
         }
     }
 
-    // Temporary test method.
-    // Call from a test script or Inspector-connected event.
-    public void TestSanityDamage(float damage)
+    /// <summary>Apply sanity damage. Must be called by State Authority.</summary>
+    public void ApplySanityDamage(float damage)
     {
         if (Object == null ||
             !Object.IsValid ||
-            !Object.HasStateAuthority)
+            !Object.HasStateAuthority ||
+            damage <= 0f)
             return;
 
         CurrentSanity = Mathf.Clamp(
-            CurrentSanity - Mathf.Max(0f, damage),
+            CurrentSanity - damage,
             0f,
             maxSanity
         );
@@ -271,6 +271,12 @@ public class PlayerSanity : NetworkBehaviour
         Debug.Log(
             $"[SANITY] Current sanity: {CurrentSanity}/{maxSanity}"
         );
+    }
+
+    // Retained for existing test scripts and Inspector events.
+    public void TestSanityDamage(float damage)
+    {
+        ApplySanityDamage(damage);
     }
 
     public void RecoverSanity(float amount)
