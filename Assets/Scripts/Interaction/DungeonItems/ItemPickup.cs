@@ -10,6 +10,17 @@ public class ItemPickup : NetworkBehaviour, IInteractable
     [Header("Optional Source Chest")]
     [SerializeField] private ChestState sourceChest;
 
+    [Header("Optional Pickup Jumpscare")]
+    [SerializeField, Range(0f, 1f)]
+    [Tooltip("Chance for this item to cause its jumpscare after a successful pickup.")]
+    private float pickupJumpscareChance;
+    [SerializeField]
+    [Tooltip("Local screen/video playback prefab. Only the successful collector sees it.")]
+    private LocalJumpscarePlayback pickupJumpscarePrefab;
+    [SerializeField, Min(0f)] private float easySanityDamage = 5f;
+    [SerializeField, Min(0f)] private float normalSanityDamage = 10f;
+    [SerializeField, Min(0f)] private float difficultSanityDamage = 15f;
+
     [Networked]
     public int ItemId { get; private set; }
 
@@ -20,6 +31,9 @@ public class ItemPickup : NetworkBehaviour, IInteractable
     private NetworkBool IsCollecting { get; set; }
 
     private PlayerRef pendingCollector;
+    // Read and written by State Authority only; the pending pickup is already
+    // serialized by IsCollecting and pendingCollector.
+    private bool pendingPickupJumpscare;
 
     public int NetworkItemId => ItemId;
     public ItemData Item => itemData;
@@ -123,6 +137,8 @@ public class ItemPickup : NetworkBehaviour, IInteractable
 
         pendingCollector = info.Source;
         IsCollecting = true;
+        pendingPickupJumpscare = pickupJumpscarePrefab != null &&
+            Random.value < pickupJumpscareChance;
 
         // Candle state is stored on the dropped world object.
         NetworkedDroppedItem dropped =
@@ -142,7 +158,8 @@ public class ItemPickup : NetworkBehaviour, IInteractable
             ItemId,
             hasCandleState,
             remaining,
-            maxLife
+            maxLife,
+            pendingPickupJumpscare
         );
     }
 
@@ -152,7 +169,8 @@ public class ItemPickup : NetworkBehaviour, IInteractable
         int itemId,
         bool hasCandleState,
         float remaining,
-        float maxLife)
+        float maxLife,
+        bool playPickupJumpscare)
     {
         if (Runner.LocalPlayer != targetPlayer)
             return;
@@ -197,6 +215,13 @@ public class ItemPickup : NetworkBehaviour, IInteractable
         {
             inventory.NotifyItemCollected(itemId);
 
+            if (playPickupJumpscare && pickupJumpscarePrefab != null)
+            {
+                LocalJumpscarePlayback playback =
+                    Instantiate(pickupJumpscarePrefab);
+                playback.Play();
+            }
+
             Debug.Log(
                 $"[ITEM PICKUP] Item {itemId} collected by {targetPlayer}."
             );
@@ -224,12 +249,49 @@ public class ItemPickup : NetworkBehaviour, IInteractable
         if (!success)
         {
             pendingCollector = PlayerRef.None;
+            pendingPickupJumpscare = false;
             return;
         }
 
+        if (pendingPickupJumpscare)
+            ApplyPickupJumpscareSanityDamage(pendingCollector);
+
         pendingCollector = PlayerRef.None;
+        pendingPickupJumpscare = false;
 
         if (Object != null && Object.IsValid)
             Runner.Despawn(Object);
+    }
+
+    private void ApplyPickupJumpscareSanityDamage(PlayerRef player)
+    {
+        if (Runner == null ||
+            !Runner.TryGetPlayerObject(player, out NetworkObject playerObject) ||
+            playerObject == null)
+            return;
+
+        PlayerSanity sanity = playerObject.GetComponent<PlayerSanity>();
+        if (sanity == null)
+            return;
+
+        GameDifficulty difficulty = NetworkGameManager.Instance != null
+            ? NetworkGameManager.Instance.Difficulty
+            : GameDifficulty.Normal;
+
+        float damage;
+        switch (difficulty)
+        {
+            case GameDifficulty.Easy:
+                damage = easySanityDamage;
+                break;
+            case GameDifficulty.Difficult:
+                damage = difficultSanityDamage;
+                break;
+            default:
+                damage = normalSanityDamage;
+                break;
+        }
+
+        sanity.ApplySanityDamage(damage);
     }
 }
