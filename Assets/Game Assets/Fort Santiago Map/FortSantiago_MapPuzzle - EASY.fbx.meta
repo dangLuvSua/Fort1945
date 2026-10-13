@@ -3,7 +3,12 @@ guid: 695e61c0921bdde4e92db0133fad020f
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: JIGSAW
+    second: {fileID: 2100000, guid: fad14c69d74677546ac0d53a19fe6655, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
