@@ -3042,6 +3042,105 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee76193313cbfac489ddc0ab652be681, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventorySlotUI
+--- !u!1 &1678901022
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1678901025}
+  - component: {fileID: 1678901024}
+  - component: {fileID: 1678901023}
+  - component: {fileID: 1678901026}
+  m_Layer: 0
+  m_Name: PuzzleManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1678901023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678901022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d998fd87f2e009c4daf8a5f222d6aa48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PuzzleTestSpawner
+--- !u!114 &1678901024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678901022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 115054514
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 1678901026}
+  ForceRemoteRenderTimeframe: 0
+--- !u!4 &1678901025
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678901022}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 89.40182, y: 0, z: -43.08904}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1678901026
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678901022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ddd802f2abd9414189686cf7a60e0e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PuzzlePieceSpawner
+  puzzleSets:
+  - difficulty: 0
+    pieces:
+    - {fileID: 11400000, guid: 29563df8547299d4dab97ab84f0e65d9, type: 2}
+    - {fileID: 11400000, guid: 8bca44fdba5990842a6a9cbfd6c0d1ce, type: 2}
+    - {fileID: 11400000, guid: 504dd550c1ad73d4187e6c77a36dab7d, type: 2}
+    - {fileID: 11400000, guid: d3dbf902ab03ca641a31fb5677ab23e4, type: 2}
+    - {fileID: 11400000, guid: 65040d7e61a97a94f9caf1ae968d81c0, type: 2}
+    - {fileID: 11400000, guid: 03cae86f011e6bd409cf420b79b12a37, type: 2}
+    - {fileID: 11400000, guid: b706d76a3bdc89b45ba0709741f64662, type: 2}
+    - {fileID: 11400000, guid: d19d98b361c579a4d8ff4bcf99dad3e2, type: 2}
+  - difficulty: 0
+    pieces: []
+  dungeonGenerator: {fileID: 0}
+  verticalOffset: 0.005
+  floorRayStartHeight: 3
+  floorRayDistance: 10
+  minDistanceBetweenPieces: 8
+  maxSpawnPointAttempts: 30
+  allowStandaloneTesting: 1
+  standaloneDifficulty: 0
 --- !u!114 &1726281406 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6953166840037382685, guid: 764ceef508f898a488dc0208d15db7f0, type: 3}
@@ -5050,3 +5149,4 @@ SceneRoots:
   - {fileID: 1156263070}
   - {fileID: 352293077}
   - {fileID: 128731028}
+  - {fileID: 1678901025}
