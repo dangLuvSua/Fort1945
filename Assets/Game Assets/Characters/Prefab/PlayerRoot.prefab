@@ -5490,6 +5490,14 @@ MonoBehaviour:
   playerCamera: {fileID: 2575002923815907540}
   audioListener: {fileID: 665955509501171220}
   cameraHolder: {fileID: 4990974187311543404}
+  enableSceneHeightAdjustment: 1
+  tallerSceneName: Dungeon
+  dungeonHeight: 3.5
+  dungeonCenterY: 2.5
+  dungeonCameraY: 4.2
+  defaultHeight: 3
+  defaultCenterY: 0.9
+  defaultCameraY: 1.5
   playerBody: {fileID: 2751663222661193382}
   speedParameter: Speed
 --- !u!114 &2481270183145079181

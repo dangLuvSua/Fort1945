@@ -1,3 +1,4 @@
+﻿using UnityEngine.SceneManagement;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
@@ -76,6 +77,31 @@ public class PlayerController : NetworkBehaviour
 
     [Tooltip("Child of PlayerRoot containing the camera.")]
     [SerializeField] private Transform cameraHolder;
+
+    // =========================================================
+    // SCENE-SPECIFIC SIZING
+    // =========================================================
+
+    [Header("Scene-Specific Sizing")]
+    [Tooltip("If true, adjusts CharacterController height depending on the active scene.")]
+    [SerializeField] private bool enableSceneHeightAdjustment = true;
+
+    [Tooltip("Name of the scene that requires a taller character.")]
+    [SerializeField] private string tallerSceneName = "Dungeon";
+
+    [Tooltip("CharacterController height in the taller scene.")]
+    [SerializeField] private float dungeonHeight = 5.0f;
+
+    [Tooltip("CharacterController center Y in the taller scene (usually Height / 2).")]
+    [SerializeField] private float dungeonCenterY = 2.5f;
+
+    [Tooltip("Camera local Y position in the taller scene.")]
+    [SerializeField] private float dungeonCameraY = 4.2f;
+
+    [Header("Default Sizing (Other Scenes)")]
+    [SerializeField] private float defaultHeight = 3.0f;
+    [SerializeField] private float defaultCenterY = 0.9f;
+    [SerializeField] private float defaultCameraY = 1.5f;
 
 
     // =========================================================
@@ -164,6 +190,9 @@ public class PlayerController : NetworkBehaviour
         }
 
         characterController.enabled = true;
+
+        // Apply scene-specific character controller height & camera position
+        ApplySceneHeight();
 
         // Debug.Log(
         //     $"[PLAYER] CharacterController found. " +
@@ -933,8 +962,15 @@ public class PlayerController : NetworkBehaviour
     // CLEANUP
     // =========================================================
 
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += HandleSceneLoaded;
+    }
+
     private void OnDisable()
     {
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
+
         if (isLocal)
         {
             inputActions?
@@ -945,6 +981,42 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+
+    // =========================================================
+    // SCENE HEIGHT ADJUSTMENT
+    // =========================================================
+
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        ApplySceneHeight();
+    }
+
+    public void ApplySceneHeight()
+    {
+        if (!enableSceneHeightAdjustment || characterController == null)
+            return;
+
+        string currentScene = SceneManager.GetActiveScene().name;
+        bool isDungeon = currentScene.Equals(tallerSceneName, System.StringComparison.OrdinalIgnoreCase);
+
+        float targetHeight = isDungeon ? dungeonHeight : defaultHeight;
+        float targetCenterY = isDungeon ? dungeonCenterY : defaultCenterY;
+        float targetCameraY = isDungeon ? dungeonCameraY : defaultCameraY;
+
+        characterController.enabled = false;
+        characterController.height = targetHeight;
+        characterController.center = new Vector3(characterController.center.x, targetCenterY, characterController.center.z);
+        characterController.enabled = true;
+
+        if (cameraHolder != null)
+        {
+            Vector3 camPos = cameraHolder.localPosition;
+            camPos.y = targetCameraY;
+            cameraHolder.localPosition = camPos;
+        }
+
+        Debug.Log($"[PlayerController] Scene: '{currentScene}' | Height: {targetHeight} | CenterY: {targetCenterY} | CameraY: {targetCameraY}");
+    }
 
     // =========================================================
     // TELEPORT

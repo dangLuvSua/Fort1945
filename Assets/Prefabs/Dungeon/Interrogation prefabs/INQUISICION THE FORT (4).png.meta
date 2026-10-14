@@ -1,0 +1,5100 @@
+fileFormatVersion: 2
+guid: 40ae1f2d036731d489cbb31f323ea6af
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_0
+      rect:
+        serializedVersion: 2
+        x: 109
+        y: 829
+        width: 188
+        height: 174
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9a51c27e7067d6f4d8ae53de3abddf4d
+      internalID: 185254424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_1
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 994
+        width: 20
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 11c3aff70cb6c35419060c7fd81d76a5
+      internalID: -1970888123
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_2
+      rect:
+        serializedVersion: 2
+        x: 142
+        y: 1000
+        width: 18
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7280f5caa763ef84ca9461c1c77d80a2
+      internalID: -2005845423
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_3
+      rect:
+        serializedVersion: 2
+        x: 161
+        y: 1002
+        width: 20
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 43d1cc17d6062f74588643c137b121ec
+      internalID: 501187843
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_4
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 1003
+        width: 31
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3af67c5dbc4b728449276e7517e4bf7d
+      internalID: -898994919
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_5
+      rect:
+        serializedVersion: 2
+        x: 145
+        y: 992
+        width: 4
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1fcde2bbc712a7940812c2e3013055a6
+      internalID: -1961280263
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_6
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 994
+        width: 7
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9a6e5922517a3ba4182a1ffd36b625ef
+      internalID: 1698460270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_7
+      rect:
+        serializedVersion: 2
+        x: 203
+        y: 994
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 206c7878fa413e245a064757a4cf0c6f
+      internalID: 1946220622
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_8
+      rect:
+        serializedVersion: 2
+        x: 1559
+        y: 746
+        width: 71
+        height: 248
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 01020915fc30ab141a52f798323ff842
+      internalID: -2133236439
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_9
+      rect:
+        serializedVersion: 2
+        x: 115
+        y: 958
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 87af7dbfa5558724eb14312b50745902
+      internalID: 330441873
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_10
+      rect:
+        serializedVersion: 2
+        x: 297
+        y: 921
+        width: 37
+        height: 66
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a59067f82e380be40b6ff2f8b7cacd6d
+      internalID: 427660923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_11
+      rect:
+        serializedVersion: 2
+        x: 306
+        y: 922
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bc727f8d2519cec429eb3e7d5af87a40
+      internalID: 1246207690
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_12
+      rect:
+        serializedVersion: 2
+        x: 383
+        y: 936
+        width: 94
+        height: 46
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fe5695c5677337e47b985fa50e67b099
+      internalID: -990054066
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_13
+      rect:
+        serializedVersion: 2
+        x: 441
+        y: 942
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f2974606906b5be42bf8988bc9af3f66
+      internalID: -1446170484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_14
+      rect:
+        serializedVersion: 2
+        x: 442
+        y: 932
+        width: 12
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 93d0a7edd7db59a4a95847ca478a35eb
+      internalID: 1378596686
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_15
+      rect:
+        serializedVersion: 2
+        x: 455
+        y: 934
+        width: 6
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cf009a04ee602c24c90ba3bda514e508
+      internalID: -22532172
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_16
+      rect:
+        serializedVersion: 2
+        x: 455
+        y: 909
+        width: 32
+        height: 19
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1bffdd80a751f7a4a8feba6153afb4ff
+      internalID: 2130760872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_17
+      rect:
+        serializedVersion: 2
+        x: 508
+        y: 921
+        width: 41
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4a2e5baede154a64cb3c0a4b709fdcad
+      internalID: 326091522
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_18
+      rect:
+        serializedVersion: 2
+        x: 544
+        y: 870
+        width: 55
+        height: 52
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a832d8d3433b2ee429ce04841d7408e9
+      internalID: 1845068525
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_19
+      rect:
+        serializedVersion: 2
+        x: 597
+        y: 915
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 872d8e02d213bf04f957e117e4295a9c
+      internalID: -1345259112
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_20
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 865
+        width: 72
+        height: 71
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b23c20a03aacaeb4385886f3808ab6a6
+      internalID: -1421790181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_21
+      rect:
+        serializedVersion: 2
+        x: 1342
+        y: 689
+        width: 97
+        height: 243
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4133166773b6790468a85de038ab31e0
+      internalID: 1375092830
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_22
+      rect:
+        serializedVersion: 2
+        x: 1421
+        y: 950
+        width: 4
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 90aad5a8cb2017e42a61a6857be4c880
+      internalID: 1746856092
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_23
+      rect:
+        serializedVersion: 2
+        x: 1427
+        y: 753
+        width: 74
+        height: 237
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5f0f9ee1fa4c27743937ba54275bab92
+      internalID: -450712669
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_24
+      rect:
+        serializedVersion: 2
+        x: 1549
+        y: 953
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1f95f0ec13a907f40b29aed39dce0386
+      internalID: 1944245605
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_25
+      rect:
+        serializedVersion: 2
+        x: 115
+        y: 907
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e56b7a79c31adc743a665ec6008a14f7
+      internalID: -606886563
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_26
+      rect:
+        serializedVersion: 2
+        x: 295
+        y: 902
+        width: 18
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a6d0e191bf6d5b74cb4b839aa928b836
+      internalID: 627513535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_27
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 901
+        width: 43
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cc4d05adcaa20134d8597e205cd8b1ee
+      internalID: -1491648036
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_28
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 885
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4f9d66e63613a2447b789619f13bace7
+      internalID: 209334627
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_29
+      rect:
+        serializedVersion: 2
+        x: 296
+        y: 868
+        width: 30
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7b29edd3aecc295488abf5bc151c102b
+      internalID: -1977063248
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_30
+      rect:
+        serializedVersion: 2
+        x: 343
+        y: 868
+        width: 10
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d2c5523fe8fb3a34c912c7ca0d4022a9
+      internalID: -685582709
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_31
+      rect:
+        serializedVersion: 2
+        x: 356
+        y: 869
+        width: 37
+        height: 31
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dd6b66b7ef8f8774cb68652d57353fc7
+      internalID: -1576981106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_32
+      rect:
+        serializedVersion: 2
+        x: 411
+        y: 867
+        width: 19
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 86cceb58cbca96a46b9510ae4e511e8f
+      internalID: -681824690
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_33
+      rect:
+        serializedVersion: 2
+        x: 450
+        y: 881
+        width: 18
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d45c4a705b0f2dc4fa48d11bad85cc2d
+      internalID: -1497995011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_34
+      rect:
+        serializedVersion: 2
+        x: 469
+        y: 888
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0c670252640ffb6469f54e09daaebff4
+      internalID: -27409451
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_35
+      rect:
+        serializedVersion: 2
+        x: 515
+        y: 885
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: de1d2935403428f42a5cedc12588ca77
+      internalID: -1958362787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_36
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 880
+        width: 13
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1f05e9cba6f720e4b8a5387326074ba9
+      internalID: -1050719230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_37
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 877
+        width: 5
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 791db02308c9be8459bafd5abf9708b7
+      internalID: 1441726089
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_38
+      rect:
+        serializedVersion: 2
+        x: 493
+        y: 870
+        width: 36
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6f035e15668ca4d43badc460354705e6
+      internalID: -1909524516
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_39
+      rect:
+        serializedVersion: 2
+        x: 1335
+        y: 856
+        width: 12
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 185c37b7b494b0148a097d94653f69ed
+      internalID: 1399256504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_40
+      rect:
+        serializedVersion: 2
+        x: 115
+        y: 588
+        width: 425
+        height: 282
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 03fc61f1ec7e0924c91e79b9d63a153f
+      internalID: -126202465
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_41
+      rect:
+        serializedVersion: 2
+        x: 365
+        y: 867
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d35d2949453263a479e2d11a46aaafaf
+      internalID: -680205310
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_42
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 849
+        width: 40
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ac0a453031b7cd240bdc6a9988e25cbb
+      internalID: 1643305281
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_43
+      rect:
+        serializedVersion: 2
+        x: 468
+        y: 863
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6245e6fae32613b40a8122205279215f
+      internalID: 1311973205
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_44
+      rect:
+        serializedVersion: 2
+        x: 487
+        y: 864
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5fc9ff287ea88d5499790902d8bed772
+      internalID: -1226623274
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_45
+      rect:
+        serializedVersion: 2
+        x: 506
+        y: 860
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8657b254bcf54d34a8812780987a3716
+      internalID: -1814827072
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_46
+      rect:
+        serializedVersion: 2
+        x: 567
+        y: 864
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 54615717d8227af4e869264e12d1a0de
+      internalID: -1638140597
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_47
+      rect:
+        serializedVersion: 2
+        x: 588
+        y: 862
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 06a2ce1e31e5f494180940c9d48803dc
+      internalID: -1682006765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_48
+      rect:
+        serializedVersion: 2
+        x: 611
+        y: 864
+        width: 4
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 96a6e7dbb29b259409b9a652d75a2f09
+      internalID: 399818371
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_49
+      rect:
+        serializedVersion: 2
+        x: 615
+        y: 838
+        width: 38
+        height: 39
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 43caf719adae06f40bfea081a7b18750
+      internalID: 1461406372
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_50
+      rect:
+        serializedVersion: 2
+        x: 988
+        y: 865
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5521339d46005dc4582953ea59759f40
+      internalID: 1172811825
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_51
+      rect:
+        serializedVersion: 2
+        x: 493
+        y: 855
+        width: 14
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c4237693b4619a8408266602681a4f20
+      internalID: 557507497
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_52
+      rect:
+        serializedVersion: 2
+        x: 516
+        y: 861
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a9b73909a9d4d8147aaf7b8c46ee27f1
+      internalID: 1965663783
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_53
+      rect:
+        serializedVersion: 2
+        x: 521
+        y: 858
+        width: 11
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 48a96ee7f7cb41a4b81cb798ce6317c1
+      internalID: -1877037928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_54
+      rect:
+        serializedVersion: 2
+        x: 538
+        y: 822
+        width: 31
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1bd4edb268610e84b99850793b6b94dd
+      internalID: -1841991705
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_55
+      rect:
+        serializedVersion: 2
+        x: 596
+        y: 842
+        width: 20
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 33b8d917ea70c9e4db9e4f14e09919b6
+      internalID: -1393962122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_56
+      rect:
+        serializedVersion: 2
+        x: 113
+        y: 850
+        width: 9
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2c2213220b7a64c44b85657d45de2ebb
+      internalID: 1722879370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_57
+      rect:
+        serializedVersion: 2
+        x: 140
+        y: 818
+        width: 18
+        height: 34
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a45694582fd54c547b3ffcc41060edcc
+      internalID: 978374042
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_58
+      rect:
+        serializedVersion: 2
+        x: 523
+        y: 846
+        width: 6
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7c2cd311237a05e49ba5453e298b9698
+      internalID: -168136914
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_59
+      rect:
+        serializedVersion: 2
+        x: 583
+        y: 840
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a7ff635af9a26a846ae69afd3a918eb6
+      internalID: -2087716096
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_60
+      rect:
+        serializedVersion: 2
+        x: 135
+        y: 841
+        width: 6
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 59967a0c501c2a24690a21e911ef91f7
+      internalID: -1052400517
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_61
+      rect:
+        serializedVersion: 2
+        x: 159
+        y: 839
+        width: 9
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c094e2055941927478e4706ba6e77590
+      internalID: -437990240
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_62
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 822
+        width: 31
+        height: 19
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e6c9b996d9e21f4469de6ebddc3c781f
+      internalID: 233529992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_63
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 833
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c0ff82f6f44551442bb632053fca3adb
+      internalID: 1345043890
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_64
+      rect:
+        serializedVersion: 2
+        x: 159
+        y: 834
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 769076a3ba07ed141b9ec0bb648bf91f
+      internalID: 1207185195
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_65
+      rect:
+        serializedVersion: 2
+        x: 578
+        y: 826
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7471ad730d66a1d488e423ec510f4663
+      internalID: 476906766
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_66
+      rect:
+        serializedVersion: 2
+        x: 118
+        y: 825
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 515d6619d6cd1c64496baad3885d15a4
+      internalID: -1889142544
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_67
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 824
+        width: 6
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c26976028dee9ad4abd43c67b95c9aee
+      internalID: -1832455475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_68
+      rect:
+        serializedVersion: 2
+        x: 156
+        y: 824
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ef3d33bfcd1700d409dabb87bf5cf801
+      internalID: 1737134849
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_69
+      rect:
+        serializedVersion: 2
+        x: 611
+        y: 823
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5cd2f60d413defd44af6e2ff8b1b1253
+      internalID: 1446919689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_70
+      rect:
+        serializedVersion: 2
+        x: 620
+        y: 825
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 647e474372b815f4f8c1c5acb3e58076
+      internalID: 866314985
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_71
+      rect:
+        serializedVersion: 2
+        x: 654
+        y: 826
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cd90a392169f4d74da6c65a8f000245a
+      internalID: -143239173
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_72
+      rect:
+        serializedVersion: 2
+        x: 111
+        y: 816
+        width: 16
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f379e06262093624895b2f429a724a6b
+      internalID: -109664804
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_73
+      rect:
+        serializedVersion: 2
+        x: 118
+        y: 780
+        width: 43
+        height: 36
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c57238afdc2bef94090349ff213defba
+      internalID: -1172325813
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_74
+      rect:
+        serializedVersion: 2
+        x: 151
+        y: 817
+        width: 13
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b76e32e97c27f174c96c81b8dc231355
+      internalID: -534271879
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_75
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 811
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9a093d2d239d7c546b54e41a7c212db7
+      internalID: -507855570
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_76
+      rect:
+        serializedVersion: 2
+        x: 553
+        y: 812
+        width: 4
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a0501af50e4e2bf41a21216566df01bf
+      internalID: 1945755513
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_77
+      rect:
+        serializedVersion: 2
+        x: 560
+        y: 803
+        width: 29
+        height: 13
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 366f813b913f91045ab089e7e36bd335
+      internalID: 1866342649
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_78
+      rect:
+        serializedVersion: 2
+        x: 591
+        y: 810
+        width: 8
+        height: 12
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6b6531471d4734e429ff57d42eea89e7
+      internalID: -1461606881
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_79
+      rect:
+        serializedVersion: 2
+        x: 609
+        y: 810
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6ff0c4bedc339104095233053803f774
+      internalID: 424382296
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_80
+      rect:
+        serializedVersion: 2
+        x: 665
+        y: 813
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fb8c31ee7bd9ee64e9079470dccca089
+      internalID: 1937116911
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_81
+      rect:
+        serializedVersion: 2
+        x: 954
+        y: 798
+        width: 21
+        height: 23
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0744381f27839fc439de07557ddf40db
+      internalID: 1295655138
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_82
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 800
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5774580ad6a73a04e82589de05e071ed
+      internalID: 1315045162
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_83
+      rect:
+        serializedVersion: 2
+        x: 121
+        y: 807
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e015421f63a02f14eb0a8c45209ab815
+      internalID: -428101852
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_84
+      rect:
+        serializedVersion: 2
+        x: 141
+        y: 809
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 475385555b67139458a7558c53305b08
+      internalID: 979541261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_85
+      rect:
+        serializedVersion: 2
+        x: 153
+        y: 809
+        width: 14
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fc598e1aa1fd3ae40bbcb2553a29ba02
+      internalID: 630422482
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_86
+      rect:
+        serializedVersion: 2
+        x: 520
+        y: 800
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 42010bd34fa7d634cb91e159d460ef03
+      internalID: -407133151
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_87
+      rect:
+        serializedVersion: 2
+        x: 530
+        y: 665
+        width: 146
+        height: 147
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 52ccbf4ddd015ab4db64df7e0247ee0c
+      internalID: 873689565
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_88
+      rect:
+        serializedVersion: 2
+        x: 626
+        y: 806
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5515cc3e420627d45926141ee63753ce
+      internalID: -1062251654
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_89
+      rect:
+        serializedVersion: 2
+        x: 1037
+        y: 803
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2d59d6afcdf3bdc48bd8fff0f8cc3ad7
+      internalID: 492336641
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_90
+      rect:
+        serializedVersion: 2
+        x: 545
+        y: 799
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f15b71a01ae3f8741ad2b581c65a8228
+      internalID: 1953230403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_91
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 792
+        width: 11
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6035172bb2560234e880892d36f4de65
+      internalID: 391116416
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_92
+      rect:
+        serializedVersion: 2
+        x: 1275
+        y: 571
+        width: 95
+        height: 231
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5b60445e132f2da43a41e14f67cb6274
+      internalID: -1875165135
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_93
+      rect:
+        serializedVersion: 2
+        x: 559
+        y: 775
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2b0f733794501b04a8990847618da6d0
+      internalID: 481045023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_94
+      rect:
+        serializedVersion: 2
+        x: 921
+        y: 787
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f1a186f783650e147acc64a57610d327
+      internalID: 942755599
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_95
+      rect:
+        serializedVersion: 2
+        x: 1034
+        y: 781
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 345a920895e34864eafff8db211212b5
+      internalID: 1862568570
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_96
+      rect:
+        serializedVersion: 2
+        x: 524
+        y: 751
+        width: 5
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2e3579d96ae5a2f4db0c3db4a0c412f1
+      internalID: -1939621673
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_97
+      rect:
+        serializedVersion: 2
+        x: 535
+        y: 750
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0cee3476f3618234e8d0c4e715459daa
+      internalID: -83360504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_98
+      rect:
+        serializedVersion: 2
+        x: 910
+        y: 753
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ece464d53e8f18d4ca811c301dae38c4
+      internalID: -2122143800
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_99
+      rect:
+        serializedVersion: 2
+        x: 956
+        y: 714
+        width: 24
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 195a9336b6e8d2948806d2332051ebf7
+      internalID: 713123388
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_100
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 748
+        width: 24
+        height: 23
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: edb98ba7b64339e4488ad9da88256435
+      internalID: -2043266591
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_101
+      rect:
+        serializedVersion: 2
+        x: 1382
+        y: 129
+        width: 463
+        height: 636
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 123d635f9985afc46803f720799310d7
+      internalID: 394715565
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_102
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 748
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0298de99eb575b1469d458feab69c5f9
+      internalID: 253539946
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_103
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 740
+        width: 14
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a5ef825f502e0804b8fbfc2228d902f4
+      internalID: 1463755682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_104
+      rect:
+        serializedVersion: 2
+        x: 918
+        y: 740
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fe6f733a14673754e9256b771949167d
+      internalID: 1171542789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_105
+      rect:
+        serializedVersion: 2
+        x: 1002
+        y: 732
+        width: 20
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a0235540aaa005847a9d7f8e1de46f1f
+      internalID: -439466574
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_106
+      rect:
+        serializedVersion: 2
+        x: 138
+        y: 733
+        width: 4
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ef72fb1f46571d541a2bae9c5ac6f589
+      internalID: -531229734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_107
+      rect:
+        serializedVersion: 2
+        x: 478
+        y: 683
+        width: 45
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bcc33be820b35b4448c68a0cd171d15d
+      internalID: 301059092
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_108
+      rect:
+        serializedVersion: 2
+        x: 521
+        y: 729
+        width: 6
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f1ad65247c990ce45bb9ec76a384661b
+      internalID: 90485511
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_109
+      rect:
+        serializedVersion: 2
+        x: 538
+        y: 731
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b13b6bdfdb33ff342a9e3a61d8967178
+      internalID: 829983477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_110
+      rect:
+        serializedVersion: 2
+        x: 543
+        y: 723
+        width: 13
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a5fdbb02d66e77e438ec588b90f0b567
+      internalID: -580963783
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_111
+      rect:
+        serializedVersion: 2
+        x: 895
+        y: 729
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7d17910dbebf6934c8f9e79e2c676e21
+      internalID: 322996318
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_112
+      rect:
+        serializedVersion: 2
+        x: 1019
+        y: 694
+        width: 33
+        height: 40
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1f2d4e9eb9238f64780325f51ec77641
+      internalID: 38126900
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_113
+      rect:
+        serializedVersion: 2
+        x: 533
+        y: 722
+        width: 10
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 55c5eb3c106d53c4e96beab43f3268f6
+      internalID: -125103803
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_114
+      rect:
+        serializedVersion: 2
+        x: 1089
+        y: 723
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7c90980f4f013834cbddbb7e9bdf6d1c
+      internalID: -304697558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_115
+      rect:
+        serializedVersion: 2
+        x: 538
+        y: 711
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3aed1b9f32758f643896a1a1dadd1449
+      internalID: -524787962
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_116
+      rect:
+        serializedVersion: 2
+        x: 1057
+        y: 691
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2d105a44cda3b0848b18402201123843
+      internalID: -1599275362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_117
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 700
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ae10d5130b7f0e748a2dcc78d209db29
+      internalID: -109477193
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_118
+      rect:
+        serializedVersion: 2
+        x: 534
+        y: 702
+        width: 5
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e30a83a37de05b74896101d77995c3f4
+      internalID: 1317473270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_119
+      rect:
+        serializedVersion: 2
+        x: 869
+        y: 664
+        width: 42
+        height: 45
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ae051d8936b268344aa365e9e357c197
+      internalID: -1657000917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_120
+      rect:
+        serializedVersion: 2
+        x: 926
+        y: 699
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5018e2b5d93468f41822b5bc4ab67f35
+      internalID: 492179309
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_121
+      rect:
+        serializedVersion: 2
+        x: 940
+        y: 673
+        width: 36
+        height: 35
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f304a82cc376d34491eb2f7ab0d0ff7
+      internalID: 765337640
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_122
+      rect:
+        serializedVersion: 2
+        x: 1081
+        y: 685
+        width: 29
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6175dbfaa7bc4e24aacfeac3abb78caf
+      internalID: -1531868132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_123
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 693
+        width: 7
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fcd315369d6150c498e8d9c056a4c4a3
+      internalID: 1021958714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_124
+      rect:
+        serializedVersion: 2
+        x: 523
+        y: 689
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 792e752f04db67a428e70729924393b5
+      internalID: -1586308832
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_125
+      rect:
+        serializedVersion: 2
+        x: 532
+        y: 689
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6b80dfd301a716c40843af6b881a3e86
+      internalID: -1426515114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_126
+      rect:
+        serializedVersion: 2
+        x: 830
+        y: 688
+        width: 5
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7a327ae91bd001e4bb6d4434b93fb70d
+      internalID: -948053954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_127
+      rect:
+        serializedVersion: 2
+        x: 515
+        y: 682
+        width: 5
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e83105c9ac077ff41a3b3dade923bdf8
+      internalID: -2042872425
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_128
+      rect:
+        serializedVersion: 2
+        x: 541
+        y: 684
+        width: 6
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 88be90dc2c8bf1647b37c6522f80fe03
+      internalID: 25391331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_129
+      rect:
+        serializedVersion: 2
+        x: 584
+        y: 683
+        width: 6
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c59638e32df733d489d62c21b5d246c5
+      internalID: 205180605
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_130
+      rect:
+        serializedVersion: 2
+        x: 988
+        y: 599
+        width: 86
+        height: 86
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9a195aab3dc748a469064905dafdf101
+      internalID: -1136622059
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_131
+      rect:
+        serializedVersion: 2
+        x: 1018
+        y: 685
+        width: 4
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 84141b48b49b3054383e98cd57cb3508
+      internalID: 1254857409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_132
+      rect:
+        serializedVersion: 2
+        x: 547
+        y: 676
+        width: 11
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 642ec0e63012a174e94ef21ce04e397d
+      internalID: 1874908741
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_133
+      rect:
+        serializedVersion: 2
+        x: 561
+        y: 676
+        width: 9
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a08b066b4932ad64e87b4cbd17cb29b0
+      internalID: -1002000351
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_134
+      rect:
+        serializedVersion: 2
+        x: 1076
+        y: 669
+        width: 11
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 55d0ecf0ccfa13e49ad3ef5e34f9b68e
+      internalID: 10554707
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_135
+      rect:
+        serializedVersion: 2
+        x: 560
+        y: 671
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f029b98cb07b274391ae89092268f1e
+      internalID: -162212192
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_136
+      rect:
+        serializedVersion: 2
+        x: 1069
+        y: 665
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6769ae7f9a4412a4da4c2febfe9749fc
+      internalID: -113004703
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_137
+      rect:
+        serializedVersion: 2
+        x: 537
+        y: 661
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eb926010c1e990b49b3d5655d5dbd3e8
+      internalID: -913450606
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_138
+      rect:
+        serializedVersion: 2
+        x: 579
+        y: 663
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9a1f5e42c4d49f94da707767d3c10c5f
+      internalID: -80313419
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_139
+      rect:
+        serializedVersion: 2
+        x: 662
+        y: 666
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: af512c787e1cbe74287406be9f1129b3
+      internalID: 291989070
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_140
+      rect:
+        serializedVersion: 2
+        x: 825
+        y: 661
+        width: 15
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b54cedc834e48b741a016d27efebd643
+      internalID: -614948905
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_141
+      rect:
+        serializedVersion: 2
+        x: 554
+        y: 661
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7a03b9059b0abe94080e6569a2d4cc8c
+      internalID: 1572523832
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_142
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 650
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6dab720e94dc30645b292a99b58cac29
+      internalID: 836670813
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_143
+      rect:
+        serializedVersion: 2
+        x: 581
+        y: 653
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 67e9ac4ec341bb94b87a833e1182f40a
+      internalID: -1532109684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_144
+      rect:
+        serializedVersion: 2
+        x: 595
+        y: 647
+        width: 11
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 354069aad740052459b703779ac1fa86
+      internalID: 1503751106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_145
+      rect:
+        serializedVersion: 2
+        x: 616
+        y: 650
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7ec19fc70e325314e8a138cffa6ef2f7
+      internalID: -1403487502
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_146
+      rect:
+        serializedVersion: 2
+        x: 830
+        y: 141
+        width: 397
+        height: 520
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a8f7fb2f06680bd4e86cfa81bc7709d5
+      internalID: 81897519
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_147
+      rect:
+        serializedVersion: 2
+        x: 957
+        y: 657
+        width: 7
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bc014c3cf2399584bac72e2673c6c766
+      internalID: 1386810104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_148
+      rect:
+        serializedVersion: 2
+        x: 1105
+        y: 660
+        width: 4
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 858f388e55335814cbf2da3aa03bc5cd
+      internalID: 2054102907
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_149
+      rect:
+        serializedVersion: 2
+        x: 525
+        y: 653
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 61a79fc58af4d204e8f259e80be7b063
+      internalID: 363827264
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_150
+      rect:
+        serializedVersion: 2
+        x: 544
+        y: 652
+        width: 5
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e676e0219a1327d4286a415ef0f5432b
+      internalID: 1751821810
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_151
+      rect:
+        serializedVersion: 2
+        x: 548
+        y: 648
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6470cf1eccfc61546a4c9222cbd91205
+      internalID: 1726813552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_152
+      rect:
+        serializedVersion: 2
+        x: 938
+        y: 651
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0a6db1a2c3d7c8b4781d527ed7e54338
+      internalID: 1714529554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_153
+      rect:
+        serializedVersion: 2
+        x: 1076
+        y: 631
+        width: 25
+        height: 29
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cfeac745c44ec534a8da8aae69a6f2fc
+      internalID: 446549012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_154
+      rect:
+        serializedVersion: 2
+        x: 559
+        y: 643
+        width: 5
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: db3a1b9deb718114799e9fe3fd977ecb
+      internalID: -531802461
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_155
+      rect:
+        serializedVersion: 2
+        x: 587
+        y: 645
+        width: 4
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 24e73aac5e95baa4782e89bf9a37c23d
+      internalID: 1926350221
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_156
+      rect:
+        serializedVersion: 2
+        x: 604
+        y: 646
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 49de0fdc0f0329e409c01e9012a48ec5
+      internalID: 1759997637
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_157
+      rect:
+        serializedVersion: 2
+        x: 617
+        y: 642
+        width: 5
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e22a6e3c80c19224d95fb604887e1c45
+      internalID: 509536151
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_158
+      rect:
+        serializedVersion: 2
+        x: 628
+        y: 637
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4af74eaf3ac1ff04d9c395bb08691a67
+      internalID: 1606294046
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_159
+      rect:
+        serializedVersion: 2
+        x: 645
+        y: 646
+        width: 9
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c2dc1457d176f4841a11e4f575a730f2
+      internalID: -471263413
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_160
+      rect:
+        serializedVersion: 2
+        x: 771
+        y: 627
+        width: 23
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2627203e3fdd45145a7ca7bafb2b1698
+      internalID: 1284501679
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_161
+      rect:
+        serializedVersion: 2
+        x: 542
+        y: 633
+        width: 5
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 272968281f4d63e4aa801d06099d3ed3
+      internalID: -1102899519
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_162
+      rect:
+        serializedVersion: 2
+        x: 557
+        y: 637
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ea78de4654302de4ab902f0eaef79398
+      internalID: -57644669
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_163
+      rect:
+        serializedVersion: 2
+        x: 569
+        y: 619
+        width: 20
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: abcf4fd9f023ab244b23667915d34864
+      internalID: -936974504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_164
+      rect:
+        serializedVersion: 2
+        x: 574
+        y: 640
+        width: 6
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 441db871e01246449a3c3ea4353c6f2b
+      internalID: 763259916
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_165
+      rect:
+        serializedVersion: 2
+        x: 612
+        y: 637
+        width: 7
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2b868a956f688f943b9fc7adb1d209ea
+      internalID: 2100567272
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_166
+      rect:
+        serializedVersion: 2
+        x: 593
+        y: 587
+        width: 39
+        height: 46
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c7a8d3dad02a50848ba4f81bd406a7eb
+      internalID: -715912388
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_167
+      rect:
+        serializedVersion: 2
+        x: 601
+        y: 629
+        width: 5
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 83836fcd6faab714b963e1abdba67c14
+      internalID: -519287724
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_168
+      rect:
+        serializedVersion: 2
+        x: 626
+        y: 628
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4531240bfff2a7640bee21e8855214a3
+      internalID: -1265306917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_169
+      rect:
+        serializedVersion: 2
+        x: 641
+        y: 625
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9d0c972886c79ba428f5efd142550939
+      internalID: 632184875
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_170
+      rect:
+        serializedVersion: 2
+        x: 663
+        y: 630
+        width: 9
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ac7f1486628944f48a7b13ac92e1642d
+      internalID: -1356083803
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_171
+      rect:
+        serializedVersion: 2
+        x: 814
+        y: 614
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 21b8bfba561e42646bb62fe855601035
+      internalID: -443099612
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_172
+      rect:
+        serializedVersion: 2
+        x: 558
+        y: 590
+        width: 6
+        height: 17
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: aaf28b7cfb82c5a49a12d192c4cce527
+      internalID: -792380580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_173
+      rect:
+        serializedVersion: 2
+        x: 506
+        y: 585
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 50bfdc5234c5b37428223bdd0c6ec981
+      internalID: -535728904
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_174
+      rect:
+        serializedVersion: 2
+        x: 771
+        y: 579
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5ceec313d10432d418ed9ba5d4e1625e
+      internalID: 156470596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_175
+      rect:
+        serializedVersion: 2
+        x: 807
+        y: 533
+        width: 10
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b5e866e7538f1014a8fe63db72d30600
+      internalID: 1721096879
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_176
+      rect:
+        serializedVersion: 2
+        x: 824
+        y: 548
+        width: 13
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b878ba6ec7789b14ea3edee362068128
+      internalID: 1389665667
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_177
+      rect:
+        serializedVersion: 2
+        x: 795
+        y: 530
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 086f95fe9ffeee94380f59688466c4fc
+      internalID: 399501990
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_178
+      rect:
+        serializedVersion: 2
+        x: 205
+        y: 210
+        width: 455
+        height: 316
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5d29173f2456493468242ac603cbd4e3
+      internalID: 665858445
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_179
+      rect:
+        serializedVersion: 2
+        x: 747
+        y: 520
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9ceca73f9eb62c84b8029ae9dc0bcf34
+      internalID: -338069322
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_180
+      rect:
+        serializedVersion: 2
+        x: 759
+        y: 519
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 81eeadd42304f3540845aa0b794a4ac4
+      internalID: -840273523
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_181
+      rect:
+        serializedVersion: 2
+        x: 787
+        y: 515
+        width: 13
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 637633b75991a084581c3d823e23245b
+      internalID: 1688555457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_182
+      rect:
+        serializedVersion: 2
+        x: 765
+        y: 485
+        width: 22
+        height: 33
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 14c716528505a0c46932aaa1ec030805
+      internalID: -772483691
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_183
+      rect:
+        serializedVersion: 2
+        x: 813
+        y: 499
+        width: 12
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 914b5f3fd7fe7b34e817979b13c1946f
+      internalID: -1964502289
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_184
+      rect:
+        serializedVersion: 2
+        x: 826
+        y: 503
+        width: 12
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bede2c0601c501f4286f3cc500956dcb
+      internalID: -222377155
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_185
+      rect:
+        serializedVersion: 2
+        x: 748
+        y: 486
+        width: 5
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9b032880d99c5cd4e8b5aec88798594a
+      internalID: 149198822
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_186
+      rect:
+        serializedVersion: 2
+        x: 762
+        y: 482
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ff66fc95c59f5cf46bcae0d058ec26ae
+      internalID: 996841812
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_187
+      rect:
+        serializedVersion: 2
+        x: 819
+        y: 449
+        width: 31
+        height: 48
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c4c7adcced96025498017e11184ab92f
+      internalID: 2006836854
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_188
+      rect:
+        serializedVersion: 2
+        x: 746
+        y: 446
+        width: 15
+        height: 30
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8abf1ed9c9fe342418ce1945e5b9a7a0
+      internalID: -557874657
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_189
+      rect:
+        serializedVersion: 2
+        x: 792
+        y: 466
+        width: 4
+        height: 5
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e5423a3f8a5ac74419bd219c2f35d165
+      internalID: -656092119
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_190
+      rect:
+        serializedVersion: 2
+        x: 765
+        y: 429
+        width: 26
+        height: 34
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 89b342b3a53e59447bd3521bae312429
+      internalID: -2127871997
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_191
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 425
+        width: 5
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 37d7a55b2441f2341844af6864ddfa8a
+      internalID: -340918634
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_192
+      rect:
+        serializedVersion: 2
+        x: 792
+        y: 429
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ef6c4efdc3221a54c86c334350dbeb39
+      internalID: -2099197181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_193
+      rect:
+        serializedVersion: 2
+        x: 806
+        y: 399
+        width: 68
+        height: 47
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f738bd1ff13d3e04db5026c096dab544
+      internalID: -1398994524
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_194
+      rect:
+        serializedVersion: 2
+        x: 196
+        y: 28
+        width: 461
+        height: 377
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ddfbe22c116746242bb20e1bb9add5be
+      internalID: -1589387415
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_195
+      rect:
+        serializedVersion: 2
+        x: 700
+        y: 369
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: faa8b38d832c29648aaa3cccb537747a
+      internalID: 1258603152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_196
+      rect:
+        serializedVersion: 2
+        x: 774
+        y: 382
+        width: 5
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 30c033a3081ac234781f183ac4d52324
+      internalID: 1074594688
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_197
+      rect:
+        serializedVersion: 2
+        x: 805
+        y: 383
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d4da3357de7642a44bfd020bbc48d42f
+      internalID: 1581694155
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_198
+      rect:
+        serializedVersion: 2
+        x: 807
+        y: 323
+        width: 45
+        height: 77
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 31a5ed8bd3abfa44eb481204a149de1c
+      internalID: 2091749206
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_199
+      rect:
+        serializedVersion: 2
+        x: 1176
+        y: 311
+        width: 56
+        height: 76
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 749c8b93b3ad6884795a5759e64ebe79
+      internalID: -1860057051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_200
+      rect:
+        serializedVersion: 2
+        x: 745
+        y: 362
+        width: 18
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7a661da129220b047bc86bc4a76261a9
+      internalID: 1000386944
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_201
+      rect:
+        serializedVersion: 2
+        x: 725
+        y: 333
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f7869c56a85908e48ac42e153383a8ba
+      internalID: -2114009062
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_202
+      rect:
+        serializedVersion: 2
+        x: 747
+        y: 306
+        width: 15
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1466bff372513e1499745f2ffc31ddaf
+      internalID: -449950864
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_203
+      rect:
+        serializedVersion: 2
+        x: 735
+        y: 206
+        width: 64
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dcaf82abe968db145a95dbeb68f77746
+      internalID: 1815442640
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_204
+      rect:
+        serializedVersion: 2
+        x: 816
+        y: 232
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e9f95e3286ce6774b9b48229cf0d759b
+      internalID: -535374379
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_205
+      rect:
+        serializedVersion: 2
+        x: 1256
+        y: 239
+        width: 61
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 963344f9f9ceac04b9dce5e751bef435
+      internalID: -2112345328
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_206
+      rect:
+        serializedVersion: 2
+        x: 1196
+        y: 194
+        width: 54
+        height: 40
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 150779b50e69f394c944efdd6fe3dab5
+      internalID: 999170551
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_207
+      rect:
+        serializedVersion: 2
+        x: 851
+        y: 131
+        width: 29
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0b7ad9c46938c6a44a566bf1f60455a0
+      internalID: 293313901
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_208
+      rect:
+        serializedVersion: 2
+        x: 1068
+        y: 135
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 61595e5cec326b8479176dd8255b3511
+      internalID: -1914428279
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_209
+      rect:
+        serializedVersion: 2
+        x: 1080
+        y: 115
+        width: 32
+        height: 29
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dfb1713f39f738d4b80b5ef36a278518
+      internalID: -615582189
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_210
+      rect:
+        serializedVersion: 2
+        x: 934
+        y: 115
+        width: 18
+        height: 19
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 35cff5ed58dd79d42a32d142d6e64ca2
+      internalID: -885170843
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_211
+      rect:
+        serializedVersion: 2
+        x: 1081
+        y: 108
+        width: 5
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f33e1e4f123d88d4e9a915015fb7d6c4
+      internalID: -714653039
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_212
+      rect:
+        serializedVersion: 2
+        x: 1115
+        y: 101
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d08b833d8c2f57f4292cdd13ce02d579
+      internalID: -59063265
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_213
+      rect:
+        serializedVersion: 2
+        x: 1066
+        y: 84
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 14dd8c0a36a324a4584ec2829acee7e9
+      internalID: -383315938
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_214
+      rect:
+        serializedVersion: 2
+        x: 1143
+        y: 43
+        width: 25
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5cf8044b0c80025478c685b18e239e54
+      internalID: 1550396458
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: INQUISICION THE FORT (4)_215
+      rect:
+        serializedVersion: 2
+        x: 1243
+        y: 65
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b9950af9dbfded84baaef37e61b40935
+      internalID: -1594168053
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: dc73287fc4daf424ea9e3fe53bcedbca
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      INQUISICION THE FORT (4)_0: 185254424
+      INQUISICION THE FORT (4)_1: -1970888123
+      INQUISICION THE FORT (4)_10: 427660923
+      INQUISICION THE FORT (4)_100: -2043266591
+      INQUISICION THE FORT (4)_101: 394715565
+      INQUISICION THE FORT (4)_102: 253539946
+      INQUISICION THE FORT (4)_103: 1463755682
+      INQUISICION THE FORT (4)_104: 1171542789
+      INQUISICION THE FORT (4)_105: -439466574
+      INQUISICION THE FORT (4)_106: -531229734
+      INQUISICION THE FORT (4)_107: 301059092
+      INQUISICION THE FORT (4)_108: 90485511
+      INQUISICION THE FORT (4)_109: 829983477
+      INQUISICION THE FORT (4)_11: 1246207690
+      INQUISICION THE FORT (4)_110: -580963783
+      INQUISICION THE FORT (4)_111: 322996318
+      INQUISICION THE FORT (4)_112: 38126900
+      INQUISICION THE FORT (4)_113: -125103803
+      INQUISICION THE FORT (4)_114: -304697558
+      INQUISICION THE FORT (4)_115: -524787962
+      INQUISICION THE FORT (4)_116: -1599275362
+      INQUISICION THE FORT (4)_117: -109477193
+      INQUISICION THE FORT (4)_118: 1317473270
+      INQUISICION THE FORT (4)_119: -1657000917
+      INQUISICION THE FORT (4)_12: -990054066
+      INQUISICION THE FORT (4)_120: 492179309
+      INQUISICION THE FORT (4)_121: 765337640
+      INQUISICION THE FORT (4)_122: -1531868132
+      INQUISICION THE FORT (4)_123: 1021958714
+      INQUISICION THE FORT (4)_124: -1586308832
+      INQUISICION THE FORT (4)_125: -1426515114
+      INQUISICION THE FORT (4)_126: -948053954
+      INQUISICION THE FORT (4)_127: -2042872425
+      INQUISICION THE FORT (4)_128: 25391331
+      INQUISICION THE FORT (4)_129: 205180605
+      INQUISICION THE FORT (4)_13: -1446170484
+      INQUISICION THE FORT (4)_130: -1136622059
+      INQUISICION THE FORT (4)_131: 1254857409
+      INQUISICION THE FORT (4)_132: 1874908741
+      INQUISICION THE FORT (4)_133: -1002000351
+      INQUISICION THE FORT (4)_134: 10554707
+      INQUISICION THE FORT (4)_135: -162212192
+      INQUISICION THE FORT (4)_136: -113004703
+      INQUISICION THE FORT (4)_137: -913450606
+      INQUISICION THE FORT (4)_138: -80313419
+      INQUISICION THE FORT (4)_139: 291989070
+      INQUISICION THE FORT (4)_14: 1378596686
+      INQUISICION THE FORT (4)_140: -614948905
+      INQUISICION THE FORT (4)_141: 1572523832
+      INQUISICION THE FORT (4)_142: 836670813
+      INQUISICION THE FORT (4)_143: -1532109684
+      INQUISICION THE FORT (4)_144: 1503751106
+      INQUISICION THE FORT (4)_145: -1403487502
+      INQUISICION THE FORT (4)_146: 81897519
+      INQUISICION THE FORT (4)_147: 1386810104
+      INQUISICION THE FORT (4)_148: 2054102907
+      INQUISICION THE FORT (4)_149: 363827264
+      INQUISICION THE FORT (4)_15: -22532172
+      INQUISICION THE FORT (4)_150: 1751821810
+      INQUISICION THE FORT (4)_151: 1726813552
+      INQUISICION THE FORT (4)_152: 1714529554
+      INQUISICION THE FORT (4)_153: 446549012
+      INQUISICION THE FORT (4)_154: -531802461
+      INQUISICION THE FORT (4)_155: 1926350221
+      INQUISICION THE FORT (4)_156: 1759997637
+      INQUISICION THE FORT (4)_157: 509536151
+      INQUISICION THE FORT (4)_158: 1606294046
+      INQUISICION THE FORT (4)_159: -471263413
+      INQUISICION THE FORT (4)_16: 2130760872
+      INQUISICION THE FORT (4)_160: 1284501679
+      INQUISICION THE FORT (4)_161: -1102899519
+      INQUISICION THE FORT (4)_162: -57644669
+      INQUISICION THE FORT (4)_163: -936974504
+      INQUISICION THE FORT (4)_164: 763259916
+      INQUISICION THE FORT (4)_165: 2100567272
+      INQUISICION THE FORT (4)_166: -715912388
+      INQUISICION THE FORT (4)_167: -519287724
+      INQUISICION THE FORT (4)_168: -1265306917
+      INQUISICION THE FORT (4)_169: 632184875
+      INQUISICION THE FORT (4)_17: 326091522
+      INQUISICION THE FORT (4)_170: -1356083803
+      INQUISICION THE FORT (4)_171: -443099612
+      INQUISICION THE FORT (4)_172: -792380580
+      INQUISICION THE FORT (4)_173: -535728904
+      INQUISICION THE FORT (4)_174: 156470596
+      INQUISICION THE FORT (4)_175: 1721096879
+      INQUISICION THE FORT (4)_176: 1389665667
+      INQUISICION THE FORT (4)_177: 399501990
+      INQUISICION THE FORT (4)_178: 665858445
+      INQUISICION THE FORT (4)_179: -338069322
+      INQUISICION THE FORT (4)_18: 1845068525
+      INQUISICION THE FORT (4)_180: -840273523
+      INQUISICION THE FORT (4)_181: 1688555457
+      INQUISICION THE FORT (4)_182: -772483691
+      INQUISICION THE FORT (4)_183: -1964502289
+      INQUISICION THE FORT (4)_184: -222377155
+      INQUISICION THE FORT (4)_185: 149198822
+      INQUISICION THE FORT (4)_186: 996841812
+      INQUISICION THE FORT (4)_187: 2006836854
+      INQUISICION THE FORT (4)_188: -557874657
+      INQUISICION THE FORT (4)_189: -656092119
+      INQUISICION THE FORT (4)_19: -1345259112
+      INQUISICION THE FORT (4)_190: -2127871997
+      INQUISICION THE FORT (4)_191: -340918634
+      INQUISICION THE FORT (4)_192: -2099197181
+      INQUISICION THE FORT (4)_193: -1398994524
+      INQUISICION THE FORT (4)_194: -1589387415
+      INQUISICION THE FORT (4)_195: 1258603152
+      INQUISICION THE FORT (4)_196: 1074594688
+      INQUISICION THE FORT (4)_197: 1581694155
+      INQUISICION THE FORT (4)_198: 2091749206
+      INQUISICION THE FORT (4)_199: -1860057051
+      INQUISICION THE FORT (4)_2: -2005845423
+      INQUISICION THE FORT (4)_20: -1421790181
+      INQUISICION THE FORT (4)_200: 1000386944
+      INQUISICION THE FORT (4)_201: -2114009062
+      INQUISICION THE FORT (4)_202: -449950864
+      INQUISICION THE FORT (4)_203: 1815442640
+      INQUISICION THE FORT (4)_204: -535374379
+      INQUISICION THE FORT (4)_205: -2112345328
+      INQUISICION THE FORT (4)_206: 999170551
+      INQUISICION THE FORT (4)_207: 293313901
+      INQUISICION THE FORT (4)_208: -1914428279
+      INQUISICION THE FORT (4)_209: -615582189
+      INQUISICION THE FORT (4)_21: 1375092830
+      INQUISICION THE FORT (4)_210: -885170843
+      INQUISICION THE FORT (4)_211: -714653039
+      INQUISICION THE FORT (4)_212: -59063265
+      INQUISICION THE FORT (4)_213: -383315938
+      INQUISICION THE FORT (4)_214: 1550396458
+      INQUISICION THE FORT (4)_215: -1594168053
+      INQUISICION THE FORT (4)_22: 1746856092
+      INQUISICION THE FORT (4)_23: -450712669
+      INQUISICION THE FORT (4)_24: 1944245605
+      INQUISICION THE FORT (4)_25: -606886563
+      INQUISICION THE FORT (4)_26: 627513535
+      INQUISICION THE FORT (4)_27: -1491648036
+      INQUISICION THE FORT (4)_28: 209334627
+      INQUISICION THE FORT (4)_29: -1977063248
+      INQUISICION THE FORT (4)_3: 501187843
+      INQUISICION THE FORT (4)_30: -685582709
+      INQUISICION THE FORT (4)_31: -1576981106
+      INQUISICION THE FORT (4)_32: -681824690
+      INQUISICION THE FORT (4)_33: -1497995011
+      INQUISICION THE FORT (4)_34: -27409451
+      INQUISICION THE FORT (4)_35: -1958362787
+      INQUISICION THE FORT (4)_36: -1050719230
+      INQUISICION THE FORT (4)_37: 1441726089
+      INQUISICION THE FORT (4)_38: -1909524516
+      INQUISICION THE FORT (4)_39: 1399256504
+      INQUISICION THE FORT (4)_4: -898994919
+      INQUISICION THE FORT (4)_40: -126202465
+      INQUISICION THE FORT (4)_41: -680205310
+      INQUISICION THE FORT (4)_42: 1643305281
+      INQUISICION THE FORT (4)_43: 1311973205
+      INQUISICION THE FORT (4)_44: -1226623274
+      INQUISICION THE FORT (4)_45: -1814827072
+      INQUISICION THE FORT (4)_46: -1638140597
+      INQUISICION THE FORT (4)_47: -1682006765
+      INQUISICION THE FORT (4)_48: 399818371
+      INQUISICION THE FORT (4)_49: 1461406372
+      INQUISICION THE FORT (4)_5: -1961280263
+      INQUISICION THE FORT (4)_50: 1172811825
+      INQUISICION THE FORT (4)_51: 557507497
+      INQUISICION THE FORT (4)_52: 1965663783
+      INQUISICION THE FORT (4)_53: -1877037928
+      INQUISICION THE FORT (4)_54: -1841991705
+      INQUISICION THE FORT (4)_55: -1393962122
+      INQUISICION THE FORT (4)_56: 1722879370
+      INQUISICION THE FORT (4)_57: 978374042
+      INQUISICION THE FORT (4)_58: -168136914
+      INQUISICION THE FORT (4)_59: -2087716096
+      INQUISICION THE FORT (4)_6: 1698460270
+      INQUISICION THE FORT (4)_60: -1052400517
+      INQUISICION THE FORT (4)_61: -437990240
+      INQUISICION THE FORT (4)_62: 233529992
+      INQUISICION THE FORT (4)_63: 1345043890
+      INQUISICION THE FORT (4)_64: 1207185195
+      INQUISICION THE FORT (4)_65: 476906766
+      INQUISICION THE FORT (4)_66: -1889142544
+      INQUISICION THE FORT (4)_67: -1832455475
+      INQUISICION THE FORT (4)_68: 1737134849
+      INQUISICION THE FORT (4)_69: 1446919689
+      INQUISICION THE FORT (4)_7: 1946220622
+      INQUISICION THE FORT (4)_70: 866314985
+      INQUISICION THE FORT (4)_71: -143239173
+      INQUISICION THE FORT (4)_72: -109664804
+      INQUISICION THE FORT (4)_73: -1172325813
+      INQUISICION THE FORT (4)_74: -534271879
+      INQUISICION THE FORT (4)_75: -507855570
+      INQUISICION THE FORT (4)_76: 1945755513
+      INQUISICION THE FORT (4)_77: 1866342649
+      INQUISICION THE FORT (4)_78: -1461606881
+      INQUISICION THE FORT (4)_79: 424382296
+      INQUISICION THE FORT (4)_8: -2133236439
+      INQUISICION THE FORT (4)_80: 1937116911
+      INQUISICION THE FORT (4)_81: 1295655138
+      INQUISICION THE FORT (4)_82: 1315045162
+      INQUISICION THE FORT (4)_83: -428101852
+      INQUISICION THE FORT (4)_84: 979541261
+      INQUISICION THE FORT (4)_85: 630422482
+      INQUISICION THE FORT (4)_86: -407133151
+      INQUISICION THE FORT (4)_87: 873689565
+      INQUISICION THE FORT (4)_88: -1062251654
+      INQUISICION THE FORT (4)_89: 492336641
+      INQUISICION THE FORT (4)_9: 330441873
+      INQUISICION THE FORT (4)_90: 1953230403
+      INQUISICION THE FORT (4)_91: 391116416
+      INQUISICION THE FORT (4)_92: -1875165135
+      INQUISICION THE FORT (4)_93: 481045023
+      INQUISICION THE FORT (4)_94: 942755599
+      INQUISICION THE FORT (4)_95: 1862568570
+      INQUISICION THE FORT (4)_96: -1939621673
+      INQUISICION THE FORT (4)_97: -83360504
+      INQUISICION THE FORT (4)_98: -2122143800
+      INQUISICION THE FORT (4)_99: 713123388
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
