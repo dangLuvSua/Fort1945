@@ -78,7 +78,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1925246797
-  m_SortingLayer: 3
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -816217405, guid: 4d7fdd0b0a75b6a42bdeacded5f53930, type: 3}
@@ -624,7 +624,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1392102069
-  m_SortingLayer: 1
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 1804469510, guid: 85540afa3009c3d46ae071aa16eb7535, type: 3}
@@ -671,6 +671,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 130142f69f2feeb498dac9fa4557c156, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
+  zoomDistance: 0.8
+  zoomScaleMultiplier: 0.5
+  animationDuration: 0.25
+  rotationOffset: {x: 0, y: 180, z: 0}
 --- !u!1 &1408715434807532048
 GameObject:
   m_ObjectHideFlags: 0
@@ -931,7 +935,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 250635093
-  m_SortingLayer: 2
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -724850285, guid: b33ed702505568644bc04f46047938d6, type: 3}
@@ -1343,7 +1347,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1392102069
-  m_SortingLayer: 1
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -886080948, guid: f43a7b18e9c3932469b75af9a1245d70, type: 3}
@@ -1390,6 +1394,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 130142f69f2feeb498dac9fa4557c156, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
+  zoomDistance: 0.8
+  zoomScaleMultiplier: 0.5
+  animationDuration: 0.25
+  rotationOffset: {x: 0, y: 180, z: 0}
 --- !u!1 &2749027715547006330
 GameObject:
   m_ObjectHideFlags: 0
@@ -1468,7 +1476,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 250635093
-  m_SortingLayer: 2
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -724850285, guid: b33ed702505568644bc04f46047938d6, type: 3}
@@ -1650,7 +1658,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 250635093
-  m_SortingLayer: 2
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -724850285, guid: b33ed702505568644bc04f46047938d6, type: 3}
@@ -1742,7 +1750,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -312946133
-  m_SortingLayer: 4
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -958517238, guid: 4d7fdd0b0a75b6a42bdeacded5f53930, type: 3}
@@ -2198,7 +2206,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1392102069
-  m_SortingLayer: 1
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -1170199375, guid: 85540afa3009c3d46ae071aa16eb7535, type: 3}
@@ -2245,6 +2253,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 130142f69f2feeb498dac9fa4557c156, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
+  zoomDistance: 0.8
+  zoomScaleMultiplier: 0.5
+  animationDuration: 0.25
+  rotationOffset: {x: 0, y: 180, z: 0}
 --- !u!1 &4365115632640725350
 GameObject:
   m_ObjectHideFlags: 0
@@ -2630,7 +2642,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 250635093
-  m_SortingLayer: 2
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -724850285, guid: b33ed702505568644bc04f46047938d6, type: 3}
@@ -2994,7 +3006,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1925246797
-  m_SortingLayer: 3
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -1123301523, guid: 4d7fdd0b0a75b6a42bdeacded5f53930, type: 3}
@@ -3176,7 +3188,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -312946133
-  m_SortingLayer: 4
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -958517238, guid: 4d7fdd0b0a75b6a42bdeacded5f53930, type: 3}
@@ -3268,7 +3280,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -312946133
-  m_SortingLayer: 4
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -958517238, guid: 4d7fdd0b0a75b6a42bdeacded5f53930, type: 3}
@@ -3499,7 +3511,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1392102069
-  m_SortingLayer: 1
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -1264879320, guid: f43a7b18e9c3932469b75af9a1245d70, type: 3}
@@ -3546,6 +3558,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 130142f69f2feeb498dac9fa4557c156, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
+  zoomDistance: 0.8
+  zoomScaleMultiplier: 0.5
+  animationDuration: 0.25
+  rotationOffset: {x: 0, y: 180, z: 0}
 --- !u!1 &7535297118775676084
 GameObject:
   m_ObjectHideFlags: 0
@@ -4076,7 +4092,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -312946133
-  m_SortingLayer: 4
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -958517238, guid: 4d7fdd0b0a75b6a42bdeacded5f53930, type: 3}
