@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using Unity.AI.Navigation;
+using UnityEngine;
 
 public class DungeonGenerator : MonoBehaviour
 {
@@ -12,6 +12,7 @@ public class DungeonGenerator : MonoBehaviour
     [Header("Corridor Pieces")]
     [Tooltip("Add Dungeon Straight, Dungeon Left and Dungeon Right here.")]
     public GameObject[] corridorPieces;
+
 
     // =========================================================
     // DUNGEON ENTRANCE
@@ -24,7 +25,6 @@ public class DungeonGenerator : MonoBehaviour
 
     private bool entranceCreated = false;
 
-    // Para makuha ng ibang scripts kung nasaan ang entrance
     public GameObject DungeonEntranceObject { get; private set; }
 
 
@@ -47,12 +47,19 @@ public class DungeonGenerator : MonoBehaviour
 
 
     // =========================================================
-    // UNIQUE ROOM
+    // UNIQUE ROOMS
     // =========================================================
 
-    [Header("Unique Room")]
-    [Tooltip("Choose from these unique rooms. One spawns per dungeon layout.")]
+    [Header("Unique Rooms")]
+    [Tooltip("Unique rooms (Prison, Interrogation, etc.).")]
     public GameObject[] uniqueRoomPrefabs;
+
+    [Tooltip("Checked = LAHAT ng rooms sa listahan ay lalabas (tig-isa). " +
+             "Unchecked = isang random lang.")]
+    public bool spawnAllUniqueRooms = true;
+
+    private int uniqueRoomsPlaced = 0;
+    private int uniqueRoomsRequired = 0;
 
 
     // =========================================================
@@ -62,7 +69,7 @@ public class DungeonGenerator : MonoBehaviour
     [Header("Dungeon Settings")]
 
     [Min(2)]
-    [Tooltip("Total number of terminal rooms, including the Unique Room.")]
+    [Tooltip("Total number of terminal rooms, including the Unique Rooms and the Entrance.")]
     public int numberOfRooms = 10;
 
     [Min(0)]
@@ -73,18 +80,20 @@ public class DungeonGenerator : MonoBehaviour
     [Tooltip("Number of placement attempts for each piece.")]
     public int placementAttempts = 15;
 
+
     // =========================================================
-    // CHEST SPAWN POINTS
+    // CHEST
     // =========================================================
 
     [Header("Chest")]
-    [Tooltip("Add Chest1 and Chest2 here. One random chest spawns in the whole dungeon.")]
+    [Tooltip("Add Chest1 and Chest2 here.")]
     public GameObject[] chestPrefabs;
 
     [Tooltip("Do not put the chest in the same room where players spawn.")]
     public bool avoidSpawnRoom = true;
 
     private GameObject spawnRoomObject;
+
 
     // =========================================================
     // LEVEL
@@ -116,11 +125,15 @@ public class DungeonGenerator : MonoBehaviour
     // =========================================================
 
     [Header("Multiplayer Seed")]
-    [Tooltip("When true, every client seeds Unity's Random from the shared session, so every client generates the exact same dungeon layout. Turn off for free single-player testing.")]
+    [Tooltip("When true, every client seeds Unity's Random from the shared session, " +
+             "so every client generates the exact same dungeon layout. " +
+             "Turn off for free single-player testing.")]
     public bool useSessionSeed = true;
 
     [Tooltip("Used only when useSessionSeed is false. 0 = fully random.")]
     public int fixedSeed = 0;
+
+
     // =========================================================
     // GENERATION RETRY
     // =========================================================
@@ -130,6 +143,7 @@ public class DungeonGenerator : MonoBehaviour
     [Tooltip("How many completely new layouts to try if generation fails.")]
     [Min(1)]
     public int maxGenerationRetries = 20;
+
 
     // =========================================================
     // NAVMESH
@@ -146,21 +160,15 @@ public class DungeonGenerator : MonoBehaviour
     // RUNTIME DATA
     // =========================================================
 
-    private readonly List<GameObject> generatedPieces =
-        new List<GameObject>();
-
-    private readonly List<DungeonConnector> availableExits =
-        new List<DungeonConnector>();
+    private readonly List<GameObject> generatedPieces = new List<GameObject>();
+    private readonly List<DungeonConnector> availableExits = new List<DungeonConnector>();
+    private readonly List<Transform> spawnPoints = new List<Transform>();
 
     private int roomsCreated = 0;
-
-    private bool uniqueRoomCreated = false;
 
     public static event System.Action<DungeonGenerator> OnDungeonGenerated;
 
     public bool IsGenerated { get; private set; }
-
-    private readonly List<Transform> spawnPoints = new List<Transform>();
 
     public GameObject SpawnRoomObject => spawnRoomObject;
 
@@ -179,11 +187,13 @@ public class DungeonGenerator : MonoBehaviour
         }
     }
 
+
     // =========================================================
     // APPLY MULTIPLAYER SEED
     // =========================================================
 
-    [Tooltip("Seeds UnityEngine.Random with the same value on every client so procedural generation is identical.")]
+    // Seeds UnityEngine.Random with the same value on every client
+    // so procedural generation is identical.
     private void ApplyMultiplayerSeed()
     {
         if (!useSessionSeed)
@@ -202,13 +212,9 @@ public class DungeonGenerator : MonoBehaviour
             return;
         }
 
-        int seed =
-            NetworkRunnerHandler.Instance.GetSessionSeed();
+        int seed = NetworkRunnerHandler.Instance.GetSessionSeed();
 
-        Debug.Log(
-            "[DUNGEON GENERATOR] Using shared session seed: " +
-            seed
-        );
+        Debug.Log("[DUNGEON GENERATOR] Using shared session seed: " + seed);
 
         Random.InitState(seed);
     }
@@ -220,19 +226,12 @@ public class DungeonGenerator : MonoBehaviour
 
     private void GenerateDungeonWithRetries()
     {
-        for (
-            int attempt = 1;
-            attempt <= maxGenerationRetries;
-            attempt++
-        )
+        for (int attempt = 1; attempt <= maxGenerationRetries; attempt++)
         {
             if (debugGeneration)
             {
                 Debug.Log(
-                    "Dungeon generation attempt " +
-                    attempt +
-                    "/" +
-                    maxGenerationRetries
+                    "Dungeon generation attempt " + attempt + "/" + maxGenerationRetries
                 );
             }
 
@@ -242,11 +241,7 @@ public class DungeonGenerator : MonoBehaviour
             {
                 if (debugGeneration)
                 {
-                    Debug.Log(
-                        "Valid dungeon found on attempt " +
-                        attempt +
-                        "."
-                    );
+                    Debug.Log("Valid dungeon found on attempt " + attempt + ".");
                 }
 
                 StartCoroutine(BuildNavMeshRoutine());
@@ -257,22 +252,17 @@ public class DungeonGenerator : MonoBehaviour
             if (debugGeneration)
             {
                 Debug.LogWarning(
-                    "Generation attempt " +
-                    attempt +
-                    " failed. Rooms: " +
-                    roomsCreated +
-                    "/" +
-                    numberOfRooms +
-                    " | Unique Room: " +
-                    uniqueRoomCreated
+                    "Generation attempt " + attempt +
+                    " failed. Rooms: " + roomsCreated + "/" + numberOfRooms +
+                    " | Unique Rooms: " + uniqueRoomsPlaced + "/" + uniqueRoomsRequired +
+                    " | Entrance: " + entranceCreated
                 );
             }
         }
 
         Debug.LogError(
             "Could not generate a complete dungeon after " +
-            maxGenerationRetries +
-            " attempts."
+            maxGenerationRetries + " attempts."
         );
     }
 
@@ -298,30 +288,19 @@ public class DungeonGenerator : MonoBehaviour
         // -----------------------------------------------------
 
         GameObject firstCorridor =
-            CreateCorridorAt(
-                Vector3.zero,
-                Quaternion.identity
-            );
+            CreateCorridorAt(Vector3.zero, Quaternion.identity);
 
         if (firstCorridor == null)
         {
-            Debug.LogError(
-                "Could not create starting corridor."
-            );
-
+            Debug.LogError("Could not create starting corridor.");
             return false;
         }
 
-
-        DungeonConnector firstEntrance =
-            FindEntrance(firstCorridor);
+        DungeonConnector firstEntrance = FindEntrance(firstCorridor);
 
         if (firstEntrance == null)
         {
-            Debug.LogError(
-                "Starting corridor has no Entrance connector."
-            );
-
+            Debug.LogError("Starting corridor has no Entrance connector.");
             return false;
         }
 
@@ -332,15 +311,11 @@ public class DungeonGenerator : MonoBehaviour
 
         if (!TryPlaceRoom(firstEntrance))
         {
-            Debug.LogError(
-                "Could not place starting terminal room."
-            );
-
+            Debug.LogError("Could not place starting terminal room.");
             return false;
         }
 
         firstEntrance.used = true;
-
 
         // Add the starting corridor's Exit.
         AddAvailableExits(firstCorridor);
@@ -359,21 +334,15 @@ public class DungeonGenerator : MonoBehaviour
             );
         }
 
-
         int intersectionsNeeded;
 
         if (numberOfRooms % 2 == 0)
         {
-            intersectionsNeeded =
-                (numberOfRooms - 2) / 2;
+            intersectionsNeeded = (numberOfRooms - 2) / 2;
         }
         else
         {
-            intersectionsNeeded =
-                Mathf.Max(
-                    0,
-                    (numberOfRooms - 3) / 2
-                );
+            intersectionsNeeded = Mathf.Max(0, (numberOfRooms - 3) / 2);
         }
 
 
@@ -381,35 +350,21 @@ public class DungeonGenerator : MonoBehaviour
         // CREATE INTERSECTIONS
         // -----------------------------------------------------
 
-        for (
-            int i = 0;
-            i < intersectionsNeeded;
-            i++
-        )
+        for (int i = 0; i < intersectionsNeeded; i++)
         {
-            bool intersectionPlaced =
-                TryAddIntersectionToDungeon();
+            bool intersectionPlaced = TryAddIntersectionToDungeon();
 
             if (!intersectionPlaced)
             {
-                Debug.LogWarning(
-                    "Could not place Intersection #" +
-                    (i + 1) +
-                    "."
-                );
-
+                Debug.LogWarning("Could not place Intersection #" + (i + 1) + ".");
                 break;
             }
 
             if (debugGeneration)
             {
                 Debug.Log(
-                    "Intersection " +
-                    (i + 1) +
-                    "/" +
-                    intersectionsNeeded +
-                    " created. Open exits: " +
-                    availableExits.Count
+                    "Intersection " + (i + 1) + "/" + intersectionsNeeded +
+                    " created. Open exits: " + availableExits.Count
                 );
             }
         }
@@ -419,8 +374,7 @@ public class DungeonGenerator : MonoBehaviour
         // CLOSE ALL OPEN EXITS
         // -----------------------------------------------------
 
-        bool finished =
-            FinishAllOpenExits();
+        bool finished = FinishAllOpenExits();
 
         if (!finished)
         {
@@ -438,28 +392,42 @@ public class DungeonGenerator : MonoBehaviour
             {
                 Debug.Log(
                     "Dungeon generated successfully! " +
-                    "Terminal Rooms: " +
-                    roomsCreated +
-                    "/" +
-                    numberOfRooms +
-                    " | Unique Room: YES" +
-                    " | Total Pieces: " +
-                    generatedPieces.Count
+                    "Terminal Rooms: " + roomsCreated + "/" + numberOfRooms +
+                    " | Unique Rooms: " + uniqueRoomsPlaced + "/" + uniqueRoomsRequired +
+                    " | Total Pieces: " + generatedPieces.Count
                 );
             }
 
             CollectSpawnPoints();
-            SpawnChest();          // <-- idagdag ito
-            SpawnProps();          // <-- idagdag ito
+            SpawnChest();
+            SpawnProps();
             IsGenerated = true;
             OnDungeonGenerated?.Invoke(this);
 
             return true;
         }
 
-
         return false;
     }
+
+
+    // =========================================================
+    // LAYOUT COMPLETE
+    // =========================================================
+
+    private bool LayoutComplete()
+    {
+        return
+            roomsCreated == numberOfRooms &&
+            uniqueRoomsRequired > 0 &&
+            uniqueRoomsPlaced == uniqueRoomsRequired &&
+            (dungeonEntrancePrefab == null || entranceCreated);
+    }
+
+
+    // =========================================================
+    // CHEST
+    // =========================================================
 
     private void SpawnChest()
     {
@@ -476,7 +444,7 @@ public class DungeonGenerator : MonoBehaviour
             if (piece == null) continue;
             if (avoidSpawnRoom && piece == spawnRoomObject) continue;
 
-            // Kunin ang chest points ng room na ito lang
+            // Chest points ng room na ito lang
             DungeonChestPoint[] points =
                 piece.GetComponentsInChildren<DungeonChestPoint>();
 
@@ -503,6 +471,11 @@ public class DungeonGenerator : MonoBehaviour
             Debug.Log("Chests spawned: " + chestsSpawned);
     }
 
+
+    // =========================================================
+    // PROPS
+    // =========================================================
+
     private void SpawnProps()
     {
         int count = 0;
@@ -523,9 +496,13 @@ public class DungeonGenerator : MonoBehaviour
             Debug.Log("Prop spawners processed: " + count);
     }
 
+
+    // =========================================================
+    // PLAYER SPAWN POINTS
+    // =========================================================
+
     private void CollectSpawnPoints()
     {
-        spawnRoomObject = null;
         spawnRoomObject = null;
         spawnPoints.Clear();
 
@@ -542,20 +519,25 @@ public class DungeonGenerator : MonoBehaviour
 
         if (roomsWithSpawns.Count == 0)
         {
-            Debug.LogError("Walang room na may DungeonSpawnPoint. Maglagay ng marker sa Dungeon Room prefab.");
+            Debug.LogError(
+                "Walang room na may DungeonSpawnPoint. " +
+                "Maglagay ng marker sa Dungeon Room prefab."
+            );
+
             return;
         }
 
         // Isang random na Dungeon Room ang pipiliin, doon lahat ang players
         GameObject spawnRoom = roomsWithSpawns[Random.Range(0, roomsWithSpawns.Count)];
         spawnRoomObject = spawnRoom;
-        spawnRoomObject = spawnRoom;
 
         foreach (var point in spawnRoom.GetComponentsInChildren<DungeonSpawnPoint>())
             spawnPoints.Add(point.transform);
 
-
-        Debug.Log("Spawn room: " + spawnRoom.name + " at " + spawnRoom.transform.position, spawnRoom);
+        Debug.Log(
+            "Spawn room: " + spawnRoom.name + " at " + spawnRoom.transform.position,
+            spawnRoom
+        );
     }
 
     public int GetSpawnCount()
@@ -578,96 +560,98 @@ public class DungeonGenerator : MonoBehaviour
         rotation = point.rotation;
     }
 
+
     // =========================================================
     // ADD INTERSECTION
     // =========================================================
 
     private bool TryAddIntersectionToDungeon()
     {
-        if (
-            intersectionPrefab == null ||
-            availableExits.Count == 0
-        )
+        if (intersectionPrefab == null || availableExits.Count == 0)
         {
             return false;
         }
 
+        List<int> exitIndices = new List<int>();
 
-        List<int> exitIndices =
-            new List<int>();
-
-
-        for (
-            int i = 0;
-            i < availableExits.Count;
-            i++
-        )
+        for (int i = 0; i < availableExits.Count; i++)
         {
             exitIndices.Add(i);
         }
 
-
         // Randomize which Exit we try first.
         ShuffleList(exitIndices);
 
-
         foreach (int exitIndex in exitIndices)
         {
-            if (
-                exitIndex < 0 ||
-                exitIndex >= availableExits.Count
-            )
+            if (exitIndex < 0 || exitIndex >= availableExits.Count)
             {
                 continue;
             }
 
+            DungeonConnector targetExit = availableExits[exitIndex];
 
-            DungeonConnector targetExit =
-                availableExits[exitIndex];
-
-
-            if (
-                targetExit == null ||
-                targetExit.used
-            )
+            if (targetExit == null || targetExit.used)
             {
                 continue;
             }
 
-
-            GameObject intersection =
-                TryPlaceIntersection(
-                    targetExit
-                );
-
+            GameObject intersection = TryPlaceIntersection(targetExit);
 
             if (intersection == null)
             {
                 continue;
             }
 
-
             // The old Exit is now connected.
             targetExit.used = true;
 
-
             // Remove the old Exit.
-            availableExits.RemoveAt(
-                exitIndex
-            );
-
+            availableExits.RemoveAt(exitIndex);
 
             // Add the Intersection's Exits.
-            AddAvailableExits(
-                intersection
-            );
-
+            AddAvailableExits(intersection);
 
             return true;
         }
 
-
         return false;
+    }
+
+
+    // =========================================================
+    // BUILD UNIQUE ROOM QUEUE
+    // =========================================================
+
+    private List<GameObject> BuildUniqueRoomQueue()
+    {
+        List<GameObject> queue = new List<GameObject>();
+
+        if (uniqueRoomPrefabs == null)
+            return queue;
+
+        List<GameObject> valid = new List<GameObject>();
+
+        foreach (GameObject prefab in uniqueRoomPrefabs)
+        {
+            if (prefab != null)
+                valid.Add(prefab);
+        }
+
+        if (valid.Count == 0)
+            return queue;
+
+        if (spawnAllUniqueRooms)
+        {
+            queue.AddRange(valid);
+            ShuffleList(queue);
+        }
+        else
+        {
+            queue.Add(valid[Random.Range(0, valid.Count)]);
+        }
+
+        return queue;
     }
 
 
@@ -682,93 +666,50 @@ public class DungeonGenerator : MonoBehaviour
             return false;
         }
 
-
-        // -----------------------------------------------------
-        // RANDOMIZE EXIT ORDER
-        // -----------------------------------------------------
-
-        List<DungeonConnector> exitsToFinish =
-            new List<DungeonConnector>(
-                availableExits
-            );
-
-
-        ShuffleList(exitsToFinish);
+        List<DungeonConnector> exitsToFinish;
 
 
         // -----------------------------------------------------
-        // PLACE UNIQUE ROOM FIRST
+        // PLACE UNIQUE ROOMS
         // -----------------------------------------------------
 
-        if (
-            uniqueRoomPrefabs != null &&
-            uniqueRoomPrefabs.Length > 0
-        )
+        List<GameObject> uniqueQueue = BuildUniqueRoomQueue();
+
+        uniqueRoomsRequired = uniqueQueue.Count;
+
+        foreach (GameObject uniquePrefab in uniqueQueue)
         {
-            bool uniquePlaced = false;
+            exitsToFinish = new List<DungeonConnector>(availableExits);
+            ShuffleList(exitsToFinish);
 
+            bool placed = false;
 
-            foreach (
-                DungeonConnector targetExit
-                in exitsToFinish
-            )
+            foreach (DungeonConnector targetExit in exitsToFinish)
             {
-                if (targetExit == null)
-                {
+                if (targetExit == null || targetExit.used)
                     continue;
-                }
 
-
-                if (targetExit.used)
-                {
-                    continue;
-                }
-
-
-                // Try to place the Prison here.
-                if (
-                    TryPlaceUniqueRoom(
-                        targetExit
-                    )
-                )
+                if (TryPlaceUniqueRoom(targetExit, uniquePrefab))
                 {
                     targetExit.used = true;
-
-
-                    availableExits.Remove(
-                        targetExit
-                    );
-
-
-                    uniquePlaced = true;
-
-
-                    if (debugGeneration)
-                    {
-                        Debug.Log(
-                            "Dungeon Prison successfully placed."
-                        );
-                    }
-
-
+                    availableExits.Remove(targetExit);
+                    placed = true;
                     break;
                 }
             }
 
-
-            // Prison must exist.
-            // If it cannot fit anywhere, regenerate
-            // the entire layout.
-            if (!uniquePlaced)
+            if (!placed)
             {
                 Debug.LogWarning(
-                    "Dungeon Prison could not be placed anywhere. " +
+                    uniquePrefab.name +
+                    " could not be placed anywhere. " +
                     "Generating a completely new layout."
                 );
 
                 return false;
             }
         }
+
 
         // -----------------------------------------------------
         // PLACE DUNGEON ENTRANCE (ONCE)
@@ -811,66 +752,35 @@ public class DungeonGenerator : MonoBehaviour
         // NORMAL TERMINAL ROOMS
         // -----------------------------------------------------
 
-        exitsToFinish =
-            new List<DungeonConnector>(
-                availableExits
-            );
-
+        exitsToFinish = new List<DungeonConnector>(availableExits);
 
         ShuffleList(exitsToFinish);
 
-
-        foreach (
-            DungeonConnector targetExit
-            in exitsToFinish
-        )
+        foreach (DungeonConnector targetExit in exitsToFinish)
         {
             if (roomsCreated >= numberOfRooms)
             {
                 break;
             }
 
-
             if (targetExit == null)
             {
                 continue;
             }
-
 
             if (targetExit.used)
             {
                 continue;
             }
 
+            bool roomPlaced = TryCreateBranchToRoom(targetExit);
 
-            bool roomPlaced =
-                TryCreateBranchToRoom(
-                    targetExit
-                );
+            targetExit.used = true;
+            availableExits.Remove(targetExit);
 
-
-            if (roomPlaced)
+            if (!roomPlaced)
             {
-                targetExit.used = true;
-
-
-                availableExits.Remove(
-                    targetExit
-                );
-            }
-            else
-            {
-                targetExit.used = true;
-
-
-                availableExits.Remove(
-                    targetExit
-                );
-
-
-                Debug.LogWarning(
-                    "Could not close an Exit with a terminal room."
-                );
+                Debug.LogWarning("Could not close an Exit with a terminal room.");
             }
         }
 
@@ -887,56 +797,35 @@ public class DungeonGenerator : MonoBehaviour
     // CREATE NORMAL BRANCH TO ROOM
     // =========================================================
 
-    private bool TryCreateBranchToRoom(
-        DungeonConnector startingExit
-    )
+    private bool TryCreateBranchToRoom(DungeonConnector startingExit)
     {
         if (startingExit == null)
         {
             return false;
         }
 
-
         /*
          * Possible branch lengths:
          *
-         * 0:
-         * Exit -> Room
-         *
-         * 1:
-         * Exit -> Corridor -> Room
-         *
-         * 2:
-         * Exit -> Corridor -> Corridor -> Room
+         * 0: Exit -> Room
+         * 1: Exit -> Corridor -> Room
+         * 2: Exit -> Corridor -> Corridor -> Room
          */
 
+        List<int> lengths = new List<int>();
 
-        List<int> lengths =
-            new List<int>();
-
-
-        for (
-            int i = 0;
-            i <= maxCorridorsBeforeRoom;
-            i++
-        )
+        for (int i = 0; i <= maxCorridorsBeforeRoom; i++)
         {
             lengths.Add(i);
         }
 
-
         ShuffleList(lengths);
-
 
         foreach (int corridorCount in lengths)
         {
-            DungeonConnector currentExit =
-                startingExit;
+            DungeonConnector currentExit = startingExit;
 
-
-            List<GameObject> branchPieces =
-                new List<GameObject>();
-
+            List<GameObject> branchPieces = new List<GameObject>();
 
             bool branchFailed = false;
 
@@ -945,17 +834,9 @@ public class DungeonGenerator : MonoBehaviour
             // CREATE CORRIDORS
             // -------------------------------------------------
 
-            for (
-                int c = 0;
-                c < corridorCount;
-                c++
-            )
+            for (int c = 0; c < corridorCount; c++)
             {
-                GameObject corridor =
-                    TryPlaceCorridor(
-                        currentExit
-                    );
-
+                GameObject corridor = TryPlaceCorridor(currentExit);
 
                 if (corridor == null)
                 {
@@ -963,17 +844,9 @@ public class DungeonGenerator : MonoBehaviour
                     break;
                 }
 
+                branchPieces.Add(corridor);
 
-                branchPieces.Add(
-                    corridor
-                );
-
-
-                DungeonConnector nextExit =
-                    FindUnusedExit(
-                        corridor
-                    );
-
+                DungeonConnector nextExit = FindUnusedExit(corridor);
 
                 if (nextExit == null)
                 {
@@ -981,9 +854,7 @@ public class DungeonGenerator : MonoBehaviour
                     break;
                 }
 
-
-                currentExit =
-                    nextExit;
+                currentExit = nextExit;
             }
 
 
@@ -993,10 +864,7 @@ public class DungeonGenerator : MonoBehaviour
 
             if (branchFailed)
             {
-                DestroyBranchPieces(
-                    branchPieces
-                );
-
+                DestroyBranchPieces(branchPieces);
                 continue;
             }
 
@@ -1005,26 +873,16 @@ public class DungeonGenerator : MonoBehaviour
             // PLACE NORMAL ROOM
             // -------------------------------------------------
 
-            if (
-                TryPlaceRoom(
-                    currentExit
-                )
-            )
+            if (TryPlaceRoom(currentExit))
             {
                 currentExit.used = true;
-
                 return true;
             }
 
-
             // Room failed.
             // Delete the temporary corridor chain.
-
-            DestroyBranchPieces(
-                branchPieces
-            );
+            DestroyBranchPieces(branchPieces);
         }
-
 
         return false;
     }
@@ -1034,146 +892,58 @@ public class DungeonGenerator : MonoBehaviour
     // PLACE CORRIDOR
     // =========================================================
 
-    private GameObject TryPlaceCorridor(
-        DungeonConnector targetExit
-    )
+    private GameObject TryPlaceCorridor(DungeonConnector targetExit)
     {
-        if (
-            targetExit == null ||
+        if (targetExit == null ||
             corridorPieces == null ||
-            corridorPieces.Length == 0
-        )
+            corridorPieces.Length == 0)
         {
             return null;
         }
 
-
-        for (
-            int attempt = 0;
-            attempt < placementAttempts;
-            attempt++
-        )
+        for (int attempt = 0; attempt < placementAttempts; attempt++)
         {
-            GameObject prefab =
-                GetRandomValidPrefab(
-                    corridorPieces
-                );
-
+            GameObject prefab = GetRandomValidPrefab(corridorPieces);
 
             if (prefab == null)
             {
                 continue;
             }
 
-
             GameObject corridor =
-                Instantiate(
-                    prefab,
-                    Vector3.zero,
-                    Quaternion.identity,
-                    transform
-                );
+                Instantiate(prefab, Vector3.zero, Quaternion.identity, transform);
 
-
-            DungeonConnector entrance =
-                FindEntrance(
-                    corridor
-                );
-
-
-            // -------------------------------------------------
-            // CHECK ENTRANCE
-            // -------------------------------------------------
+            DungeonConnector entrance = FindEntrance(corridor);
 
             if (entrance == null)
             {
-                Debug.LogWarning(
-                    corridor.name +
-                    " has no Entrance connector."
-                );
-
-
+                Debug.LogWarning(corridor.name + " has no Entrance connector.");
                 Destroy(corridor);
-
                 continue;
             }
 
-
-            // -------------------------------------------------
-            // CHECK ROOM BOUNDS
-            // -------------------------------------------------
-
-            if (
-                FindRoomBounds(
-                    corridor
-                ) == null
-            )
+            if (FindRoomBounds(corridor) == null)
             {
-                Debug.LogWarning(
-                    corridor.name +
-                    " has no RoomBounds."
-                );
-
-
+                Debug.LogWarning(corridor.name + " has no RoomBounds.");
                 Destroy(corridor);
-
                 continue;
             }
 
+            AlignPiece(corridor, entrance, targetExit);
+            SnapToDungeonLevel(corridor);
+            AlignEntrancePosition(corridor, targetExit);
 
-            // -------------------------------------------------
-            // ALIGN
-            // -------------------------------------------------
-
-            AlignPiece(
-                corridor,
-                entrance,
-                targetExit
-            );
-
-
-            SnapToDungeonLevel(
-                corridor
-            );
-
-
-            AlignEntrancePosition(
-                corridor,
-                targetExit
-            );
-
-
-            // -------------------------------------------------
-            // OVERLAP CHECK
-            // -------------------------------------------------
-
-            if (
-                RoomOverlaps(
-                    corridor
-                )
-            )
+            if (RoomOverlaps(corridor))
             {
                 Destroy(corridor);
-
                 continue;
             }
 
-
-            // -------------------------------------------------
-            // SUCCESS
-            // -------------------------------------------------
-
-            generatedPieces.Add(
-                corridor
-            );
-
-
+            generatedPieces.Add(corridor);
             entrance.used = true;
-
 
             return corridor;
         }
-
 
         return null;
     }
@@ -1183,24 +953,14 @@ public class DungeonGenerator : MonoBehaviour
     // PLACE INTERSECTION
     // =========================================================
 
-    private GameObject TryPlaceIntersection(
-        DungeonConnector targetExit
-    )
+    private GameObject TryPlaceIntersection(DungeonConnector targetExit)
     {
-        if (
-            intersectionPrefab == null ||
-            targetExit == null
-        )
+        if (intersectionPrefab == null || targetExit == null)
         {
             return null;
         }
 
-
-        for (
-            int attempt = 0;
-            attempt < placementAttempts;
-            attempt++
-        )
+        for (int attempt = 0; attempt < placementAttempts; attempt++)
         {
             GameObject intersection =
                 Instantiate(
@@ -1210,276 +970,100 @@ public class DungeonGenerator : MonoBehaviour
                     transform
                 );
 
-
-            DungeonConnector entrance =
-                FindEntrance(
-                    intersection
-                );
-
-
-            // -------------------------------------------------
-            // CHECK ENTRANCE
-            // -------------------------------------------------
+            DungeonConnector entrance = FindEntrance(intersection);
 
             if (entrance == null)
             {
-                Debug.LogWarning(
-                    "Dungeon Intersection has no Entrance."
-                );
-
-
+                Debug.LogWarning("Dungeon Intersection has no Entrance.");
                 Destroy(intersection);
-
                 continue;
             }
 
-
-            // -------------------------------------------------
-            // CHECK ROOM BOUNDS
-            // -------------------------------------------------
-
-            if (
-                FindRoomBounds(
-                    intersection
-                ) == null
-            )
+            if (FindRoomBounds(intersection) == null)
             {
-                Debug.LogWarning(
-                    "Dungeon Intersection has no RoomBounds."
-                );
-
-
+                Debug.LogWarning("Dungeon Intersection has no RoomBounds.");
                 Destroy(intersection);
-
                 continue;
             }
 
+            AlignPiece(intersection, entrance, targetExit);
+            SnapToDungeonLevel(intersection);
+            AlignEntrancePosition(intersection, targetExit);
 
-            // -------------------------------------------------
-            // ALIGN
-            // -------------------------------------------------
-
-            AlignPiece(
-                intersection,
-                entrance,
-                targetExit
-            );
-
-
-            SnapToDungeonLevel(
-                intersection
-            );
-
-
-            AlignEntrancePosition(
-                intersection,
-                targetExit
-            );
-
-
-            // -------------------------------------------------
-            // OVERLAP CHECK
-            // -------------------------------------------------
-
-            if (
-                RoomOverlaps(
-                    intersection
-                )
-            )
+            if (RoomOverlaps(intersection))
             {
                 Destroy(intersection);
-
                 continue;
             }
 
-
-            // -------------------------------------------------
-            // SUCCESS
-            // -------------------------------------------------
-
-            generatedPieces.Add(
-                intersection
-            );
-
-
+            generatedPieces.Add(intersection);
             entrance.used = true;
-
 
             return intersection;
         }
-
 
         return null;
     }
 
 
     // =========================================================
-    // PLACE UNIQUE ROOM
+    // PLACE UNIQUE ROOM (specific prefab)
     // =========================================================
 
     private bool TryPlaceUniqueRoom(
-        DungeonConnector targetExit
-    )
+        DungeonConnector targetExit,
+        GameObject roomPrefab)
     {
-        if (
-            targetExit == null ||
-            uniqueRoomPrefabs == null ||
-            uniqueRoomPrefabs.Length == 0 ||
-            uniqueRoomCreated ||
-            roomsCreated >= numberOfRooms
-        )
+        if (targetExit == null ||
+            roomPrefab == null ||
+            roomsCreated >= numberOfRooms)
         {
             return false;
         }
 
+        GameObject room =
+            Instantiate(roomPrefab, Vector3.zero, Quaternion.identity, transform);
 
-        for (
-            int attempt = 0;
-            attempt < placementAttempts;
-            attempt++
-        )
+        DungeonConnector entrance = FindEntrance(room);
+
+        if (entrance == null || FindRoomBounds(room) == null)
         {
-            GameObject roomPrefab =
-                GetRandomValidPrefab(
-                    uniqueRoomPrefabs
-                );
-
-            if (roomPrefab == null)
-            {
-                continue;
-            }
-
-
-            GameObject room =
-                Instantiate(
-                    roomPrefab,
-                    Vector3.zero,
-                    Quaternion.identity,
-                    transform
-                );
-
-
-            DungeonConnector entrance =
-                FindEntrance(
-                    room
-                );
-
-
-            // -------------------------------------------------
-            // CHECK ENTRANCE
-            // -------------------------------------------------
-
-            if (entrance == null)
-            {
-                Debug.LogWarning(
-                    room.name +
-                    " has no Entrance connector."
-                );
-
-
-                Destroy(room);
-
-                continue;
-            }
-
-
-            // -------------------------------------------------
-            // CHECK ROOM BOUNDS
-            // -------------------------------------------------
-
-            if (
-                FindRoomBounds(
-                    room
-                ) == null
-            )
-            {
-                Debug.LogWarning(
-                    room.name +
-                    " has no RoomBounds."
-                );
-
-
-                Destroy(room);
-
-                continue;
-            }
-
-
-            // -------------------------------------------------
-            // ALIGN PRISON
-            // -------------------------------------------------
-
-            AlignPiece(
-                room,
-                entrance,
-                targetExit
+            Debug.LogWarning(
+                roomPrefab.name + " needs an Entrance connector and a RoomBounds."
             );
 
-
-            SnapToDungeonLevel(
-                room
-            );
-
-
-            AlignEntrancePosition(
-                room,
-                targetExit
-            );
-
-
-            // -------------------------------------------------
-            // OVERLAP CHECK
-            // -------------------------------------------------
-
-            if (
-                RoomOverlaps(
-                    room
-                )
-            )
-            {
-                Destroy(room);
-
-                continue;
-            }
-
-
-            // -------------------------------------------------
-            // SUCCESS
-            // -------------------------------------------------
-
-            generatedPieces.Add(
-                room
-            );
-
-
-            entrance.used = true;
-
-
-            roomsCreated++;
-
-
-            uniqueRoomCreated = true;
-
-
-            if (debugGeneration)
-            {
-                Debug.Log(
-                    "UNIQUE ROOM CREATED: " +
-                    room.name +
-                    " | Terminal Rooms: " +
-                    roomsCreated +
-                    "/" +
-                    numberOfRooms
-                );
-            }
-
-
-            return true;
+            Destroy(room);
+            return false;
         }
 
+        AlignPiece(room, entrance, targetExit);
+        SnapToDungeonLevel(room);
+        AlignEntrancePosition(room, targetExit);
 
-        return false;
+        if (RoomOverlaps(room))
+        {
+            Destroy(room);
+            return false;
+        }
+
+        generatedPieces.Add(room);
+        entrance.used = true;
+
+        roomsCreated++;
+        uniqueRoomsPlaced++;
+
+        if (debugGeneration)
+        {
+            Debug.Log(
+                "UNIQUE ROOM CREATED: " + room.name +
+                " | Unique: " + uniqueRoomsPlaced + "/" + uniqueRoomsRequired +
+                " | Terminal Rooms: " + roomsCreated + "/" + numberOfRooms
+            );
+        }
+
+        return true;
     }
+
 
     // =========================================================
     // PLACE DUNGEON ENTRANCE (ONCE)
@@ -1549,161 +1133,68 @@ public class DungeonGenerator : MonoBehaviour
     // PLACE NORMAL TERMINAL ROOM
     // =========================================================
 
-    private bool TryPlaceRoom(
-        DungeonConnector targetExit
-    )
+    private bool TryPlaceRoom(DungeonConnector targetExit)
     {
-        if (
-            targetExit == null ||
+        if (targetExit == null ||
             roomPrefabs == null ||
             roomPrefabs.Length == 0 ||
-            roomsCreated >= numberOfRooms
-        )
+            roomsCreated >= numberOfRooms)
         {
             return false;
         }
 
-
-        for (
-            int attempt = 0;
-            attempt < placementAttempts;
-            attempt++
-        )
+        for (int attempt = 0; attempt < placementAttempts; attempt++)
         {
-            GameObject prefab =
-                GetRandomValidPrefab(
-                    roomPrefabs
-                );
-
+            GameObject prefab = GetRandomValidPrefab(roomPrefabs);
 
             if (prefab == null)
             {
                 continue;
             }
 
-
             GameObject room =
-                Instantiate(
-                    prefab,
-                    Vector3.zero,
-                    Quaternion.identity,
-                    transform
-                );
+                Instantiate(prefab, Vector3.zero, Quaternion.identity, transform);
 
-
-            DungeonConnector entrance =
-                FindEntrance(
-                    room
-                );
-
-
-            // -------------------------------------------------
-            // CHECK ENTRANCE
-            // -------------------------------------------------
+            DungeonConnector entrance = FindEntrance(room);
 
             if (entrance == null)
             {
-                Debug.LogWarning(
-                    room.name +
-                    " has no Entrance connector."
-                );
-
-
+                Debug.LogWarning(room.name + " has no Entrance connector.");
                 Destroy(room);
-
                 continue;
             }
 
-
-            // -------------------------------------------------
-            // CHECK ROOM BOUNDS
-            // -------------------------------------------------
-
-            if (
-                FindRoomBounds(
-                    room
-                ) == null
-            )
+            if (FindRoomBounds(room) == null)
             {
-                Debug.LogWarning(
-                    room.name +
-                    " has no RoomBounds."
-                );
-
-
+                Debug.LogWarning(room.name + " has no RoomBounds.");
                 Destroy(room);
-
                 continue;
             }
 
+            AlignPiece(room, entrance, targetExit);
+            SnapToDungeonLevel(room);
+            AlignEntrancePosition(room, targetExit);
 
-            // -------------------------------------------------
-            // ALIGN ROOM
-            // -------------------------------------------------
-
-            AlignPiece(
-                room,
-                entrance,
-                targetExit
-            );
-
-
-            SnapToDungeonLevel(
-                room
-            );
-
-
-            AlignEntrancePosition(
-                room,
-                targetExit
-            );
-
-
-            // -------------------------------------------------
-            // OVERLAP CHECK
-            // -------------------------------------------------
-
-            if (
-                RoomOverlaps(
-                    room
-                )
-            )
+            if (RoomOverlaps(room))
             {
                 Destroy(room);
-
                 continue;
             }
 
-
-            // -------------------------------------------------
-            // SUCCESS
-            // -------------------------------------------------
-
-            generatedPieces.Add(
-                room
-            );
-
-
+            generatedPieces.Add(room);
             entrance.used = true;
 
-
             roomsCreated++;
-
 
             if (debugGeneration)
             {
                 Debug.Log(
-                    "Terminal Room created: " +
-                    roomsCreated +
-                    "/" +
-                    numberOfRooms
+                    "Terminal Room created: " + roomsCreated + "/" + numberOfRooms
                 );
             }
 
-
             return true;
         }
-
 
         return false;
     }
@@ -1716,71 +1207,37 @@ public class DungeonGenerator : MonoBehaviour
     private void AlignPiece(
         GameObject piece,
         DungeonConnector entrance,
-        DungeonConnector targetExit
-    )
+        DungeonConnector targetExit)
     {
-        if (
-            piece == null ||
-            entrance == null ||
-            targetExit == null
-        )
+        if (piece == null || entrance == null || targetExit == null)
         {
             return;
         }
 
+        Vector3 entranceForward = entrance.transform.forward;
+        Vector3 targetForward = targetExit.transform.forward;
 
-        Vector3 entranceForward =
-            entrance.transform.forward;
-
-
-        Vector3 targetForward =
-            targetExit.transform.forward;
-
-
-        // Ignore Y.
-        // This keeps the dungeon flat.
-
+        // Ignore Y. This keeps the dungeon flat.
         entranceForward.y = 0f;
         targetForward.y = 0f;
 
-
-        if (
-            entranceForward.sqrMagnitude <
-            0.0001f ||
-
-            targetForward.sqrMagnitude <
-            0.0001f
-        )
+        if (entranceForward.sqrMagnitude < 0.0001f ||
+            targetForward.sqrMagnitude < 0.0001f)
         {
             return;
         }
-
 
         entranceForward.Normalize();
         targetForward.Normalize();
 
-
-        // Entrance must face the opposite
-        // direction of the Exit.
-
+        // Entrance must face the opposite direction of the Exit.
         Quaternion correction =
-            Quaternion.FromToRotation(
-                entranceForward,
-                -targetForward
-            );
+            Quaternion.FromToRotation(entranceForward, -targetForward);
 
-
-        piece.transform.rotation =
-            correction *
-            piece.transform.rotation;
-
+        piece.transform.rotation = correction * piece.transform.rotation;
 
         // Exact position alignment.
-
-        AlignEntrancePosition(
-            piece,
-            targetExit
-        );
+        AlignEntrancePosition(piece, targetExit);
     }
 
 
@@ -1790,37 +1247,24 @@ public class DungeonGenerator : MonoBehaviour
 
     private void AlignEntrancePosition(
         GameObject piece,
-        DungeonConnector targetExit
-    )
+        DungeonConnector targetExit)
     {
-        if (
-            piece == null ||
-            targetExit == null
-        )
+        if (piece == null || targetExit == null)
         {
             return;
         }
 
-
-        DungeonConnector entrance =
-            FindEntrance(
-                piece
-            );
-
+        DungeonConnector entrance = FindEntrance(piece);
 
         if (entrance == null)
         {
             return;
         }
 
-
         Vector3 difference =
-            targetExit.transform.position -
-            entrance.transform.position;
+            targetExit.transform.position - entrance.transform.position;
 
-
-        piece.transform.position +=
-            difference;
+        piece.transform.position += difference;
     }
 
 
@@ -1828,29 +1272,18 @@ public class DungeonGenerator : MonoBehaviour
     // SNAP TO DUNGEON LEVEL
     // =========================================================
 
-    private void SnapToDungeonLevel(
-        GameObject piece
-    )
+    private void SnapToDungeonLevel(GameObject piece)
     {
-        if (
-            piece == null ||
-            !keepDungeonLevel
-        )
+        if (piece == null || !keepDungeonLevel)
         {
             return;
         }
 
+        Vector3 position = piece.transform.position;
 
-        Vector3 position =
-            piece.transform.position;
+        position.y = dungeonY;
 
-
-        position.y =
-            dungeonY;
-
-
-        piece.transform.position =
-            position;
+        piece.transform.position = position;
     }
 
 
@@ -1858,41 +1291,23 @@ public class DungeonGenerator : MonoBehaviour
     // ADD AVAILABLE EXITS
     // =========================================================
 
-    private void AddAvailableExits(
-        GameObject piece
-    )
+    private void AddAvailableExits(GameObject piece)
     {
         if (piece == null)
         {
             return;
         }
 
-
         DungeonConnector[] connectors =
-            piece.GetComponentsInChildren<
-                DungeonConnector
-            >();
+            piece.GetComponentsInChildren<DungeonConnector>();
 
-
-        foreach (
-            DungeonConnector connector
-            in connectors
-        )
+        foreach (DungeonConnector connector in connectors)
         {
-            if (
-                connector.connectorType ==
-                DungeonConnector.ConnectorType.Exit &&
-
+            if (connector.connectorType == DungeonConnector.ConnectorType.Exit &&
                 !connector.used &&
-
-                !availableExits.Contains(
-                    connector
-                )
-            )
+                !availableExits.Contains(connector))
             {
-                availableExits.Add(
-                    connector
-                );
+                availableExits.Add(connector);
             }
         }
     }
@@ -1902,38 +1317,24 @@ public class DungeonGenerator : MonoBehaviour
     // FIND UNUSED EXIT
     // =========================================================
 
-    private DungeonConnector FindUnusedExit(
-        GameObject piece
-    )
+    private DungeonConnector FindUnusedExit(GameObject piece)
     {
         if (piece == null)
         {
             return null;
         }
 
-
         DungeonConnector[] connectors =
-            piece.GetComponentsInChildren<
-                DungeonConnector
-            >();
+            piece.GetComponentsInChildren<DungeonConnector>();
 
-
-        foreach (
-            DungeonConnector connector
-            in connectors
-        )
+        foreach (DungeonConnector connector in connectors)
         {
-            if (
-                connector.connectorType ==
-                DungeonConnector.ConnectorType.Exit &&
-
-                !connector.used
-            )
+            if (connector.connectorType == DungeonConnector.ConnectorType.Exit &&
+                !connector.used)
             {
                 return connector;
             }
         }
-
 
         return null;
     }
@@ -1943,36 +1344,23 @@ public class DungeonGenerator : MonoBehaviour
     // FIND ENTRANCE
     // =========================================================
 
-    private DungeonConnector FindEntrance(
-        GameObject piece
-    )
+    private DungeonConnector FindEntrance(GameObject piece)
     {
         if (piece == null)
         {
             return null;
         }
 
-
         DungeonConnector[] connectors =
-            piece.GetComponentsInChildren<
-                DungeonConnector
-            >();
+            piece.GetComponentsInChildren<DungeonConnector>();
 
-
-        foreach (
-            DungeonConnector connector
-            in connectors
-        )
+        foreach (DungeonConnector connector in connectors)
         {
-            if (
-                connector.connectorType ==
-                DungeonConnector.ConnectorType.Entrance
-            )
+            if (connector.connectorType == DungeonConnector.ConnectorType.Entrance)
             {
                 return connector;
             }
         }
-
 
         return null;
     }
@@ -1982,31 +1370,19 @@ public class DungeonGenerator : MonoBehaviour
     // FIND ROOM BOUNDS
     // =========================================================
 
-    private BoxCollider FindRoomBounds(
-        GameObject piece
-    )
+    private BoxCollider FindRoomBounds(GameObject piece)
     {
         if (piece == null)
         {
             return null;
         }
 
-
         // First check direct child.
-
-        Transform bounds =
-            piece.transform.Find(
-                "RoomBounds"
-            );
-
+        Transform bounds = piece.transform.Find("RoomBounds");
 
         if (bounds != null)
         {
-            BoxCollider collider =
-                bounds.GetComponent<
-                    BoxCollider
-                >();
-
+            BoxCollider collider = bounds.GetComponent<BoxCollider>();
 
             if (collider != null)
             {
@@ -2014,29 +1390,16 @@ public class DungeonGenerator : MonoBehaviour
             }
         }
 
-
         // Then search all children.
+        BoxCollider[] colliders = piece.GetComponentsInChildren<BoxCollider>();
 
-        BoxCollider[] colliders =
-            piece.GetComponentsInChildren<
-                BoxCollider
-            >();
-
-
-        foreach (
-            BoxCollider collider
-            in colliders
-        )
+        foreach (BoxCollider collider in colliders)
         {
-            if (
-                collider.gameObject.name ==
-                "RoomBounds"
-            )
+            if (collider.gameObject.name == "RoomBounds")
             {
                 return collider;
             }
         }
-
 
         return null;
     }
@@ -2046,50 +1409,29 @@ public class DungeonGenerator : MonoBehaviour
     // OVERLAP CHECK
     // =========================================================
 
-    private bool RoomOverlaps(
-        GameObject newPiece
-    )
+    private bool RoomOverlaps(GameObject newPiece)
     {
-        BoxCollider newBounds =
-            FindRoomBounds(
-                newPiece
-            );
-
+        BoxCollider newBounds = FindRoomBounds(newPiece);
 
         if (newBounds == null)
         {
-            Debug.LogWarning(
-                newPiece.name +
-                " has no RoomBounds."
-            );
-
-
+            Debug.LogWarning(newPiece.name + " has no RoomBounds.");
             return true;
         }
 
-
-        foreach (
-            GameObject existingPiece
-            in generatedPieces
-        )
+        foreach (GameObject existingPiece in generatedPieces)
         {
             if (existingPiece == null)
             {
                 continue;
             }
 
-
-            BoxCollider existingBounds =
-                FindRoomBounds(
-                    existingPiece
-                );
-
+            BoxCollider existingBounds = FindRoomBounds(existingPiece);
 
             if (existingBounds == null)
             {
                 continue;
             }
-
 
             bool overlapping =
                 Physics.ComputePenetration(
@@ -2105,13 +1447,11 @@ public class DungeonGenerator : MonoBehaviour
                     out float distance
                 );
 
-
             if (overlapping)
             {
                 return true;
             }
         }
-
 
         return false;
     }
@@ -2121,63 +1461,31 @@ public class DungeonGenerator : MonoBehaviour
     // CREATE STARTING CORRIDOR
     // =========================================================
 
-    private GameObject CreateCorridorAt(
-        Vector3 position,
-        Quaternion rotation
-    )
+    private GameObject CreateCorridorAt(Vector3 position, Quaternion rotation)
     {
-        if (
-            corridorPieces == null ||
-            corridorPieces.Length == 0
-        )
+        if (corridorPieces == null || corridorPieces.Length == 0)
         {
             return null;
         }
 
-
-        GameObject selected =
-            GetRandomValidPrefab(
-                corridorPieces
-            );
-
+        GameObject selected = GetRandomValidPrefab(corridorPieces);
 
         if (selected == null)
         {
             return null;
         }
 
-
         GameObject corridor =
-            Instantiate(
-                selected,
-                position,
-                rotation,
-                transform
-            );
+            Instantiate(selected, position, rotation, transform);
 
-
-        if (
-            FindEntrance(corridor) == null ||
-            FindRoomBounds(corridor) == null
-        )
+        if (FindEntrance(corridor) == null || FindRoomBounds(corridor) == null)
         {
-            Debug.LogError(
-                corridor.name +
-                " needs an Entrance and RoomBounds."
-            );
-
-
+            Debug.LogError(corridor.name + " needs an Entrance and RoomBounds.");
             Destroy(corridor);
-
-
             return null;
         }
 
-
-        generatedPieces.Add(
-            corridor
-        );
-
+        generatedPieces.Add(corridor);
 
         return corridor;
     }
@@ -2187,49 +1495,29 @@ public class DungeonGenerator : MonoBehaviour
     // GET RANDOM VALID PREFAB
     // =========================================================
 
-    private GameObject GetRandomValidPrefab(
-        GameObject[] prefabs
-    )
+    private GameObject GetRandomValidPrefab(GameObject[] prefabs)
     {
-        if (
-            prefabs == null ||
-            prefabs.Length == 0
-        )
+        if (prefabs == null || prefabs.Length == 0)
         {
             return null;
         }
 
+        List<GameObject> validPrefabs = new List<GameObject>();
 
-        List<GameObject> validPrefabs =
-            new List<GameObject>();
-
-
-        foreach (
-            GameObject prefab
-            in prefabs
-        )
+        foreach (GameObject prefab in prefabs)
         {
             if (prefab != null)
             {
-                validPrefabs.Add(
-                    prefab
-                );
+                validPrefabs.Add(prefab);
             }
         }
-
 
         if (validPrefabs.Count == 0)
         {
             return null;
         }
 
-
-        return validPrefabs[
-            Random.Range(
-                0,
-                validPrefabs.Count
-            )
-        ];
+        return validPrefabs[Random.Range(0, validPrefabs.Count)];
     }
 
 
@@ -2237,33 +1525,15 @@ public class DungeonGenerator : MonoBehaviour
     // SHUFFLE LIST
     // =========================================================
 
-    private void ShuffleList<T>(
-        List<T> list
-    )
+    private void ShuffleList<T>(List<T> list)
     {
-        for (
-            int i = list.Count - 1;
-            i > 0;
-            i--
-        )
+        for (int i = list.Count - 1; i > 0; i--)
         {
-            int randomIndex =
-                Random.Range(
-                    0,
-                    i + 1
-                );
+            int randomIndex = Random.Range(0, i + 1);
 
-
-            T temporary =
-                list[i];
-
-
-            list[i] =
-                list[randomIndex];
-
-
-            list[randomIndex] =
-                temporary;
+            T temporary = list[i];
+            list[i] = list[randomIndex];
+            list[randomIndex] = temporary;
         }
     }
 
@@ -2272,31 +1542,21 @@ public class DungeonGenerator : MonoBehaviour
     // DESTROY TEMPORARY BRANCH
     // =========================================================
 
-    private void DestroyBranchPieces(
-        List<GameObject> branchPieces
-    )
+    private void DestroyBranchPieces(List<GameObject> branchPieces)
     {
         if (branchPieces == null)
         {
             return;
         }
 
-
-        foreach (
-            GameObject piece
-            in branchPieces
-        )
+        foreach (GameObject piece in branchPieces)
         {
             if (piece == null)
             {
                 continue;
             }
 
-
-            generatedPieces.Remove(
-                piece
-            );
-
+            generatedPieces.Remove(piece);
 
             Destroy(piece);
         }
@@ -2310,29 +1570,21 @@ public class DungeonGenerator : MonoBehaviour
     private void ClearDungeon()
     {
         availableExits.Clear();
-
         generatedPieces.Clear();
 
         roomsCreated = 0;
 
-        uniqueRoomCreated = false;
+        uniqueRoomsPlaced = 0;
+        uniqueRoomsRequired = 0;
 
         entranceCreated = false;
-
         DungeonEntranceObject = null;
 
         NavMeshReady = false;
 
-
-        for (
-            int i = transform.childCount - 1;
-            i >= 0;
-            i--
-        )
+        for (int i = transform.childCount - 1; i >= 0; i--)
         {
-            Destroy(
-                transform.GetChild(i).gameObject
-            );
+            Destroy(transform.GetChild(i).gameObject);
         }
     }
 
@@ -2343,114 +1595,93 @@ public class DungeonGenerator : MonoBehaviour
 
     private bool ValidateSetup()
     {
-        if (
-            corridorPieces == null ||
-            corridorPieces.Length == 0
-        )
+        if (corridorPieces == null || corridorPieces.Length == 0)
         {
-            Debug.LogError(
-                "No corridor pieces assigned."
-            );
-
+            Debug.LogError("No corridor pieces assigned.");
             return false;
         }
-
 
         if (intersectionPrefab == null)
         {
-            Debug.LogError(
-                "Dungeon Intersection is not assigned."
-            );
-
+            Debug.LogError("Dungeon Intersection is not assigned.");
             return false;
         }
 
-
-        if (
-            roomPrefabs == null ||
-            roomPrefabs.Length == 0
-        )
+        if (roomPrefabs == null || roomPrefabs.Length == 0)
         {
-            Debug.LogError(
-                "No normal terminal rooms assigned."
-            );
-
+            Debug.LogError("No normal terminal rooms assigned.");
             return false;
         }
 
-
-        if (
-            uniqueRoomPrefabs == null ||
-            uniqueRoomPrefabs.Length == 0
-        )
+        if (uniqueRoomPrefabs == null || uniqueRoomPrefabs.Length == 0)
         {
-            Debug.LogError(
-                "No unique room prefabs assigned."
-            );
-
+            Debug.LogError("No unique room prefabs assigned.");
             return false;
         }
-
 
         if (numberOfRooms < 2)
         {
-            Debug.LogError(
-                "Number Of Rooms must be at least 2."
-            );
-
+            Debug.LogError("Number Of Rooms must be at least 2.");
             return false;
         }
-
 
         if (placementAttempts < 1)
         {
-            Debug.LogError(
-                "Placement Attempts must be at least 1."
-            );
-
+            Debug.LogError("Placement Attempts must be at least 1.");
             return false;
         }
-
 
         if (maxCorridorsBeforeRoom < 0)
         {
-            Debug.LogError(
-                "Max Corridors Before Room cannot be negative."
-            );
-
+            Debug.LogError("Max Corridors Before Room cannot be negative.");
             return false;
         }
-
 
         if (maxGenerationRetries < 1)
         {
-            Debug.LogError(
-                "Max Generation Retries must be at least 1."
-            );
-
+            Debug.LogError("Max Generation Retries must be at least 1.");
             return false;
         }
 
-        if (dungeonEntrancePrefab != null && numberOfRooms < 3)
+        // Minimum rooms: starting room + unique rooms + entrance
+        int validUnique = 0;
+
+        foreach (GameObject prefab in uniqueRoomPrefabs)
+        {
+            if (prefab != null)
+                validUnique++;
+        }
+
+        if (validUnique == 0)
+        {
+            Debug.LogError("All Unique Room slots are empty.");
+            return false;
+        }
+
+        int uniqueNeeded = spawnAllUniqueRooms ? validUnique : 1;
+
+        int minRooms =
+            1 +
+            uniqueNeeded +
+            (dungeonEntrancePrefab != null ? 1 : 0);
+
+        if (numberOfRooms < minRooms)
         {
             Debug.LogError(
-                "Number Of Rooms must be at least 3 when a Dungeon Entrance is assigned."
+                "Number Of Rooms must be at least " + minRooms +
+                " for the current Unique Rooms / Entrance setup."
             );
 
             return false;
         }
-
 
         return true;
     }
 
-    private bool LayoutComplete()
-    {
-        return
-            roomsCreated == numberOfRooms &&
-            uniqueRoomCreated &&
-            (dungeonEntrancePrefab == null || entranceCreated);
-    }
+
+    // =========================================================
+    // NAVMESH
+    // =========================================================
 
     private IEnumerator BuildNavMeshRoutine()
     {

@@ -368,6 +368,7 @@ MonoBehaviour:
   dungeon: {fileID: 749619190}
   enemyPrefabs:
   - {fileID: 7884260556253595289, guid: 749342cc14cef6847b8105d8ed7fedae, type: 3}
+  pointGroup: Crawler
   maxEnemies: 1
   spawnChancePerPoint: 1
   avoidPlayerSpawnRoom: 1
@@ -380,12 +381,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 128731026}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -78.31211, y: 0, z: -222.10606}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -57.2512, y: 0, z: -151.55112}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 168789134}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &151194694 stripped
 MonoBehaviour:
@@ -398,6 +399,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee76193313cbfac489ddc0ab652be681, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventorySlotUI
+--- !u!1 &168789133
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 168789134}
+  m_Layer: 0
+  m_Name: Spawners
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &168789134
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 168789133}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -21.06091, y: 0, z: -70.55495}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1029082813}
+  - {fileID: 128731028}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &170805838 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8469366828541365762, guid: a64d1449c062d9644911d0b71e207663, type: 3}
@@ -1184,6 +1218,7 @@ MonoBehaviour:
   uniqueRoomPrefabs:
   - {fileID: 3739409803601189944, guid: f8ca09c2b7b8c0f4d8da1bb1d6106748, type: 3}
   - {fileID: 5427564906860841166, guid: 47a2ac7b706e9274d85a95c9fc4841fc, type: 3}
+  spawnAllUniqueRooms: 1
   numberOfRooms: 10
   maxCorridorsBeforeRoom: 5
   placementAttempts: 15
@@ -2030,6 +2065,58 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8545007655399859627, guid: a64d1449c062d9644911d0b71e207663, type: 3}
   m_PrefabInstance: {fileID: 8474524742945892415}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1029082812
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1029082813}
+  - component: {fileID: 1029082814}
+  m_Layer: 0
+  m_Name: SoldierSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1029082813
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1029082812}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 168789134}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1029082814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1029082812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc26c6b00adf44943a1be01d106d2781, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DungeonEnemySpawner
+  dungeon: {fileID: 0}
+  enemyPrefabs:
+  - {fileID: -9161531733502029728, guid: 87837b782de6ef14ca67f3227e92ed8a, type: 3}
+  pointGroup: Soldier
+  maxEnemies: 6
+  spawnChancePerPoint: 1
+  avoidPlayerSpawnRoom: 1
+  navMeshSnapDistance: 2
 --- !u!1 &1031973683
 GameObject:
   m_ObjectHideFlags: 0
@@ -5148,5 +5235,5 @@ SceneRoots:
   - {fileID: 758525747}
   - {fileID: 1156263070}
   - {fileID: 352293077}
-  - {fileID: 128731028}
   - {fileID: 1678901025}
+  - {fileID: 168789134}

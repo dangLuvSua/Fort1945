@@ -144,50 +144,68 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 19.785172, y: 11.246872, z: 35.33307}
   m_Center: {x: 3.191597, y: 5.6870804, z: -1.8386536}
---- !u!1 &8027779646033507167
-GameObject:
+--- !u!1001 &753916469385043929
+PrefabInstance:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2782886119445289510}
-  - component: {fileID: 3186882979320685578}
-  m_Layer: 0
-  m_Name: EnemyPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2782886119445289510
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8027779646033507167}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.99998, z: -0, w: 0.0063303676}
-  m_LocalPosition: {x: 17.219997, y: 0.84, z: 27.72}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4084445780045416066}
-  m_LocalEulerAnglesHint: {x: 0, y: 179.275, z: 0}
---- !u!114 &3186882979320685578
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4084445780045416066}
+    m_Modifications:
+    - target: {fileID: 3236046505213543935, guid: c2d91ff3453e0c64692b672f3fa12278, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 17.219997
+      objectReference: {fileID: 0}
+    - target: {fileID: 3236046505213543935, guid: c2d91ff3453e0c64692b672f3fa12278, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.84
+      objectReference: {fileID: 0}
+    - target: {fileID: 3236046505213543935, guid: c2d91ff3453e0c64692b672f3fa12278, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 27.72
+      objectReference: {fileID: 0}
+    - target: {fileID: 3236046505213543935, guid: c2d91ff3453e0c64692b672f3fa12278, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.0063303676
+      objectReference: {fileID: 0}
+    - target: {fileID: 3236046505213543935, guid: c2d91ff3453e0c64692b672f3fa12278, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3236046505213543935, guid: c2d91ff3453e0c64692b672f3fa12278, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.99998
+      objectReference: {fileID: 0}
+    - target: {fileID: 3236046505213543935, guid: c2d91ff3453e0c64692b672f3fa12278, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3236046505213543935, guid: c2d91ff3453e0c64692b672f3fa12278, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3236046505213543935, guid: c2d91ff3453e0c64692b672f3fa12278, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 179.275
+      objectReference: {fileID: 0}
+    - target: {fileID: 3236046505213543935, guid: c2d91ff3453e0c64692b672f3fa12278, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7286283266572889222, guid: c2d91ff3453e0c64692b672f3fa12278, type: 3}
+      propertyPath: m_Name
+      value: EnemyPoint
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c2d91ff3453e0c64692b672f3fa12278, type: 3}
+--- !u!4 &2782886119445289510 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3236046505213543935, guid: c2d91ff3453e0c64692b672f3fa12278, type: 3}
+  m_PrefabInstance: {fileID: 753916469385043929}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8027779646033507167}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66c00c8ea00e6dc4c894b14d8a5719ef, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DungeonEnemyPoint
 --- !u!1001 &1193321750078617113
 PrefabInstance:
   m_ObjectHideFlags: 0

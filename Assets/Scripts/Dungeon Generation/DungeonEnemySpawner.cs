@@ -11,6 +11,11 @@ public class DungeonEnemySpawner : MonoBehaviour
     [Header("Enemies")]
     [SerializeField] private NetworkObject[] enemyPrefabs;
 
+    [Header("Points")]
+    [Tooltip("Gagamitin lang ang DungeonEnemyPoint na may parehong Group. " +
+             "Blangko = mga point na walang group.")]
+    [SerializeField] private string pointGroup = "";
+
     [Header("Rules")]
     [SerializeField] private int maxEnemies = 6;
 
@@ -102,14 +107,17 @@ public class DungeonEnemySpawner : MonoBehaviour
     {
         if (enemyPrefabs == null || enemyPrefabs.Length == 0)
         {
-            Debug.LogWarning("[ENEMY SPAWN] Walang enemy prefab na naka-assign.");
+            Debug.LogWarning($"[ENEMY SPAWN:{pointGroup}] Walang enemy prefab na naka-assign.");
             return;
         }
 
-        List<DungeonEnemyPoint> points =
-            new List<DungeonEnemyPoint>(
-                FindObjectsByType<DungeonEnemyPoint>(FindObjectsSortMode.None)
-            );
+        List<DungeonEnemyPoint> points = new List<DungeonEnemyPoint>();
+
+        foreach (DungeonEnemyPoint p in FindObjectsByType<DungeonEnemyPoint>(FindObjectsSortMode.None))
+        {
+            if (p.group == pointGroup)
+                points.Add(p);
+        }
 
         GameObject spawnRoom = dungeon != null ? dungeon.SpawnRoomObject : null;
 
@@ -142,7 +150,7 @@ public class DungeonEnemySpawner : MonoBehaviour
                     NavMesh.AllAreas))
             {
                 Debug.LogWarning(
-                    $"[ENEMY SPAWN] {point.name} is not near the NavMesh. Skipped."
+                    $"[ENEMY SPAWN:{pointGroup}] {point.name} is not near the NavMesh. Skipped."
                 );
                 continue;
             }
@@ -158,7 +166,7 @@ public class DungeonEnemySpawner : MonoBehaviour
 
         spawned = true;
 
-        Debug.Log($"[ENEMY SPAWN] Spawned {count} enemies.");
+        Debug.Log($"[ENEMY SPAWN:{pointGroup}] Spawned {count} enemies from {points.Count} points.");
     }
 
     private void Shuffle<T>(List<T> list)
