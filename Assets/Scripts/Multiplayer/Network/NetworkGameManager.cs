@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections;
 using Fusion;
 using UnityEngine;
 using UnityEngine.AI;
@@ -2139,8 +2140,16 @@ public class NetworkGameManager : NetworkBehaviour
             return false;
         }
 
-        NetworkRunnerHandler.Instance.LoadDungeonScene();
+        StartCoroutine(LoadDungeonAfterTeleportEffect());
         return true;
+    }
+
+    private IEnumerator LoadDungeonAfterTeleportEffect()
+    {
+        // Give each client time to play its local fade and teleport sound.
+        yield return new WaitForSecondsRealtime(1f);
+        if (NetworkRunnerHandler.Instance != null)
+            NetworkRunnerHandler.Instance.LoadDungeonScene();
     }
 
     private static bool PlayerOverlapsTrigger(Transform playerRoot, Collider trigger)
