@@ -266,6 +266,17 @@ public class PlayerInventoryUI : MonoBehaviour
 
         inventory = null;
 
+        NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
+        if (handler != null)
+        {
+            NetworkRunner gameRunner = handler.GameRunner;
+            if (gameRunner != null && gameRunner.IsRunning)
+                TryBindInventoryFromRunner(gameRunner);
+
+            // Do not bind to the separate lobby browser runner.
+            return;
+        }
+
         NetworkRunner[] runners =
             FindObjectsByType<NetworkRunner>(FindObjectsSortMode.None);
 
@@ -274,37 +285,37 @@ public class PlayerInventoryUI : MonoBehaviour
             if (runner == null || !runner.IsRunning)
                 continue;
 
-            if (!runner.TryGetPlayerObject(
-                    runner.LocalPlayer,
-                    out NetworkObject playerObject))
-            {
-                continue;
-            }
-
-            if (playerObject == null || !playerObject.IsValid)
-                continue;
-
-            PlayerInventory foundInventory =
-                playerObject.GetComponent<PlayerInventory>();
-
-            if (foundInventory == null)
-            {
-                Debug.LogError(
-                    "[INVENTORY UI] Local PlayerObject has no PlayerInventory."
-                );
-                continue;
-            }
-
-            inventory = foundInventory;
-
-            Debug.Log(
-                $"[INVENTORY UI] Found local inventory on " +
-                $"'{playerObject.name}'. " +
-                $"Ready={inventory.IsInventorySpawned}"
-            );
-
-            return;
+            if (TryBindInventoryFromRunner(runner))
+                return;
         }
+    }
+
+    private bool TryBindInventoryFromRunner(NetworkRunner runner)
+    {
+        if (runner == null || !runner.IsRunning || !runner.LocalPlayer.IsValid ||
+            !runner.TryGetPlayerObject(runner.LocalPlayer, out NetworkObject playerObject))
+            return false;
+
+        if (playerObject == null || !playerObject.IsValid)
+            return false;
+
+        PlayerInventory foundInventory = playerObject.GetComponent<PlayerInventory>();
+
+        if (foundInventory == null)
+        {
+            Debug.LogError(
+                "[INVENTORY UI] Local PlayerObject has no PlayerInventory.");
+            return false;
+        }
+
+        inventory = foundInventory;
+
+        Debug.Log(
+            $"[INVENTORY UI] Found local inventory on " +
+            $"'{playerObject.name}'. Ready={inventory.IsInventorySpawned} " +
+            $"Runner={runner.name}");
+
+        return true;
     }
 
     // =========================================================

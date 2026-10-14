@@ -49,6 +49,8 @@ public class DungeonPlayerSpawner : MonoBehaviour
     private bool hasSpawnedLocalPlayer;
     private float debugTimer;
 
+    public bool IsLocalPlayerReady => hasSpawnedLocalPlayer;
+
     private void Awake()
     {
         Debug.Log(
@@ -130,6 +132,25 @@ public class DungeonPlayerSpawner : MonoBehaviour
     {
         if (runner != null)
             return;
+
+        // Prefer the actual game session runner. A lobby browser runner can
+        // also be alive in this scene, but it has no Fort player inventory.
+        NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
+        if (handler != null)
+        {
+            runner = handler.GameRunner;
+            if (runner != null && runner.IsRunning)
+            {
+                Debug.Log(
+                    $"[DUNGEON SPAWN] Using main game runner: {runner.name}",
+                    this);
+                return;
+            }
+
+            // Don't fall through to the separate lobby browser runner.
+            runner = null;
+            return;
+        }
 
         NetworkRunner[] runners =
             FindObjectsByType<NetworkRunner>(
@@ -323,7 +344,34 @@ public class DungeonPlayerSpawner : MonoBehaviour
             return;
         }
 
-        hasSpawnedLocalPlayer = true;
+        PlayerInventory inventory =
+            existingPlayer != null
+                ? existingPlayer.GetComponent<PlayerInventory>()
+                : runner.GetPlayerObject(localPlayer)?.GetComponent<PlayerInventory>();
+        if (inventory != null)
+        {
+            NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
+            if (handler != null && !handler.RestoreLocalInventoryForDungeon(inventory))
+            {
+                return;
+            }
+
+            hasSpawnedLocalPlayer = true;
+            inventory.RefreshInventoryDisplay();
+            Debug.Log(
+                $"[DUNGEON SPAWN] Carried inventory after placement: " +
+                $"candle (203) x{inventory.GetQuantityForItemId(203)}, " +
+                $"Dungeon Key (103) x{inventory.GetQuantityForItemId(103)}. " +
+                $"Reused Fort player={existingPlayer != null}.",
+                inventory);
+        }
+        else
+        {
+            Debug.LogError(
+                "[DUNGEON SPAWN] PlayerInventory is missing from the placed player.",
+                this);
+            return;
+        }
 
         Debug.Log(
             "[DUNGEON SPAWN] " +

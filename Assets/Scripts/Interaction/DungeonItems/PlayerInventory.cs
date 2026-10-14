@@ -12,6 +12,35 @@ using UnityEngine.InputSystem;
 public class PlayerInventory : NetworkBehaviour
 
 {
+    public sealed class InventoryTransferSnapshot
+    {
+        internal readonly int[] ItemIds;
+        internal readonly int[] Quantities;
+        internal readonly int[] QuickBar;
+        internal readonly float[] CandleRemaining;
+        internal readonly float[] CandleMaxLife;
+        internal readonly bool[] CandleInitialized;
+        internal readonly int SelectedSlot;
+
+        internal InventoryTransferSnapshot(
+            int[] itemIds,
+            int[] quantities,
+            int[] quickBar,
+            float[] candleRemaining,
+            float[] candleMaxLife,
+            bool[] candleInitialized,
+            int selectedSlot)
+        {
+            ItemIds = itemIds;
+            Quantities = quantities;
+            QuickBar = quickBar;
+            CandleRemaining = candleRemaining;
+            CandleMaxLife = candleMaxLife;
+            CandleInitialized = candleInitialized;
+            SelectedSlot = selectedSlot;
+        }
+    }
+
     public sealed class CapturedPhoto
     {
         public ItemData Item { get; }
@@ -154,9 +183,60 @@ public class PlayerInventory : NetworkBehaviour
 
     private int nextPhotoNumber = 1;
 
+    private InventoryTransferSnapshot pendingTransferSnapshot;
+    private InventoryTransferSnapshot appliedTransferSnapshot;
+
 
 
     public event Action InventoryChanged;
+
+    public void RefreshInventoryDisplay()
+    {
+        NotifyInventoryChangedImmediately();
+    }
+
+    public InventoryTransferSnapshot CaptureTransferSnapshot()
+    {
+        int[] itemIds = new int[StorageSlotCount];
+        int[] quantities = new int[StorageSlotCount];
+        float[] candleRemaining = new float[StorageSlotCount];
+        float[] candleMaxLife = new float[StorageSlotCount];
+        bool[] candleInitialized = new bool[StorageSlotCount];
+        int[] quickBar = new int[QuickBarSlotCount];
+
+        for (int i = 0; i < StorageSlotCount; i++)
+        {
+            itemIds[i] = NetworkSlots.Get(i);
+            quantities[i] = NetworkQuantities.Get(i);
+            candleRemaining[i] = CandleLifeBySlot.Get(i);
+            candleMaxLife[i] = CandleMaxLifeBySlot.Get(i);
+            candleInitialized[i] = CandleInitializedBySlot.Get(i);
+        }
+
+        for (int i = 0; i < QuickBarSlotCount; i++)
+            quickBar[i] = NetworkQuickBar.Get(i);
+
+        return new InventoryTransferSnapshot(
+            itemIds,
+            quantities,
+            quickBar,
+            candleRemaining,
+            candleMaxLife,
+            candleInitialized,
+            SelectedSlot);
+    }
+
+    public bool RestoreTransferSnapshot(InventoryTransferSnapshot snapshot)
+    {
+        if (snapshot == null || Object == null || !Object.HasStateAuthority)
+            return false;
+
+        if (ReferenceEquals(appliedTransferSnapshot, snapshot))
+            return true;
+
+        pendingTransferSnapshot = snapshot;
+        return false;
+    }
 
     private void NotifyInventoryChangedImmediately()
     {
@@ -339,10 +419,6 @@ public class PlayerInventory : NetworkBehaviour
 
 
 
-            for (int i = 0; i < QuickBarSlotCount; i++)
-
-                NetworkQuickBar.Set(i, 0);
-
         }
 
 
@@ -370,6 +446,31 @@ public class PlayerInventory : NetworkBehaviour
     }
 
 
+
+    public override void FixedUpdateNetwork()
+    {
+        if (pendingTransferSnapshot == null || Object == null ||
+            !Object.HasStateAuthority)
+            return;
+
+        InventoryTransferSnapshot snapshot = pendingTransferSnapshot;
+        for (int i = 0; i < StorageSlotCount; i++)
+        {
+            NetworkSlots.Set(i, snapshot.ItemIds[i]);
+            NetworkQuantities.Set(i, snapshot.Quantities[i]);
+            CandleLifeBySlot.Set(i, snapshot.CandleRemaining[i]);
+            CandleMaxLifeBySlot.Set(i, snapshot.CandleMaxLife[i]);
+            CandleInitializedBySlot.Set(i, snapshot.CandleInitialized[i]);
+        }
+
+        for (int i = 0; i < QuickBarSlotCount; i++)
+            NetworkQuickBar.Set(i, snapshot.QuickBar[i]);
+
+        SelectedSlot = snapshot.SelectedSlot;
+        appliedTransferSnapshot = snapshot;
+        pendingTransferSnapshot = null;
+        NotifyInventoryChangedImmediately();
+    }
 
     private void Update()
 
