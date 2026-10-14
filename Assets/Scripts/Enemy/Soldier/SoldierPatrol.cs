@@ -1,4 +1,5 @@
 using Fusion;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -61,6 +62,10 @@ public class SoldierPatrol : NetworkBehaviour
 
     [SerializeField] private float searchTimeout = 10f;
 
+    [Header("Prison Capture")]
+    [Tooltip("A player within this horizontal distance of the soldier is captured and sent to the prison cell.")]
+    [SerializeField, Min(0.1f)] private float captureRange = 2.5f;
+
     [Header("Animation")]
     [SerializeField] private Animator animator;
     [SerializeField] private string speedParameter = "Speed";
@@ -87,10 +92,48 @@ public class SoldierPatrol : NetworkBehaviour
     private float searchTimer;
 
     private readonly RaycastHit[] hitBuffer = new RaycastHit[16];
+    private readonly Dictionary<NetworkId, float> captureCooldowns = new Dictionary<NetworkId, float>();
 
     // animation (lahat ng players)
     private Vector3 lastPosition;
     private float animSpeed;
+
+    private void OnTriggerEnter(Collider other)
+    {
+        TryCapturePlayer(other != null ? other.GetComponentInParent<PlayerController>() : null);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        TryCapturePlayer(collision != null && collision.collider != null
+            ? collision.collider.GetComponentInParent<PlayerController>()
+            : null);
+    }
+
+    private bool TryCapturePlayer(PlayerController player)
+    {
+        if (player == null || Object == null || !Object.HasStateAuthority ||
+            player.Object == null)
+            return false;
+
+        NetworkId playerNetworkId = player.Object.Id;
+        if (captureCooldowns.TryGetValue(playerNetworkId, out float nextAllowedTime) &&
+            Time.time < nextAllowedTime)
+            return false;
+
+        DungeonGenerator generator = FindFirstObjectByType<DungeonGenerator>();
+        if (generator == null ||
+            !generator.TryGetPrisonCaptureSpawn(out Vector3 prisonPosition, out Quaternion prisonRotation))
+        {
+            Debug.LogWarning("[SOLDIER] Prison capture spawn (SP_03) was not found in the generated Dungeon Prison room.", this);
+            return false;
+        }
+
+        captureCooldowns[playerNetworkId] = Time.time + 2f;
+        player.RpcTeleportPlayer(prisonPosition, prisonRotation);
+        Debug.Log($"[SOLDIER] Captured player object {playerNetworkId} and sent only that player to the prison cell.", this);
+        return true;
+    }
 
     // =========================================================
     // SPAWNED
@@ -184,6 +227,14 @@ public class SoldierPatrol : NetworkBehaviour
         foreach (PlayerController p in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
         {
             float d = Vector3.Distance(transform.position, p.transform.position);
+
+            Vector3 flatOffset = p.transform.position - transform.position;
+            flatOffset.y = 0f;
+            if (flatOffset.sqrMagnitude <= captureRange * captureRange &&
+                TryCapturePlayer(p))
+            {
+                return;
+            }
 
             if (d > range)
                 continue;
