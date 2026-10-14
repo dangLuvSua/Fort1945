@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEngine;
@@ -1230,9 +1230,9 @@ public class DungeonGenerator : MonoBehaviour
         entranceForward.Normalize();
         targetForward.Normalize();
 
-        // Entrance must face the opposite direction of the Exit.
-        Quaternion correction =
-            Quaternion.FromToRotation(entranceForward, -targetForward);
+        // Entrance must face the opposite direction of the Exit (strictly around Y-axis).
+        float angle = Vector3.SignedAngle(entranceForward, -targetForward, Vector3.up);
+        Quaternion correction = Quaternion.AngleAxis(angle, Vector3.up);
 
         piece.transform.rotation = correction * piece.transform.rotation;
 
