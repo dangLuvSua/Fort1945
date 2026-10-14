@@ -42,9 +42,6 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: Interactable notes
-    uniqueID: 1392102069
-    locked: 0
   - name: Polaroid
     uniqueID: 250635093
     locked: 0
@@ -53,6 +50,9 @@ TagManager:
     locked: 0
   - name: sticky notes
     uniqueID: 3982021163
+    locked: 0
+  - name: Interactable notes
+    uniqueID: 1392102069
     locked: 0
   m_RenderingLayers:
   - Default
