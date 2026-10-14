@@ -111,13 +111,62 @@ public class NetworkRunnerHandler :
     // Main game runner.
     private NetworkRunner runner;
 
+    public NetworkRunner GameRunner => runner;
+
     // Separate runner used ONLY for browsing lobbies.
     private NetworkRunner lobbyRunner;
 
     // Scene manager attached to the main runner.
     private NetworkSceneManagerDefault networkSceneManager;
 
+    private PlayerInventory.InventoryTransferSnapshot dungeonInventorySnapshot;
+
     private string currentSessionName;
+
+    public void CaptureLocalInventoryForDungeon()
+    {
+        if (runner == null || !runner.IsRunning || !runner.LocalPlayer.IsValid ||
+            !runner.TryGetPlayerObject(runner.LocalPlayer, out NetworkObject playerObject) ||
+            playerObject == null)
+        {
+            Debug.LogWarning(
+                "[DUNGEON INVENTORY] Could not find the local Fort player before scene load.");
+            return;
+        }
+
+        PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
+        if (inventory == null)
+        {
+            Debug.LogWarning(
+                "[DUNGEON INVENTORY] Fort player has no PlayerInventory component.",
+                playerObject);
+            return;
+        }
+
+        dungeonInventorySnapshot = inventory.CaptureTransferSnapshot();
+        Debug.Log(
+            $"[DUNGEON INVENTORY] Saved local inventory before scene load: " +
+            $"candle (203) x{inventory.GetQuantityForItemId(203)}, " +
+            $"Dungeon Key (103) x{inventory.GetQuantityForItemId(103)}.",
+            inventory);
+    }
+
+    public bool RestoreLocalInventoryForDungeon(PlayerInventory inventory)
+    {
+        if (dungeonInventorySnapshot == null)
+            return true;
+
+        if (inventory == null || !inventory.RestoreTransferSnapshot(dungeonInventorySnapshot))
+            return false;
+
+        Debug.Log(
+            $"[DUNGEON INVENTORY] Restored saved local inventory: " +
+            $"candle (203) x{inventory.GetQuantityForItemId(203)}, " +
+            $"Dungeon Key (103) x{inventory.GetQuantityForItemId(103)}.",
+            inventory);
+        dungeonInventorySnapshot = null;
+        return true;
+    }
 
 
     // =========================================================
@@ -1799,7 +1848,11 @@ public class NetworkRunnerHandler :
                 // or assigned the player's NetworkObject.
                 // -------------------------------------------------
 
-                if (playerObject != null)
+                DungeonPlayerSpawner spawner =
+                    FindFirstObjectByType<DungeonPlayerSpawner>();
+
+                if (playerObject != null && spawner != null &&
+                    spawner.IsLocalPlayerReady)
                 {
                     Debug.Log(
                         "[DUNGEON] Local player confirmed after " +
@@ -1812,6 +1865,7 @@ public class NetworkRunnerHandler :
                     );
 
 
+                    DungeonTeleportLoadingOverlay.Hide();
                     CompleteLoading();
 
                     yield break;

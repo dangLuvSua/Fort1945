@@ -14,8 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MissionData
   title: Find 2 Candles and 1 Key
   description: "The entrance to Fort Santiago\u2019s underground dungeon lies ahead.
-    Before venturing into the darkness, collect the 2 candles and the key hidden
-    around the fort. Equip the key, then hold [E] at the dungeon gate to unlock it. "
+    Before venturing into the darkness, collect the 2 candles and dungeon key.  "
   icon: {fileID: 21300000, guid: 0bf4a89b627470f4090e0ed68cb9eb15, type: 3}
   autoDuration: 0
   titleColor: {r: 1, g: 0, b: 0, a: 1}
