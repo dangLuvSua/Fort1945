@@ -560,6 +560,89 @@ public class DungeonGenerator : MonoBehaviour
         rotation = point.rotation;
     }
 
+    /// <summary>Gets the prison capture spawn from the generated prison room.</summary>
+    public bool TryGetPrisonCaptureSpawn(out Vector3 position, out Quaternion rotation)
+    {
+        foreach (GameObject piece in generatedPieces)
+        {
+            if (piece == null || !piece.name.Contains("Dungeon Prison"))
+                continue;
+
+            BoxCollider roomBounds = null;
+            foreach (BoxCollider box in piece.GetComponentsInChildren<BoxCollider>(true))
+            {
+                if (box.name == "RoomBounds")
+                {
+                    roomBounds = box;
+                    break;
+                }
+            }
+
+            List<PrisonCaptureSpawnPoint> validMarkers = new List<PrisonCaptureSpawnPoint>();
+            List<Vector3> validPositions = new List<Vector3>();
+            PrisonCaptureSpawnPoint[] markers =
+                piece.GetComponentsInChildren<PrisonCaptureSpawnPoint>(true);
+
+            foreach (PrisonCaptureSpawnPoint marker in markers)
+            {
+                if (marker == null || !marker.gameObject.activeInHierarchy)
+                    continue;
+
+                Vector3 candidate = marker.transform.position;
+                if (roomBounds != null && !roomBounds.bounds.Contains(candidate))
+                {
+                    Debug.LogWarning(
+                        $"[DUNGEON GENERATOR] Ignoring prison spawn {marker.name}; it is outside RoomBounds at {candidate}.",
+                        marker);
+                    continue;
+                }
+
+                // Use the authored transform exactly. NavMesh.SamplePosition is
+                // global and can select a nearby corridor/outside surface instead
+                // of the cell where this marker was placed.
+                validMarkers.Add(marker);
+                validPositions.Add(candidate);
+            }
+
+            if (validMarkers.Count > 0)
+            {
+                int index = Random.Range(0, validMarkers.Count);
+                PrisonCaptureSpawnPoint selected = validMarkers[index];
+                position = validPositions[index];
+                rotation = selected.transform.rotation;
+                Debug.Log(
+                    $"[DUNGEON GENERATOR] Selected authored prison spawn {selected.name} at {position} " +
+                    $"from {validMarkers.Count}/{markers.Length} points inside RoomBounds.", selected);
+                return true;
+            }
+
+            if (markers.Length > 0)
+            {
+                Debug.LogError(
+                    $"[DUNGEON GENERATOR] All {markers.Length} prison capture points are outside RoomBounds. " +
+                    "Move them inside the prison room.", piece);
+                break;
+            }
+
+            // Backward compatibility for a prison prefab that still has only
+            // the original unmarked SP_03 transform.
+            foreach (Transform child in piece.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name != "SP_03")
+                    continue;
+
+                position = child.position;
+                rotation = child.rotation;
+                Debug.LogWarning($"[DUNGEON GENERATOR] No valid capture markers; falling back to SP_03 at {position}.", child);
+                return true;
+            }
+        }
+
+        position = Vector3.zero;
+        rotation = Quaternion.identity;
+        return false;
+    }
+
 
     // =========================================================
     // ADD INTERSECTION

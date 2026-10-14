@@ -26,12 +26,18 @@ public class ItemRandomSpawner : NetworkBehaviour
     [SerializeField] private bool spawnOnCurrentPhase = true;
     [SerializeField] private float verticalOffset = 0.1f;
 
+    [Header("Guaranteed Prison Keys")]
+    [Tooltip("Each assigned prison key is spawned once per dungeon run, outside the random phase item rolls.")]
+    [SerializeField] private ItemData[] guaranteedPrisonKeys;
+
     private readonly List<ItemSpawnPoint> availablePoints =
         new List<ItemSpawnPoint>();
 
     private bool dungeonReady;
     private bool isSubscribed;
     private int lastProcessedPhase = -1;
+    private bool prisonKeysSpawned;
+    private readonly HashSet<int> spawnedGuaranteedKeyIds = new HashSet<int>();
 
     public override void Spawned()
     {
@@ -129,6 +135,12 @@ public class ItemRandomSpawner : NetworkBehaviour
         if (Object == null || !Object.HasStateAuthority)
             return;
 
+        if (dungeonReady && !prisonKeysSpawned && guaranteedPrisonKeys != null && guaranteedPrisonKeys.Length > 0)
+        {
+            if (SpawnGuaranteedPrisonKeys())
+                prisonKeysSpawned = true;
+        }
+
         if (!spawnOnCurrentPhase || !dungeonReady)
             return;
 
@@ -200,6 +212,52 @@ public class ItemRandomSpawner : NetworkBehaviour
         {
             lastProcessedPhase = phase;
         }
+    }
+
+    private bool SpawnGuaranteedPrisonKeys()
+    {
+        int requiredCount = 0;
+        foreach (ItemData key in guaranteedPrisonKeys)
+        {
+            if (key != null && !spawnedGuaranteedKeyIds.Contains(key.itemId))
+                requiredCount++;
+        }
+
+        if (requiredCount == 0)
+            return true;
+
+        if (availablePoints.Count < requiredCount)
+            return false;
+
+        foreach (ItemData key in guaranteedPrisonKeys)
+        {
+            if (key == null || spawnedGuaranteedKeyIds.Contains(key.itemId))
+                continue;
+
+            if (!SpawnAtRandomPoint(key))
+            {
+                Debug.LogWarning(
+                    $"[ITEM SPAWNER] Guaranteed prison key '{key.itemName}' failed to spawn; retrying next network tick.", this);
+                continue;
+            }
+
+            spawnedGuaranteedKeyIds.Add(key.itemId);
+        }
+
+        bool complete = true;
+        foreach (ItemData key in guaranteedPrisonKeys)
+        {
+            if (key != null && !spawnedGuaranteedKeyIds.Contains(key.itemId))
+            {
+                complete = false;
+                break;
+            }
+        }
+
+        if (complete)
+            Debug.Log($"[ITEM SPAWNER] Guaranteed prison keys spawned: {spawnedGuaranteedKeyIds.Count}.", this);
+
+        return complete;
     }
 
     private bool SpawnPhaseItems(
@@ -353,7 +411,8 @@ public class ItemRandomSpawner : NetworkBehaviour
         {
             if (entry == null ||
                 entry.item == null ||
-                entry.item.worldPrefab == null)
+                entry.item.worldPrefab == null ||
+                IsGuaranteedPrisonKey(entry.item))
                 continue;
 
             totalWeight += Mathf.Max(0f, entry.weight);
@@ -368,7 +427,8 @@ public class ItemRandomSpawner : NetworkBehaviour
         {
             if (entry == null ||
                 entry.item == null ||
-                entry.item.worldPrefab == null)
+                entry.item.worldPrefab == null ||
+                IsGuaranteedPrisonKey(entry.item))
                 continue;
 
             roll -= Mathf.Max(0f, entry.weight);
@@ -378,6 +438,20 @@ public class ItemRandomSpawner : NetworkBehaviour
         }
 
         return null;
+    }
+
+    private bool IsGuaranteedPrisonKey(ItemData item)
+    {
+        if (item == null || guaranteedPrisonKeys == null)
+            return false;
+
+        foreach (ItemData key in guaranteedPrisonKeys)
+        {
+            if (key != null && key.itemId == item.itemId)
+                return true;
+        }
+
+        return false;
     }
 
     private void ShufflePoints()

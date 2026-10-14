@@ -2283,6 +2283,9 @@ MonoBehaviour:
   standalonePhase: 1
   spawnOnCurrentPhase: 1
   verticalOffset: 0.1
+  guaranteedPrisonKeys:
+  - {fileID: 11400000, guid: d98faaf2d5a8a2b46adbd30d840696f4, type: 2}
+  - {fileID: 11400000, guid: 7623e8308b325a24cb3752c1a93ecc4c, type: 2}
 --- !u!114 &1106075645
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2432,7 +2435,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9519b7261d71f124293bdb2d4d091f93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DungeonPlayerSpawner
-  testingMode: 0
+  testingMode: 1
   testGameMode: 1
   playerPrefab: {fileID: 2481270183145079181, guid: ddc5dfc990d6831408c4d5f15c7b31fe, type: 3}
   dungeon: {fileID: 749619190}
@@ -4730,6 +4733,10 @@ PrefabInstance:
     - target: {fileID: 1478200190005367746, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: -0.000061035156
+      objectReference: {fileID: 0}
+    - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
       propertyPath: videoImage

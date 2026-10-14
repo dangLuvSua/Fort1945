@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dffecc99a2dea9b439750e0edf8e7d7b, type: 3}
-  m_Name: PrisonKey
+  m_Name: Prison Key 1
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemId: 102
-  itemName: Prison Key
+  itemName: Prison Key 1
   icon: {fileID: 21300000, guid: 991774dd9f29e13479958204f0ebe672, type: 3}
-  description: An old, rusted key used to unlock the prison cells. Its worn surface
+  description: An old, rusted key used to unlock the prison cell 1. Its worn surface
     suggests it has been hidden away for years, but the lock it belongs to may still
     be waiting. Find it to free your teammates.
   category: 0
