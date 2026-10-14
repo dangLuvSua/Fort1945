@@ -130,6 +130,12 @@ public class NetworkGameManager : NetworkBehaviour
     [Networked]
     public NetworkBool DungeonGateUnlocked { get; private set; }
 
+    [Networked]
+    public NetworkBool PrisonCell1Unlocked { get; private set; }
+
+    [Networked]
+    public NetworkBool PrisonCell2Unlocked { get; private set; }
+
 
     // =========================================================
     // SOLDIER INTERACTION / DIALOGUE
@@ -542,6 +548,10 @@ public class NetworkGameManager : NetworkBehaviour
             HostPlayer = Runner.LocalPlayer;
             GameStarted = false;
             LobbyLocked = false;
+            DungeonGateUnlocked = false;
+            PrisonCell1Unlocked = false;
+            PrisonCell2Unlocked = false;
+            MissionItemsSpawned = false;
 
             AllPlayersEnteredGate = false;
 
@@ -2049,6 +2059,41 @@ public class NetworkGameManager : NetworkBehaviour
     // =========================================================
     // GATE UNLOCK REQUESTS
     // =========================================================
+
+    public void RequestPrisonCellUnlock(int cellNumber, int keyItemId)
+    {
+        if (Runner == null || !Runner.IsRunning)
+            return;
+
+        RPC_RequestPrisonCellUnlock(cellNumber, keyItemId);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_RequestPrisonCellUnlock(int cellNumber, int keyItemId, RpcInfo info = default)
+    {
+        if (!Object.HasStateAuthority || info.Source == PlayerRef.None ||
+            Runner == null || !Runner.TryGetPlayerObject(info.Source, out NetworkObject playerObject) ||
+            playerObject == null)
+            return;
+
+        int requiredKeyId = cellNumber == 1 ? 102 : cellNumber == 2 ? 104 : 0;
+        if (requiredKeyId == 0 || keyItemId != requiredKeyId)
+            return;
+
+        PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
+        if (inventory == null || !inventory.HasItemId(requiredKeyId))
+        {
+            Debug.LogWarning($"[PRISON GATE] Player {info.Source} requested cell {cellNumber} without its prison key.", this);
+            return;
+        }
+
+        if (cellNumber == 1)
+            PrisonCell1Unlocked = true;
+        else
+            PrisonCell2Unlocked = true;
+
+        Debug.Log($"[PRISON GATE] Cell {cellNumber} unlocked by player {info.Source}.", this);
+    }
 
     public void RequestDungeonGateUnlock()
     {

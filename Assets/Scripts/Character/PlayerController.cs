@@ -980,4 +980,14 @@ public class PlayerController : NetworkBehaviour
             NetworkAnimationSpeed = 0f;
         }
     }
+
+    /// <summary>Called by state-authority patrols to capture a player on every peer.</summary>
+    // The patrol has authority over its own object, not necessarily this
+    // player's object in Fusion Shared mode. The patrol guards the call with
+    // its StateAuthority check and invokes this RPC on the touched player only.
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcTeleportPlayer(Vector3 position, Quaternion rotation)
+    {
+        Teleport(position, rotation);
+    }
 }
