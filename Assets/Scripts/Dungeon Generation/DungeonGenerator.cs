@@ -94,6 +94,14 @@ public class DungeonGenerator : MonoBehaviour
 
     private GameObject spawnRoomObject;
 
+    // =========================================================
+    // MYSTERY CHARACTERS
+    // =========================================================
+
+    [Header("Mystery Characters")]
+    [Tooltip("Character prefabs chosen at random for room mystery spawn points (MSP1, MSP2, etc.).")]
+    [SerializeField] private GameObject[] mysteryCharacterPrefabs;
+
 
     // =========================================================
     // LEVEL
@@ -405,6 +413,7 @@ public class DungeonGenerator : MonoBehaviour
             CollectSpawnPoints();
             SpawnChest();
             SpawnProps();
+            SpawnMysteryCharacters();
             IsGenerated = true;
             OnDungeonGenerated?.Invoke(this);
 
@@ -498,6 +507,54 @@ public class DungeonGenerator : MonoBehaviour
 
         if (debugGeneration)
             Debug.Log("Prop spawners processed: " + count);
+    }
+
+
+    // =========================================================
+    // MYSTERY CHARACTERS
+    // =========================================================
+
+    private void SpawnMysteryCharacters()
+    {
+        if (mysteryCharacterPrefabs == null || mysteryCharacterPrefabs.Length == 0)
+        {
+            if (debugGeneration)
+                Debug.Log("No mystery character prefabs assigned.");
+            return;
+        }
+
+        int spawnedCount = 0;
+
+        foreach (GameObject piece in generatedPieces)
+        {
+            if (piece == null)
+                continue;
+
+            List<Transform> points = new List<Transform>();
+            foreach (Transform child in piece.GetComponentsInChildren<Transform>(true))
+            {
+                if (child != piece.transform &&
+                    child.name.StartsWith("MSP", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    points.Add(child);
+                }
+            }
+
+            // One random point and one random character per marked room instance.
+            if (points.Count == 0)
+                continue;
+
+            GameObject prefab = GetRandomValidPrefab(mysteryCharacterPrefabs);
+            if (prefab == null)
+                continue;
+
+            Transform point = points[Random.Range(0, points.Count)];
+            Instantiate(prefab, point.position, point.rotation, point);
+            spawnedCount++;
+        }
+
+        if (debugGeneration)
+            Debug.Log("Mystery characters spawned: " + spawnedCount);
     }
 
 

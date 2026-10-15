@@ -22,6 +22,8 @@ private bool isLocal;
 
 private IHoldInteractable currentHoldTarget;
 private HoldInteractionSliderUI holdSlider;
+private bool ownsPromptInstance;
+private InteractionPrompt holdPromptPrefab;
 
 private float holdProgress;
 private bool holdStarted;
@@ -49,14 +51,28 @@ public override void Spawned()
     if (promptText != null)
         promptText.SetActive(false);
 
-    // PlayerRoot can serialize a reference to the prompt prefab asset rather
-    // than the live prompt instance in this client's loaded scene. UI methods
-    // must target the scene instance so the prompt and slider are visible.
+    // Use a live scene instance when one exists. Otherwise instantiate the
+    // assigned prefab under this local player's UI root.
     if (holdPrompt == null || !holdPrompt.gameObject.scene.IsValid())
+    {
+        InteractionPrompt promptPrefab = holdPrompt;
+        holdPromptPrefab = promptPrefab;
         holdPrompt = FindInteractionPrompt();
+
+        if (holdPrompt == null && promptPrefab != null && uiRoot != null)
+        {
+            holdPrompt = Instantiate(promptPrefab, uiRoot.transform, false);
+            holdPrompt.gameObject.name = "InteractionPrompt";
+            ownsPromptInstance = true;
+        }
+    }
 
     if (holdPrompt != null)
     {
+        // The prefab root is authored inactive. Activate once so Awake runs
+        // and initializes its slider before the first interaction displays it.
+        holdPrompt.gameObject.SetActive(true);
+        holdPrompt.Hide();
         ownsHoldPrompt = false;
     }
     else if (createFallbackSlider && uiRoot != null)
@@ -161,6 +177,18 @@ private void Update()
         currentHoldTarget != holdTarget)
     {
         CancelHold();
+    }
+
+    if (holdTarget is IQuickTapHoldInteractable quickTapTarget &&
+        quickTapTarget.CanTapInteract)
+    {
+        if (currentHoldTarget != null)
+            CancelHold();
+
+        if (Keyboard.current.eKey.wasPressedThisFrame)
+            quickTapTarget.TapInteract(inventory);
+
+        return;
     }
 
     if (holdTarget != null &&
@@ -351,6 +379,13 @@ private void OnDisable()
 
     if (holdSlider != null)
         holdSlider.Hide();
+
+    if (ownsPromptInstance && holdPrompt != null)
+    {
+        Destroy(holdPrompt.gameObject);
+        holdPrompt = holdPromptPrefab;
+        ownsPromptInstance = false;
+    }
 }
 
 

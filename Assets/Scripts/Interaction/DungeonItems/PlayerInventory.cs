@@ -119,6 +119,13 @@ public class PlayerInventory : NetworkBehaviour
 
     [SerializeField] private ItemData[] itemCatalog;
 
+    [Header("Testing Loadout")]
+    [Tooltip("Give this player the test items when their network inventory spawns. Turn off when testing is complete.")]
+    [SerializeField] private bool giveDebugStartingItems = true;
+    [Tooltip("Item IDs: Prison Keys 1/2, Cross, Salt, Candle, Camera.")]
+    [SerializeField] private int[] debugStartingItemIds = { 102, 104, 201, 202, 203, 204 };
+    private bool debugStartingItemsGranted;
+
 
 
     // NetworkSlots contains the actual stored items.
@@ -417,6 +424,8 @@ public class PlayerInventory : NetworkBehaviour
 
             SelectedSlot = -1;
 
+            GrantDebugStartingItems();
+
 
 
         }
@@ -443,6 +452,31 @@ public class PlayerInventory : NetworkBehaviour
 
         );
 
+    }
+
+    private void GrantDebugStartingItems()
+    {
+        if (!giveDebugStartingItems || debugStartingItemsGranted ||
+            !Object.HasStateAuthority)
+        {
+            return;
+        }
+
+        debugStartingItemsGranted = true;
+
+        if (debugStartingItemIds == null)
+            return;
+
+        foreach (int itemId in debugStartingItemIds)
+        {
+            if (!TryAddNetworkedById(itemId))
+            {
+                Debug.LogWarning(
+                    $"[INVENTORY TEST LOADOUT] Could not add item ID {itemId}. " +
+                    "Check that it is in the PlayerInventory item catalog.",
+                    this);
+            }
+        }
     }
 
 

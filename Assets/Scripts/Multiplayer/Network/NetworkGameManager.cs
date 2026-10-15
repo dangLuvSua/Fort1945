@@ -136,6 +136,12 @@ public class NetworkGameManager : NetworkBehaviour
     [Networked]
     public NetworkBool PrisonCell2Unlocked { get; private set; }
 
+    [Networked]
+    public NetworkBool PrisonCell1GateOpen { get; private set; }
+
+    [Networked]
+    public NetworkBool PrisonCell2GateOpen { get; private set; }
+
 
     // =========================================================
     // SOLDIER INTERACTION / DIALOGUE
@@ -551,6 +557,8 @@ public class NetworkGameManager : NetworkBehaviour
             DungeonGateUnlocked = false;
             PrisonCell1Unlocked = false;
             PrisonCell2Unlocked = false;
+            PrisonCell1GateOpen = false;
+            PrisonCell2GateOpen = false;
             MissionItemsSpawned = false;
 
             AllPlayersEnteredGate = false;
@@ -2088,11 +2096,42 @@ public class NetworkGameManager : NetworkBehaviour
         }
 
         if (cellNumber == 1)
+        {
             PrisonCell1Unlocked = true;
+            PrisonCell1GateOpen = true;
+        }
         else
+        {
             PrisonCell2Unlocked = true;
+            PrisonCell2GateOpen = true;
+        }
 
         Debug.Log($"[PRISON GATE] Cell {cellNumber} unlocked by player {info.Source}.", this);
+    }
+
+    public void RequestPrisonCellGateState(int cellNumber, bool open)
+    {
+        if (Runner == null || !Runner.IsRunning)
+            return;
+
+        RPC_RequestPrisonCellGateState(cellNumber, open);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_RequestPrisonCellGateState(
+        int cellNumber,
+        bool open,
+        RpcInfo info = default)
+    {
+        if (!Object.HasStateAuthority || info.Source == PlayerRef.None ||
+            Runner == null || !Runner.TryGetPlayerObject(info.Source, out NetworkObject playerObject) ||
+            playerObject == null)
+            return;
+
+        if (cellNumber == 1 && PrisonCell1Unlocked)
+            PrisonCell1GateOpen = open;
+        else if (cellNumber == 2 && PrisonCell2Unlocked)
+            PrisonCell2GateOpen = open;
     }
 
     public void RequestDungeonGateUnlock()

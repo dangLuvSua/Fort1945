@@ -34,3 +34,10 @@ public interface IKeyHoldInteractable
 {
     UnityEngine.InputSystem.Key HoldKey { get; }
 }
+
+/// <summary>Optional tap action for an otherwise hold-based interaction.</summary>
+public interface IQuickTapHoldInteractable
+{
+    bool CanTapInteract { get; }
+    void TapInteract(PlayerInventory inv);
+}
