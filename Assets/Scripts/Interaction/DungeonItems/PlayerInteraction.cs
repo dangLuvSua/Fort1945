@@ -364,6 +364,7 @@ private InteractionPrompt FindInteractionPrompt()
 
 private void OnDisable()
 {
+    // Cancel any active hold interaction.
     if (holdStarted && currentHoldTarget != null)
         currentHoldTarget.HoldCancelled();
 
@@ -371,12 +372,21 @@ private void OnDisable()
     holdProgress = 0f;
     currentHoldTarget = null;
 
+    // Hide normal interaction prompt.
+    if (promptText != null)
+        promptText.SetActive(false);
+
+    if (promptLabel != null)
+        promptLabel.text = string.Empty;
+
+    // Hide hold interaction prompt.
     if (holdPrompt != null && ownsHoldPrompt)
     {
         holdPrompt.HideFor(this);
         ownsHoldPrompt = false;
     }
 
+    // Hide fallback slider.
     if (holdSlider != null)
         holdSlider.Hide();
 
@@ -387,6 +397,5 @@ private void OnDisable()
         ownsPromptInstance = false;
     }
 }
-
 
 }
