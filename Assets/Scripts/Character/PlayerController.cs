@@ -90,13 +90,13 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private string tallerSceneName = "Dungeon";
 
     [Tooltip("CharacterController height in the taller scene.")]
-    [SerializeField] private float dungeonHeight = 5.0f;
+    [SerializeField] private float dungeonHeight = 1.5f;
 
     [Tooltip("CharacterController center Y in the taller scene (usually Height / 2).")]
-    [SerializeField] private float dungeonCenterY = 2.5f;
+    [SerializeField] private float dungeonCenterY = 0.75f;
 
     [Tooltip("Camera local Y position in the taller scene.")]
-    [SerializeField] private float dungeonCameraY = 4.2f;
+    [SerializeField] private float dungeonCameraY = 1.5f;
 
     [Header("Default Sizing (Other Scenes)")]
     [SerializeField] private float defaultHeight = 3.0f;
@@ -145,6 +145,9 @@ public class PlayerController : NetworkBehaviour
     private Vector2 moveInput;
 
     private bool runInput;
+    private float movementLockedUntil;
+    private bool verifyTeleportOnNextNetworkTick;
+    private Vector3 expectedTeleportPosition;
     private bool jumpRequested;
 
     private Vector3 currentVelocity;
@@ -577,6 +580,16 @@ public class PlayerController : NetworkBehaviour
         if (!Object.HasStateAuthority)
             return;
 
+        if (verifyTeleportOnNextNetworkTick)
+        {
+            verifyTeleportOnNextNetworkTick = false;
+            float error = Vector3.Distance(transform.position, expectedTeleportPosition);
+            Debug.Log(
+                $"[PRISON TELEPORT CHECK] Player {Object.Id} next state tick: " +
+                $"expected={expectedTeleportPosition}, actual={transform.position}, " +
+                $"error={error:F3}m, moveInput={moveInput}, locked={Time.time < movementLockedUntil}.", this);
+        }
+
         // Apply horizontal player rotation
         transform.rotation =
             Quaternion.Euler(
@@ -604,12 +617,13 @@ public class PlayerController : NetworkBehaviour
 
     private void HandleMovement()
     {
+        Vector2 effectiveMoveInput = Time.time < movementLockedUntil ? Vector2.zero : moveInput;
         Vector3 desiredDirection =
             transform.forward *
-            moveInput.y
+            effectiveMoveInput.y
             +
             transform.right *
-            moveInput.x;
+            effectiveMoveInput.x;
 
         desiredDirection =
             Vector3.ClampMagnitude(
@@ -619,7 +633,7 @@ public class PlayerController : NetworkBehaviour
 
         bool wantsRun =
             runInput &&
-            moveInput.magnitude > 0.01f &&
+            effectiveMoveInput.magnitude > 0.01f &&
             (playerSanity == null ||
              playerSanity.SanityPercent > disableSprintAtSanityPercent);
 
@@ -1046,6 +1060,9 @@ public class PlayerController : NetworkBehaviour
         currentVelocity = Vector3.zero;
         verticalVelocity = 0f;
         jumpRequested = false;
+        moveInput = Vector2.zero;
+        runInput = false;
+        movementLockedUntil = Time.time + 0.25f;
 
         if (isLocal)
         {
@@ -1053,13 +1070,45 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    /// <summary>Called by state-authority patrols to capture a player on every peer.</summary>
-    // The patrol has authority over its own object, not necessarily this
-    // player's object in Fusion Shared mode. The patrol guards the call with
-    // its StateAuthority check and invokes this RPC on the touched player only.
-    [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RpcTeleportPlayer(Vector3 position, Quaternion rotation)
+    /// <summary>Resolves and teleports this player to the prison cell on this player's state authority.</summary>
+    // Resolve the world position here, after the RPC reaches this player's
+    // authority. The soldier may have authority over another peer's dungeon
+    // instance, whose generated room positions can differ.
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcTeleportPlayerToPrisonCell()
     {
-        Teleport(position, rotation);
+        Vector3 previousPosition = transform.position;
+        if (characterController == null)
+            characterController = GetComponent<CharacterController>();
+
+        if (characterController == null)
+        {
+            Debug.LogError($"[PRISON TELEPORT] Player {Object.Id} has no CharacterController; teleport aborted.", this);
+            return;
+        }
+
+        DungeonGenerator generator = FindFirstObjectByType<DungeonGenerator>();
+        if (generator == null ||
+            !generator.TryGetPrisonCaptureSpawn(out Vector3 position, out Quaternion rotation))
+        {
+            Debug.LogError(
+                $"[PRISON TELEPORT] Player {Object.Id}'s state authority could not resolve CellTeleportPoint in its local generated dungeon. Teleport aborted.",
+                this);
+            return;
+        }
+
+        Debug.Log(
+            $"[PRISON TELEPORT] Player {Object.Id}'s state authority resolved its local CellTeleportPoint to {position}; applying teleport now.", this);
+
+        float bottomOffset = characterController.height * 0.5f - characterController.center.y;
+        Vector3 playerRootPosition = position + Vector3.up * bottomOffset;
+
+        Teleport(playerRootPosition, rotation);
+        expectedTeleportPosition = playerRootPosition;
+        verifyTeleportOnNextNetworkTick = true;
+        Debug.Log(
+            $"[PRISON TELEPORT] Player {Object.Id} moved from {previousPosition} to {transform.position} " +
+            $"on state authority. Floor={position}, CharacterController bottom offset={bottomOffset:F2}, " +
+            $"lock=0.25s.", this);
     }
 }

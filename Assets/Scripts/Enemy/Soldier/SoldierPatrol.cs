@@ -121,17 +121,12 @@ public class SoldierPatrol : NetworkBehaviour
             Time.time < nextAllowedTime)
             return false;
 
-        DungeonGenerator generator = FindFirstObjectByType<DungeonGenerator>();
-        if (generator == null ||
-            !generator.TryGetPrisonCaptureSpawn(out Vector3 prisonPosition, out Quaternion prisonRotation))
-        {
-            Debug.LogWarning("[SOLDIER] Prison capture spawn (SP_03) was not found in the generated Dungeon Prison room.", this);
-            return false;
-        }
-
         captureCooldowns[playerNetworkId] = Time.time + 2f;
-        player.RpcTeleportPlayer(prisonPosition, prisonRotation);
-        Debug.Log($"[SOLDIER] Captured player object {playerNetworkId} and sent only that player to the prison cell.", this);
+        // Resolve the point on the player's own state authority. In Shared
+        // mode this can differ from the soldier's authority, and each peer's
+        // generated dungeon may have different world-space room coordinates.
+        player.RpcTeleportPlayerToPrisonCell();
+        Debug.Log($"[SOLDIER] Requested prison-cell teleport for player {playerNetworkId}; that player's authority will resolve its local CellTeleportPoint.", this);
         return true;
     }
 
