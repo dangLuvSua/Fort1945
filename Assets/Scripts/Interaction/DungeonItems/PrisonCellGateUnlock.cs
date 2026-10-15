@@ -38,9 +38,8 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable
     {
         get
         {
-            if (unlocked) return string.Empty;
-            if (!IsViewerOnOutsideSide())
-                return $"UNLOCK {cellName} FROM OUTSIDE";
+            if (unlocked || !IsViewerOnOutsideSide())
+                return string.Empty;
 
             return HasRequiredKey()
                 ? $"{unlockPrompt} WITH {requiredKeyName} ({cellName})"
@@ -48,7 +47,9 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable
         }
     }
 
-    public bool CanInteract => enabled && !unlocked && !unlockPending;
+    // Don't expose this gate as an interaction target from inside the cell.
+    // This also prevents PlayerInteractor from starting its hold-progress UI.
+    public bool CanInteract => enabled && !unlocked && !unlockPending && IsViewerOnOutsideSide();
     public int Priority => 40;
     public float HoldDuration => holdDuration;
 
