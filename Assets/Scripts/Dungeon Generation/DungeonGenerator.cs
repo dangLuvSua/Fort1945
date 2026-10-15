@@ -569,7 +569,7 @@ public class DungeonGenerator : MonoBehaviour
     {
         foreach (GameObject piece in generatedPieces)
         {
-            if (piece == null || !piece.name.Contains("Dungeon Prison"))
+            if (piece == null || !IsPrisonPiece(piece))
                 continue;
 
             BoxCollider roomBounds = null;
@@ -655,7 +655,20 @@ public class DungeonGenerator : MonoBehaviour
                point.z >= bounds.min.z && point.z <= bounds.max.z;
     }
 
+    private bool IsPrisonPiece(GameObject piece)
+    {
+        if (piece.name.Contains("Dungeon Prison"))
+            return true;
 
+        // Fallback: any piece that contains the named cell teleport collider.
+        foreach (BoxCollider box in piece.GetComponentsInChildren<BoxCollider>(true))
+        {
+            if (box.name == cellTeleportPointName)
+                return true;
+        }
+
+        return false;
+    }
     // =========================================================
     // ADD INTERSECTION
     // =========================================================

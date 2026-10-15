@@ -5675,7 +5675,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   holdPrompt: {fileID: 915891558482464258, guid: f1112d93167f9034eb54d0cadb8380cf, type: 3}
-  createFallbackSlider: 1
+  createFallbackSlider: 0
 --- !u!114 &264984566483249543
 MonoBehaviour:
   m_ObjectHideFlags: 0
