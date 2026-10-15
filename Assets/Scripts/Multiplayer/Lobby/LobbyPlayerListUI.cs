@@ -38,8 +38,14 @@ public class LobbyPlayerListUI : MonoBehaviour
         if (runner != null)
             return;
 
-        runner =
-            FindAnyObjectByType<NetworkRunner>();
+        // The project can have a second runner for lobby browsing. The
+        // player roster must always observe the actual shared game session.
+        NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
+        if (handler != null && handler.GameRunner != null &&
+            handler.GameRunner.IsRunning)
+        {
+            runner = handler.GameRunner;
+        }
     }
 
 

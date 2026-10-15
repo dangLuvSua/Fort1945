@@ -26,6 +26,11 @@ public class MissionProgressPanelUI : MonoBehaviour
     private readonly List<ItemRowUI> rows =
         new List<ItemRowUI>();
 
+    // Objective progress is calculated from all active players' replicated
+    // inventories, so every client's local HUD shows the same team total.
+    private readonly List<TeamObjective> teamObjectives =
+        new List<TeamObjective>();
+
     private bool layoutAdded;
 
     // =========================================================
@@ -144,6 +149,25 @@ public class MissionProgressPanelUI : MonoBehaviour
         EnsureInitialized();
     }
 
+    private void Update()
+    {
+        NetworkGameManager manager = NetworkGameManager.Instance;
+        if (manager == null || !manager.IsNetworkStateReady)
+            return;
+
+        for (int i = 0; i < teamObjectives.Count; i++)
+        {
+            TeamObjective objective = teamObjectives[i];
+            if (objective == null)
+                continue;
+
+            SetProgress(
+                objective.ItemId,
+                manager.GetTeamItemCount(objective.ItemId),
+                objective.Required);
+        }
+    }
+
     // =========================================================
     // PUBLIC API
     // =========================================================
@@ -232,6 +256,7 @@ public class MissionProgressPanelUI : MonoBehaviour
                 );
 
         rows.Add(row);
+        teamObjectives.Add(new TeamObjective(itemData.itemId, required));
     }
 
     public void SetProgress(
@@ -262,6 +287,7 @@ public class MissionProgressPanelUI : MonoBehaviour
         }
 
         rows.Clear();
+        teamObjectives.Clear();
     }
 
     // =========================================================
@@ -542,6 +568,18 @@ public class MissionProgressPanelUI : MonoBehaviour
             {
                 Object.Destroy(rowGameObject);
             }
+        }
+    }
+
+    private sealed class TeamObjective
+    {
+        public int ItemId { get; }
+        public int Required { get; }
+
+        public TeamObjective(int itemId, int required)
+        {
+            ItemId = itemId;
+            Required = required;
         }
     }
 }

@@ -87,10 +87,10 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
             ? manager.PrisonCell1Unlocked
             : manager.PrisonCell2Unlocked;
 
-        if (!networkUnlocked)
-            return;
-
-        unlocked = true;
+        // The manager is the source of truth for every client. Keep the
+        // local interaction and visuals in sync even if this scene object
+        // was enabled after the network state changed.
+        unlocked = networkUnlocked;
         bool networkGateOpen = cellNumber == 1
             ? manager.PrisonCell1GateOpen
             : manager.PrisonCell2GateOpen;

@@ -841,18 +841,20 @@ public class FortMissionItemSpawner : MonoBehaviour
     {
         PlayerInventory inventory =
             GetLocalPlayerInventory();
-
-        if (inventory == null)
-        {
-            return;
-        }
-
         NetworkGameManager manager = NetworkGameManager.Instance;
-        int candleCountOwned = manager != null
+        bool hasTeamNetwork = manager != null && manager.IsNetworkStateReady;
+
+        // In a network session, mission progress is the combined quantity
+        // carried by every active player's networked inventory. A local
+        // inventory reference is only needed for offline fallback mode.
+        if (!hasTeamNetwork && inventory == null)
+            return;
+
+        int candleCountOwned = hasTeamNetwork
             ? manager.GetTeamItemCount(candleItemId)
             : inventory.GetQuantityForItemId(candleItemId);
 
-        int keyCountOwned = manager != null
+        int keyCountOwned = hasTeamNetwork
             ? manager.GetTeamItemCount(keyItemId)
             : inventory.GetQuantityForItemId(keyItemId);
 

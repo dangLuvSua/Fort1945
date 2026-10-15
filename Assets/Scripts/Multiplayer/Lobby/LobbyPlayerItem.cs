@@ -119,27 +119,9 @@ public class LobbyPlayerItem : MonoBehaviour
             return;
 
 
-        NetworkRunner runner =
-            playerState.Runner;
-
-        if (runner == null)
-            return;
-
-
-        PlayerRef targetPlayer =
-            playerState.Object.InputAuthority;
-
-
-        // Ask Fusion for the actual network player object.
-        if (!runner.TryGetPlayerObject(
-            targetPlayer,
-            out NetworkObject playerObject))
-        {
-            return;
-        }
-
-
-        if (playerObject == null)
+        NetworkObject playerObject = playerState.Object;
+        if (playerObject == null || !playerObject.IsValid ||
+            !playerObject.IsInSimulation)
             return;
 
 
@@ -172,7 +154,7 @@ public class LobbyPlayerItem : MonoBehaviour
             $"[LOBBY PLAYER ITEM] " +
             $"Connected stamina for " +
             $"{playerState.PlayerName} " +
-            $"({targetPlayer})"
+            $"({playerObject.InputAuthority})"
         );
 
 
@@ -205,27 +187,9 @@ public class LobbyPlayerItem : MonoBehaviour
             return;
 
 
-        NetworkRunner runner =
-            playerState.Runner;
-
-        if (runner == null)
-            return;
-
-
-        PlayerRef targetPlayer =
-            playerState.Object.InputAuthority;
-
-
-        // Ask Fusion for the actual network player object.
-        if (!runner.TryGetPlayerObject(
-            targetPlayer,
-            out NetworkObject playerObject))
-        {
-            return;
-        }
-
-
-        if (playerObject == null)
+        NetworkObject playerObject = playerState.Object;
+        if (playerObject == null || !playerObject.IsValid ||
+            !playerObject.IsInSimulation)
             return;
 
 
@@ -258,7 +222,7 @@ public class LobbyPlayerItem : MonoBehaviour
             $"[LOBBY PLAYER ITEM] " +
             $"Connected sanity for " +
             $"{playerState.PlayerName} " +
-            $"({targetPlayer})"
+            $"({playerObject.InputAuthority})"
         );
     }
 

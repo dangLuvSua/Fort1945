@@ -2425,7 +2425,7 @@ public class NetworkGameManager : NetworkBehaviour
     /// <summary>Returns the total quantity held by all active players.</summary>
     public int GetTeamItemCount(int itemId)
     {
-        if (Runner == null || itemId <= 0)
+        if (Runner == null || !Runner.IsRunning || itemId <= 0)
             return 0;
 
         int total = 0;
