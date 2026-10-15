@@ -5399,6 +5399,7 @@ GameObject:
   - component: {fileID: 676268940557445744}
   - component: {fileID: 1313644337388063740}
   - component: {fileID: 5247716031049982711}
+  - component: {fileID: -3578491280945047849}
   m_Layer: 0
   m_Name: PlayerRoot
   m_TagString: Player
@@ -5467,7 +5468,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  walkSpeed: 3
+  walkSpeed: 56
   runSpeed: 6
   acceleration: 12
   deceleration: 14
@@ -5529,6 +5530,7 @@ MonoBehaviour:
   - {fileID: 2076916406607803299}
   - {fileID: 676268940557445744}
   - {fileID: 1313644337388063740}
+  - {fileID: -3578491280945047849}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &1612331710460718894
 MonoBehaviour:
@@ -5807,6 +5809,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CrossReviveTarget
   holdDuration: 8
+--- !u!114 &-3578491280945047849
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3522006267438135775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2ced70969fff05428c441fa8b28beff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PuzzleModeController
+  playerController: {fileID: 646776472205063453}
+  playerInteractor: {fileID: 7925084007181689668}
+  cameraController: {fileID: 1313644337388063740}
+  playerCamera: {fileID: 5854169451270767622}
 --- !u!1 &3812555787650489551
 GameObject:
   m_ObjectHideFlags: 0
