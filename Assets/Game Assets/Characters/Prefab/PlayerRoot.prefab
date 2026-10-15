@@ -5654,6 +5654,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 03cae86f011e6bd409cf420b79b12a37, type: 2}
   - {fileID: 11400000, guid: b706d76a3bdc89b45ba0709741f64662, type: 2}
   - {fileID: 11400000, guid: d19d98b361c579a4d8ff4bcf99dad3e2, type: 2}
+  giveDebugStartingItems: 1
+  debugStartingItemIds: 6600000068000000c9000000ca000000cb000000cc000000
   _SelectedSlot: 0
 --- !u!114 &7925084007181689668
 MonoBehaviour:
@@ -5728,7 +5730,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSanity
   maxSanity: 100
-  startingSanity: 100
+  startingSanity: 15
   allowRecovery: 0
   recoveryPerSecond: 2
   reviveSanity: 8
