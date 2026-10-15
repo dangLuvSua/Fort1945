@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: b834d6a59b4a4eb4196ec7d23c4ecc86
+guid: 0af8aa409491eac46b39c638f6532170
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -7,7 +7,7 @@ TextureImporter:
   mipmaps:
     mipMapMode: 0
     enableMipMap: 1
-    sRGBTexture: 0
+    sRGBTexture: 1
     linearTexture: 0
     fadeOut: 0
     borderMipMap: 0
@@ -54,7 +54,7 @@ TextureImporter:
   alphaUsage: 1
   alphaIsTransparency: 0
   spriteTessellationDetail: -1
-  textureType: 1
+  textureType: 0
   textureShape: 1
   singleChannelComponent: 0
   flipbookRows: 1
@@ -115,10 +115,3 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 277458
-  packageName: Modular Sewer Props
-  packageVersion: 1.0
-  assetPath: Assets/Ata Khani/Modular Sewer Props/Textures/Trim_Wood_normal.png
-  uploadId: 713236

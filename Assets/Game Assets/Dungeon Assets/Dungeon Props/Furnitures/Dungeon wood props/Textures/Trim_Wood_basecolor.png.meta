@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: ba32813b79af53f4b90115086745e69c
+guid: c46592a2a0d242c4fa22a04430fe5383
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -115,10 +115,3 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 277458
-  packageName: Modular Sewer Props
-  packageVersion: 1.0
-  assetPath: Assets/Ata Khani/Modular Sewer Props/Textures/Trim_Wood_basecolor.png
-  uploadId: 713236

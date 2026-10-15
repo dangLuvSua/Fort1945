@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 42f2e8f0d444aef49a8a694bc8b1f586
+guid: b0f7d126e67c7c343842b948586b80e8
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -115,10 +115,3 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 277458
-  packageName: Modular Sewer Props
-  packageVersion: 1.0
-  assetPath: Assets/Ata Khani/Modular Sewer Props/Textures/Cloth_Lights MaskMap.png
-  uploadId: 713236

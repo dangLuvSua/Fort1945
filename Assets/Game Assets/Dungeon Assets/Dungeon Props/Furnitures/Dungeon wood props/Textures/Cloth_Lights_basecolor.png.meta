@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 8b829cecfcc23e347b0dde215b33639f
+guid: e9d44ba64cbe86f4bbb8de09ab0796a4
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -115,10 +115,3 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 277458
-  packageName: Modular Sewer Props
-  packageVersion: 1.0
-  assetPath: Assets/Ata Khani/Modular Sewer Props/Textures/Cloth_Lights_basecolor.png
-  uploadId: 713236
