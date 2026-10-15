@@ -1232,7 +1232,8 @@ MonoBehaviour:
   useSessionSeed: 1
   fixedSeed: 0
   maxGenerationRetries: 20
-  navMeshSurface: {fileID: 0}
+  navMeshSurface: {fileID: 749619191}
+  cellTeleportPointName: CellTeleportPoint
 --- !u!114 &749619191
 MonoBehaviour:
   m_ObjectHideFlags: 0

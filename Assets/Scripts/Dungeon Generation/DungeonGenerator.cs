@@ -152,6 +152,10 @@ public class DungeonGenerator : MonoBehaviour
     [Header("NavMesh")]
     [SerializeField] private NavMeshSurface navMeshSurface;
 
+    [Header("Prison Capture")]
+    [Tooltip("Exact BoxCollider name in the prison prefab that marks the cell teleport area.")]
+    [SerializeField] private string cellTeleportPointName = "CellTeleportPoint";
+
     public bool NavMeshReady { get; private set; }
     public static event System.Action<DungeonGenerator> OnNavMeshBuilt;
 
@@ -560,7 +564,7 @@ public class DungeonGenerator : MonoBehaviour
         rotation = point.rotation;
     }
 
-    /// <summary>Gets the prison capture spawn from the generated prison room.</summary>
+    /// <summary>Gets a grounded teleport position from the named cell volume in the generated prison room.</summary>
     public bool TryGetPrisonCaptureSpawn(out Vector3 position, out Quaternion rotation)
     {
         foreach (GameObject piece in generatedPieces)
@@ -569,78 +573,86 @@ public class DungeonGenerator : MonoBehaviour
                 continue;
 
             BoxCollider roomBounds = null;
+            BoxCollider cellTeleportPoint = null;
             foreach (BoxCollider box in piece.GetComponentsInChildren<BoxCollider>(true))
             {
                 if (box.name == "RoomBounds")
-                {
                     roomBounds = box;
-                    break;
-                }
+                else if (box.name == cellTeleportPointName &&
+                         box.enabled && box.gameObject.activeInHierarchy)
+                    cellTeleportPoint = box;
             }
 
-            List<PrisonCaptureSpawnPoint> validMarkers = new List<PrisonCaptureSpawnPoint>();
-            List<Vector3> validPositions = new List<Vector3>();
-            PrisonCaptureSpawnPoint[] markers =
-                piece.GetComponentsInChildren<PrisonCaptureSpawnPoint>(true);
-
-            foreach (PrisonCaptureSpawnPoint marker in markers)
-            {
-                if (marker == null || !marker.gameObject.activeInHierarchy)
-                    continue;
-
-                Vector3 candidate = marker.transform.position;
-                if (roomBounds != null && !roomBounds.bounds.Contains(candidate))
-                {
-                    Debug.LogWarning(
-                        $"[DUNGEON GENERATOR] Ignoring prison spawn {marker.name}; it is outside RoomBounds at {candidate}.",
-                        marker);
-                    continue;
-                }
-
-                // Use the authored transform exactly. NavMesh.SamplePosition is
-                // global and can select a nearby corridor/outside surface instead
-                // of the cell where this marker was placed.
-                validMarkers.Add(marker);
-                validPositions.Add(candidate);
-            }
-
-            if (validMarkers.Count > 0)
-            {
-                int index = Random.Range(0, validMarkers.Count);
-                PrisonCaptureSpawnPoint selected = validMarkers[index];
-                position = validPositions[index];
-                rotation = selected.transform.rotation;
-                Debug.Log(
-                    $"[DUNGEON GENERATOR] Selected authored prison spawn {selected.name} at {position} " +
-                    $"from {validMarkers.Count}/{markers.Length} points inside RoomBounds.", selected);
-                return true;
-            }
-
-            if (markers.Length > 0)
+            if (cellTeleportPoint == null)
             {
                 Debug.LogError(
-                    $"[DUNGEON GENERATOR] All {markers.Length} prison capture points are outside RoomBounds. " +
-                    "Move them inside the prison room.", piece);
+                    $"[DUNGEON GENERATOR] No active BoxCollider named '{cellTeleportPointName}' was found in the generated prison room.",
+                    piece);
                 break;
             }
 
-            // Backward compatibility for a prison prefab that still has only
-            // the original unmarked SP_03 transform.
-            foreach (Transform child in piece.GetComponentsInChildren<Transform>(true))
+            // The named box defines the cell interior. Start above its top
+            // face: starting the ray inside a thin trigger (or floor collider)
+            // can make Unity miss the floor entirely.
+            Vector3 center = cellTeleportPoint.transform.TransformPoint(cellTeleportPoint.center);
+            Bounds teleportBounds = cellTeleportPoint.bounds;
+            Vector3 rayOrigin = new Vector3(center.x, teleportBounds.max.y + 2f, center.z);
+            float rayDistance = Mathf.Max(30f, teleportBounds.size.y + 20f);
+            RaycastHit[] hits = Physics.RaycastAll(
+                rayOrigin,
+                Vector3.down,
+                rayDistance,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+
+            bool foundFloor = false;
+            RaycastHit floorHit = default;
+            foreach (RaycastHit candidateHit in hits)
             {
-                if (child.name != "SP_03")
+                if (candidateHit.normal.y < 0.5f ||
+                    candidateHit.point.y > center.y + 0.15f ||
+                    !candidateHit.transform.IsChildOf(piece.transform) ||
+                    !IsInsideRoomBoundsXZ(roomBounds, candidateHit.point))
                     continue;
 
-                position = child.position;
-                rotation = child.rotation;
-                Debug.LogWarning($"[DUNGEON GENERATOR] No valid capture markers; falling back to SP_03 at {position}.", child);
-                return true;
+                if (!foundFloor || candidateHit.point.y > floorHit.point.y)
+                {
+                    foundFloor = true;
+                    floorHit = candidateHit;
+                }
             }
+
+            if (!foundFloor)
+            {
+                Debug.LogError(
+                    $"[DUNGEON GENERATOR] Could not find a floor inside '{cellTeleportPointName}' at {center}. " +
+                    "Place the trigger box above the cell floor and ensure the floor has a collider.",
+                    cellTeleportPoint);
+                break;
+            }
+
+            position = floorHit.point;
+            rotation = cellTeleportPoint.transform.rotation;
+            Debug.Log(
+                $"[DUNGEON GENERATOR] Cell teleport area '{cellTeleportPointName}' resolved to floor {position} " +
+                $"on {floorHit.collider.name}. Room='{piece.name}' root={piece.transform.position}, " +
+                $"pointCenter={center}, pointLocal={piece.transform.InverseTransformPoint(center)}.", cellTeleportPoint);
+            return true;
         }
 
         position = Vector3.zero;
         rotation = Quaternion.identity;
         return false;
+    }
+
+    private static bool IsInsideRoomBoundsXZ(BoxCollider roomBounds, Vector3 point)
+    {
+        if (roomBounds == null)
+            return true;
+
+        Bounds bounds = roomBounds.bounds;
+        return point.x >= bounds.min.x && point.x <= bounds.max.x &&
+               point.z >= bounds.min.z && point.z <= bounds.max.z;
     }
 
 
