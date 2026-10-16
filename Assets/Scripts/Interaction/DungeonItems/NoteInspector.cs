@@ -1,142 +1,326 @@
+
 using UnityEngine;
 using System.Collections;
 
 public class NoteInspector : MonoBehaviour
 {
     [Header("Zoom Configuration")]
-    [Tooltip("Distance from the camera when inspected. 0.5 - 0.7 keeps it in front of nearby props.")]
-    [SerializeField] private float zoomDistance = 0.65f;
-
-    [Tooltip("Scale multiplier when inspected. 1.0 - 1.2 is usually enough because moving closer already enlarges it.")]
-    [SerializeField] private float zoomScaleMultiplier = 1.15f;
-
-    [Tooltip("Duration of the smooth zoom transition.")]
+    [SerializeField] private float zoomDistance = 0.8f;
+    [SerializeField] private float zoomScaleMultiplier = 0.5f;
     [SerializeField] private float animationDuration = 0.25f;
 
-    [Tooltip("Set rotation offset if your model's front face is inverted (e.g., (0, 180, 0)).")]
-    [SerializeField] private Vector3 rotationOffset = new Vector3(0, 180, 0);
+    [Header("Sprite Rotation")]
+    [SerializeField] private Vector3 rotationOffset =
+        new Vector3(0, 180, 0);
 
-    private Vector3 originalLocalPosition;
-    private Quaternion originalLocalRotation;
-    private Vector3 originalLocalScale;
-    private Transform originalParent;
-    private int originalSortingOrder;
+    [Header("Camera Follow")]
+    [SerializeField] private bool followCamera = true;
 
-    private SpriteRenderer spriteRenderer;
-    private Collider noteCollider;
+    [Header("Controls")]
+    [SerializeField] private KeyCode closeKey = KeyCode.Escape;
+
+    private SpriteRenderer originalRenderer;
+
+    private GameObject inspectionCopy;
+    private Transform inspectionTransform;
+    private SpriteRenderer inspectionRenderer;
+
+    private Camera activeCamera;
+    private Coroutine animationCoroutine;
 
     private bool isZoomed = false;
-    private static bool isAnimating = false;
+    private bool isAnimating = false;
+
+    private int openedFrame = -1;
+
+    // Only one note can be inspected per game client.
+    private static NoteInspector activeNote;
 
     void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        noteCollider = GetComponent<Collider>();
-    }
+        originalRenderer = GetComponent<SpriteRenderer>();
 
-    void Start()
-    {
-        // Save the note's original state on the board
-        originalParent = transform.parent;
-        originalLocalPosition = transform.localPosition;
-        originalLocalRotation = transform.localRotation;
-        originalLocalScale = transform.localScale;
-
-        if (spriteRenderer != null)
+        if (originalRenderer == null)
         {
-            originalSortingOrder = spriteRenderer.sortingOrder;
+            Debug.LogWarning(
+                "NoteInspector: SpriteRenderer is missing!"
+            );
         }
     }
 
     void OnMouseDown()
     {
-        if (isAnimating) return;
+        // Prevent opening another note while inspecting.
+        if (activeNote != null && activeNote != this)
+            return;
 
-        isZoomed = !isZoomed;
-        StopAllCoroutines();
-        StartCoroutine(AnimateNote(isZoomed));
+        if (isAnimating)
+            return;
+
+        if (!isZoomed)
+        {
+            Camera cam = Camera.main;
+
+            if (cam == null)
+            {
+                Debug.LogWarning(
+                    "NoteInspector: Main Camera not found!"
+                );
+                return;
+            }
+
+            if (originalRenderer == null)
+                return;
+
+            OpenNote(cam);
+        }
+        else
+        {
+            CloseNote();
+        }
     }
 
-    IEnumerator AnimateNote(bool zoomIn)
+    void Update()
+    {
+        if (!isZoomed || isAnimating)
+            return;
+
+        // Press ESC to close.
+        if (Input.GetKeyDown(closeKey))
+        {
+            CloseNote();
+            return;
+        }
+
+        // Click again to close.
+        if (Input.GetMouseButtonDown(0) &&
+            Time.frameCount > openedFrame)
+        {
+            CloseNote();
+        }
+    }
+
+    void LateUpdate()
+    {
+        if (!isZoomed ||
+            isAnimating ||
+            !followCamera ||
+            inspectionTransform == null ||
+            activeCamera == null)
+            return;
+
+        // Keep the inspected note in front of the camera.
+        inspectionTransform.position =
+            GetCameraTargetPosition();
+
+        inspectionTransform.rotation =
+            GetCameraTargetRotation();
+    }
+
+    void OpenNote(Camera cam)
+    {
+        activeCamera = cam;
+
+        // Create a LOCAL copy.
+        // This object is NOT network spawned.
+        inspectionCopy = new GameObject(
+            "LOCAL_NoteInspection"
+        );
+
+        inspectionTransform = inspectionCopy.transform;
+
+        // Start at the original note's position.
+        inspectionTransform.position = transform.position;
+        inspectionTransform.rotation = transform.rotation;
+        inspectionTransform.localScale = transform.lossyScale;
+
+        // Add a SpriteRenderer to the local copy.
+        inspectionRenderer =
+            inspectionCopy.AddComponent<SpriteRenderer>();
+
+        // Copy sprite appearance.
+        inspectionRenderer.sprite = originalRenderer.sprite;
+        inspectionRenderer.color = originalRenderer.color;
+
+        inspectionRenderer.flipX = originalRenderer.flipX;
+        inspectionRenderer.flipY = originalRenderer.flipY;
+
+        inspectionRenderer.sharedMaterial =
+            originalRenderer.sharedMaterial;
+
+        inspectionRenderer.sortingLayerID =
+            originalRenderer.sortingLayerID;
+
+        inspectionRenderer.sortingOrder = 999;
+
+        // No NetworkObject, NetworkTransform, or RPC.
+        isZoomed = true;
+        activeNote = this;
+
+        // Prevent the opening click from closing it.
+        openedFrame = Time.frameCount;
+
+        animationCoroutine =
+            StartCoroutine(AnimateInspection(true));
+    }
+
+    void CloseNote()
+    {
+        if (!isZoomed || isAnimating)
+            return;
+
+        isZoomed = false;
+
+        if (animationCoroutine != null)
+        {
+            StopCoroutine(animationCoroutine);
+            animationCoroutine = null;
+        }
+
+        animationCoroutine =
+            StartCoroutine(AnimateInspection(false));
+    }
+
+    IEnumerator AnimateInspection(bool opening)
     {
         isAnimating = true;
-        float elapsed = 0f;
 
-        Camera cam = Camera.main;
-        if (cam == null)
+        if (inspectionTransform == null)
         {
-            Debug.LogError("No Main Camera found in the scene! Ensure your camera is tagged as 'MainCamera'.");
             isAnimating = false;
             yield break;
         }
 
-        Vector3 startPos = transform.position;
-        Quaternion startRot = transform.rotation;
-        Vector3 startScale = transform.localScale;
+        Vector3 startPos = inspectionTransform.position;
+        Quaternion startRot = inspectionTransform.rotation;
+        Vector3 startScale = inspectionTransform.localScale;
 
         Vector3 targetPos;
         Quaternion targetRot;
         Vector3 targetScale;
 
-        if (zoomIn)
+        if (opening)
         {
-            // Unparent to move freely in world space
-            transform.SetParent(null);
+            targetPos = GetCameraTargetPosition();
+            targetRot = GetCameraTargetRotation();
 
-            // 1. Position closer to camera (0.65m) so it is in front of desks/items
-            targetPos = cam.transform.position + (cam.transform.forward * zoomDistance);
-
-            // 2. Make it face directly flat to the camera view
-            targetRot = cam.transform.rotation * Quaternion.Euler(rotationOffset);
-
-            // 3. Reasonable scale so it fits nicely inside the screen
-            targetScale = originalLocalScale * zoomScaleMultiplier;
-
-            // If 2D Sprite, bring sorting order to the very front
-            if (spriteRenderer != null)
-            {
-                spriteRenderer.sortingOrder = 999;
-            }
+            targetScale =
+                transform.lossyScale * zoomScaleMultiplier;
         }
         else
         {
-            // Return back to board
-            transform.SetParent(originalParent);
-            targetPos = originalParent.TransformPoint(originalLocalPosition);
-            targetRot = originalParent.rotation * originalLocalRotation;
-            targetScale = originalLocalScale;
-
-            if (spriteRenderer != null)
-            {
-                spriteRenderer.sortingOrder = originalSortingOrder;
-            }
+            // Return the local copy to the original note.
+            targetPos = transform.position;
+            targetRot = transform.rotation;
+            targetScale = transform.lossyScale;
         }
 
-        // Smooth transition
-        while (elapsed < animationDuration)
+        float elapsed = 0f;
+
+        float duration = Mathf.Max(
+            0.001f,
+            animationDuration
+        );
+
+        while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            float t = Mathf.SmoothStep(0f, 1f, elapsed / animationDuration);
 
-            transform.position = Vector3.Lerp(startPos, targetPos, t);
-            transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
-            transform.localScale = Vector3.Lerp(startScale, targetScale, t);
+            float t = Mathf.SmoothStep(
+                0f,
+                1f,
+                Mathf.Clamp01(elapsed / duration)
+            );
+
+            // Update target while camera moves.
+            if (opening && activeCamera != null)
+            {
+                targetPos = GetCameraTargetPosition();
+                targetRot = GetCameraTargetRotation();
+            }
+
+            inspectionTransform.position =
+                Vector3.Lerp(startPos, targetPos, t);
+
+            inspectionTransform.rotation =
+                Quaternion.Slerp(startRot, targetRot, t);
+
+            inspectionTransform.localScale =
+                Vector3.Lerp(startScale, targetScale, t);
 
             yield return null;
         }
 
-        // Snap to exact values
-        transform.position = targetPos;
-        transform.rotation = targetRot;
-        transform.localScale = targetScale;
-
-        if (!zoomIn)
+        if (inspectionTransform != null)
         {
-            transform.localPosition = originalLocalPosition;
-            transform.localRotation = originalLocalRotation;
-            transform.localScale = originalLocalScale;
+            inspectionTransform.position = targetPos;
+            inspectionTransform.rotation = targetRot;
+            inspectionTransform.localScale = targetScale;
+        }
+
+        if (!opening)
+        {
+            CleanupInspection();
         }
 
         isAnimating = false;
+        animationCoroutine = null;
+    }
+
+    Vector3 GetCameraTargetPosition()
+    {
+        if (activeCamera == null)
+            return transform.position;
+
+        return activeCamera.transform.position +
+               activeCamera.transform.forward * zoomDistance;
+    }
+
+    Quaternion GetCameraTargetRotation()
+    {
+        if (activeCamera == null)
+            return transform.rotation;
+
+        return activeCamera.transform.rotation *
+               Quaternion.Euler(rotationOffset);
+    }
+
+    void CleanupInspection()
+    {
+        if (inspectionCopy != null)
+        {
+            Destroy(inspectionCopy);
+        }
+
+        inspectionCopy = null;
+        inspectionTransform = null;
+        inspectionRenderer = null;
+
+        if (activeNote == this)
+        {
+            activeNote = null;
+        }
+
+        activeCamera = null;
+    }
+
+    void OnDisable()
+    {
+        if (animationCoroutine != null)
+        {
+            StopCoroutine(animationCoroutine);
+            animationCoroutine = null;
+        }
+
+        CleanupInspection();
+
+        isZoomed = false;
+        isAnimating = false;
+    }
+
+    void OnDestroy()
+    {
+        if (activeNote == this)
+            activeNote = null;
     }
 }
