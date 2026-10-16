@@ -700,24 +700,61 @@ public class PlayerController : NetworkBehaviour
     // CLEANUP
     // =========================================================
 
-    private void OnEnable()
-    {
-        SceneManager.sceneLoaded += HandleSceneLoaded;
-    }
+   private void OnEnable()
+{
+    SceneManager.sceneLoaded += HandleSceneLoaded;
 
-    private void OnDisable()
+    // PlayerController may have been disabled temporarily
+    // by puzzle mode.
+    //
+    // Spawned() creates/enables the input map only once.
+    // If this component is re-enabled later, we must
+    // enable that same input map again.
+    if (isLocal &&
+        inputInitialized &&
+        inputActions != null)
     {
-        SceneManager.sceneLoaded -= HandleSceneLoaded;
+        InputActionMap playerMap =
+            inputActions.FindActionMap(
+                "Player",
+                false
+            );
 
-        if (isLocal)
+        if (playerMap != null)
         {
-            inputActions?
-                .FindActionMap("Player")?
-                .Disable();
+            playerMap.Enable();
 
-            LockCursor(false);
+            Debug.Log(
+                "[PLAYER CONTROLLER] Player input re-enabled."
+            );
         }
     }
+}
+
+private void OnDisable()
+{
+    SceneManager.sceneLoaded -= HandleSceneLoaded;
+
+    if (isLocal &&
+        inputInitialized &&
+        inputActions != null)
+    {
+        InputActionMap playerMap =
+            inputActions.FindActionMap(
+                "Player",
+                false
+            );
+
+        if (playerMap != null)
+        {
+            playerMap.Disable();
+        }
+
+        // Puzzle mode needs the cursor unlocked
+        // while the player is interacting with UI/pieces.
+        LockCursor(false);
+    }
+}
 
 
     // =========================================================
