@@ -5448,7 +5448,7 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 1.5
+  m_Height: 1.8
   m_Radius: 0.3
   m_SlopeLimit: 45
   m_StepOffset: 0.3
@@ -5493,10 +5493,10 @@ MonoBehaviour:
   cameraHolder: {fileID: 4990974187311543404}
   enableSceneHeightAdjustment: 1
   tallerSceneName: Dungeon
-  dungeonHeight: 1.5
+  dungeonHeight: 1.8
   dungeonCenterY: 0.75
   dungeonCameraY: 1.5
-  defaultHeight: 3
+  defaultHeight: 1.8
   defaultCenterY: 0.9
   defaultCameraY: 1.5
   playerBody: {fileID: 2751663222661193382}
@@ -5730,7 +5730,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSanity
   maxSanity: 100
-  startingSanity: 15
+  startingSanity: 100
   allowRecovery: 0
   recoveryPerSecond: 2
   reviveSanity: 8
