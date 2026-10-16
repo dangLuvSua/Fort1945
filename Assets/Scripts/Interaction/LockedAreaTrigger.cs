@@ -15,9 +15,7 @@ public class LockedAreaTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        CharacterController player =
-            other.GetComponentInParent<CharacterController>();
-
+        PlayerController player = GetLocalPlayer(other);
         if (player == null)
             return;
 
@@ -38,9 +36,7 @@ public class LockedAreaTrigger : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        CharacterController player =
-            other.GetComponentInParent<CharacterController>();
-
+        PlayerController player = GetLocalPlayer(other);
         if (player == null)
             return;
 
@@ -50,5 +46,19 @@ public class LockedAreaTrigger : MonoBehaviour
         {
             panelController.HidePanel();
         }
+    }
+
+    private static PlayerController GetLocalPlayer(Collider other)
+    {
+        PlayerController player =
+            other.GetComponentInParent<PlayerController>();
+
+        if (player == null || player.Object == null ||
+            !player.Object.IsValid || !player.Object.HasInputAuthority)
+        {
+            return null;
+        }
+
+        return player;
     }
 }

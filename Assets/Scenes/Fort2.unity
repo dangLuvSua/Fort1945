@@ -39951,6 +39951,59 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -7771613508976059695, guid: 76f88b068cdd3484887358fab297e8c5, type: 3}
+--- !u!1 &360599827
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 360599828}
+  - component: {fileID: 360599829}
+  m_Layer: 0
+  m_Name: TeleportBlocker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 18
+  m_IsActive: 1
+--- !u!4 &360599828
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 360599827}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.04, y: 1.89, z: -7.63}
+  m_LocalScale: {x: 4.517813, y: 6.0139494, z: 1.5529866}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 543450653023212525}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &360599829
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 360599827}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &361879433 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5636837054935278104, guid: 02360d495bd392d41b658a417b14322b, type: 3}
@@ -43787,7 +43840,7 @@ Transform:
   m_GameObject: {fileID: 507221322}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.04, y: 1.89, z: -8.15}
+  m_LocalPosition: {x: 0.04, y: 1.89, z: -6.05}
   m_LocalScale: {x: 4.517813, y: 6.0139494, z: 1.5529866}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -122112,6 +122165,7 @@ Transform:
   - {fileID: 260848309}
   - {fileID: 1787549207}
   - {fileID: 507221323}
+  - {fileID: 360599828}
   m_Father: {fileID: 1383538169}
   m_LocalEulerAnglesHint: {x: -4.582, y: 0, z: 0}
 --- !u!1001 &812507429709606577
