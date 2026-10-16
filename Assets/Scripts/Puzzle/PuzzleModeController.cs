@@ -2,10 +2,17 @@ using System.Collections;
 using Fusion;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
+using TMPro;
 
 public class PuzzleModeController : NetworkBehaviour
 {
+    // =========================================================
+    // PLAYER COMPONENTS
+    // =========================================================
+
     [Header("Player Components")]
+
     [SerializeField]
     private PlayerController playerController;
 
@@ -15,11 +22,47 @@ public class PuzzleModeController : NetworkBehaviour
     [SerializeField]
     private CameraController cameraController;
 
+    // =========================================================
+    // CAMERA
+    // =========================================================
+
     [Header("Camera")]
+
     [SerializeField]
     private Transform playerCamera;
 
+    // =========================================================
+    // PUZZLE UI
+    // =========================================================
+
+    [Header("Puzzle UI")]
+
+    [SerializeField]
+    private TMP_Text puzzleProgressText;
+
+    [SerializeField]
+    private TMP_Text puzzleTimerText;
+
+    // =========================================================
+    // PUZZLE INTRO / INSTRUCTIONS
+    // =========================================================
+
+    [Header("Puzzle Instructions")]
+
+    [Tooltip("The panel containing the Lost Map parchment.")]
+    [SerializeField]
+    private GameObject puzzleIntroPanel;
+
+    [Tooltip("The BEGIN button inside the intro panel.")]
+    [SerializeField]
+    private Button beginButton;
+
+    // =========================================================
+    // STATE
+    // =========================================================
+
     private bool isInPuzzleMode;
+    private bool isShowingPuzzleIntro;
 
     private Vector3 originalCameraLocalPosition;
     private Quaternion originalCameraLocalRotation;
@@ -30,12 +73,88 @@ public class PuzzleModeController : NetworkBehaviour
 
     private PuzzleTableController activePuzzleTable;
 
+    // Information temporarily stored while
+    // the instruction page is visible.
+    private Transform pendingPuzzleCameraPoint;
+    private PuzzleTableController pendingPuzzleTable;
+    private PlayerInventory pendingInventory;
+
     private Coroutine cursorRelockRoutine;
 
     public bool IsInPuzzleMode => isInPuzzleMode;
+    public bool IsShowingPuzzleIntro => isShowingPuzzleIntro;
+
+    // =========================================================
+    // SPAWNED
+    // =========================================================
+
+    public override void Spawned()
+    {
+        // Only the local player should control this UI.
+        if (Object != null &&
+            !Object.HasInputAuthority)
+        {
+            return;
+        }
+
+        // Intro should start hidden.
+        if (puzzleIntroPanel != null)
+        {
+            puzzleIntroPanel.SetActive(false);
+        }
+
+        // Connect BEGIN button automatically.
+        if (beginButton != null)
+        {
+            beginButton.onClick.RemoveListener(
+                BeginPuzzleFromIntro
+            );
+
+            beginButton.onClick.AddListener(
+                BeginPuzzleFromIntro
+            );
+        }
+    }
+
+    // =========================================================
+    // CLEANUP
+    // =========================================================
+
+    private void OnDestroy()
+    {
+        if (beginButton != null)
+        {
+            beginButton.onClick.RemoveListener(
+                BeginPuzzleFromIntro
+            );
+        }
+    }
+
+    // =========================================================
+    // UPDATE
+    // =========================================================
 
     private void Update()
     {
+        // -----------------------------------------------------
+        // ESC WHILE READING INSTRUCTIONS
+        // -----------------------------------------------------
+
+        if (isShowingPuzzleIntro)
+        {
+            if (Keyboard.current != null &&
+                Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                ClosePuzzleIntro();
+            }
+
+            return;
+        }
+
+        // -----------------------------------------------------
+        // ESC WHILE ASSEMBLING PUZZLE
+        // -----------------------------------------------------
+
         if (!isInPuzzleMode)
             return;
 
@@ -46,13 +165,20 @@ public class PuzzleModeController : NetworkBehaviour
         }
     }
 
+    // =========================================================
+    // PLAYER PRESSES E ON TABLE
+    // =========================================================
+
     public void EnterPuzzleMode(
         Transform puzzleCameraPoint,
         PuzzleTableController puzzleTable,
         PlayerInventory inventory)
     {
-        if (isInPuzzleMode)
+        if (isInPuzzleMode ||
+            isShowingPuzzleIntro)
+        {
             return;
+        }
 
         if (Object != null &&
             !Object.HasInputAuthority)
@@ -60,11 +186,25 @@ public class PuzzleModeController : NetworkBehaviour
             return;
         }
 
+        // -----------------------------------------------------
+        // VALIDATION
+        // -----------------------------------------------------
+
         if (puzzleCameraPoint == null)
         {
             Debug.LogError(
                 "[PUZZLE MODE] PuzzleCameraPoint is missing."
             );
+
+            return;
+        }
+
+        if (puzzleTable == null)
+        {
+            Debug.LogError(
+                "[PUZZLE MODE] PuzzleTableController is missing."
+            );
+
             return;
         }
 
@@ -73,24 +213,276 @@ public class PuzzleModeController : NetworkBehaviour
             Debug.LogError(
                 "[PUZZLE MODE] Player Camera is missing."
             );
+
             return;
         }
 
-        // Stop any pending cursor relock.
+        // -----------------------------------------------------
+        // STORE PUZZLE DATA
+        // -----------------------------------------------------
+
+        pendingPuzzleCameraPoint =
+            puzzleCameraPoint;
+
+        pendingPuzzleTable =
+            puzzleTable;
+
+        pendingInventory =
+            inventory;
+
+        // Save current component states.
+        SavePlayerControlStates();
+
+        // Player cannot move/look while reading instructions.
+        DisablePlayerControls();
+
+        // Cancel any old cursor relock.
         if (cursorRelockRoutine != null)
         {
-            StopCoroutine(cursorRelockRoutine);
+            StopCoroutine(
+                cursorRelockRoutine
+            );
+
             cursorRelockRoutine = null;
         }
 
-        // Save normal camera transform.
+        // We are now in the instruction state.
+        isShowingPuzzleIntro = true;
+
+        // -----------------------------------------------------
+        // SHOW INTRO
+        // -----------------------------------------------------
+
+        if (puzzleIntroPanel != null)
+        {
+            puzzleIntroPanel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[PUZZLE MODE] Puzzle Intro Panel is missing. " +
+                "Starting puzzle immediately."
+            );
+
+            BeginPuzzleFromIntro();
+            return;
+        }
+
+        // Unlock mouse so BEGIN can be clicked.
+        Cursor.lockState =
+            CursorLockMode.None;
+
+        Cursor.visible =
+            true;
+
+        Debug.Log(
+            "[PUZZLE MODE] Puzzle instructions opened."
+        );
+    }
+
+    // =========================================================
+    // BEGIN BUTTON
+    // =========================================================
+
+    public void BeginPuzzleFromIntro()
+    {
+        if (!isShowingPuzzleIntro)
+            return;
+
+        if (pendingPuzzleCameraPoint == null ||
+            pendingPuzzleTable == null)
+        {
+            Debug.LogError(
+                "[PUZZLE MODE] Pending puzzle information is missing."
+            );
+
+            ClosePuzzleIntro();
+            return;
+        }
+
+        // -----------------------------------------------------
+        // HIDE INSTRUCTIONS
+        // -----------------------------------------------------
+
+        if (puzzleIntroPanel != null)
+        {
+            puzzleIntroPanel.SetActive(false);
+        }
+
+        isShowingPuzzleIntro = false;
+
+        // -----------------------------------------------------
+        // SAVE NORMAL CAMERA POSITION
+        // -----------------------------------------------------
+
         originalCameraLocalPosition =
             playerCamera.localPosition;
 
         originalCameraLocalRotation =
             playerCamera.localRotation;
 
-        // Remember enabled states.
+        // -----------------------------------------------------
+        // MOVE CAMERA TO PUZZLE
+        // -----------------------------------------------------
+
+        playerCamera.SetPositionAndRotation(
+            pendingPuzzleCameraPoint.position,
+            pendingPuzzleCameraPoint.rotation
+        );
+
+        activePuzzleTable =
+            pendingPuzzleTable;
+
+        Camera cameraComponent =
+            playerCamera.GetComponent<Camera>();
+
+        if (cameraComponent == null)
+        {
+            Debug.LogError(
+                "[PUZZLE MODE] Main Camera has no Camera component."
+            );
+
+            RestorePlayerControls();
+            ClearPendingPuzzle();
+
+            return;
+        }
+
+        // =====================================================
+        // ACTUAL PUZZLE STARTS HERE
+        //
+        // Timer starts here.
+        // Timer SFX starts here.
+        // World timer appears here.
+        // Puzzle pieces appear here.
+        // =====================================================
+
+        activePuzzleTable.BeginPuzzle(
+            pendingInventory,
+            cameraComponent,
+            puzzleProgressText,
+            puzzleTimerText
+        );
+
+        // Puzzle needs unlocked cursor for dragging.
+        Cursor.lockState =
+            CursorLockMode.None;
+
+        Cursor.visible =
+            true;
+
+        isInPuzzleMode =
+            true;
+
+        Debug.Log(
+            "[PUZZLE MODE] BEGIN clicked. Puzzle started."
+        );
+    }
+
+    // =========================================================
+    // ESC WHILE READING INTRO
+    // =========================================================
+
+    private void ClosePuzzleIntro()
+    {
+        if (!isShowingPuzzleIntro)
+            return;
+
+        isShowingPuzzleIntro =
+            false;
+
+        if (puzzleIntroPanel != null)
+        {
+            puzzleIntroPanel.SetActive(false);
+        }
+
+        ClearPendingPuzzle();
+
+        RestorePlayerControls();
+
+        if (cursorRelockRoutine != null)
+        {
+            StopCoroutine(
+                cursorRelockRoutine
+            );
+        }
+
+        cursorRelockRoutine =
+            StartCoroutine(
+                RelockCursorNextFrame()
+            );
+
+        Debug.Log(
+            "[PUZZLE MODE] Instructions closed without starting puzzle."
+        );
+    }
+
+    // =========================================================
+    // EXIT ACTUAL PUZZLE
+    // =========================================================
+
+    public void ExitPuzzleMode()
+    {
+        if (!isInPuzzleMode)
+            return;
+
+        isInPuzzleMode =
+            false;
+
+        // -----------------------------------------------------
+        // CLOSE PUZZLE VIEW
+        // -----------------------------------------------------
+
+        if (activePuzzleTable != null)
+        {
+            activePuzzleTable.EndPuzzle();
+
+            activePuzzleTable =
+                null;
+        }
+
+        // -----------------------------------------------------
+        // RESTORE NORMAL CAMERA
+        // -----------------------------------------------------
+
+        if (playerCamera != null)
+        {
+            playerCamera.localPosition =
+                originalCameraLocalPosition;
+
+            playerCamera.localRotation =
+                originalCameraLocalRotation;
+        }
+
+        // Restore controls.
+        RestorePlayerControls();
+
+        ClearPendingPuzzle();
+
+        // Relock cursor after Unity processes Escape.
+        if (cursorRelockRoutine != null)
+        {
+            StopCoroutine(
+                cursorRelockRoutine
+            );
+        }
+
+        cursorRelockRoutine =
+            StartCoroutine(
+                RelockCursorNextFrame()
+            );
+
+        Debug.Log(
+            "[PUZZLE MODE] Exited puzzle mode."
+        );
+    }
+
+    // =========================================================
+    // SAVE PLAYER STATES
+    // =========================================================
+
+    private void SavePlayerControlStates()
+    {
         if (playerController != null)
         {
             playerControllerWasEnabled =
@@ -108,86 +500,39 @@ public class PuzzleModeController : NetworkBehaviour
             cameraControllerWasEnabled =
                 cameraController.enabled;
         }
-
-        // Disable normal controls.
-        if (playerController != null)
-            playerController.enabled = false;
-
-        if (playerInteractor != null)
-            playerInteractor.enabled = false;
-
-        if (cameraController != null)
-            cameraController.enabled = false;
-
-        // Move camera to puzzle view.
-        playerCamera.SetPositionAndRotation(
-            puzzleCameraPoint.position,
-            puzzleCameraPoint.rotation
-        );
-
-        activePuzzleTable = puzzleTable;
-
-        Camera cameraComponent =
-            playerCamera.GetComponent<Camera>();
-
-        if (cameraComponent == null)
-        {
-            Debug.LogError(
-                "[PUZZLE MODE] Main Camera does not have " +
-                "a Camera component."
-            );
-        }
-
-        if (activePuzzleTable != null)
-        {
-            activePuzzleTable.BeginPuzzle(
-                inventory,
-                cameraComponent
-            );
-        }
-        else
-        {
-            Debug.LogError(
-                "[PUZZLE MODE] PuzzleTableController is missing."
-            );
-        }
-
-        // Unlock mouse for puzzle.
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
-        isInPuzzleMode = true;
-
-        Debug.Log(
-            "[PUZZLE MODE] Entered puzzle mode."
-        );
     }
 
-    public void ExitPuzzleMode()
+    // =========================================================
+    // DISABLE PLAYER
+    // =========================================================
+
+    private void DisablePlayerControls()
     {
-        if (!isInPuzzleMode)
-            return;
-
-        isInPuzzleMode = false;
-
-        // Close puzzle.
-        if (activePuzzleTable != null)
+        if (playerController != null)
         {
-            activePuzzleTable.EndPuzzle();
-            activePuzzleTable = null;
+            playerController.enabled =
+                false;
         }
 
-        // Return camera.
-        if (playerCamera != null)
+        if (playerInteractor != null)
         {
-            playerCamera.localPosition =
-                originalCameraLocalPosition;
-
-            playerCamera.localRotation =
-                originalCameraLocalRotation;
+            playerInteractor.enabled =
+                false;
         }
 
-        // Restore player controls.
+        if (cameraController != null)
+        {
+            cameraController.enabled =
+                false;
+        }
+    }
+
+    // =========================================================
+    // RESTORE PLAYER
+    // =========================================================
+
+    private void RestorePlayerControls()
+    {
         if (playerController != null)
         {
             playerController.enabled =
@@ -205,31 +550,45 @@ public class PuzzleModeController : NetworkBehaviour
             cameraController.enabled =
                 cameraControllerWasEnabled;
         }
-
-        // IMPORTANT:
-        // Wait until the next frame before locking the cursor.
-        // Unity Editor also reacts to Escape.
-        if (cursorRelockRoutine != null)
-            StopCoroutine(cursorRelockRoutine);
-
-        cursorRelockRoutine =
-            StartCoroutine(RelockCursorNextFrame());
-
-        Debug.Log(
-            "[PUZZLE MODE] Exited puzzle mode."
-        );
     }
+
+    // =========================================================
+    // CLEAR TEMPORARY PUZZLE DATA
+    // =========================================================
+
+    private void ClearPendingPuzzle()
+    {
+        pendingPuzzleCameraPoint =
+            null;
+
+        pendingPuzzleTable =
+            null;
+
+        pendingInventory =
+            null;
+    }
+
+    // =========================================================
+    // CURSOR
+    // =========================================================
 
     private IEnumerator RelockCursorNextFrame()
     {
-        // Let Unity finish processing the Escape key first.
+        // Escape also affects the Unity Editor cursor,
+        // so wait before locking it again.
         yield return null;
-        yield return new WaitForEndOfFrame();
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        yield return
+            new WaitForEndOfFrame();
 
-        cursorRelockRoutine = null;
+        Cursor.lockState =
+            CursorLockMode.Locked;
+
+        Cursor.visible =
+            false;
+
+        cursorRelockRoutine =
+            null;
 
         Debug.Log(
             "[PUZZLE MODE] Mouse locked again."
