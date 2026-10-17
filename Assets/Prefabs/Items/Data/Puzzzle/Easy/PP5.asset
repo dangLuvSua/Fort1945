@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemId: 1005
   itemName: Map Piece 05
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 6dcdd3db96e637145905cc788421af41, type: 3}
   description: ' A torn piece of the Fort Santiago map.'
   category: 2
   isStackable: 0
   maxStackSize: 1
-  heldPrefab: {fileID: 0}
+  heldPrefab: {fileID: 3754099032284177157, guid: 2e896263529015341af94ffede83940f, type: 3}
   worldPrefab: {fileID: 5290687999525144174, guid: 2e896263529015341af94ffede83940f, type: 3}
