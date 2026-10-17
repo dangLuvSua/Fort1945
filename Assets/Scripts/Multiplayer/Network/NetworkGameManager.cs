@@ -142,6 +142,12 @@ public class NetworkGameManager : NetworkBehaviour
     [Networked]
     public NetworkBool PrisonCell2GateOpen { get; private set; }
 
+    [Networked]
+    public NetworkBool InterrogationRoomUnlocked { get; private set; }
+
+    [Networked]
+    public NetworkBool InterrogationRoomGateOpen { get; private set; }
+
 
     // =========================================================
     // SOLDIER INTERACTION / DIALOGUE
@@ -559,6 +565,8 @@ public class NetworkGameManager : NetworkBehaviour
             PrisonCell2Unlocked = false;
             PrisonCell1GateOpen = false;
             PrisonCell2GateOpen = false;
+            InterrogationRoomUnlocked = false;
+            InterrogationRoomGateOpen = false;
             MissionItemsSpawned = false;
 
             AllPlayersEnteredGate = false;
@@ -2132,6 +2140,68 @@ public class NetworkGameManager : NetworkBehaviour
             PrisonCell1GateOpen = open;
         else if (cellNumber == 2 && PrisonCell2Unlocked)
             PrisonCell2GateOpen = open;
+    }
+
+    public void RequestInterrogationRoomUnlock(int keyItemId)
+    {
+        if (Runner == null || !Runner.IsRunning)
+            return;
+
+        RPC_RequestInterrogationRoomUnlock(keyItemId);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_RequestInterrogationRoomUnlock(int keyItemId, RpcInfo info = default)
+    {
+        if (!Object.HasStateAuthority || info.Source == PlayerRef.None ||
+            Runner == null || !Runner.TryGetPlayerObject(info.Source, out NetworkObject playerObject) ||
+            playerObject == null || keyItemId != 105)
+            return;
+
+        PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
+        if (inventory == null || !inventory.HasItemId(keyItemId))
+            return;
+
+        InterrogationRoomUnlocked = true;
+        InterrogationRoomGateOpen = true;
+        Debug.Log($"[INTERROGATION GATE] Unlocked by player {info.Source}.", this);
+    }
+
+    public void RequestInterrogationRoomGateState(bool open)
+    {
+        if (Runner == null || !Runner.IsRunning)
+            return;
+
+        RPC_RequestInterrogationRoomGateState(open);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_RequestInterrogationRoomGateState(bool open, RpcInfo info = default)
+    {
+        if (!Object.HasStateAuthority || info.Source == PlayerRef.None ||
+            Runner == null || !Runner.TryGetPlayerObject(info.Source, out NetworkObject playerObject) ||
+            playerObject == null)
+            return;
+
+        bool playerInside = false;
+        InterrogationRoomGateUnlock[] gates = FindObjectsByType<InterrogationRoomGateUnlock>(FindObjectsSortMode.None);
+        foreach (InterrogationRoomGateUnlock gate in gates)
+        {
+            if (gate != null && gate.IsPlayerOnInsideSide(playerObject.transform))
+            {
+                playerInside = true;
+                break;
+            }
+        }
+
+        // The room side can always open the gate to exit. Outside operation
+        // requires the permanent unlock state, which is only granted by the key RPC.
+        if (open && !InterrogationRoomUnlocked && !playerInside)
+            return;
+        if (!open && !InterrogationRoomUnlocked && !playerInside)
+            return;
+
+        InterrogationRoomGateOpen = open;
     }
 
     public void RequestDungeonGateUnlock()
