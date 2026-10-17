@@ -5606,13 +5606,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  walkSpeed: 56
-  runSpeed: 6
+  walkSpeed: 5
+  runSpeed: 10
   acceleration: 12
   deceleration: 14
   jumpHeight: 1
   gravity: -20
   stamina: {fileID: 264984566483249543}
+  captureLookDuration: 0.8
+  captureLookUpAngle: 15
   lowestSanitySpeedMultiplier: 0.55
   maximumDizzyCameraRoll: 2.5
   dizzyCameraRollSpeed: 1.5
