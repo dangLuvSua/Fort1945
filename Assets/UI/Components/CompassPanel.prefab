@@ -90,10 +90,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 746927e04cf44b44aaa0b4492ed422eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CompassUI
+  player: {fileID: 0}
   playerCamera: {fileID: 0}
-  compassBackground: {fileID: 6793320080556298630}
-  compassArrow: {fileID: 6824140804770729041}
-  rotationSpeed: 10
+  compassNeedle: {fileID: 0}
+  needleOffset: 0
+  springStrength: 25
+  damping: 7
+  maxAngularSpeed: 540
+  enableShake: 1
+  shakeAmount: 3.5
+  shakeSpeed: 10
+  movementSpeedForMaxShake: 2
+  shakeWhenTurning: 1
+  turningShakeAmount: 1.5
+  shakeFadeInSpeed: 10
+  shakeFadeOutSpeed: 3
+  shakeSmoothness: 12
 --- !u!1 &8317548936532018292
 GameObject:
   m_ObjectHideFlags: 0
@@ -159,7 +171,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 1072933682, guid: 97884a2ecdb250645bf2ba0d71cd0e18, type: 3}
+  m_Sprite: {fileID: 1908659833, guid: f716a859bdff7854dabc62542740f86b, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -234,7 +246,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -508987982, guid: 97884a2ecdb250645bf2ba0d71cd0e18, type: 3}
+  m_Sprite: {fileID: -1936623249, guid: f716a859bdff7854dabc62542740f86b, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
