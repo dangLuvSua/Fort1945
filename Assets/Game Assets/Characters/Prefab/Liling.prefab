@@ -68,6 +68,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Liling
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 834e409392a63e9498ea09cfa0573833, type: 3}
+      propertyPath: m_Layer
+      value: 14
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -75,6 +79,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 834e409392a63e9498ea09cfa0573833, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7450235200253967130}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 834e409392a63e9498ea09cfa0573833, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3487453188618161091}
   m_SourcePrefab: {fileID: 100100000, guid: 834e409392a63e9498ea09cfa0573833, type: 3}
 --- !u!1 &9178671559024884875 stripped
 GameObject:
@@ -103,3 +110,17 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -2370213246507413593, guid: 834e409392a63e9498ea09cfa0573833, type: 3}
+--- !u!114 &3487453188618161091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9178671559024884875}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3d1fc1792ea4e7391af8ff01dd68ca2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraPhotoPoint
+  photo: {fileID: 2800000, guid: 0fce097c145c2394db339b286f4664a7, type: 3}
+  objectThatMustBeVisible: {fileID: 9178671559024884875}
