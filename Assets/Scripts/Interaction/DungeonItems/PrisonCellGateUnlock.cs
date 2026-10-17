@@ -12,9 +12,9 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
 
     [Header("Interaction")]
     [SerializeField, Min(0.1f)] private float holdDuration = 2f;
-    [SerializeField] private string unlockPrompt = "HOLD [E] TO UNLOCK";
-    [SerializeField] private string closePrompt = "PRESS [E] TO CLOSE";
-    [SerializeField] private string reopenPrompt = "HOLD [E] TO OPEN";
+    [SerializeField] private string unlockPrompt = "[E] HOLD TO UNLOCK";
+    [SerializeField] private string closePrompt = "[E] CLOSE";
+    [SerializeField] private string reopenPrompt = "[E] HOLD TO OPEN";
 
     [Header("Approach Side")]
     [Tooltip("Place this empty transform in the corridor/outside the cell. The gate can only be unlocked from this side.")]
@@ -48,16 +48,16 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
             if (unlocked)
             {
                 if (gateOpen)
-                    return $"{closePrompt} ({cellName})";
+                    return closePrompt;
 
                 return HasRequiredKey()
-                    ? $"{reopenPrompt} WITH {requiredKeyName} ({cellName})"
-                    : $"EQUIP {requiredKeyName}, THEN HOLD [E] TO OPEN ({cellName})";
+                    ? reopenPrompt
+                    : $"EQUIP {requiredKeyName}, THEN HOLD [E] TO OPEN";
             }
 
             return HasRequiredKey()
-                ? $"{unlockPrompt} WITH {requiredKeyName} ({cellName})"
-                : $"EQUIP {requiredKeyName}, THEN HOLD [E] ({cellName})";
+                ? unlockPrompt
+                : $"EQUIP {requiredKeyName}, THEN HOLD [E] TO UNLOCK";
         }
     }
 

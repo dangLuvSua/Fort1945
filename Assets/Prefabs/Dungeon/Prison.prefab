@@ -5550,7 +5550,9 @@ MonoBehaviour:
   requiredKeyName: PRISON KEY 2
   cellName: CELL 2
   holdDuration: 2
-  unlockPrompt: HOLD [E] TO UNLOCK
+  unlockPrompt: '[E] HOLD TO UNLOCK'
+  closePrompt: '[E] CLOSE'
+  reopenPrompt: '[E] HOLD TO OPEN'
   outsideSidePoint: {fileID: 4182407966966680197}
   gateToRotate: {fileID: 2210639876367201603}
   openRotationOffset: {x: 0, y: -90, z: 0}
@@ -5569,7 +5571,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 21efe8e0b1723214a8762fd780aec1b7, type: 3}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 0
@@ -27085,7 +27087,9 @@ MonoBehaviour:
   requiredKeyName: PRISON KEY 1
   cellName: CELL 1
   holdDuration: 2
-  unlockPrompt: HOLD [E] TO UNLOCK
+  unlockPrompt: '[E] HOLD TO UNLOCK'
+  closePrompt: '[E] CLOSE'
+  reopenPrompt: '[E] HOLD TO OPEN'
   outsideSidePoint: {fileID: 1467491116505479182}
   gateToRotate: {fileID: 263672627998863387}
   openRotationOffset: {x: 0, y: -90, z: 0}
@@ -27104,7 +27108,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 21efe8e0b1723214a8762fd780aec1b7, type: 3}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 0
@@ -43015,7 +43019,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4770147733201180035}
   m_Layer: 0
-  m_Name: Dungeon Prison 1
+  m_Name: Prison
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
