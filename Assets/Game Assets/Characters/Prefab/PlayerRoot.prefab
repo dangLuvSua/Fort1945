@@ -5932,7 +5932,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 03cae86f011e6bd409cf420b79b12a37, type: 2}
   - {fileID: 11400000, guid: b706d76a3bdc89b45ba0709741f64662, type: 2}
   - {fileID: 11400000, guid: d19d98b361c579a4d8ff4bcf99dad3e2, type: 2}
-  giveDebugStartingItems: 1
+  giveDebugStartingItems: 0
   debugStartingItemIds: 6600000068000000c9000000ca000000cb000000cc00000069000000
   _SelectedSlot: 0
 --- !u!114 &7925084007181689668
@@ -7445,6 +7445,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerNameTag
   nameText: {fileID: 7521491173724313895}
   targetCamera: {fileID: 0}
+  headClearance: 0.25
 --- !u!1 &8189685294517626447
 GameObject:
   m_ObjectHideFlags: 0

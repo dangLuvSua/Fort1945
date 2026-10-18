@@ -10,7 +10,12 @@ public class PlayerNameTag : MonoBehaviour
     [Header("Camera")]
     [SerializeField] private Camera targetCamera;
 
+    [Header("Placement")]
+    [SerializeField, Min(0f)] private float headClearance = 0.25f;
+
     private PlayerNetwork playerNetwork;
+    private CharacterController characterController;
+    private Transform playerRoot;
 
     private void Awake()
     {
@@ -18,6 +23,18 @@ public class PlayerNameTag : MonoBehaviour
         // so search upward for PlayerNetwork.
         playerNetwork =
             GetComponentInParent<PlayerNetwork>();
+
+        characterController =
+            GetComponentInParent<CharacterController>();
+
+        if (characterController != null)
+        {
+            playerRoot = characterController.transform;
+        }
+        else if (playerNetwork != null)
+        {
+            playerRoot = playerNetwork.transform;
+        }
 
         if (playerNetwork == null)
         {
@@ -46,7 +63,24 @@ public class PlayerNameTag : MonoBehaviour
     private void LateUpdate()
     {
         UpdateName();
+        PlaceAboveHead();
         FaceCamera();
+    }
+
+    private void PlaceAboveHead()
+    {
+        if (playerRoot == null)
+        {
+            return;
+        }
+
+        float topY = characterController != null
+            ? characterController.center.y + characterController.height * 0.5f
+            : 1.8f;
+
+        transform.position = playerRoot.TransformPoint(
+            new Vector3(0f, topY + headClearance, 0f)
+        );
     }
 
     private void UpdateName()
@@ -88,7 +122,17 @@ public class PlayerNameTag : MonoBehaviour
             return;
         }
 
-        transform.forward =
-            targetCamera.transform.forward;
+        Vector3 directionToCamera = Vector3.ProjectOnPlane(
+            targetCamera.transform.position - transform.position,
+            Vector3.up
+        );
+
+        if (directionToCamera.sqrMagnitude > 0.0001f)
+        {
+            transform.rotation = Quaternion.LookRotation(
+                directionToCamera,
+                Vector3.up
+            );
+        }
     }
 }
