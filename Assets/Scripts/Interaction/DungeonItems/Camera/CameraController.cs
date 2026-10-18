@@ -283,7 +283,9 @@ public class CameraController : NetworkBehaviour
             {
                 if (capturedPhoto != null)
                     Destroy(capturedPhoto);
-                capturedPhoto = Instantiate(photoPoint.Photo);
+                capturedPhoto = photoPoint.IsWholeObjectInFrame(cameraViewCamera)
+                    ? Instantiate(photoPoint.Photo)
+                    : CreateBlackPhoto();
                 yield break;
             }
         }
@@ -338,6 +340,15 @@ public class CameraController : NetworkBehaviour
             cameraViewCamera.aspect = previousAspect;
             RenderTexture.active = previousActive;
         }
+    }
+
+    private static Texture2D CreateBlackPhoto()
+    {
+        Texture2D blackPhoto = new Texture2D(2, 2, TextureFormat.RGB24, false);
+        blackPhoto.name = "Black Photo";
+        blackPhoto.SetPixels(new[] { Color.black, Color.black, Color.black, Color.black });
+        blackPhoto.Apply();
+        return blackPhoto;
     }
 
     public void ClosePhoto()

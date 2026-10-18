@@ -68,6 +68,7 @@ GameObject:
   - component: {fileID: 8620235980921186325}
   - component: {fileID: 2970941295772903171}
   - component: {fileID: 1247812992747348593}
+  - component: {fileID: 2871252315788779128}
   m_Layer: 0
   m_Name: PrisonerCrawler
   m_TagString: Untagged
@@ -247,6 +248,32 @@ CapsuleCollider:
   m_Height: 5.14
   m_Direction: 2
   m_Center: {x: 0, y: 1.24, z: 0}
+--- !u!114 &2871252315788779128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7706599878256953206}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be68354e8ae39de49aab5c3c7aa84944, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BloodTrail
+  crawler: {fileID: 8130582922296604732}
+  decalPrefab: {fileID: 3144739090638984477, guid: 6e7a9433f78de1249980d5952dc1a6fb, type: 3}
+  spacing: 0.6
+  sizeRange: {x: 0.5, y: 0.9}
+  sideJitter: 0.15
+  useProceduralBlob: 1
+  bloodColor: {r: 0.35, g: 0.03, b: 0.03, a: 0.9}
+  blobResolution: 64
+  maxDecals: 60
+  lifetime: 25
+  fadeTime: 6
+  floorLayers:
+    serializedVersion: 2
+    m_Bits: 4608
 --- !u!1001 &4237223373903730539
 PrefabInstance:
   m_ObjectHideFlags: 0

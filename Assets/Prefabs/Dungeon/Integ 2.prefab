@@ -507,7 +507,7 @@ MonoBehaviour:
   snapDistance: 0.18
   snapRotationTolerance: 20
   rotationStep: 90
-  puzzleDuration: 15
+  puzzleDuration: 60
   normalTimerAudioSource: {fileID: 6200718603921897278}
   finalCountdownAudioSource: {fileID: 6750748836010195966}
   worldTimerText: {fileID: 7002589509367532270}
@@ -2987,7 +2987,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: b27d02b54c6dcc445a6799cae71ab29c, type: 3}
+  m_Resource: {fileID: 8300000, guid: a9df065be535848469220553f6fa5039, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.6
   m_Pitch: 1
@@ -4744,7 +4744,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 562255b37402a2542a4079688bc9c969, type: 3}
+  m_Resource: {fileID: 8300000, guid: ffb3dd21f31e9054a9fb89ee64f97b68, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.8
   m_Pitch: 1

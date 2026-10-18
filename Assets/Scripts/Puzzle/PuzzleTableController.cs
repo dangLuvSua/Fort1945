@@ -20,6 +20,13 @@ public class PuzzleTableController : MonoBehaviour
     }
 
     // =========================================================
+    // EVENTS
+    // =========================================================
+
+    public event Action PuzzleCompleted;
+    public event Action PuzzleFailed;
+
+    // =========================================================
     // TESTING
     // =========================================================
 
@@ -154,7 +161,6 @@ public class PuzzleTableController : MonoBehaviour
 
     private bool puzzleCompleted;
 
-    // Prevents final countdown SFX from playing repeatedly.
     private bool finalCountdownStarted;
 
     // =========================================================
@@ -187,8 +193,7 @@ public class PuzzleTableController : MonoBehaviour
 
     private void Update()
     {
-        // Timer and timer audio continue even
-        // after the player presses Escape.
+        // Timer continues even if player exits puzzle view.
         UpdatePuzzleTimer();
 
         if (!puzzleActive ||
@@ -201,7 +206,7 @@ public class PuzzleTableController : MonoBehaviour
         }
 
         // -----------------------------------------------------
-        // SELECT PIECE
+        // SELECT
         // -----------------------------------------------------
 
         if (Mouse.current.leftButton.wasPressedThisFrame)
@@ -237,7 +242,7 @@ public class PuzzleTableController : MonoBehaviour
         }
 
         // -----------------------------------------------------
-        // RELEASE + SNAP
+        // RELEASE
         // -----------------------------------------------------
 
         if (selectedPiece != null &&
@@ -278,7 +283,7 @@ public class PuzzleTableController : MonoBehaviour
             playerTimerText;
 
         // -----------------------------------------------------
-        // CACHE HUD TIMER VISUALS
+        // CACHE HUD TIMER
         // -----------------------------------------------------
 
         if (timerText != null &&
@@ -290,11 +295,12 @@ public class PuzzleTableController : MonoBehaviour
             timerNormalScale =
                 timerText.rectTransform.localScale;
 
-            timerVisualCached = true;
+            timerVisualCached =
+                true;
         }
 
         // -----------------------------------------------------
-        // CACHE WORLD TIMER VISUALS
+        // CACHE WORLD TIMER
         // -----------------------------------------------------
 
         if (worldTimerText != null &&
@@ -306,10 +312,12 @@ public class PuzzleTableController : MonoBehaviour
             worldTimerNormalScale =
                 worldTimerText.rectTransform.localScale;
 
-            worldTimerVisualCached = true;
+            worldTimerVisualCached =
+                true;
         }
 
         ResetGuidePieces();
+
         ApplySolvedGuideState();
 
         // -----------------------------------------------------
@@ -323,6 +331,7 @@ public class PuzzleTableController : MonoBehaviour
             );
 
             HidePuzzleHUD();
+
             return;
         }
 
@@ -333,6 +342,7 @@ public class PuzzleTableController : MonoBehaviour
             );
 
             HidePuzzleHUD();
+
             return;
         }
 
@@ -343,6 +353,7 @@ public class PuzzleTableController : MonoBehaviour
             );
 
             HidePuzzleHUD();
+
             return;
         }
 
@@ -354,6 +365,7 @@ public class PuzzleTableController : MonoBehaviour
             );
 
             HidePuzzleHUD();
+
             return;
         }
 
@@ -365,6 +377,7 @@ public class PuzzleTableController : MonoBehaviour
             );
 
             HidePuzzleHUD();
+
             return;
         }
 
@@ -372,8 +385,6 @@ public class PuzzleTableController : MonoBehaviour
         // START TIMER
         // -----------------------------------------------------
 
-        // Timer starts only once.
-        // Pressing Esc will NOT restart it.
         if (!timerStarted &&
             !timerExpired &&
             !puzzleCompleted)
@@ -384,17 +395,16 @@ public class PuzzleTableController : MonoBehaviour
                     puzzleDuration
                 );
 
-            timerStarted = true;
+            timerStarted =
+                true;
 
-            finalCountdownStarted = false;
+            finalCountdownStarted =
+                false;
 
-            // Start the appropriate timer sound immediately.
             UpdateTimerAudio();
         }
         else
         {
-            // Re-entering puzzle mode does not restart
-            // the countdown sound.
             UpdateTimerAudio();
         }
 
@@ -404,7 +414,9 @@ public class PuzzleTableController : MonoBehaviour
 
         if (progressText != null)
         {
-            progressText.gameObject.SetActive(true);
+            progressText.gameObject.SetActive(
+                true
+            );
         }
         else
         {
@@ -415,7 +427,9 @@ public class PuzzleTableController : MonoBehaviour
 
         if (timerText != null)
         {
-            timerText.gameObject.SetActive(true);
+            timerText.gameObject.SetActive(
+                true
+            );
         }
         else
         {
@@ -425,12 +439,13 @@ public class PuzzleTableController : MonoBehaviour
         }
 
         // -----------------------------------------------------
-        // SHOW WORLD TIMER
+        // WORLD TIMER
         // -----------------------------------------------------
 
         ShowWorldTimer();
 
         UpdateProgressUI();
+
         UpdateTimerUI();
 
         // -----------------------------------------------------
@@ -458,15 +473,17 @@ public class PuzzleTableController : MonoBehaviour
             // Already solved.
             if (solvedItemIds.Contains(itemId))
             {
-                SpawnSolvedRuntimePiece(entry);
+                SpawnSolvedRuntimePiece(
+                    entry
+                );
 
                 availableCount++;
 
                 continue;
             }
 
-            // Normal gameplay:
-            // only show pieces the player collected.
+            // Normal mode:
+            // only collected pieces are available.
             if (!testModeShowAllPieces)
             {
                 if (!inventory.HasItemId(itemId))
@@ -475,30 +492,17 @@ public class PuzzleTableController : MonoBehaviour
                 }
             }
 
-            SpawnRuntimePiece(entry);
+            SpawnRuntimePiece(
+                entry
+            );
 
             availableCount++;
         }
 
-        puzzleActive = true;
+        puzzleActive =
+            true;
 
-        // -----------------------------------------------------
-        // DEBUG
-        // -----------------------------------------------------
-
-        if (timerExpired)
-        {
-            Debug.Log(
-                "[PUZZLE TABLE] Puzzle opened but time already expired."
-            );
-        }
-        else if (puzzleCompleted)
-        {
-            Debug.Log(
-                "[PUZZLE TABLE] Puzzle already completed."
-            );
-        }
-        else if (testModeShowAllPieces)
+        if (testModeShowAllPieces)
         {
             Debug.Log(
                 $"[PUZZLE TABLE] TEST MODE: " +
@@ -524,23 +528,26 @@ public class PuzzleTableController : MonoBehaviour
 
     public void EndPuzzle()
     {
-        puzzleActive = false;
+        puzzleActive =
+            false;
 
-        selectedPiece = null;
+        selectedPiece =
+            null;
 
-        puzzleCamera = null;
+        puzzleCamera =
+            null;
 
         ClearRuntimePieces();
 
-        // Hide only the player's screen HUD.
-        //
-        // DO NOT stop the timer.
-        // DO NOT stop the timer audio.
-        // DO NOT hide the world timer.
+        // Do not stop timer here.
+        // Leaving with ESC keeps timer running.
         HidePuzzleHUD();
 
-        progressText = null;
-        timerText = null;
+        progressText =
+            null;
+
+        timerText =
+            null;
 
         Debug.Log(
             $"[PUZZLE TABLE] Puzzle closed. " +
@@ -551,7 +558,7 @@ public class PuzzleTableController : MonoBehaviour
     }
 
     // =========================================================
-    // WORLD TIMER VISIBILITY
+    // WORLD TIMER
     // =========================================================
 
     private void ShowWorldTimer()
@@ -570,11 +577,35 @@ public class PuzzleTableController : MonoBehaviour
 
         if (parent != null)
         {
-            parent.gameObject.SetActive(true);
+            parent.gameObject.SetActive(
+                true
+            );
         }
 
-        worldTimerText.gameObject.SetActive(true);
+        worldTimerText.gameObject.SetActive(
+            true
+        );
     }
+
+    // =========================================================
+// HIDE WORLD TIMER
+// =========================================================
+
+private void HideWorldTimer()
+{
+    if (worldTimerText == null)
+        return;
+
+    worldTimerText.gameObject.SetActive(false);
+
+    Transform parent =
+        worldTimerText.transform.parent;
+
+    if (parent != null)
+    {
+        parent.gameObject.SetActive(false);
+    }
+}
 
     // =========================================================
     // TIMER
@@ -592,37 +623,137 @@ public class PuzzleTableController : MonoBehaviour
         remainingTime -=
             Time.deltaTime;
 
-        // -----------------------------------------------------
-        // TIME UP
-        // -----------------------------------------------------
+        // =====================================================
+        // TIME'S UP
+        // =====================================================
 
         if (remainingTime <= 0f)
         {
-            remainingTime = 0f;
+            remainingTime =
+                0f;
 
-            timerStarted = false;
+            timerStarted =
+                false;
 
-            timerExpired = true;
+            timerExpired =
+                true;
 
-            selectedPiece = null;
+            puzzleActive =
+                false;
+
+            selectedPiece =
+                null;
 
             StopTimerAudio();
 
+            // Shows TIME UP before result screen appears.
             UpdateTimerUI();
 
+            // Hide the world-space timer when the attempt ends.
+            HideWorldTimer();
+
+            // =================================================
+            // FAILURE RULE:
+            // ERASE ALL PROGRESS FROM THIS ATTEMPT
+            // =================================================
+
+            solvedItemIds.Clear();
+
+            snappedCount =
+                0;
+
+            // Remove every currently visible puzzle piece.
+            ClearRuntimePieces();
+
+            // Bring all black guide pieces back.
+            ResetGuidePieces();
+
+            // Progress becomes 0 / 8.
+            UpdateProgressUI();
+
             Debug.Log(
-                "[PUZZLE] TIME UP!"
+                "[PUZZLE] TIME'S UP! " +
+                "Attempt progress cleared. " +
+                "Puzzle reset to 0."
             );
+
+            // Tell PuzzleModeController to show
+            // TIME'S UP / RETRY.
+            PuzzleFailed?.Invoke();
 
             return;
         }
 
-        // Switch between normal ticking
-        // and final countdown SFX.
         UpdateTimerAudio();
 
-        // Update both timers.
         UpdateTimerUI();
+    }
+
+    // =========================================================
+    // RESET FAILED ATTEMPT
+    // =========================================================
+
+    public void ResetFailedAttempt()
+    {
+        StopTimerAudio();
+
+        puzzleActive =
+            false;
+
+        selectedPiece =
+            null;
+
+        // -----------------------------------------------------
+        // ERASE SOLVED STATE
+        // -----------------------------------------------------
+
+        solvedItemIds.Clear();
+
+        snappedCount =
+            0;
+
+        // -----------------------------------------------------
+        // RESET TIMER
+        // -----------------------------------------------------
+
+        timerStarted =
+            false;
+
+        timerExpired =
+            false;
+
+        puzzleCompleted =
+            false;
+
+        finalCountdownStarted =
+            false;
+
+        remainingTime =
+            Mathf.Max(
+                0f,
+                puzzleDuration
+            );
+
+        // -----------------------------------------------------
+        // RESET BOARD
+        // -----------------------------------------------------
+
+        ClearRuntimePieces();
+
+        ResetGuidePieces();
+
+        // -----------------------------------------------------
+        // RESET UI
+        // -----------------------------------------------------
+
+        UpdateProgressUI();
+
+        UpdateTimerUI();
+
+        Debug.Log(
+            "[PUZZLE] Failed attempt reset. " +
+            "Next attempt starts from 0."
+        );
     }
 
     // =========================================================
@@ -636,6 +767,7 @@ public class PuzzleTableController : MonoBehaviour
             puzzleCompleted)
         {
             StopTimerAudio();
+
             return;
         }
 
@@ -654,17 +786,16 @@ public class PuzzleTableController : MonoBehaviour
         if (totalSeconds <= 10 &&
             totalSeconds > 0)
         {
-            // Stop normal ticking.
             if (normalTimerAudioSource != null &&
                 normalTimerAudioSource.isPlaying)
             {
                 normalTimerAudioSource.Stop();
             }
 
-            // Play the final countdown ONLY ONCE.
             if (!finalCountdownStarted)
             {
-                finalCountdownStarted = true;
+                finalCountdownStarted =
+                    true;
 
                 if (finalCountdownAudioSource != null)
                 {
@@ -680,7 +811,7 @@ public class PuzzleTableController : MonoBehaviour
         }
 
         // -----------------------------------------------------
-        // NORMAL TIMER SOUND
+        // NORMAL TIMER
         // -----------------------------------------------------
 
         if (normalTimerAudioSource != null &&
@@ -727,7 +858,6 @@ public class PuzzleTableController : MonoBehaviour
                 )
             );
 
-        // Player HUD timer.
         UpdateSingleTimerText(
             timerText,
             timerNormalColor,
@@ -735,7 +865,6 @@ public class PuzzleTableController : MonoBehaviour
             totalSeconds
         );
 
-        // World-space timer.
         UpdateSingleTimerText(
             worldTimerText,
             worldTimerNormalColor,
@@ -745,7 +874,7 @@ public class PuzzleTableController : MonoBehaviour
     }
 
     // =========================================================
-    // UPDATE ONE TIMER
+    // SINGLE TIMER
     // =========================================================
 
     private void UpdateSingleTimerText(
@@ -776,7 +905,7 @@ public class PuzzleTableController : MonoBehaviour
         }
 
         // -----------------------------------------------------
-        // PUZZLE COMPLETE
+        // COMPLETED
         // -----------------------------------------------------
 
         if (puzzleCompleted)
@@ -800,20 +929,12 @@ public class PuzzleTableController : MonoBehaviour
         }
 
         // -----------------------------------------------------
-        // FINAL 10 SECONDS
+        // FINAL 10
         // -----------------------------------------------------
 
         if (totalSeconds <= 10 &&
             totalSeconds > 0)
         {
-            // Displays:
-            //
-            // 10
-            // 9
-            // 8
-            // ...
-            // 1
-
             targetText.text =
                 totalSeconds.ToString();
 
@@ -829,7 +950,7 @@ public class PuzzleTableController : MonoBehaviour
         }
 
         // -----------------------------------------------------
-        // NORMAL TIMER
+        // NORMAL
         // -----------------------------------------------------
 
         int minutes =
@@ -849,7 +970,7 @@ public class PuzzleTableController : MonoBehaviour
     }
 
     // =========================================================
-    // HEARTBEAT ANIMATION
+    // HEARTBEAT
     // =========================================================
 
     private void UpdateTimerHeartbeat(
@@ -865,7 +986,6 @@ public class PuzzleTableController : MonoBehaviour
                 1f
             );
 
-        // Strong first beat.
         float beat1 =
             Mathf.Clamp01(
                 1f -
@@ -874,7 +994,6 @@ public class PuzzleTableController : MonoBehaviour
                 ) / 0.10f
             );
 
-        // Smaller second beat.
         float beat2 =
             Mathf.Clamp01(
                 1f -
@@ -897,7 +1016,6 @@ public class PuzzleTableController : MonoBehaviour
                 beat2
             );
 
-        // THUMP - thump
         float pulse =
             (beat1 * 0.18f) +
             (beat2 * 0.10f);
@@ -933,7 +1051,9 @@ public class PuzzleTableController : MonoBehaviour
     {
         if (progressText != null)
         {
-            progressText.gameObject.SetActive(false);
+            progressText.gameObject.SetActive(
+                false
+            );
         }
 
         if (timerText != null)
@@ -941,10 +1061,10 @@ public class PuzzleTableController : MonoBehaviour
             timerText.rectTransform.localScale =
                 timerNormalScale;
 
-            timerText.gameObject.SetActive(false);
+            timerText.gameObject.SetActive(
+                false
+            );
         }
-
-        // World timer intentionally stays visible.
     }
 
     // =========================================================
@@ -987,8 +1107,7 @@ public class PuzzleTableController : MonoBehaviour
                 continue;
             }
 
-            if (hit.distance <
-                bestDistance)
+            if (hit.distance < bestDistance)
             {
                 bestDistance =
                     hit.distance;
@@ -1011,7 +1130,7 @@ public class PuzzleTableController : MonoBehaviour
     }
 
     // =========================================================
-    // DRAG PIECE
+    // DRAG
     // =========================================================
 
     private void DragSelectedPiece()
@@ -1046,14 +1165,16 @@ public class PuzzleTableController : MonoBehaviour
             );
 
         if (!boardPlane.Raycast(
-                ray,
-                out float enter))
+            ray,
+            out float enter))
         {
             return;
         }
 
         Vector3 worldHit =
-            ray.GetPoint(enter);
+            ray.GetPoint(
+                enter
+            );
 
         Vector3 localHit =
             areaTransform.InverseTransformPoint(
@@ -1107,7 +1228,7 @@ public class PuzzleTableController : MonoBehaviour
     }
 
     // =========================================================
-    // ROTATE PIECE
+    // ROTATE
     // =========================================================
 
     private void RotateSelectedPiece(
@@ -1130,7 +1251,7 @@ public class PuzzleTableController : MonoBehaviour
     }
 
     // =========================================================
-    // SPAWN UNSOLVED PIECE
+    // SPAWN UNSOLVED
     // =========================================================
 
     private void SpawnRuntimePiece(
@@ -1194,7 +1315,7 @@ public class PuzzleTableController : MonoBehaviour
     }
 
     // =========================================================
-    // SPAWN SOLVED PIECE
+    // SPAWN SOLVED
     // =========================================================
 
     private void SpawnSolvedRuntimePiece(
@@ -1275,7 +1396,8 @@ public class PuzzleTableController : MonoBehaviour
             if (renderer == null)
                 continue;
 
-            renderer.enabled = true;
+            renderer.enabled =
+                true;
 
             if (puzzlePieceMaterial != null)
             {
@@ -1312,12 +1434,12 @@ public class PuzzleTableController : MonoBehaviour
 
         if (colliders.Length > 0)
         {
-            foreach (Collider col
-                     in colliders)
+            foreach (Collider col in colliders)
             {
                 if (col != null)
                 {
-                    col.enabled = true;
+                    col.enabled =
+                        true;
                 }
             }
 
@@ -1381,8 +1503,8 @@ public class PuzzleTableController : MonoBehaviour
 
         UpdateProgressUI();
 
-        foreach (PuzzlePieceEntry entry
-                 in pieces)
+        // Hide corresponding guide.
+        foreach (PuzzlePieceEntry entry in pieces)
         {
             if (entry == null ||
                 entry.item == null)
@@ -1409,31 +1531,44 @@ public class PuzzleTableController : MonoBehaviour
             $"Progress: {snappedCount}/{pieces.Length}"
         );
 
-        // -----------------------------------------------------
-        // PUZZLE COMPLETE
-        // -----------------------------------------------------
+        // =====================================================
+        // SUCCESS
+        // =====================================================
 
         if (snappedCount >= pieces.Length)
         {
-            puzzleCompleted = true;
+            puzzleCompleted =
+                true;
 
-            timerStarted = false;
+            timerStarted =
+                false;
 
-            // Stop both timer sounds immediately.
+            puzzleActive =
+                false;
+
+            selectedPiece =
+                null;
+
             StopTimerAudio();
 
             UpdateTimerUI();
+
+            // Puzzle is finished, so remove the world-space timer.
+            HideWorldTimer();
 
             Debug.Log(
                 $"[PUZZLE] PUZZLE COMPLETE! " +
                 $"Time remaining: " +
                 $"{remainingTime:F1} seconds."
             );
+
+            // Show completion result immediately.
+            PuzzleCompleted?.Invoke();
         }
     }
 
     // =========================================================
-    // RESET GUIDE PIECES
+    // RESET GUIDES
     // =========================================================
 
     private void ResetGuidePieces()
@@ -1441,8 +1576,7 @@ public class PuzzleTableController : MonoBehaviour
         if (pieces == null)
             return;
 
-        foreach (PuzzlePieceEntry entry
-                 in pieces)
+        foreach (PuzzlePieceEntry entry in pieces)
         {
             if (entry == null)
                 continue;
@@ -1456,7 +1590,7 @@ public class PuzzleTableController : MonoBehaviour
     }
 
     // =========================================================
-    // APPLY SAVED GUIDE STATE
+    // APPLY SAVED GUIDES
     // =========================================================
 
     private void ApplySolvedGuideState()
@@ -1464,8 +1598,7 @@ public class PuzzleTableController : MonoBehaviour
         if (pieces == null)
             return;
 
-        foreach (PuzzlePieceEntry entry
-                 in pieces)
+        foreach (PuzzlePieceEntry entry in pieces)
         {
             if (entry == null ||
                 entry.item == null ||
@@ -1490,8 +1623,7 @@ public class PuzzleTableController : MonoBehaviour
 
     private void ClearRuntimePieces()
     {
-        foreach (GameObject piece
-                 in runtimePieces)
+        foreach (GameObject piece in runtimePieces)
         {
             if (piece != null)
             {

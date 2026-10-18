@@ -66,6 +66,11 @@ public class SoldierPatrol : NetworkBehaviour
     [Tooltip("A player within this horizontal distance of the soldier is captured and sent to the prison cell.")]
     [SerializeField, Min(0.1f)] private float captureRange = 2.5f;
 
+    [Tooltip("Gaano katagal titigil ang soldier pagka-capture, para makita ng player ang mukha niya.")]
+    [SerializeField] private float captureFreezeTime = 0.8f;
+
+    private float freezeUntil;
+
     [Header("Animation")]
     [SerializeField] private Animator animator;
     [SerializeField] private string speedParameter = "Speed";
@@ -117,16 +122,37 @@ public class SoldierPatrol : NetworkBehaviour
             return false;
 
         NetworkId playerNetworkId = player.Object.Id;
+
         if (captureCooldowns.TryGetValue(playerNetworkId, out float nextAllowedTime) &&
             Time.time < nextAllowedTime)
             return false;
 
         captureCooldowns[playerNetworkId] = Time.time + 2f;
-        // Resolve the point on the player's own state authority. In Shared
-        // mode this can differ from the soldier's authority, and each peer's
-        // generated dungeon may have different world-space room coordinates.
-        player.RpcTeleportPlayerToPrisonCell();
-        Debug.Log($"[SOLDIER] Requested prison-cell teleport for player {playerNetworkId}; that player's authority will resolve its local CellTeleportPoint.", this);
+
+        // Titingin ang camera ng player sa ulo ng soldier bago ma-teleport.
+        // Ang player mismo ang tatawag ng RpcTeleportPlayerToPrisonCell pagkatapos ng look,
+        // kaya hindi na ito tinatawag dito.
+        player.RpcCaptureAndTeleport(transform.position + Vector3.up * eyeHeight);
+
+        // Huminto muna ang soldier at itigil ang habol
+        freezeUntil = Time.time + captureFreezeTime;
+        target = null;
+
+        if (agent != null && agent.enabled && agent.isOnNavMesh)
+        {
+            agent.ResetPath();
+            agent.speed = walkSpeed;
+            agent.stoppingDistance = 0.1f;
+        }
+
+        if (state == State.Chase)
+        {
+            state = State.Patrol;
+            BeginWait();
+        }
+
+        Debug.Log($"[SOLDIER] Captured player {playerNetworkId}.", this);
+
         return true;
     }
 
@@ -179,6 +205,9 @@ public class SoldierPatrol : NetworkBehaviour
             return;
 
         if (agent == null || !agent.enabled || !agent.isOnNavMesh)
+            return;
+
+        if (Time.time < freezeUntil)
             return;
 
         float dt = Runner.DeltaTime;

@@ -30,6 +30,20 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float gravity = -20f;
     [SerializeField] private PlayerStamina stamina;
 
+    [Header("Capture")]
+    [SerializeField] private float captureLookDuration = 0.5f;
+
+    [Tooltip("Dagdag na tingala (degrees) habang nakatingin sa soldier. 0 = diretso sa ulo niya.")]
+    [Range(0f, 60f)]
+    [SerializeField] private float captureLookUpAngle = 15f;
+
+    private bool isBeingCaptured;
+    private float captureTimer;
+    private float captureStartYaw;
+    private float captureStartPitch;
+    private float captureTargetYaw;
+    private float captureTargetPitch;
+
     [Header("Low Sanity Movement / Camera")]
     [SerializeField, Range(0.1f, 1f)] private float lowestSanitySpeedMultiplier = 0.55f;
     [SerializeField, Range(0f, 8f)] private float maximumDizzyCameraRoll = 2.5f;
@@ -183,7 +197,9 @@ public class PlayerController : NetworkBehaviour
         // Apply scene-specific character controller height & camera position
         ApplySceneHeight();
 
-        isLocal = Object.HasInputAuthority;
+        // The game uses Fusion Shared mode: the local player owns their
+        // object through State Authority.
+        isLocal = Object.HasStateAuthority;
 
         TryFindAnimator();
 
@@ -294,7 +310,7 @@ public class PlayerController : NetworkBehaviour
         if (Object == null)
             return;
 
-        if (!Object.HasInputAuthority)
+        if (!Object.HasStateAuthority)
             return;
 
         if (Keyboard.current != null &&
@@ -316,6 +332,12 @@ public class PlayerController : NetworkBehaviour
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
             }
+        }
+
+        if (isBeingCaptured)
+        {
+            UpdateCaptureLook();
+            return;
         }
 
         ReadInput();
@@ -700,61 +722,61 @@ public class PlayerController : NetworkBehaviour
     // CLEANUP
     // =========================================================
 
-   private void OnEnable()
-{
-    SceneManager.sceneLoaded += HandleSceneLoaded;
-
-    // PlayerController may have been disabled temporarily
-    // by puzzle mode.
-    //
-    // Spawned() creates/enables the input map only once.
-    // If this component is re-enabled later, we must
-    // enable that same input map again.
-    if (isLocal &&
-        inputInitialized &&
-        inputActions != null)
+    private void OnEnable()
     {
-        InputActionMap playerMap =
-            inputActions.FindActionMap(
-                "Player",
-                false
-            );
+        SceneManager.sceneLoaded += HandleSceneLoaded;
 
-        if (playerMap != null)
+        // PlayerController may have been disabled temporarily
+        // by puzzle mode.
+        //
+        // Spawned() creates/enables the input map only once.
+        // If this component is re-enabled later, we must
+        // enable that same input map again.
+        if (isLocal &&
+            inputInitialized &&
+            inputActions != null)
         {
-            playerMap.Enable();
+            InputActionMap playerMap =
+                inputActions.FindActionMap(
+                    "Player",
+                    false
+                );
 
-            Debug.Log(
-                "[PLAYER CONTROLLER] Player input re-enabled."
-            );
+            if (playerMap != null)
+            {
+                playerMap.Enable();
+
+                Debug.Log(
+                    "[PLAYER CONTROLLER] Player input re-enabled."
+                );
+            }
         }
     }
-}
 
-private void OnDisable()
-{
-    SceneManager.sceneLoaded -= HandleSceneLoaded;
-
-    if (isLocal &&
-        inputInitialized &&
-        inputActions != null)
+    private void OnDisable()
     {
-        InputActionMap playerMap =
-            inputActions.FindActionMap(
-                "Player",
-                false
-            );
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
 
-        if (playerMap != null)
+        if (isLocal &&
+            inputInitialized &&
+            inputActions != null)
         {
-            playerMap.Disable();
-        }
+            InputActionMap playerMap =
+                inputActions.FindActionMap(
+                    "Player",
+                    false
+                );
 
-        // Puzzle mode needs the cursor unlocked
-        // while the player is interacting with UI/pieces.
-        LockCursor(false);
+            if (playerMap != null)
+            {
+                playerMap.Disable();
+            }
+
+            // Puzzle mode needs the cursor unlocked
+            // while the player is interacting with UI/pieces.
+            LockCursor(false);
+        }
     }
-}
 
 
     // =========================================================
@@ -877,5 +899,70 @@ private void OnDisable()
             $"[PRISON TELEPORT] Player {Object.Id} moved from {previousPosition} to {transform.position} " +
             $"on state authority. Floor={position}, CharacterController bottom offset={bottomOffset:F2}, " +
             $"lock=0.25s.", this);
+    }
+
+    // Ilagay ang parehong [Rpc(...)] attribute ng RpcTeleportPlayerToPrisonCell
+    // Ilagay ang parehong [Rpc(...)] attribute ng RpcTeleportPlayerToPrisonCell
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcCaptureAndTeleport(Vector3 lookTarget)
+    {
+        if (isBeingCaptured)
+            return;
+
+        isBeingCaptured = true;
+        captureTimer = 0f;
+
+        captureStartYaw = yaw;
+        captureStartPitch = pitch;
+        captureTargetYaw = yaw;
+        captureTargetPitch = pitch;
+
+        Transform camTransform = cameraHolder != null ? cameraHolder : transform;
+        Vector3 dir = lookTarget - camTransform.position;
+
+        if (dir.sqrMagnitude > 0.0001f)
+        {
+            captureTargetYaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
+
+            float vertical = Mathf.Clamp(dir.y / dir.magnitude, -1f, 1f);
+
+            // Positive pitch = pababa, negative = pataas.
+            // Binabawasan natin ng captureLookUpAngle para mas tumingala.
+            float pitchToTarget = -Mathf.Asin(vertical) * Mathf.Rad2Deg;
+
+            captureTargetPitch = Mathf.Clamp(
+                pitchToTarget - captureLookUpAngle,
+                -maxLookUp,
+                maxLookDown
+            );
+        }
+
+        // Huminto agad ang player
+        moveInput = Vector2.zero;
+        runInput = false;
+        jumpRequested = false;
+    }
+    private void UpdateCaptureLook()
+    {
+        moveInput = Vector2.zero;
+        runInput = false;
+        jumpRequested = false;
+
+        captureTimer += Time.deltaTime;
+
+        float t = Mathf.Clamp01(captureTimer / Mathf.Max(0.01f, captureLookDuration));
+        float ease = Mathf.SmoothStep(0f, 1f, t);
+
+        yaw = Mathf.LerpAngle(captureStartYaw, captureTargetYaw, ease);
+        pitch = Mathf.Lerp(captureStartPitch, captureTargetPitch, ease);
+
+        if (cameraHolder != null)
+            cameraHolder.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+
+        if (t >= 1f)
+        {
+            RpcTeleportPlayerToPrisonCell();
+            isBeingCaptured = false;
+        }
     }
 }

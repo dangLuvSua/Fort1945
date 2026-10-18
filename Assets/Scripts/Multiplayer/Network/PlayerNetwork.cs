@@ -37,7 +37,9 @@ public class PlayerNetwork : NetworkBehaviour
         );
 
         // Only the local player reads their local PlayerPrefs.
-        if (Object.HasInputAuthority)
+        // This project runs Fusion in Shared mode, where the object owner
+        // is identified by State Authority.
+        if (Object.HasStateAuthority)
         {
             SetLocalPlayerData();
         }
@@ -255,7 +257,7 @@ public class PlayerNetwork : NetworkBehaviour
             Vector3.one;
 
         bool hideCharacter =
-            Object.HasInputAuthority;
+            Object.HasStateAuthority;
 
         foreach (Renderer characterRenderer in
                  currentCharacter.GetComponentsInChildren<Renderer>(true))
@@ -275,7 +277,7 @@ public class PlayerNetwork : NetworkBehaviour
     private void SetupCamera()
     {
         bool isLocalPlayer =
-            Object.HasInputAuthority;
+            Object.HasStateAuthority;
 
         if (playerCamera != null)
         {
