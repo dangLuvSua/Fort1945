@@ -25,6 +25,7 @@ public class PuzzleTableController : MonoBehaviour
 
     public event Action PuzzleCompleted;
     public event Action PuzzleFailed;
+    public event Action PuzzleRetried;
 
     // =========================================================
     // TESTING
@@ -89,6 +90,16 @@ public class PuzzleTableController : MonoBehaviour
     [SerializeField]
     private float rotationStep = 90f;
 
+    [Header("Multiplayer Live Dragging")]
+
+    [Tooltip("How many live pose updates are sent per second while dragging.")]
+    [SerializeField]
+    private float networkDragUpdatesPerSecond = 20f;
+
+    [Tooltip("How quickly remote puzzle pieces follow their network pose.")]
+    [SerializeField]
+    private float networkRemoteFollowSpeed = 24f;
+
     // =========================================================
     // TIMER
     // =========================================================
@@ -135,6 +146,8 @@ public class PuzzleTableController : MonoBehaviour
 
     private Camera puzzleCamera;
 
+    private PlayerInventory currentInventory;
+
     private PuzzleRuntimePiece selectedPiece;
 
     private bool puzzleActive;
@@ -162,6 +175,30 @@ public class PuzzleTableController : MonoBehaviour
     private bool puzzleCompleted;
 
     private bool finalCountdownStarted;
+
+    public bool IsCompleted => puzzleCompleted;
+
+    // =========================================================
+    // SHARED NETWORK STATE
+    // =========================================================
+
+    private int lastNetworkSolvedMask = -1;
+    private bool lastNetworkStarted;
+    private bool lastNetworkCompleted;
+    private bool lastNetworkFailed;
+    private bool networkSnapshotInitialized;
+    private bool waitingForNetworkStart;
+    private bool networkRetryPending;
+    private bool completionEventRaised;
+    private bool failureEventRaised;
+
+    // =========================================================
+    // LIVE DRAG NETWORK STATE
+    // =========================================================
+
+    private PuzzleRuntimePiece pendingGrabPiece;
+    private int pendingGrabIndex = -1;
+    private float nextNetworkPoseSendTime;
 
     // =========================================================
     // HUD TIMER VISUAL STATE
@@ -193,8 +230,15 @@ public class PuzzleTableController : MonoBehaviour
 
     private void Update()
     {
-        // Timer continues even if player exits puzzle view.
-        UpdatePuzzleTimer();
+        if (HasSharedNetworkState())
+        {
+            SyncFromNetworkState();
+            ResolvePendingNetworkGrab();
+        }
+        else
+        {
+            UpdatePuzzleTimer();
+        }
 
         if (!puzzleActive ||
             timerExpired ||
@@ -205,18 +249,28 @@ public class PuzzleTableController : MonoBehaviour
             return;
         }
 
-        // -----------------------------------------------------
-        // SELECT
-        // -----------------------------------------------------
+        if (selectedPiece != null &&
+            HasSharedNetworkState())
+        {
+            int selectedIndex =
+                FindPieceIndexByItemId(
+                    selectedPiece.Item.itemId
+                );
+
+            if (selectedIndex < 0 ||
+                !PuzzleNetworkState.Instance
+                    .IsPieceHeldByLocalPlayer(
+                        selectedIndex
+                    ))
+            {
+                selectedPiece = null;
+            }
+        }
 
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
             TrySelectPiece();
         }
-
-        // -----------------------------------------------------
-        // DRAG + ROTATE
-        // -----------------------------------------------------
 
         if (selectedPiece != null &&
             Mouse.current.leftButton.isPressed)
@@ -241,19 +295,10 @@ public class PuzzleTableController : MonoBehaviour
             }
         }
 
-        // -----------------------------------------------------
-        // RELEASE
-        // -----------------------------------------------------
-
         if (selectedPiece != null &&
             Mouse.current.leftButton.wasReleasedThisFrame)
         {
-            selectedPiece.TrySnap(
-                snapDistance,
-                snapRotationTolerance
-            );
-
-            selectedPiece = null;
+            ReleaseSelectedPiece();
         }
     }
 
@@ -270,59 +315,13 @@ public class PuzzleTableController : MonoBehaviour
         ClearRuntimePieces();
 
         puzzleCamera = camera;
-
+        currentInventory = inventory;
         selectedPiece = null;
 
-        snappedCount =
-            solvedItemIds.Count;
+        progressText = playerProgressText;
+        timerText = playerTimerText;
 
-        progressText =
-            playerProgressText;
-
-        timerText =
-            playerTimerText;
-
-        // -----------------------------------------------------
-        // CACHE HUD TIMER
-        // -----------------------------------------------------
-
-        if (timerText != null &&
-            !timerVisualCached)
-        {
-            timerNormalColor =
-                timerText.color;
-
-            timerNormalScale =
-                timerText.rectTransform.localScale;
-
-            timerVisualCached =
-                true;
-        }
-
-        // -----------------------------------------------------
-        // CACHE WORLD TIMER
-        // -----------------------------------------------------
-
-        if (worldTimerText != null &&
-            !worldTimerVisualCached)
-        {
-            worldTimerNormalColor =
-                worldTimerText.color;
-
-            worldTimerNormalScale =
-                worldTimerText.rectTransform.localScale;
-
-            worldTimerVisualCached =
-                true;
-        }
-
-        ResetGuidePieces();
-
-        ApplySolvedGuideState();
-
-        // -----------------------------------------------------
-        // VALIDATION
-        // -----------------------------------------------------
+        CacheTimerVisuals();
 
         if (puzzleCamera == null)
         {
@@ -331,7 +330,6 @@ public class PuzzleTableController : MonoBehaviour
             );
 
             HidePuzzleHUD();
-
             return;
         }
 
@@ -342,7 +340,6 @@ public class PuzzleTableController : MonoBehaviour
             );
 
             HidePuzzleHUD();
-
             return;
         }
 
@@ -353,7 +350,6 @@ public class PuzzleTableController : MonoBehaviour
             );
 
             HidePuzzleHUD();
-
             return;
         }
 
@@ -365,7 +361,6 @@ public class PuzzleTableController : MonoBehaviour
             );
 
             HidePuzzleHUD();
-
             return;
         }
 
@@ -377,149 +372,127 @@ public class PuzzleTableController : MonoBehaviour
             );
 
             HidePuzzleHUD();
-
             return;
         }
 
-        // -----------------------------------------------------
-        // START TIMER
-        // -----------------------------------------------------
+        ResetGuidePieces();
 
-        if (!timerStarted &&
-            !timerExpired &&
-            !puzzleCompleted)
+        PuzzleNetworkState sharedState =
+            PuzzleNetworkState.Instance;
+
+        if (sharedState != null)
         {
-            remainingTime =
-                Mathf.Max(
-                    0f,
-                    puzzleDuration
+            ApplyNetworkSolvedMask(
+                sharedState.SolvedMask,
+                true
+            );
+
+            if (sharedState.PuzzleCompleted)
+            {
+                ApplyNetworkCompletion(
+                    true
                 );
 
-            timerStarted =
-                true;
+                return;
+            }
 
-            finalCountdownStarted =
-                false;
+            if (sharedState.PuzzleFailed &&
+                !networkRetryPending)
+            {
+                ApplyNetworkFailure(
+                    true
+                );
 
-            UpdateTimerAudio();
+                return;
+            }
+
+            if (sharedState.PuzzleStarted)
+            {
+                waitingForNetworkStart = false;
+                networkRetryPending = false;
+                timerStarted = true;
+                timerExpired = false;
+                puzzleCompleted = false;
+
+                remainingTime =
+                    Mathf.Max(
+                        0f,
+                        sharedState.GetRemainingTime()
+                    );
+            }
+            else
+            {
+                if (!networkRetryPending)
+                {
+                    sharedState.RPC_StartPuzzle(
+                        puzzleDuration
+                    );
+                }
+
+                waitingForNetworkStart = true;
+                timerStarted = true;
+                timerExpired = false;
+                puzzleCompleted = false;
+
+                remainingTime =
+                    Mathf.Max(
+                        0f,
+                        puzzleDuration
+                    );
+            }
         }
         else
         {
-            UpdateTimerAudio();
+            snappedCount =
+                solvedItemIds.Count;
+
+            ApplySolvedGuideState();
+
+            if (!timerStarted &&
+                !timerExpired &&
+                !puzzleCompleted)
+            {
+                remainingTime =
+                    Mathf.Max(
+                        0f,
+                        puzzleDuration
+                    );
+
+                timerStarted = true;
+                finalCountdownStarted = false;
+            }
         }
 
-        // -----------------------------------------------------
-        // SHOW HUD
-        // -----------------------------------------------------
-
-        if (progressText != null)
-        {
-            progressText.gameObject.SetActive(
-                true
-            );
-        }
-        else
-        {
-            Debug.LogWarning(
-                "[PUZZLE TABLE] Puzzle Progress Text was not assigned."
-            );
-        }
-
-        if (timerText != null)
-        {
-            timerText.gameObject.SetActive(
-                true
-            );
-        }
-        else
-        {
-            Debug.LogWarning(
-                "[PUZZLE TABLE] Puzzle Timer Text was not assigned."
-            );
-        }
-
-        // -----------------------------------------------------
-        // WORLD TIMER
-        // -----------------------------------------------------
-
+        ShowPuzzleHUD();
         ShowWorldTimer();
-
         UpdateProgressUI();
-
+        UpdateTimerAudio();
         UpdateTimerUI();
 
-        // -----------------------------------------------------
-        // SPAWN PIECES
-        // -----------------------------------------------------
-
-        int availableCount = 0;
-
-        foreach (PuzzlePieceEntry entry in pieces)
-        {
-            if (entry == null ||
-                entry.item == null ||
-                entry.solvedTarget == null)
-            {
-                Debug.LogWarning(
-                    "[PUZZLE TABLE] Incomplete puzzle entry."
-                );
-
-                continue;
-            }
-
-            int itemId =
-                entry.item.itemId;
-
-            // Already solved.
-            if (solvedItemIds.Contains(itemId))
-            {
-                SpawnSolvedRuntimePiece(
-                    entry
-                );
-
-                availableCount++;
-
-                continue;
-            }
-
-            // Normal mode:
-            // only collected pieces are available.
-            if (!testModeShowAllPieces)
-            {
-                if (!inventory.HasItemId(itemId))
-                {
-                    continue;
-                }
-            }
-
-            SpawnRuntimePiece(
-                entry
+        int availableCount =
+            SpawnAvailableRuntimePieces(
+                currentInventory
             );
 
-            availableCount++;
-        }
+        puzzleActive = true;
 
-        puzzleActive =
-            true;
-
-        if (testModeShowAllPieces)
+        if (HasSharedNetworkState())
         {
-            Debug.Log(
-                $"[PUZZLE TABLE] TEST MODE: " +
-                $"Available {availableCount}/{pieces.Length}. " +
-                $"Solved {snappedCount}/{pieces.Length}. " +
-                $"Time: {remainingTime:F1}s"
+            PublishMissingNetworkPiecePoses();
+
+            SyncNetworkPieceTransforms(
+                PuzzleNetworkState.Instance,
+                true
             );
         }
-        else
-        {
-            Debug.Log(
-                $"[PUZZLE TABLE] Available " +
-                $"{availableCount}/{pieces.Length}. " +
-                $"Solved {snappedCount}/{pieces.Length}. " +
-                $"Time: {remainingTime:F1}s"
-            );
-        }
+
+        Debug.Log(
+            $"[PUZZLE TABLE] Opened. " +
+            $"Available {availableCount}/{pieces.Length}. " +
+            $"Solved {snappedCount}/{pieces.Length}. " +
+            $"Time: {remainingTime:F1}s. " +
+            $"Shared={HasSharedNetworkState()}"
+        );
     }
 
     // =========================================================
@@ -528,26 +501,24 @@ public class PuzzleTableController : MonoBehaviour
 
     public void EndPuzzle()
     {
-        puzzleActive =
-            false;
+        ReleaseNetworkGrabsOnExit();
 
-        selectedPiece =
-            null;
+        puzzleActive = false;
 
-        puzzleCamera =
-            null;
+        selectedPiece = null;
+
+        pendingGrabPiece = null;
+        pendingGrabIndex = -1;
+
+        puzzleCamera = null;
+        currentInventory = null;
 
         ClearRuntimePieces();
 
-        // Do not stop timer here.
-        // Leaving with ESC keeps timer running.
         HidePuzzleHUD();
 
-        progressText =
-            null;
-
-        timerText =
-            null;
+        progressText = null;
+        timerText = null;
 
         Debug.Log(
             $"[PUZZLE TABLE] Puzzle closed. " +
@@ -564,51 +535,658 @@ public class PuzzleTableController : MonoBehaviour
     private void ShowWorldTimer()
     {
         if (worldTimerText == null)
-        {
-            Debug.LogWarning(
-                "[PUZZLE TABLE] World Timer Text was not assigned."
-            );
-
             return;
-        }
 
         Transform parent =
             worldTimerText.transform.parent;
 
         if (parent != null)
         {
-            parent.gameObject.SetActive(
+            parent.gameObject.SetActive(true);
+        }
+
+        worldTimerText.gameObject.SetActive(true);
+    }
+
+    private void HideWorldTimer()
+    {
+        if (worldTimerText == null)
+            return;
+
+        worldTimerText.gameObject.SetActive(false);
+
+        Transform parent =
+            worldTimerText.transform.parent;
+
+        if (parent != null)
+        {
+            parent.gameObject.SetActive(false);
+        }
+    }
+
+    // =========================================================
+    // NETWORK CHECK
+    // =========================================================
+
+    private bool HasSharedNetworkState()
+    {
+        return PuzzleNetworkState.Instance != null &&
+               PuzzleNetworkState.Instance.Object != null &&
+               PuzzleNetworkState.Instance.Runner != null;
+    }
+
+    // =========================================================
+    // TIMER VISUAL CACHE
+    // =========================================================
+
+    private void CacheTimerVisuals()
+    {
+        if (timerText != null &&
+            !timerVisualCached)
+        {
+            timerNormalColor =
+                timerText.color;
+
+            timerNormalScale =
+                timerText.rectTransform.localScale;
+
+            timerVisualCached =
+                true;
+        }
+
+        if (worldTimerText != null &&
+            !worldTimerVisualCached)
+        {
+            worldTimerNormalColor =
+                worldTimerText.color;
+
+            worldTimerNormalScale =
+                worldTimerText.rectTransform.localScale;
+
+            worldTimerVisualCached =
+                true;
+        }
+    }
+
+    // =========================================================
+    // SHARED NETWORK SYNC
+    // =========================================================
+
+    private void SyncFromNetworkState()
+    {
+        PuzzleNetworkState state =
+            PuzzleNetworkState.Instance;
+
+        if (state == null)
+            return;
+
+        int solvedMask =
+            state.SolvedMask;
+
+        bool started =
+            state.PuzzleStarted;
+
+        bool completed =
+            state.PuzzleCompleted;
+
+        bool failed =
+            state.PuzzleFailed;
+
+        if (!networkSnapshotInitialized)
+        {
+            networkSnapshotInitialized = true;
+
+            lastNetworkSolvedMask =
+                solvedMask;
+
+            lastNetworkStarted =
+                started;
+
+            lastNetworkCompleted =
+                completed;
+
+            lastNetworkFailed =
+                failed;
+
+            ApplyNetworkSolvedMask(
+                solvedMask,
+                true
+            );
+        }
+        else if (solvedMask !=
+                 lastNetworkSolvedMask)
+        {
+            ApplyNetworkSolvedMask(
+                solvedMask,
+                false
+            );
+        }
+
+        if (puzzleActive &&
+            !completed &&
+            !failed)
+        {
+            SyncNetworkPieceTransforms(
+                state,
+                false
+            );
+        }
+
+        if (completed)
+        {
+            ApplyNetworkCompletion(
+                false
+            );
+
+            RememberNetworkSnapshot(
+                solvedMask,
+                started,
+                completed,
+                failed
+            );
+
+            return;
+        }
+
+        if (failed &&
+            !networkRetryPending)
+        {
+            ApplyNetworkFailure(
+                false
+            );
+
+            RememberNetworkSnapshot(
+                solvedMask,
+                started,
+                completed,
+                failed
+            );
+
+            return;
+        }
+
+        if (started)
+        {
+            bool retryJustStarted =
+                lastNetworkFailed ||
+                timerExpired ||
+                networkRetryPending;
+
+            waitingForNetworkStart = false;
+            networkRetryPending = false;
+
+            timerStarted = true;
+            timerExpired = false;
+            puzzleCompleted = false;
+
+            remainingTime =
+                Mathf.Max(
+                    0f,
+                    state.GetRemainingTime()
+                );
+
+            if (retryJustStarted)
+            {
+                failureEventRaised = false;
+                completionEventRaised = false;
+                finalCountdownStarted = false;
+
+                if (puzzleCamera != null)
+                {
+                    ShowPuzzleHUD();
+
+                    RebuildRuntimePiecesForCurrentPlayer();
+
+                    puzzleActive = true;
+                }
+
+                PuzzleRetried?.Invoke();
+            }
+
+            ShowWorldTimer();
+            UpdateTimerAudio();
+            UpdateTimerUI();
+        }
+        else if (waitingForNetworkStart)
+        {
+            timerStarted = true;
+            timerExpired = false;
+            puzzleCompleted = false;
+
+            ShowWorldTimer();
+            UpdateTimerAudio();
+            UpdateTimerUI();
+        }
+        else
+        {
+            timerStarted = false;
+
+            StopTimerAudio();
+        }
+
+        RememberNetworkSnapshot(
+            solvedMask,
+            started,
+            completed,
+            failed
+        );
+    }
+
+    private void RememberNetworkSnapshot(
+        int solvedMask,
+        bool started,
+        bool completed,
+        bool failed)
+    {
+        lastNetworkSolvedMask =
+            solvedMask;
+
+        lastNetworkStarted =
+            started;
+
+        lastNetworkCompleted =
+            completed;
+
+        lastNetworkFailed =
+            failed;
+    }
+
+    // =========================================================
+    // APPLY SOLVED MASK
+    // =========================================================
+
+    private void ApplyNetworkSolvedMask(
+        int solvedMask,
+        bool forceRebuild)
+    {
+        bool removedPieces =
+            lastNetworkSolvedMask >= 0 &&
+            (lastNetworkSolvedMask &
+             ~solvedMask) != 0;
+
+        if (forceRebuild ||
+            removedPieces)
+        {
+            solvedItemIds.Clear();
+
+            ResetGuidePieces();
+
+            for (int i = 0;
+                 i < pieces.Length;
+                 i++)
+            {
+                if ((solvedMask &
+                     (1 << i)) != 0)
+                {
+                    AddSolvedEntryLocal(
+                        i,
+                        false
+                    );
+                }
+            }
+
+            snappedCount =
+                solvedItemIds.Count;
+
+            ApplySolvedGuideState();
+
+            UpdateProgressUI();
+
+            if (puzzleActive &&
+                puzzleCamera != null)
+            {
+                RebuildRuntimePiecesForCurrentPlayer();
+            }
+
+            lastNetworkSolvedMask =
+                solvedMask;
+
+            return;
+        }
+
+        for (int i = 0;
+             i < pieces.Length;
+             i++)
+        {
+            if ((solvedMask &
+                 (1 << i)) == 0)
+            {
+                continue;
+            }
+
+            PuzzlePieceEntry entry =
+                pieces[i];
+
+            if (entry == null ||
+                entry.item == null)
+            {
+                continue;
+            }
+
+            if (!solvedItemIds.Contains(
+                    entry.item.itemId))
+            {
+                AddSolvedEntryLocal(
+                    i,
+                    true
+                );
+            }
+        }
+
+        snappedCount =
+            solvedItemIds.Count;
+
+        UpdateProgressUI();
+
+        lastNetworkSolvedMask =
+            solvedMask;
+    }
+
+    private void AddSolvedEntryLocal(
+        int pieceIndex,
+        bool updateRuntimePiece)
+    {
+        if (pieces == null ||
+            pieceIndex < 0 ||
+            pieceIndex >= pieces.Length)
+        {
+            return;
+        }
+
+        PuzzlePieceEntry entry =
+            pieces[pieceIndex];
+
+        if (entry == null ||
+            entry.item == null)
+        {
+            return;
+        }
+
+        solvedItemIds.Add(
+            entry.item.itemId
+        );
+
+        if (entry.guideRenderer != null)
+        {
+            entry.guideRenderer.enabled =
+                false;
+        }
+
+        if (!updateRuntimePiece ||
+            !puzzleActive)
+        {
+            return;
+        }
+
+        PuzzleRuntimePiece runtimePiece =
+            FindRuntimePieceByItemId(
+                entry.item.itemId
+            );
+
+        if (runtimePiece != null)
+        {
+            runtimePiece.LockToSolvedTarget();
+        }
+        else
+        {
+            SpawnSolvedRuntimePiece(
+                entry
+            );
+        }
+    }
+
+    private PuzzleRuntimePiece FindRuntimePieceByItemId(
+        int itemId)
+    {
+        foreach (GameObject pieceObject
+                 in runtimePieces)
+        {
+            if (pieceObject == null)
+                continue;
+
+            PuzzleRuntimePiece runtimePiece =
+                pieceObject
+                    .GetComponent<PuzzleRuntimePiece>();
+
+            if (runtimePiece == null ||
+                runtimePiece.Item == null)
+            {
+                continue;
+            }
+
+            if (runtimePiece.Item.itemId ==
+                itemId)
+            {
+                return runtimePiece;
+            }
+        }
+
+        return null;
+    }
+
+    private int FindPieceIndexByItemId(
+        int itemId)
+    {
+        if (pieces == null)
+            return -1;
+
+        for (int i = 0;
+             i < pieces.Length;
+             i++)
+        {
+            if (pieces[i] != null &&
+                pieces[i].item != null &&
+                pieces[i].item.itemId ==
+                itemId)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    // =========================================================
+    // NETWORK COMPLETE
+    // =========================================================
+
+    private void ApplyNetworkCompletion(
+        bool forceEvent)
+    {
+        puzzleCompleted = true;
+
+        timerStarted = false;
+        timerExpired = false;
+
+        puzzleActive = false;
+
+        selectedPiece = null;
+
+        pendingGrabPiece = null;
+        pendingGrabIndex = -1;
+
+        waitingForNetworkStart = false;
+        networkRetryPending = false;
+
+        StopTimerAudio();
+        UpdateTimerUI();
+        HideWorldTimer();
+
+        if (forceEvent ||
+            !completionEventRaised)
+        {
+            completionEventRaised = true;
+            failureEventRaised = false;
+
+            Debug.Log(
+                "[PUZZLE NETWORK] Shared puzzle completed locally."
+            );
+
+            PuzzleCompleted?.Invoke();
+        }
+    }
+
+    // =========================================================
+    // NETWORK FAILURE
+    // =========================================================
+
+    private void ApplyNetworkFailure(
+        bool forceEvent)
+    {
+        timerStarted = false;
+
+        timerExpired = true;
+
+        puzzleCompleted = false;
+
+        puzzleActive = false;
+
+        selectedPiece = null;
+
+        pendingGrabPiece = null;
+        pendingGrabIndex = -1;
+
+        waitingForNetworkStart = false;
+
+        remainingTime = 0f;
+
+        StopTimerAudio();
+
+        UpdateTimerUI();
+
+        HideWorldTimer();
+
+        solvedItemIds.Clear();
+
+        snappedCount = 0;
+
+        ClearRuntimePieces();
+
+        ResetGuidePieces();
+
+        UpdateProgressUI();
+
+        if (forceEvent ||
+            !failureEventRaised)
+        {
+            failureEventRaised = true;
+            completionEventRaised = false;
+
+            Debug.Log(
+                "[PUZZLE NETWORK] Shared puzzle failed. " +
+                "Local board reset to 0/8."
+            );
+
+            PuzzleFailed?.Invoke();
+        }
+    }
+
+    // =========================================================
+    // PUZZLE HUD
+    // =========================================================
+
+    private void ShowPuzzleHUD()
+    {
+        if (progressText != null)
+        {
+            progressText.gameObject
+                .SetActive(true);
+        }
+
+        if (timerText != null)
+        {
+            timerText.gameObject
+                .SetActive(true);
+        }
+    }
+
+    // =========================================================
+    // SPAWN AVAILABLE
+    // =========================================================
+
+    private int SpawnAvailableRuntimePieces(
+        PlayerInventory inventory)
+    {
+        int availableCount = 0;
+
+        foreach (PuzzlePieceEntry entry
+                 in pieces)
+        {
+            if (entry == null ||
+                entry.item == null ||
+                entry.solvedTarget == null)
+            {
+                continue;
+            }
+
+            int itemId =
+                entry.item.itemId;
+
+            if (solvedItemIds.Contains(
+                    itemId))
+            {
+                SpawnSolvedRuntimePiece(
+                    entry
+                );
+
+                availableCount++;
+
+                continue;
+            }
+
+            if (!testModeShowAllPieces)
+            {
+                if (inventory == null ||
+                    !inventory.HasItemId(
+                        itemId))
+                {
+                    continue;
+                }
+            }
+
+            SpawnRuntimePiece(
+                entry
+            );
+
+            availableCount++;
+        }
+
+        return availableCount;
+    }
+
+    private void RebuildRuntimePiecesForCurrentPlayer()
+    {
+        ClearRuntimePieces();
+
+        ResetGuidePieces();
+
+        ApplySolvedGuideState();
+
+        if (puzzleCamera == null)
+            return;
+
+        SpawnAvailableRuntimePieces(
+            currentInventory
+        );
+
+        if (HasSharedNetworkState())
+        {
+            PublishMissingNetworkPiecePoses();
+
+            SyncNetworkPieceTransforms(
+                PuzzleNetworkState.Instance,
                 true
             );
         }
 
-        worldTimerText.gameObject.SetActive(
-            true
-        );
+        snappedCount =
+            solvedItemIds.Count;
+
+        UpdateProgressUI();
     }
 
     // =========================================================
-// HIDE WORLD TIMER
-// =========================================================
-
-private void HideWorldTimer()
-{
-    if (worldTimerText == null)
-        return;
-
-    worldTimerText.gameObject.SetActive(false);
-
-    Transform parent =
-        worldTimerText.transform.parent;
-
-    if (parent != null)
-    {
-        parent.gameObject.SetActive(false);
-    }
-}
-
-    // =========================================================
-    // TIMER
+    // OFFLINE TIMER
     // =========================================================
 
     private void UpdatePuzzleTimer()
@@ -623,62 +1201,37 @@ private void HideWorldTimer()
         remainingTime -=
             Time.deltaTime;
 
-        // =====================================================
-        // TIME'S UP
-        // =====================================================
-
         if (remainingTime <= 0f)
         {
-            remainingTime =
-                0f;
+            remainingTime = 0f;
 
-            timerStarted =
-                false;
+            timerStarted = false;
+            timerExpired = true;
 
-            timerExpired =
-                true;
+            puzzleActive = false;
 
-            puzzleActive =
-                false;
-
-            selectedPiece =
-                null;
+            selectedPiece = null;
 
             StopTimerAudio();
 
-            // Shows TIME UP before result screen appears.
             UpdateTimerUI();
 
-            // Hide the world-space timer when the attempt ends.
             HideWorldTimer();
-
-            // =================================================
-            // FAILURE RULE:
-            // ERASE ALL PROGRESS FROM THIS ATTEMPT
-            // =================================================
 
             solvedItemIds.Clear();
 
-            snappedCount =
-                0;
+            snappedCount = 0;
 
-            // Remove every currently visible puzzle piece.
             ClearRuntimePieces();
 
-            // Bring all black guide pieces back.
             ResetGuidePieces();
 
-            // Progress becomes 0 / 8.
             UpdateProgressUI();
 
             Debug.Log(
-                "[PUZZLE] TIME'S UP! " +
-                "Attempt progress cleared. " +
-                "Puzzle reset to 0."
+                "[PUZZLE] TIME'S UP! Attempt reset to 0."
             );
 
-            // Tell PuzzleModeController to show
-            // TIME'S UP / RETRY.
             PuzzleFailed?.Invoke();
 
             return;
@@ -697,36 +1250,28 @@ private void HideWorldTimer()
     {
         StopTimerAudio();
 
-        puzzleActive =
-            false;
+        puzzleActive = false;
 
-        selectedPiece =
-            null;
+        selectedPiece = null;
 
-        // -----------------------------------------------------
-        // ERASE SOLVED STATE
-        // -----------------------------------------------------
+        pendingGrabPiece = null;
+        pendingGrabIndex = -1;
 
         solvedItemIds.Clear();
 
-        snappedCount =
-            0;
+        snappedCount = 0;
 
-        // -----------------------------------------------------
-        // RESET TIMER
-        // -----------------------------------------------------
+        timerStarted = false;
 
-        timerStarted =
-            false;
+        timerExpired = false;
 
-        timerExpired =
-            false;
+        puzzleCompleted = false;
 
-        puzzleCompleted =
-            false;
+        finalCountdownStarted = false;
 
-        finalCountdownStarted =
-            false;
+        completionEventRaised = false;
+
+        failureEventRaised = false;
 
         remainingTime =
             Mathf.Max(
@@ -734,26 +1279,36 @@ private void HideWorldTimer()
                 puzzleDuration
             );
 
-        // -----------------------------------------------------
-        // RESET BOARD
-        // -----------------------------------------------------
-
         ClearRuntimePieces();
 
         ResetGuidePieces();
-
-        // -----------------------------------------------------
-        // RESET UI
-        // -----------------------------------------------------
 
         UpdateProgressUI();
 
         UpdateTimerUI();
 
-        Debug.Log(
-            "[PUZZLE] Failed attempt reset. " +
-            "Next attempt starts from 0."
-        );
+        if (HasSharedNetworkState())
+        {
+            networkRetryPending = true;
+
+            waitingForNetworkStart = true;
+
+            PuzzleNetworkState.Instance
+                .RPC_RetryPuzzle(
+                    puzzleDuration
+                );
+
+            Debug.Log(
+                "[PUZZLE NETWORK] RETRY requested. " +
+                "Waiting for shared state authority."
+            );
+        }
+        else
+        {
+            Debug.Log(
+                "[PUZZLE] Offline retry prepared from 0/8."
+            );
+        }
     }
 
     // =========================================================
@@ -779,10 +1334,6 @@ private void HideWorldTimer()
                 )
             );
 
-        // -----------------------------------------------------
-        // FINAL 10 SECONDS
-        // -----------------------------------------------------
-
         if (totalSeconds <= 10 &&
             totalSeconds > 0)
         {
@@ -801,33 +1352,17 @@ private void HideWorldTimer()
                 {
                     finalCountdownAudioSource.Play();
                 }
-
-                Debug.Log(
-                    "[PUZZLE AUDIO] Final 10-second countdown started."
-                );
             }
 
             return;
         }
 
-        // -----------------------------------------------------
-        // NORMAL TIMER
-        // -----------------------------------------------------
-
         if (normalTimerAudioSource != null &&
             !normalTimerAudioSource.isPlaying)
         {
             normalTimerAudioSource.Play();
-
-            Debug.Log(
-                "[PUZZLE AUDIO] Normal timer sound started."
-            );
         }
     }
-
-    // =========================================================
-    // STOP TIMER AUDIO
-    // =========================================================
 
     private void StopTimerAudio()
     {
@@ -873,10 +1408,6 @@ private void HideWorldTimer()
         );
     }
 
-    // =========================================================
-    // SINGLE TIMER
-    // =========================================================
-
     private void UpdateSingleTimerText(
         TMP_Text targetText,
         Color normalColor,
@@ -885,10 +1416,6 @@ private void HideWorldTimer()
     {
         if (targetText == null)
             return;
-
-        // -----------------------------------------------------
-        // TIME UP
-        // -----------------------------------------------------
 
         if (timerExpired)
         {
@@ -903,10 +1430,6 @@ private void HideWorldTimer()
 
             return;
         }
-
-        // -----------------------------------------------------
-        // COMPLETED
-        // -----------------------------------------------------
 
         if (puzzleCompleted)
         {
@@ -928,10 +1451,6 @@ private void HideWorldTimer()
             return;
         }
 
-        // -----------------------------------------------------
-        // FINAL 10
-        // -----------------------------------------------------
-
         if (totalSeconds <= 10 &&
             totalSeconds > 0)
         {
@@ -949,10 +1468,6 @@ private void HideWorldTimer()
             return;
         }
 
-        // -----------------------------------------------------
-        // NORMAL
-        // -----------------------------------------------------
-
         int minutes =
             totalSeconds / 60;
 
@@ -968,10 +1483,6 @@ private void HideWorldTimer()
         targetText.rectTransform.localScale =
             normalScale;
     }
-
-    // =========================================================
-    // HEARTBEAT
-    // =========================================================
 
     private void UpdateTimerHeartbeat(
         TMP_Text targetText,
@@ -1043,17 +1554,12 @@ private void HideWorldTimer()
             $"Pieces: {snappedCount} / {totalPieces}";
     }
 
-    // =========================================================
-    // HIDE PLAYER HUD
-    // =========================================================
-
     private void HidePuzzleHUD()
     {
         if (progressText != null)
         {
-            progressText.gameObject.SetActive(
-                false
-            );
+            progressText.gameObject
+                .SetActive(false);
         }
 
         if (timerText != null)
@@ -1061,9 +1567,8 @@ private void HideWorldTimer()
             timerText.rectTransform.localScale =
                 timerNormalScale;
 
-            timerText.gameObject.SetActive(
-                false
-            );
+            timerText.gameObject
+                .SetActive(false);
         }
     }
 
@@ -1102,12 +1607,14 @@ private void HideWorldTimer()
                     .GetComponentInParent<PuzzleRuntimePiece>();
 
             if (piece == null ||
-                piece.IsLocked)
+                piece.IsLocked ||
+                piece.Item == null)
             {
                 continue;
             }
 
-            if (hit.distance < bestDistance)
+            if (hit.distance <
+                bestDistance)
             {
                 bestDistance =
                     hit.distance;
@@ -1117,16 +1624,68 @@ private void HideWorldTimer()
             }
         }
 
+        if (bestPiece == null)
+            return;
+
+        if (HasSharedNetworkState())
+        {
+            int pieceIndex =
+                FindPieceIndexByItemId(
+                    bestPiece.Item.itemId
+                );
+
+            if (pieceIndex < 0)
+                return;
+
+            PuzzleNetworkState state =
+                PuzzleNetworkState.Instance;
+
+            if (state.IsPieceSolved(
+                    pieceIndex) ||
+                state.IsPieceHeldByOtherPlayer(
+                    pieceIndex))
+            {
+                return;
+            }
+
+            if (state.IsPieceHeldByLocalPlayer(
+                    pieceIndex))
+            {
+                selectedPiece =
+                    bestPiece;
+
+                pendingGrabPiece =
+                    null;
+
+                pendingGrabIndex =
+                    -1;
+
+                nextNetworkPoseSendTime =
+                    0f;
+
+                return;
+            }
+
+            pendingGrabPiece =
+                bestPiece;
+
+            pendingGrabIndex =
+                pieceIndex;
+
+            state.RPC_RequestGrab(
+                pieceIndex
+            );
+
+            Debug.Log(
+                $"[PUZZLE NETWORK] Requested grab for " +
+                $"piece {pieceIndex + 1}."
+            );
+
+            return;
+        }
+
         selectedPiece =
             bestPiece;
-
-        if (selectedPiece != null)
-        {
-            Debug.Log(
-                $"[PUZZLE] Selected " +
-                $"{selectedPiece.Item.itemName}"
-            );
-        }
     }
 
     // =========================================================
@@ -1165,8 +1724,8 @@ private void HideWorldTimer()
             );
 
         if (!boardPlane.Raycast(
-            ray,
-            out float enter))
+                ray,
+                out float enter))
         {
             return;
         }
@@ -1225,6 +1784,10 @@ private void HideWorldTimer()
             areaTransform.TransformPoint(
                 localHit
             );
+
+        SendSelectedPiecePose(
+            false
+        );
     }
 
     // =========================================================
@@ -1248,6 +1811,440 @@ private void HideWorldTimer()
                 rotationReference.up
             ) *
             selectedPiece.transform.rotation;
+
+        SendSelectedPiecePose(
+            true
+        );
+    }
+
+    // =========================================================
+    // LIVE MULTIPLAYER DRAGGING
+    // =========================================================
+
+    private void ResolvePendingNetworkGrab()
+    {
+        if (pendingGrabPiece == null ||
+            pendingGrabIndex < 0 ||
+            !HasSharedNetworkState())
+        {
+            return;
+        }
+
+        PuzzleNetworkState state =
+            PuzzleNetworkState.Instance;
+
+        if (state.PuzzleCompleted ||
+            state.PuzzleFailed ||
+            state.IsPieceSolved(
+                pendingGrabIndex))
+        {
+            pendingGrabPiece = null;
+
+            pendingGrabIndex = -1;
+
+            return;
+        }
+
+        if (Mouse.current == null ||
+            !Mouse.current.leftButton.isPressed)
+        {
+            state.RPC_CancelGrab(
+                pendingGrabIndex
+            );
+
+            pendingGrabPiece = null;
+
+            pendingGrabIndex = -1;
+
+            return;
+        }
+
+        if (state.IsPieceHeldByOtherPlayer(
+                pendingGrabIndex))
+        {
+            pendingGrabPiece = null;
+
+            pendingGrabIndex = -1;
+
+            return;
+        }
+
+        if (!state.IsPieceHeldByLocalPlayer(
+                pendingGrabIndex))
+        {
+            return;
+        }
+
+        selectedPiece =
+            pendingGrabPiece;
+
+        pendingGrabPiece = null;
+
+        pendingGrabIndex = -1;
+
+        nextNetworkPoseSendTime = 0f;
+
+        Debug.Log(
+            "[PUZZLE NETWORK] Grab authority confirmed."
+        );
+    }
+
+    private void ReleaseSelectedPiece()
+    {
+        if (selectedPiece == null)
+            return;
+
+        PuzzleRuntimePiece releasingPiece =
+            selectedPiece;
+
+        int pieceIndex =
+            releasingPiece.Item != null
+                ? FindPieceIndexByItemId(
+                    releasingPiece.Item.itemId
+                )
+                : -1;
+
+        releasingPiece.TrySnap(
+            snapDistance,
+            snapRotationTolerance
+        );
+
+        if (HasSharedNetworkState() &&
+            pieceIndex >= 0)
+        {
+            GetPieceBoardLocalPose(
+                releasingPiece,
+                out Vector3 localPosition,
+                out Quaternion localRotation
+            );
+
+            PuzzleNetworkState.Instance
+                .RPC_ReleasePiece(
+                    pieceIndex,
+                    localPosition,
+                    localRotation
+                );
+        }
+
+        selectedPiece = null;
+    }
+
+    private void SendSelectedPiecePose(
+        bool force)
+    {
+        if (selectedPiece == null ||
+            !HasSharedNetworkState() ||
+            selectedPiece.Item == null)
+        {
+            return;
+        }
+
+        int pieceIndex =
+            FindPieceIndexByItemId(
+                selectedPiece.Item.itemId
+            );
+
+        if (pieceIndex < 0)
+            return;
+
+        PuzzleNetworkState state =
+            PuzzleNetworkState.Instance;
+
+        if (!state.IsPieceHeldByLocalPlayer(
+                pieceIndex))
+        {
+            return;
+        }
+
+        float updatesPerSecond =
+            Mathf.Max(
+                1f,
+                networkDragUpdatesPerSecond
+            );
+
+        float sendInterval =
+            1f /
+            updatesPerSecond;
+
+        if (!force &&
+            Time.unscaledTime <
+            nextNetworkPoseSendTime)
+        {
+            return;
+        }
+
+        nextNetworkPoseSendTime =
+            Time.unscaledTime +
+            sendInterval;
+
+        GetPieceBoardLocalPose(
+            selectedPiece,
+            out Vector3 localPosition,
+            out Quaternion localRotation
+        );
+
+        state.RPC_UpdatePiecePose(
+            pieceIndex,
+            localPosition,
+            localRotation
+        );
+    }
+
+    private void GetPieceBoardLocalPose(
+        PuzzleRuntimePiece piece,
+        out Vector3 localPosition,
+        out Quaternion localRotation)
+    {
+        Transform boardTransform =
+            puzzleDragArea != null
+                ? puzzleDragArea.transform
+                : transform;
+
+        localPosition =
+            boardTransform.InverseTransformPoint(
+                piece.transform.position
+            );
+
+        localRotation =
+            Quaternion.Inverse(
+                boardTransform.rotation
+            ) *
+            piece.transform.rotation;
+    }
+
+    private void ApplyNetworkPoseToRuntimePiece(
+        PuzzleRuntimePiece runtimePiece,
+        int pieceIndex,
+        PuzzleNetworkState state,
+        bool immediate)
+    {
+        if (runtimePiece == null ||
+            puzzleDragArea == null ||
+            state == null ||
+            !state.IsPiecePoseValid(
+                pieceIndex))
+        {
+            return;
+        }
+
+        Transform boardTransform =
+            puzzleDragArea.transform;
+
+        Vector3 worldPosition =
+            boardTransform.TransformPoint(
+                state.GetPieceLocalPosition(
+                    pieceIndex
+                )
+            );
+
+        Quaternion worldRotation =
+            boardTransform.rotation *
+            state.GetPieceLocalRotation(
+                pieceIndex
+            );
+
+        if (immediate)
+        {
+            runtimePiece.transform
+                .SetPositionAndRotation(
+                    worldPosition,
+                    worldRotation
+                );
+
+            return;
+        }
+
+        float follow =
+            1f -
+            Mathf.Exp(
+                -Mathf.Max(
+                    1f,
+                    networkRemoteFollowSpeed
+                ) *
+                Time.unscaledDeltaTime
+            );
+
+        runtimePiece.transform.position =
+            Vector3.Lerp(
+                runtimePiece.transform.position,
+                worldPosition,
+                follow
+            );
+
+        runtimePiece.transform.rotation =
+            Quaternion.Slerp(
+                runtimePiece.transform.rotation,
+                worldRotation,
+                follow
+            );
+    }
+
+    private void SyncNetworkPieceTransforms(
+        PuzzleNetworkState state,
+        bool immediate)
+    {
+        if (state == null ||
+            !puzzleActive ||
+            puzzleDragArea == null ||
+            pieces == null)
+        {
+            return;
+        }
+
+        int count =
+            Mathf.Min(
+                pieces.Length,
+                PuzzleNetworkState.MaxPieces
+            );
+
+        for (int i = 0;
+             i < count;
+             i++)
+        {
+            if (state.IsPieceSolved(i) ||
+                !state.IsPiecePoseValid(i))
+            {
+                continue;
+            }
+
+            PuzzlePieceEntry entry =
+                pieces[i];
+
+            if (entry == null ||
+                entry.item == null)
+            {
+                continue;
+            }
+
+            PuzzleRuntimePiece runtimePiece =
+                FindRuntimePieceByItemId(
+                    entry.item.itemId
+                );
+
+            if (runtimePiece == null)
+            {
+                SpawnRuntimePiece(
+                    entry
+                );
+
+                runtimePiece =
+                    FindRuntimePieceByItemId(
+                        entry.item.itemId
+                    );
+            }
+
+            if (runtimePiece == null)
+                continue;
+
+            if (state.IsPieceHeldByLocalPlayer(i) &&
+                selectedPiece ==
+                runtimePiece)
+            {
+                continue;
+            }
+
+            ApplyNetworkPoseToRuntimePiece(
+                runtimePiece,
+                i,
+                state,
+                immediate
+            );
+        }
+    }
+
+    private void PublishMissingNetworkPiecePoses()
+    {
+        if (!HasSharedNetworkState())
+            return;
+
+        PuzzleNetworkState state =
+            PuzzleNetworkState.Instance;
+
+        foreach (GameObject pieceObject
+                 in runtimePieces)
+        {
+            if (pieceObject == null)
+                continue;
+
+            PuzzleRuntimePiece runtimePiece =
+                pieceObject
+                    .GetComponent<PuzzleRuntimePiece>();
+
+            if (runtimePiece == null ||
+                runtimePiece.Item == null ||
+                runtimePiece.IsLocked)
+            {
+                continue;
+            }
+
+            int pieceIndex =
+                FindPieceIndexByItemId(
+                    runtimePiece.Item.itemId
+                );
+
+            if (pieceIndex < 0 ||
+                state.IsPieceSolved(
+                    pieceIndex) ||
+                state.IsPiecePoseValid(
+                    pieceIndex))
+            {
+                continue;
+            }
+
+            GetPieceBoardLocalPose(
+                runtimePiece,
+                out Vector3 localPosition,
+                out Quaternion localRotation
+            );
+
+            state.RPC_InitializePiecePose(
+                pieceIndex,
+                localPosition,
+                localRotation
+            );
+        }
+    }
+
+    private void ReleaseNetworkGrabsOnExit()
+    {
+        if (!HasSharedNetworkState())
+            return;
+
+        PuzzleNetworkState state =
+            PuzzleNetworkState.Instance;
+
+        if (selectedPiece != null &&
+            selectedPiece.Item != null)
+        {
+            int pieceIndex =
+                FindPieceIndexByItemId(
+                    selectedPiece.Item.itemId
+                );
+
+            if (pieceIndex >= 0 &&
+                state.IsPieceHeldByLocalPlayer(
+                    pieceIndex))
+            {
+                GetPieceBoardLocalPose(
+                    selectedPiece,
+                    out Vector3 localPosition,
+                    out Quaternion localRotation
+                );
+
+                state.RPC_ReleasePiece(
+                    pieceIndex,
+                    localPosition,
+                    localRotation
+                );
+            }
+        }
+
+        if (pendingGrabIndex >= 0)
+        {
+            state.RPC_CancelGrab(
+                pendingGrabIndex
+            );
+        }
     }
 
     // =========================================================
@@ -1265,43 +2262,94 @@ private void HideWorldTimer()
         if (pieceObject == null)
             return;
 
-        float randomX =
-            UnityEngine.Random.Range(
-                -scatterSize.x * 0.5f,
-                scatterSize.x * 0.5f
-            );
+        int pieceIndex =
+            entry != null &&
+            entry.item != null
+                ? FindPieceIndexByItemId(
+                    entry.item.itemId
+                )
+                : -1;
 
-        float randomZ =
-            UnityEngine.Random.Range(
-                -scatterSize.y * 0.5f,
-                scatterSize.y * 0.5f
-            );
+        bool usedNetworkPose =
+            false;
 
-        pieceObject.transform.position =
-            scatterCenter.position +
-            scatterCenter.right * randomX +
-            scatterCenter.forward * randomZ +
-            scatterCenter.up * surfaceOffset;
+        if (HasSharedNetworkState() &&
+            pieceIndex >= 0)
+        {
+            PuzzleNetworkState state =
+                PuzzleNetworkState.Instance;
 
-        float randomRotation =
-            UnityEngine.Random.Range(
-                0,
-                4
-            ) * 90f;
+            if (state.IsPiecePoseValid(
+                    pieceIndex))
+            {
+                Transform boardTransform =
+                    puzzleDragArea != null
+                        ? puzzleDragArea.transform
+                        : transform;
 
-        pieceObject.transform.rotation =
-            Quaternion.AngleAxis(
-                randomRotation,
-                scatterCenter.up
-            ) *
-            entry.solvedTarget.rotation;
+                pieceObject.transform
+                    .SetPositionAndRotation(
+                        boardTransform.TransformPoint(
+                            state.GetPieceLocalPosition(
+                                pieceIndex
+                            )
+                        ),
+                        boardTransform.rotation *
+                        state.GetPieceLocalRotation(
+                            pieceIndex
+                        )
+                    );
+
+                usedNetworkPose =
+                    true;
+            }
+        }
+
+        if (!usedNetworkPose)
+        {
+            float randomX =
+                UnityEngine.Random.Range(
+                    -scatterSize.x * 0.5f,
+                    scatterSize.x * 0.5f
+                );
+
+            float randomZ =
+                UnityEngine.Random.Range(
+                    -scatterSize.y * 0.5f,
+                    scatterSize.y * 0.5f
+                );
+
+            pieceObject.transform.position =
+                scatterCenter.position +
+                scatterCenter.right *
+                randomX +
+                scatterCenter.forward *
+                randomZ +
+                scatterCenter.up *
+                surfaceOffset;
+
+            float randomRotation =
+                UnityEngine.Random.Range(
+                    0,
+                    4
+                ) *
+                90f;
+
+            pieceObject.transform.rotation =
+                Quaternion.AngleAxis(
+                    randomRotation,
+                    scatterCenter.up
+                ) *
+                entry.solvedTarget.rotation;
+        }
 
         EnsurePieceCollider(
             pieceObject
         );
 
         PuzzleRuntimePiece runtimePiece =
-            pieceObject.AddComponent<PuzzleRuntimePiece>();
+            pieceObject
+                .AddComponent<PuzzleRuntimePiece>();
 
         runtimePiece.Initialize(
             entry.item,
@@ -1333,7 +2381,8 @@ private void HideWorldTimer()
             $"Solved_{entry.item.itemName}";
 
         PuzzleRuntimePiece runtimePiece =
-            pieceObject.AddComponent<PuzzleRuntimePiece>();
+            pieceObject
+                .AddComponent<PuzzleRuntimePiece>();
 
         runtimePiece.Initialize(
             entry.item,
@@ -1372,9 +2421,10 @@ private void HideWorldTimer()
             $"Runtime_{entry.item.itemName}";
 
         PuzzleTarget[] targetComponents =
-            pieceObject.GetComponentsInChildren<PuzzleTarget>(
-                true
-            );
+            pieceObject
+                .GetComponentsInChildren<PuzzleTarget>(
+                    true
+                );
 
         foreach (PuzzleTarget target
                  in targetComponents)
@@ -1386,9 +2436,10 @@ private void HideWorldTimer()
         }
 
         Renderer[] renderers =
-            pieceObject.GetComponentsInChildren<Renderer>(
-                true
-            );
+            pieceObject
+                .GetComponentsInChildren<Renderer>(
+                    true
+                );
 
         foreach (Renderer renderer
                  in renderers)
@@ -1396,8 +2447,7 @@ private void HideWorldTimer()
             if (renderer == null)
                 continue;
 
-            renderer.enabled =
-                true;
+            renderer.enabled = true;
 
             if (puzzlePieceMaterial != null)
             {
@@ -1428,18 +2478,19 @@ private void HideWorldTimer()
             return;
 
         Collider[] colliders =
-            pieceObject.GetComponentsInChildren<Collider>(
-                true
-            );
+            pieceObject
+                .GetComponentsInChildren<Collider>(
+                    true
+                );
 
         if (colliders.Length > 0)
         {
-            foreach (Collider col in colliders)
+            foreach (Collider col
+                     in colliders)
             {
                 if (col != null)
                 {
-                    col.enabled =
-                        true;
+                    col.enabled = true;
                 }
             }
 
@@ -1447,9 +2498,10 @@ private void HideWorldTimer()
         }
 
         MeshFilter meshFilter =
-            pieceObject.GetComponentInChildren<MeshFilter>(
-                true
-            );
+            pieceObject
+                .GetComponentInChildren<MeshFilter>(
+                    true
+                );
 
         if (meshFilter == null ||
             meshFilter.sharedMesh == null)
@@ -1488,13 +2540,59 @@ private void HideWorldTimer()
         int itemId =
             piece.Item.itemId;
 
-        if (!solvedItemIds.Add(itemId))
+        if (HasSharedNetworkState())
         {
-            Debug.LogWarning(
-                $"[PUZZLE] {piece.Item.itemName} " +
-                $"was already solved."
+            int pieceIndex =
+                FindPieceIndexByItemId(
+                    itemId
+                );
+
+            if (pieceIndex < 0)
+            {
+                Debug.LogError(
+                    $"[PUZZLE NETWORK] Could not map item " +
+                    $"{itemId} to a puzzle index."
+                );
+
+                return;
+            }
+
+            PuzzleNetworkState state =
+                PuzzleNetworkState.Instance;
+
+            if (state.PuzzleCompleted ||
+                state.PuzzleFailed)
+            {
+                return;
+            }
+
+            AddSolvedEntryLocal(
+                pieceIndex,
+                true
             );
 
+            snappedCount =
+                solvedItemIds.Count;
+
+            UpdateProgressUI();
+
+            state.RPC_SolvePiece(
+                pieceIndex
+            );
+
+            Debug.Log(
+                $"[PUZZLE NETWORK] Requested solve for " +
+                $"piece {pieceIndex + 1}. " +
+                $"Local progress: " +
+                $"{snappedCount}/{pieces.Length}"
+            );
+
+            return;
+        }
+
+        if (!solvedItemIds.Add(
+                itemId))
+        {
             return;
         }
 
@@ -1503,8 +2601,8 @@ private void HideWorldTimer()
 
         UpdateProgressUI();
 
-        // Hide corresponding guide.
-        foreach (PuzzlePieceEntry entry in pieces)
+        foreach (PuzzlePieceEntry entry
+                 in pieces)
         {
             if (entry == null ||
                 entry.item == null)
@@ -1512,8 +2610,10 @@ private void HideWorldTimer()
                 continue;
             }
 
-            if (entry.item == piece.Item ||
-                entry.item.itemId == itemId)
+            if (entry.item ==
+                piece.Item ||
+                entry.item.itemId ==
+                itemId)
             {
                 if (entry.guideRenderer != null)
                 {
@@ -1525,44 +2625,23 @@ private void HideWorldTimer()
             }
         }
 
-        Debug.Log(
-            $"[PUZZLE] Correct! " +
-            $"{piece.Item.itemName} snapped. " +
-            $"Progress: {snappedCount}/{pieces.Length}"
-        );
-
-        // =====================================================
-        // SUCCESS
-        // =====================================================
-
-        if (snappedCount >= pieces.Length)
+        if (snappedCount >=
+            pieces.Length)
         {
-            puzzleCompleted =
-                true;
+            puzzleCompleted = true;
 
-            timerStarted =
-                false;
+            timerStarted = false;
 
-            puzzleActive =
-                false;
+            puzzleActive = false;
 
-            selectedPiece =
-                null;
+            selectedPiece = null;
 
             StopTimerAudio();
 
             UpdateTimerUI();
 
-            // Puzzle is finished, so remove the world-space timer.
             HideWorldTimer();
 
-            Debug.Log(
-                $"[PUZZLE] PUZZLE COMPLETE! " +
-                $"Time remaining: " +
-                $"{remainingTime:F1} seconds."
-            );
-
-            // Show completion result immediately.
             PuzzleCompleted?.Invoke();
         }
     }
@@ -1576,7 +2655,8 @@ private void HideWorldTimer()
         if (pieces == null)
             return;
 
-        foreach (PuzzlePieceEntry entry in pieces)
+        foreach (PuzzlePieceEntry entry
+                 in pieces)
         {
             if (entry == null)
                 continue;
@@ -1590,7 +2670,7 @@ private void HideWorldTimer()
     }
 
     // =========================================================
-    // APPLY SAVED GUIDES
+    // APPLY GUIDE STATE
     // =========================================================
 
     private void ApplySolvedGuideState()
@@ -1598,7 +2678,8 @@ private void HideWorldTimer()
         if (pieces == null)
             return;
 
-        foreach (PuzzlePieceEntry entry in pieces)
+        foreach (PuzzlePieceEntry entry
+                 in pieces)
         {
             if (entry == null ||
                 entry.item == null ||
@@ -1618,12 +2699,19 @@ private void HideWorldTimer()
     }
 
     // =========================================================
-    // CLEAR RUNTIME PIECES
+    // CLEAR RUNTIME
     // =========================================================
 
     private void ClearRuntimePieces()
     {
-        foreach (GameObject piece in runtimePieces)
+        selectedPiece = null;
+
+        pendingGrabPiece = null;
+
+        pendingGrabIndex = -1;
+
+        foreach (GameObject piece
+                 in runtimePieces)
         {
             if (piece != null)
             {

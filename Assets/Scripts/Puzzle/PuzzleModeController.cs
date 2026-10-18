@@ -1,233 +1,210 @@
-using System.Collections;
-using Fusion;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 using TMPro;
 
-public class PuzzleModeController : NetworkBehaviour
+public class PuzzleTableController : MonoBehaviour
 {
-    // =========================================================
-    // PLAYER COMPONENTS
-    // =========================================================
-
-    [Header("Player Components")]
-
-    [SerializeField]
-    private PlayerController playerController;
-
-    [SerializeField]
-    private PlayerInteractor playerInteractor;
-
-    [SerializeField]
-    private CameraController cameraController;
-
-    // =========================================================
-    // FOOTSTEPS
-    // =========================================================
-
-    [Header("Footsteps")]
-
-    [SerializeField]
-    private AudioSource footstepsAudioSource;
-
-    // =========================================================
-    // CAMERA
-    // =========================================================
-
-    [Header("Camera")]
-
-    [SerializeField]
-    private Transform playerCamera;
-
-    // =========================================================
-    // PUZZLE UI
-    // =========================================================
-
-    [Header("Puzzle UI")]
-
-    [SerializeField]
-    private TMP_Text puzzleProgressText;
-
-    [SerializeField]
-    private TMP_Text puzzleTimerText;
-
-    // =========================================================
-    // PUZZLE INTRO
-    // =========================================================
-
-    [Header("Puzzle Instructions")]
-
-    [Tooltip("The panel containing the Lost Map parchment.")]
-    [SerializeField]
-    private GameObject puzzleIntroPanel;
-
-    [Tooltip("The BEGIN button inside the intro panel.")]
-    [SerializeField]
-    private Button beginButton;
-
-    // =========================================================
-    // PUZZLE RESULT
-    // =========================================================
-
-    [Header("Puzzle Result")]
-
-    [Tooltip("Panel used for puzzle success and failure.")]
-    [SerializeField]
-    private GameObject puzzleResultPanel;
-
-    [SerializeField]
-    private TMP_Text resultTitleText;
-
-    [SerializeField]
-    private TMP_Text resultMessageText;
-
-    [SerializeField]
-    private Button continueButton;
-
-    // =========================================================
-    // STATE
-    // =========================================================
-
-    private bool isInPuzzleMode;
-
-    private bool isShowingPuzzleIntro;
-
-    private bool isShowingPuzzleResult;
-
-    // True when result panel currently represents
-    // TIME'S UP instead of success.
-    private bool resultIsFailure;
-
-    // Once BEGIN is pressed, intro does not appear again.
-    private bool hasSeenPuzzleIntro;
-
-    private Vector3 originalCameraLocalPosition;
-
-    private Quaternion originalCameraLocalRotation;
-
-    private bool playerControllerWasEnabled;
-
-    private bool playerInteractorWasEnabled;
-
-    private bool cameraControllerWasEnabled;
-
-    private bool footstepsWasMuted;
-
-    private PuzzleTableController activePuzzleTable;
-
-    // =========================================================
-    // PENDING PUZZLE DATA
-    // =========================================================
-
-    private Transform pendingPuzzleCameraPoint;
-
-    private PuzzleTableController pendingPuzzleTable;
-
-    private PlayerInventory pendingInventory;
-
-    private Coroutine cursorRelockRoutine;
-
-    public bool IsInPuzzleMode =>
-        isInPuzzleMode;
-
-    public bool IsShowingPuzzleIntro =>
-        isShowingPuzzleIntro;
-
-    public bool IsShowingPuzzleResult =>
-        isShowingPuzzleResult;
-
-    // =========================================================
-    // SPAWNED
-    // =========================================================
-
-    public override void Spawned()
+    [Serializable]
+    public class PuzzlePieceEntry
     {
-        // Only local player controls their own puzzle UI.
-        if (Object != null &&
-            !Object.HasInputAuthority)
-        {
-            return;
-        }
+        [Header("Piece")]
+        public ItemData item;
 
-        // -----------------------------------------------------
-        // HIDE INTRO
-        // -----------------------------------------------------
+        [Tooltip("Invisible correct position from PuzzleSolvedTargets_Easy.")]
+        public Transform solvedTarget;
 
-        if (puzzleIntroPanel != null)
-        {
-            puzzleIntroPanel.SetActive(false);
-        }
-
-        // -----------------------------------------------------
-        // HIDE RESULT
-        // -----------------------------------------------------
-
-        if (puzzleResultPanel != null)
-        {
-            puzzleResultPanel.SetActive(false);
-        }
-
-        // -----------------------------------------------------
-        // BEGIN BUTTON
-        // -----------------------------------------------------
-
-        if (beginButton != null)
-        {
-            beginButton.onClick.RemoveListener(
-                BeginPuzzleFromIntro
-            );
-
-            beginButton.onClick.AddListener(
-                BeginPuzzleFromIntro
-            );
-        }
-
-        // -----------------------------------------------------
-        // RESULT BUTTON
-        // -----------------------------------------------------
-
-        if (continueButton != null)
-        {
-            continueButton.onClick.RemoveListener(
-                ContinueAfterPuzzleResult
-            );
-
-            continueButton.onClick.AddListener(
-                ContinueAfterPuzzleResult
-            );
-        }
+        [Tooltip("Visible black guide piece from PuzzleGuide_Easy.")]
+        public Renderer guideRenderer;
     }
 
     // =========================================================
-    // CLEANUP
+    // EVENTS
     // =========================================================
 
-    private void OnDestroy()
-    {
-        if (beginButton != null)
-        {
-            beginButton.onClick.RemoveListener(
-                BeginPuzzleFromIntro
-            );
-        }
+    public event Action PuzzleCompleted;
+    public event Action PuzzleFailed;
+    public event Action PuzzleRetried;
 
-        if (continueButton != null)
-        {
-            continueButton.onClick.RemoveListener(
-                ContinueAfterPuzzleResult
-            );
-        }
+    // =========================================================
+    // TESTING
+    // =========================================================
 
-        if (activePuzzleTable != null)
-        {
-            activePuzzleTable.PuzzleCompleted -=
-                HandlePuzzleCompleted;
+    [Header("Testing")]
+    [Tooltip("Show all puzzle pieces without collecting them.")]
+    [SerializeField]
+    private bool testModeShowAllPieces = false;
 
-            activePuzzleTable.PuzzleFailed -=
-                HandlePuzzleFailed;
-        }
-    }
+    // =========================================================
+    // VISUAL
+    // =========================================================
+
+    [Header("Puzzle Piece Visual")]
+    [SerializeField]
+    private Material puzzlePieceMaterial;
+
+    // =========================================================
+    // PUZZLE PIECES
+    // =========================================================
+
+    [Header("Easy Puzzle Pieces")]
+    [SerializeField]
+    private PuzzlePieceEntry[] pieces;
+
+    // =========================================================
+    // RUNTIME PIECE AREA
+    // =========================================================
+
+    [Header("Runtime Piece Area")]
+
+    [SerializeField]
+    private Transform scatterCenter;
+
+    [SerializeField]
+    private Vector2 scatterSize =
+        new Vector2(1.2f, 1.2f);
+
+    [SerializeField]
+    private float surfaceOffset = 0.02f;
+
+    [SerializeField]
+    private Transform runtimePiecesRoot;
+
+    [Tooltip("Box Collider covering the black puzzle board.")]
+    [SerializeField]
+    private BoxCollider puzzleDragArea;
+
+    // =========================================================
+    // CONTROLS
+    // =========================================================
+
+    [Header("Piece Controls")]
+
+    [SerializeField]
+    private float snapDistance = 0.18f;
+
+    [SerializeField]
+    private float snapRotationTolerance = 20f;
+
+    [SerializeField]
+    private float rotationStep = 90f;
+
+    // =========================================================
+    // TIMER
+    // =========================================================
+
+    [Header("Puzzle Timer")]
+
+    [Tooltip("Puzzle duration in seconds. 180 = 3 minutes.")]
+    [SerializeField]
+    private float puzzleDuration = 180f;
+
+    // =========================================================
+    // TIMER AUDIO
+    // =========================================================
+
+    [Header("Puzzle Timer Audio")]
+
+    [Tooltip("Looping timer sound used before the final 10 seconds.")]
+    [SerializeField]
+    private AudioSource normalTimerAudioSource;
+
+    [Tooltip("Countdown sound played once when the timer reaches 10.")]
+    [SerializeField]
+    private AudioSource finalCountdownAudioSource;
+
+    // =========================================================
+    // WORLD TIMER
+    // =========================================================
+
+    [Header("World Timer UI")]
+
+    [Tooltip("Timer text attached to the World Space Canvas above the table.")]
+    [SerializeField]
+    private TMP_Text worldTimerText;
+
+    // =========================================================
+    // RUNTIME PIECES
+    // =========================================================
+
+    private readonly List<GameObject> runtimePieces =
+        new List<GameObject>();
+
+    private readonly HashSet<int> solvedItemIds =
+        new HashSet<int>();
+
+    private Camera puzzleCamera;
+
+    private PlayerInventory currentInventory;
+
+    private PuzzleRuntimePiece selectedPiece;
+
+    private bool puzzleActive;
+
+    private int snappedCount;
+
+    // =========================================================
+    // HUD UI
+    // =========================================================
+
+    private TMP_Text progressText;
+
+    private TMP_Text timerText;
+
+    // =========================================================
+    // TIMER STATE
+    // =========================================================
+
+    private float remainingTime;
+
+    private bool timerStarted;
+
+    private bool timerExpired;
+
+    private bool puzzleCompleted;
+
+    private bool finalCountdownStarted;
+
+    public bool IsCompleted => puzzleCompleted;
+
+    // =========================================================
+    // SHARED NETWORK STATE
+    // =========================================================
+
+    private int lastNetworkSolvedMask = -1;
+    private bool lastNetworkStarted;
+    private bool lastNetworkCompleted;
+    private bool lastNetworkFailed;
+    private bool networkSnapshotInitialized;
+    private bool waitingForNetworkStart;
+    private bool networkRetryPending;
+    private bool completionEventRaised;
+    private bool failureEventRaised;
+
+    // =========================================================
+    // HUD TIMER VISUAL STATE
+    // =========================================================
+
+    private Color timerNormalColor =
+        Color.white;
+
+    private Vector3 timerNormalScale =
+        Vector3.one;
+
+    private bool timerVisualCached;
+
+    // =========================================================
+    // WORLD TIMER VISUAL STATE
+    // =========================================================
+
+    private Color worldTimerNormalColor =
+        Color.white;
+
+    private Vector3 worldTimerNormalScale =
+        Vector3.one;
+
+    private bool worldTimerVisualCached;
 
     // =========================================================
     // UPDATE
@@ -235,976 +212,1803 @@ public class PuzzleModeController : NetworkBehaviour
 
     private void Update()
     {
-        // -----------------------------------------------------
-        // RESULT SCREEN
-        // -----------------------------------------------------
-
-        if (isShowingPuzzleResult)
+        // In multiplayer the Fusion PuzzleNetworkState is the
+        // authority for the solved pieces and countdown timer.
+        if (HasSharedNetworkState())
         {
-            // Player must use CONTINUE or RETRY.
+            SyncFromNetworkState();
+        }
+        else
+        {
+            // Offline / standalone fallback.
+            UpdatePuzzleTimer();
+        }
+
+        if (!puzzleActive ||
+            timerExpired ||
+            puzzleCompleted ||
+            puzzleCamera == null ||
+            Mouse.current == null)
+        {
             return;
         }
 
+        if (Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            TrySelectPiece();
+        }
+
+        if (selectedPiece != null &&
+            Mouse.current.leftButton.isPressed)
+        {
+            DragSelectedPiece();
+
+            if (Keyboard.current != null)
+            {
+                if (Keyboard.current.qKey.wasPressedThisFrame)
+                {
+                    RotateSelectedPiece(-rotationStep);
+                }
+
+                if (Keyboard.current.rKey.wasPressedThisFrame)
+                {
+                    RotateSelectedPiece(rotationStep);
+                }
+            }
+        }
+
+        if (selectedPiece != null &&
+            Mouse.current.leftButton.wasReleasedThisFrame)
+        {
+            selectedPiece.TrySnap(
+                snapDistance,
+                snapRotationTolerance
+            );
+
+            selectedPiece = null;
+        }
+    }
+
+    // =========================================================
+    // BEGIN PUZZLE
+    // =========================================================
+
+    public void BeginPuzzle(
+        PlayerInventory inventory,
+        Camera camera,
+        TMP_Text playerProgressText,
+        TMP_Text playerTimerText)
+    {
+        ClearRuntimePieces();
+
+        puzzleCamera = camera;
+        currentInventory = inventory;
+        selectedPiece = null;
+
+        progressText = playerProgressText;
+        timerText = playerTimerText;
+
+        CacheTimerVisuals();
+
         // -----------------------------------------------------
-        // ESC WHILE READING INTRO
+        // VALIDATION
         // -----------------------------------------------------
 
-        if (isShowingPuzzleIntro)
+        if (puzzleCamera == null)
         {
-            if (Keyboard.current != null &&
-                Keyboard.current.escapeKey.wasPressedThisFrame)
+            Debug.LogError(
+                "[PUZZLE TABLE] Puzzle camera is missing."
+            );
+
+            HidePuzzleHUD();
+            return;
+        }
+
+        if (scatterCenter == null)
+        {
+            Debug.LogError(
+                "[PUZZLE TABLE] Scatter Center is missing."
+            );
+
+            HidePuzzleHUD();
+            return;
+        }
+
+        if (puzzleDragArea == null)
+        {
+            Debug.LogError(
+                "[PUZZLE TABLE] Puzzle Drag Area is missing."
+            );
+
+            HidePuzzleHUD();
+            return;
+        }
+
+        if (!testModeShowAllPieces && inventory == null)
+        {
+            Debug.LogError(
+                "[PUZZLE TABLE] PlayerInventory is missing."
+            );
+
+            HidePuzzleHUD();
+            return;
+        }
+
+        if (pieces == null || pieces.Length == 0)
+        {
+            Debug.LogError(
+                "[PUZZLE TABLE] No puzzle pieces configured."
+            );
+
+            HidePuzzleHUD();
+            return;
+        }
+
+        ResetGuidePieces();
+
+        // =====================================================
+        // SHARED MULTIPLAYER STATE
+        // =====================================================
+
+        PuzzleNetworkState sharedState =
+            PuzzleNetworkState.Instance;
+
+        if (sharedState != null)
+        {
+            ApplyNetworkSolvedMask(
+                sharedState.SolvedMask,
+                true
+            );
+
+            if (sharedState.PuzzleCompleted)
             {
-                ClosePuzzleIntro();
+                ApplyNetworkCompletion(true);
+                return;
+            }
+
+            // If another player failed while this player was away,
+            // entering the board should show TIME'S UP / RETRY.
+            if (sharedState.PuzzleFailed &&
+                !networkRetryPending)
+            {
+                ApplyNetworkFailure(true);
+                return;
+            }
+
+            if (sharedState.PuzzleStarted)
+            {
+                waitingForNetworkStart = false;
+                networkRetryPending = false;
+                timerStarted = true;
+                timerExpired = false;
+                puzzleCompleted = false;
+                remainingTime =
+                    Mathf.Max(0f, sharedState.GetRemainingTime());
+            }
+            else
+            {
+                // First player to begin asks the State Authority
+                // to create the shared Fusion TickTimer.
+                if (!networkRetryPending)
+                {
+                    sharedState.RPC_StartPuzzle(
+                        puzzleDuration
+                    );
+                }
+
+                waitingForNetworkStart = true;
+                timerStarted = true;
+                timerExpired = false;
+                puzzleCompleted = false;
+                remainingTime =
+                    Mathf.Max(0f, puzzleDuration);
+            }
+        }
+        else
+        {
+            // =================================================
+            // OFFLINE / STANDALONE FALLBACK
+            // =================================================
+
+            snappedCount = solvedItemIds.Count;
+            ApplySolvedGuideState();
+
+            if (!timerStarted &&
+                !timerExpired &&
+                !puzzleCompleted)
+            {
+                remainingTime =
+                    Mathf.Max(0f, puzzleDuration);
+
+                timerStarted = true;
+                finalCountdownStarted = false;
+            }
+        }
+
+        ShowPuzzleHUD();
+        ShowWorldTimer();
+        UpdateProgressUI();
+        UpdateTimerAudio();
+        UpdateTimerUI();
+
+        int availableCount =
+            SpawnAvailableRuntimePieces(
+                currentInventory
+            );
+
+        puzzleActive = true;
+
+        Debug.Log(
+            $"[PUZZLE TABLE] Opened. " +
+            $"Available {availableCount}/{pieces.Length}. " +
+            $"Solved {snappedCount}/{pieces.Length}. " +
+            $"Time: {remainingTime:F1}s. " +
+            $"Shared={HasSharedNetworkState()}"
+        );
+    }
+
+    // =========================================================
+    // END PUZZLE
+    // =========================================================
+
+    public void EndPuzzle()
+    {
+        puzzleActive =
+            false;
+
+        selectedPiece =
+            null;
+
+        puzzleCamera =
+            null;
+
+        currentInventory =
+            null;
+
+        ClearRuntimePieces();
+
+        // Do not stop timer here.
+        // Leaving with ESC keeps timer running.
+        HidePuzzleHUD();
+
+        progressText =
+            null;
+
+        timerText =
+            null;
+
+        Debug.Log(
+            $"[PUZZLE TABLE] Puzzle closed. " +
+            $"Progress saved: " +
+            $"{solvedItemIds.Count}/{pieces.Length}. " +
+            $"Time remaining: {remainingTime:F1}s."
+        );
+    }
+
+    // =========================================================
+    // WORLD TIMER
+    // =========================================================
+
+    private void ShowWorldTimer()
+    {
+        if (worldTimerText == null)
+        {
+            Debug.LogWarning(
+                "[PUZZLE TABLE] World Timer Text was not assigned."
+            );
+
+            return;
+        }
+
+        Transform parent =
+            worldTimerText.transform.parent;
+
+        if (parent != null)
+        {
+            parent.gameObject.SetActive(
+                true
+            );
+        }
+
+        worldTimerText.gameObject.SetActive(
+            true
+        );
+    }
+
+    // =========================================================
+// HIDE WORLD TIMER
+// =========================================================
+
+private void HideWorldTimer()
+{
+    if (worldTimerText == null)
+        return;
+
+    worldTimerText.gameObject.SetActive(false);
+
+    Transform parent =
+        worldTimerText.transform.parent;
+
+    if (parent != null)
+    {
+        parent.gameObject.SetActive(false);
+    }
+}
+
+    // =========================================================
+    // TIMER
+    // =========================================================
+
+    private bool HasSharedNetworkState()
+    {
+        return PuzzleNetworkState.Instance != null &&
+               PuzzleNetworkState.Instance.Object != null &&
+               PuzzleNetworkState.Instance.Runner != null;
+    }
+
+    // =========================================================
+    // CACHE TIMER VISUALS
+    // =========================================================
+
+    private void CacheTimerVisuals()
+    {
+        if (timerText != null && !timerVisualCached)
+        {
+            timerNormalColor = timerText.color;
+            timerNormalScale = timerText.rectTransform.localScale;
+            timerVisualCached = true;
+        }
+
+        if (worldTimerText != null && !worldTimerVisualCached)
+        {
+            worldTimerNormalColor = worldTimerText.color;
+            worldTimerNormalScale = worldTimerText.rectTransform.localScale;
+            worldTimerVisualCached = true;
+        }
+    }
+
+    // =========================================================
+    // SHARED NETWORK SYNCHRONIZATION
+    // =========================================================
+
+    private void SyncFromNetworkState()
+    {
+        PuzzleNetworkState state =
+            PuzzleNetworkState.Instance;
+
+        if (state == null)
+            return;
+
+        int solvedMask = state.SolvedMask;
+        bool started = state.PuzzleStarted;
+        bool completed = state.PuzzleCompleted;
+        bool failed = state.PuzzleFailed;
+
+        if (!networkSnapshotInitialized)
+        {
+            networkSnapshotInitialized = true;
+            lastNetworkSolvedMask = solvedMask;
+            lastNetworkStarted = started;
+            lastNetworkCompleted = completed;
+            lastNetworkFailed = failed;
+
+            ApplyNetworkSolvedMask(
+                solvedMask,
+                true
+            );
+        }
+        else if (solvedMask != lastNetworkSolvedMask)
+        {
+            ApplyNetworkSolvedMask(
+                solvedMask,
+                false
+            );
+        }
+
+        // Authority-confirmed completion always wins.
+        if (completed)
+        {
+            ApplyNetworkCompletion(false);
+            RememberNetworkSnapshot(
+                solvedMask,
+                started,
+                completed,
+                failed
+            );
+            return;
+        }
+
+        // While a RETRY RPC is travelling to State Authority,
+        // ignore the old failed snapshot for a moment.
+        if (failed && !networkRetryPending)
+        {
+            ApplyNetworkFailure(false);
+            RememberNetworkSnapshot(
+                solvedMask,
+                started,
+                completed,
+                failed
+            );
+            return;
+        }
+
+        if (started)
+        {
+            bool retryJustStarted =
+                lastNetworkFailed ||
+                timerExpired ||
+                networkRetryPending;
+
+            waitingForNetworkStart = false;
+            networkRetryPending = false;
+
+            timerStarted = true;
+            timerExpired = false;
+            puzzleCompleted = false;
+
+            remainingTime =
+                Mathf.Max(
+                    0f,
+                    state.GetRemainingTime()
+                );
+
+            if (retryJustStarted)
+            {
+                failureEventRaised = false;
+                completionEventRaised = false;
+                finalCountdownStarted = false;
+
+                if (puzzleCamera != null)
+                {
+                    ShowPuzzleHUD();
+                    RebuildRuntimePiecesForCurrentPlayer();
+                    puzzleActive = true;
+                }
+
+                PuzzleRetried?.Invoke();
+            }
+
+            ShowWorldTimer();
+            UpdateTimerAudio();
+            UpdateTimerUI();
+        }
+        else if (waitingForNetworkStart)
+        {
+            // Keep the locally opened board responsive while waiting
+            // for State Authority to acknowledge START/RETRY.
+            timerStarted = true;
+            timerExpired = false;
+            puzzleCompleted = false;
+
+            ShowWorldTimer();
+            UpdateTimerAudio();
+            UpdateTimerUI();
+        }
+        else
+        {
+            timerStarted = false;
+            StopTimerAudio();
+        }
+
+        RememberNetworkSnapshot(
+            solvedMask,
+            started,
+            completed,
+            failed
+        );
+    }
+
+    private void RememberNetworkSnapshot(
+        int solvedMask,
+        bool started,
+        bool completed,
+        bool failed)
+    {
+        lastNetworkSolvedMask = solvedMask;
+        lastNetworkStarted = started;
+        lastNetworkCompleted = completed;
+        lastNetworkFailed = failed;
+    }
+
+    // =========================================================
+    // APPLY SHARED SOLVED MASK
+    // =========================================================
+
+    private void ApplyNetworkSolvedMask(
+        int solvedMask,
+        bool forceRebuild)
+    {
+        bool removedPieces =
+            lastNetworkSolvedMask >= 0 &&
+            (lastNetworkSolvedMask & ~solvedMask) != 0;
+
+        if (forceRebuild || removedPieces)
+        {
+            solvedItemIds.Clear();
+            ResetGuidePieces();
+
+            for (int i = 0; i < pieces.Length; i++)
+            {
+                if ((solvedMask & (1 << i)) != 0)
+                {
+                    AddSolvedEntryLocal(
+                        i,
+                        false
+                    );
+                }
+            }
+
+            snappedCount = solvedItemIds.Count;
+            ApplySolvedGuideState();
+            UpdateProgressUI();
+
+            if (puzzleActive && puzzleCamera != null)
+            {
+                RebuildRuntimePiecesForCurrentPlayer();
+            }
+
+            lastNetworkSolvedMask = solvedMask;
+            return;
+        }
+
+        for (int i = 0; i < pieces.Length; i++)
+        {
+            if ((solvedMask & (1 << i)) == 0)
+                continue;
+
+            PuzzlePieceEntry entry = pieces[i];
+
+            if (entry == null || entry.item == null)
+                continue;
+
+            if (!solvedItemIds.Contains(entry.item.itemId))
+            {
+                AddSolvedEntryLocal(
+                    i,
+                    true
+                );
+            }
+        }
+
+        snappedCount = solvedItemIds.Count;
+        UpdateProgressUI();
+        lastNetworkSolvedMask = solvedMask;
+    }
+
+    private void AddSolvedEntryLocal(
+        int pieceIndex,
+        bool updateRuntimePiece)
+    {
+        if (pieces == null ||
+            pieceIndex < 0 ||
+            pieceIndex >= pieces.Length)
+        {
+            return;
+        }
+
+        PuzzlePieceEntry entry =
+            pieces[pieceIndex];
+
+        if (entry == null || entry.item == null)
+            return;
+
+        solvedItemIds.Add(
+            entry.item.itemId
+        );
+
+        if (entry.guideRenderer != null)
+        {
+            entry.guideRenderer.enabled = false;
+        }
+
+        if (!updateRuntimePiece || !puzzleActive)
+            return;
+
+        PuzzleRuntimePiece runtimePiece =
+            FindRuntimePieceByItemId(
+                entry.item.itemId
+            );
+
+        if (runtimePiece != null)
+        {
+            runtimePiece.LockToSolvedTarget();
+        }
+        else
+        {
+            // A remote player may solve a piece that this local
+            // inventory did not originally spawn. Show it solved.
+            SpawnSolvedRuntimePiece(entry);
+        }
+    }
+
+    private PuzzleRuntimePiece FindRuntimePieceByItemId(
+        int itemId)
+    {
+        foreach (GameObject pieceObject in runtimePieces)
+        {
+            if (pieceObject == null)
+                continue;
+
+            PuzzleRuntimePiece runtimePiece =
+                pieceObject.GetComponent<PuzzleRuntimePiece>();
+
+            if (runtimePiece == null ||
+                runtimePiece.Item == null)
+            {
+                continue;
+            }
+
+            if (runtimePiece.Item.itemId == itemId)
+            {
+                return runtimePiece;
+            }
+        }
+
+        return null;
+    }
+
+    private int FindPieceIndexByItemId(
+        int itemId)
+    {
+        if (pieces == null)
+            return -1;
+
+        for (int i = 0; i < pieces.Length; i++)
+        {
+            if (pieces[i] != null &&
+                pieces[i].item != null &&
+                pieces[i].item.itemId == itemId)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    // =========================================================
+    // NETWORK RESULT STATES
+    // =========================================================
+
+    private void ApplyNetworkCompletion(
+        bool forceEvent)
+    {
+        puzzleCompleted = true;
+        timerStarted = false;
+        timerExpired = false;
+        puzzleActive = false;
+        selectedPiece = null;
+        waitingForNetworkStart = false;
+        networkRetryPending = false;
+
+        StopTimerAudio();
+        UpdateTimerUI();
+        HideWorldTimer();
+
+        if (forceEvent || !completionEventRaised)
+        {
+            completionEventRaised = true;
+            failureEventRaised = false;
+
+            Debug.Log(
+                "[PUZZLE NETWORK] Shared puzzle completed locally."
+            );
+
+            PuzzleCompleted?.Invoke();
+        }
+    }
+
+    private void ApplyNetworkFailure(
+        bool forceEvent)
+    {
+        timerStarted = false;
+        timerExpired = true;
+        puzzleCompleted = false;
+        puzzleActive = false;
+        selectedPiece = null;
+        waitingForNetworkStart = false;
+
+        remainingTime = 0f;
+
+        StopTimerAudio();
+        UpdateTimerUI();
+        HideWorldTimer();
+
+        solvedItemIds.Clear();
+        snappedCount = 0;
+        ClearRuntimePieces();
+        ResetGuidePieces();
+        UpdateProgressUI();
+
+        if (forceEvent || !failureEventRaised)
+        {
+            failureEventRaised = true;
+            completionEventRaised = false;
+
+            Debug.Log(
+                "[PUZZLE NETWORK] Shared puzzle failed. " +
+                "Local board reset to 0/8."
+            );
+
+            PuzzleFailed?.Invoke();
+        }
+    }
+
+    // =========================================================
+    // RUNTIME BOARD HELPERS
+    // =========================================================
+
+    private void ShowPuzzleHUD()
+    {
+        if (progressText != null)
+        {
+            progressText.gameObject.SetActive(true);
+        }
+
+        if (timerText != null)
+        {
+            timerText.gameObject.SetActive(true);
+        }
+    }
+
+    private int SpawnAvailableRuntimePieces(
+        PlayerInventory inventory)
+    {
+        int availableCount = 0;
+
+        foreach (PuzzlePieceEntry entry in pieces)
+        {
+            if (entry == null ||
+                entry.item == null ||
+                entry.solvedTarget == null)
+            {
+                continue;
+            }
+
+            int itemId = entry.item.itemId;
+
+            if (solvedItemIds.Contains(itemId))
+            {
+                SpawnSolvedRuntimePiece(entry);
+                availableCount++;
+                continue;
+            }
+
+            if (!testModeShowAllPieces)
+            {
+                if (inventory == null ||
+                    !inventory.HasItemId(itemId))
+                {
+                    continue;
+                }
+            }
+
+            SpawnRuntimePiece(entry);
+            availableCount++;
+        }
+
+        return availableCount;
+    }
+
+    private void RebuildRuntimePiecesForCurrentPlayer()
+    {
+        ClearRuntimePieces();
+        ResetGuidePieces();
+        ApplySolvedGuideState();
+
+        if (puzzleCamera == null)
+            return;
+
+        SpawnAvailableRuntimePieces(
+            currentInventory
+        );
+
+        snappedCount = solvedItemIds.Count;
+        UpdateProgressUI();
+    }
+
+    // =========================================================
+    // LOCAL/OFFLINE TIMER FALLBACK
+    // =========================================================
+
+    private void UpdatePuzzleTimer()
+    {
+        if (!timerStarted ||
+            timerExpired ||
+            puzzleCompleted)
+        {
+            return;
+        }
+
+        remainingTime -= Time.deltaTime;
+
+        if (remainingTime <= 0f)
+        {
+            remainingTime = 0f;
+            timerStarted = false;
+            timerExpired = true;
+            puzzleActive = false;
+            selectedPiece = null;
+
+            StopTimerAudio();
+            UpdateTimerUI();
+            HideWorldTimer();
+
+            solvedItemIds.Clear();
+            snappedCount = 0;
+            ClearRuntimePieces();
+            ResetGuidePieces();
+            UpdateProgressUI();
+
+            Debug.Log(
+                "[PUZZLE] TIME'S UP! Attempt reset to 0."
+            );
+
+            PuzzleFailed?.Invoke();
+            return;
+        }
+
+        UpdateTimerAudio();
+        UpdateTimerUI();
+    }
+
+    // =========================================================
+    // RESET FAILED ATTEMPT
+    // =========================================================
+
+    public void ResetFailedAttempt()
+    {
+        StopTimerAudio();
+
+        puzzleActive = false;
+        selectedPiece = null;
+
+        solvedItemIds.Clear();
+        snappedCount = 0;
+
+        timerStarted = false;
+        timerExpired = false;
+        puzzleCompleted = false;
+        finalCountdownStarted = false;
+        completionEventRaised = false;
+        failureEventRaised = false;
+
+        remainingTime =
+            Mathf.Max(0f, puzzleDuration);
+
+        ClearRuntimePieces();
+        ResetGuidePieces();
+        UpdateProgressUI();
+        UpdateTimerUI();
+
+        if (HasSharedNetworkState())
+        {
+            networkRetryPending = true;
+            waitingForNetworkStart = true;
+
+            PuzzleNetworkState.Instance
+                .RPC_RetryPuzzle(
+                    puzzleDuration
+                );
+
+            Debug.Log(
+                "[PUZZLE NETWORK] RETRY requested. " +
+                "Waiting for shared state authority."
+            );
+        }
+        else
+        {
+            Debug.Log(
+                "[PUZZLE] Offline retry prepared from 0/8."
+            );
+        }
+    }
+
+    // =========================================================
+    // TIMER AUDIO
+    // =========================================================
+
+    private void UpdateTimerAudio()
+    {
+        if (!timerStarted ||
+            timerExpired ||
+            puzzleCompleted)
+        {
+            StopTimerAudio();
+
+            return;
+        }
+
+        int totalSeconds =
+            Mathf.CeilToInt(
+                Mathf.Max(
+                    0f,
+                    remainingTime
+                )
+            );
+
+        // -----------------------------------------------------
+        // FINAL 10 SECONDS
+        // -----------------------------------------------------
+
+        if (totalSeconds <= 10 &&
+            totalSeconds > 0)
+        {
+            if (normalTimerAudioSource != null &&
+                normalTimerAudioSource.isPlaying)
+            {
+                normalTimerAudioSource.Stop();
+            }
+
+            if (!finalCountdownStarted)
+            {
+                finalCountdownStarted =
+                    true;
+
+                if (finalCountdownAudioSource != null)
+                {
+                    finalCountdownAudioSource.Play();
+                }
+
+                Debug.Log(
+                    "[PUZZLE AUDIO] Final 10-second countdown started."
+                );
             }
 
             return;
         }
 
         // -----------------------------------------------------
-        // ESC WHILE ASSEMBLING
+        // NORMAL TIMER
         // -----------------------------------------------------
 
-        if (!isInPuzzleMode)
-            return;
-
-        if (Keyboard.current != null &&
-            Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (normalTimerAudioSource != null &&
+            !normalTimerAudioSource.isPlaying)
         {
-            ExitPuzzleMode();
+            normalTimerAudioSource.Play();
+
+            Debug.Log(
+                "[PUZZLE AUDIO] Normal timer sound started."
+            );
         }
     }
 
     // =========================================================
-    // PLAYER PRESSES E
+    // STOP TIMER AUDIO
     // =========================================================
 
-    public void EnterPuzzleMode(
-        Transform puzzleCameraPoint,
-        PuzzleTableController puzzleTable,
-        PlayerInventory inventory)
+    private void StopTimerAudio()
     {
-        if (isInPuzzleMode ||
-            isShowingPuzzleIntro ||
-            isShowingPuzzleResult)
+        if (normalTimerAudioSource != null &&
+            normalTimerAudioSource.isPlaying)
         {
-            return;
+            normalTimerAudioSource.Stop();
         }
 
-        if (Object != null &&
-            !Object.HasInputAuthority)
+        if (finalCountdownAudioSource != null &&
+            finalCountdownAudioSource.isPlaying)
         {
+            finalCountdownAudioSource.Stop();
+        }
+    }
+
+    // =========================================================
+    // TIMER UI
+    // =========================================================
+
+    private void UpdateTimerUI()
+    {
+        int totalSeconds =
+            Mathf.CeilToInt(
+                Mathf.Max(
+                    0f,
+                    remainingTime
+                )
+            );
+
+        UpdateSingleTimerText(
+            timerText,
+            timerNormalColor,
+            timerNormalScale,
+            totalSeconds
+        );
+
+        UpdateSingleTimerText(
+            worldTimerText,
+            worldTimerNormalColor,
+            worldTimerNormalScale,
+            totalSeconds
+        );
+    }
+
+    // =========================================================
+    // SINGLE TIMER
+    // =========================================================
+
+    private void UpdateSingleTimerText(
+        TMP_Text targetText,
+        Color normalColor,
+        Vector3 normalScale,
+        int totalSeconds)
+    {
+        if (targetText == null)
+            return;
+
+        // -----------------------------------------------------
+        // TIME UP
+        // -----------------------------------------------------
+
+        if (timerExpired)
+        {
+            targetText.text =
+                "TIME UP!";
+
+            targetText.color =
+                Color.red;
+
+            targetText.rectTransform.localScale =
+                normalScale;
+
             return;
         }
 
         // -----------------------------------------------------
-        // VALIDATION
+        // COMPLETED
         // -----------------------------------------------------
 
-        if (puzzleCameraPoint == null)
+        if (puzzleCompleted)
         {
-            Debug.LogError(
-                "[PUZZLE MODE] PuzzleCameraPoint is missing."
+            int completedMinutes =
+                totalSeconds / 60;
+
+            int completedSeconds =
+                totalSeconds % 60;
+
+            targetText.text =
+                $"{completedMinutes:00}:{completedSeconds:00}";
+
+            targetText.color =
+                normalColor;
+
+            targetText.rectTransform.localScale =
+                normalScale;
+
+            return;
+        }
+
+        // -----------------------------------------------------
+        // FINAL 10
+        // -----------------------------------------------------
+
+        if (totalSeconds <= 10 &&
+            totalSeconds > 0)
+        {
+            targetText.text =
+                totalSeconds.ToString();
+
+            targetText.color =
+                Color.red;
+
+            UpdateTimerHeartbeat(
+                targetText,
+                normalScale
             );
 
             return;
         }
 
-        if (puzzleTable == null)
-        {
-            Debug.LogError(
-                "[PUZZLE MODE] PuzzleTableController is missing."
-            );
-
-            return;
-        }
-
-        if (playerCamera == null)
-        {
-            Debug.LogError(
-                "[PUZZLE MODE] Player Camera is missing."
-            );
-
-            return;
-        }
-
         // -----------------------------------------------------
-        // STORE DATA
+        // NORMAL
         // -----------------------------------------------------
 
-        pendingPuzzleCameraPoint =
-            puzzleCameraPoint;
+        int minutes =
+            totalSeconds / 60;
 
-        pendingPuzzleTable =
-            puzzleTable;
+        int seconds =
+            totalSeconds % 60;
 
-        pendingInventory =
-            inventory;
+        targetText.text =
+            $"{minutes:00}:{seconds:00}";
 
-        // Save normal player states.
-        SavePlayerControlStates();
+        targetText.color =
+            normalColor;
 
-        // Disable movement/look and silence footsteps.
-        DisablePlayerControls();
+        targetText.rectTransform.localScale =
+            normalScale;
+    }
 
-        // Stop pending cursor relock.
-        if (cursorRelockRoutine != null)
-        {
-            StopCoroutine(
-                cursorRelockRoutine
+    // =========================================================
+    // HEARTBEAT
+    // =========================================================
+
+    private void UpdateTimerHeartbeat(
+        TMP_Text targetText,
+        Vector3 normalScale)
+    {
+        if (targetText == null)
+            return;
+
+        float phase =
+            Mathf.Repeat(
+                Time.unscaledTime,
+                1f
             );
 
-            cursorRelockRoutine =
-                null;
+        float beat1 =
+            Mathf.Clamp01(
+                1f -
+                Mathf.Abs(
+                    phase - 0.12f
+                ) / 0.10f
+            );
+
+        float beat2 =
+            Mathf.Clamp01(
+                1f -
+                Mathf.Abs(
+                    phase - 0.32f
+                ) / 0.08f
+            );
+
+        beat1 =
+            Mathf.SmoothStep(
+                0f,
+                1f,
+                beat1
+            );
+
+        beat2 =
+            Mathf.SmoothStep(
+                0f,
+                1f,
+                beat2
+            );
+
+        float pulse =
+            (beat1 * 0.18f) +
+            (beat2 * 0.10f);
+
+        targetText.rectTransform.localScale =
+            normalScale *
+            (1f + pulse);
+    }
+
+    // =========================================================
+    // PROGRESS UI
+    // =========================================================
+
+    private void UpdateProgressUI()
+    {
+        if (progressText == null)
+            return;
+
+        int totalPieces =
+            pieces != null
+                ? pieces.Length
+                : 0;
+
+        progressText.text =
+            $"Pieces: {snappedCount} / {totalPieces}";
+    }
+
+    // =========================================================
+    // HIDE PLAYER HUD
+    // =========================================================
+
+    private void HidePuzzleHUD()
+    {
+        if (progressText != null)
+        {
+            progressText.gameObject.SetActive(
+                false
+            );
         }
 
-        // =====================================================
-        // INTRO ALREADY SEEN
-        // =====================================================
+        if (timerText != null)
+        {
+            timerText.rectTransform.localScale =
+                timerNormalScale;
 
-        if (hasSeenPuzzleIntro)
+            timerText.gameObject.SetActive(
+                false
+            );
+        }
+    }
+
+    // =========================================================
+    // SELECT PIECE
+    // =========================================================
+
+    private void TrySelectPiece()
+    {
+        Vector2 mousePosition =
+            Mouse.current.position.ReadValue();
+
+        Ray ray =
+            puzzleCamera.ScreenPointToRay(
+                mousePosition
+            );
+
+        RaycastHit[] hits =
+            Physics.RaycastAll(
+                ray,
+                100f,
+                ~0,
+                QueryTriggerInteraction.Ignore
+            );
+
+        PuzzleRuntimePiece bestPiece =
+            null;
+
+        float bestDistance =
+            float.MaxValue;
+
+        foreach (RaycastHit hit in hits)
+        {
+            PuzzleRuntimePiece piece =
+                hit.collider
+                    .GetComponentInParent<PuzzleRuntimePiece>();
+
+            if (piece == null ||
+                piece.IsLocked)
+            {
+                continue;
+            }
+
+            if (hit.distance < bestDistance)
+            {
+                bestDistance =
+                    hit.distance;
+
+                bestPiece =
+                    piece;
+            }
+        }
+
+        selectedPiece =
+            bestPiece;
+
+        if (selectedPiece != null)
         {
             Debug.Log(
-                "[PUZZLE MODE] Intro already completed. " +
-                "Opening puzzle directly."
+                $"[PUZZLE] Selected " +
+                $"{selectedPiece.Item.itemName}"
             );
+        }
+    }
 
-            StartActualPuzzle();
+    // =========================================================
+    // DRAG
+    // =========================================================
 
+    private void DragSelectedPiece()
+    {
+        if (selectedPiece == null ||
+            puzzleCamera == null ||
+            puzzleDragArea == null ||
+            Mouse.current == null)
+        {
             return;
         }
 
-        // =====================================================
-        // FIRST TIME
-        // =====================================================
+        Transform areaTransform =
+            puzzleDragArea.transform;
 
-        isShowingPuzzleIntro =
-            true;
+        Vector3 boardNormal =
+            areaTransform.up;
 
-        if (puzzleIntroPanel != null)
-        {
-            puzzleIntroPanel.SetActive(true);
-        }
-        else
-        {
-            Debug.LogWarning(
-                "[PUZZLE MODE] Puzzle Intro Panel missing. " +
-                "Starting puzzle directly."
+        Plane boardPlane =
+            new Plane(
+                boardNormal,
+                areaTransform.position +
+                boardNormal * surfaceOffset
             );
 
-            hasSeenPuzzleIntro =
-                true;
+        Vector2 mousePosition =
+            Mouse.current.position.ReadValue();
 
-            isShowingPuzzleIntro =
-                false;
+        Ray ray =
+            puzzleCamera.ScreenPointToRay(
+                mousePosition
+            );
 
-            StartActualPuzzle();
-
+        if (!boardPlane.Raycast(
+            ray,
+            out float enter))
+        {
             return;
         }
 
-        Cursor.lockState =
-            CursorLockMode.None;
+        Vector3 worldHit =
+            ray.GetPoint(
+                enter
+            );
 
-        Cursor.visible =
-            true;
+        Vector3 localHit =
+            areaTransform.InverseTransformPoint(
+                worldHit
+            );
 
-        Debug.Log(
-            "[PUZZLE MODE] Puzzle instructions opened."
+        Vector3 center =
+            puzzleDragArea.center;
+
+        Vector3 size =
+            puzzleDragArea.size;
+
+        float minX =
+            center.x -
+            size.x * 0.5f;
+
+        float maxX =
+            center.x +
+            size.x * 0.5f;
+
+        float minZ =
+            center.z -
+            size.z * 0.5f;
+
+        float maxZ =
+            center.z +
+            size.z * 0.5f;
+
+        localHit.x =
+            Mathf.Clamp(
+                localHit.x,
+                minX,
+                maxX
+            );
+
+        localHit.z =
+            Mathf.Clamp(
+                localHit.z,
+                minZ,
+                maxZ
+            );
+
+        localHit.y =
+            center.y +
+            surfaceOffset;
+
+        selectedPiece.transform.position =
+            areaTransform.TransformPoint(
+                localHit
+            );
+    }
+
+    // =========================================================
+    // ROTATE
+    // =========================================================
+
+    private void RotateSelectedPiece(
+        float angle)
+    {
+        if (selectedPiece == null)
+            return;
+
+        Transform rotationReference =
+            puzzleDragArea != null
+                ? puzzleDragArea.transform
+                : scatterCenter;
+
+        selectedPiece.transform.rotation =
+            Quaternion.AngleAxis(
+                angle,
+                rotationReference.up
+            ) *
+            selectedPiece.transform.rotation;
+    }
+
+    // =========================================================
+    // SPAWN UNSOLVED
+    // =========================================================
+
+    private void SpawnRuntimePiece(
+        PuzzlePieceEntry entry)
+    {
+        GameObject pieceObject =
+            CreateRuntimePieceVisual(
+                entry
+            );
+
+        if (pieceObject == null)
+            return;
+
+        float randomX =
+            UnityEngine.Random.Range(
+                -scatterSize.x * 0.5f,
+                scatterSize.x * 0.5f
+            );
+
+        float randomZ =
+            UnityEngine.Random.Range(
+                -scatterSize.y * 0.5f,
+                scatterSize.y * 0.5f
+            );
+
+        pieceObject.transform.position =
+            scatterCenter.position +
+            scatterCenter.right * randomX +
+            scatterCenter.forward * randomZ +
+            scatterCenter.up * surfaceOffset;
+
+        float randomRotation =
+            UnityEngine.Random.Range(
+                0,
+                4
+            ) * 90f;
+
+        pieceObject.transform.rotation =
+            Quaternion.AngleAxis(
+                randomRotation,
+                scatterCenter.up
+            ) *
+            entry.solvedTarget.rotation;
+
+        EnsurePieceCollider(
+            pieceObject
+        );
+
+        PuzzleRuntimePiece runtimePiece =
+            pieceObject.AddComponent<PuzzleRuntimePiece>();
+
+        runtimePiece.Initialize(
+            entry.item,
+            entry.solvedTarget,
+            this
+        );
+
+        runtimePieces.Add(
+            pieceObject
         );
     }
 
     // =========================================================
-    // BEGIN BUTTON
+    // SPAWN SOLVED
     // =========================================================
 
-    public void BeginPuzzleFromIntro()
+    private void SpawnSolvedRuntimePiece(
+        PuzzlePieceEntry entry)
     {
-        if (!isShowingPuzzleIntro)
+        GameObject pieceObject =
+            CreateRuntimePieceVisual(
+                entry
+            );
+
+        if (pieceObject == null)
             return;
 
-        hasSeenPuzzleIntro =
-            true;
+        pieceObject.name =
+            $"Solved_{entry.item.itemName}";
 
-        if (puzzleIntroPanel != null)
-        {
-            puzzleIntroPanel.SetActive(false);
-        }
+        PuzzleRuntimePiece runtimePiece =
+            pieceObject.AddComponent<PuzzleRuntimePiece>();
 
-        isShowingPuzzleIntro =
-            false;
-
-        Debug.Log(
-            "[PUZZLE MODE] BEGIN clicked. " +
-            "Intro will not appear again."
+        runtimePiece.Initialize(
+            entry.item,
+            entry.solvedTarget,
+            this
         );
 
-        StartActualPuzzle();
-    }
+        runtimePiece.LockToSolvedTarget();
 
-    // =========================================================
-    // START ACTUAL PUZZLE
-    // =========================================================
-
-    private void StartActualPuzzle()
-    {
-        if (pendingPuzzleCameraPoint == null)
-        {
-            Debug.LogError(
-                "[PUZZLE MODE] Pending PuzzleCameraPoint missing."
-            );
-
-            CancelPuzzleStart();
-
-            return;
-        }
-
-        if (pendingPuzzleTable == null)
-        {
-            Debug.LogError(
-                "[PUZZLE MODE] Pending PuzzleTableController missing."
-            );
-
-            CancelPuzzleStart();
-
-            return;
-        }
-
-        if (playerCamera == null)
-        {
-            Debug.LogError(
-                "[PUZZLE MODE] Player Camera missing."
-            );
-
-            CancelPuzzleStart();
-
-            return;
-        }
-
-        // -----------------------------------------------------
-        // SAVE CAMERA
-        // -----------------------------------------------------
-
-        originalCameraLocalPosition =
-            playerCamera.localPosition;
-
-        originalCameraLocalRotation =
-            playerCamera.localRotation;
-
-        // -----------------------------------------------------
-        // MOVE CAMERA
-        // -----------------------------------------------------
-
-        playerCamera.SetPositionAndRotation(
-            pendingPuzzleCameraPoint.position,
-            pendingPuzzleCameraPoint.rotation
-        );
-
-        // -----------------------------------------------------
-        // REMOVE OLD EVENT SUBSCRIPTIONS
-        // -----------------------------------------------------
-
-        if (activePuzzleTable != null)
-        {
-            activePuzzleTable.PuzzleCompleted -=
-                HandlePuzzleCompleted;
-
-            activePuzzleTable.PuzzleFailed -=
-                HandlePuzzleFailed;
-        }
-
-        activePuzzleTable =
-            pendingPuzzleTable;
-
-        // -----------------------------------------------------
-        // SUBSCRIBE TO RESULT EVENTS
-        // -----------------------------------------------------
-
-        activePuzzleTable.PuzzleCompleted -=
-            HandlePuzzleCompleted;
-
-        activePuzzleTable.PuzzleFailed -=
-            HandlePuzzleFailed;
-
-        activePuzzleTable.PuzzleCompleted +=
-            HandlePuzzleCompleted;
-
-        activePuzzleTable.PuzzleFailed +=
-            HandlePuzzleFailed;
-
-        // -----------------------------------------------------
-        // CAMERA COMPONENT
-        // -----------------------------------------------------
-
-        Camera cameraComponent =
-            playerCamera.GetComponent<Camera>();
-
-        if (cameraComponent == null)
-        {
-            Debug.LogError(
-                "[PUZZLE MODE] Main Camera has no Camera component."
-            );
-
-            CancelPuzzleStart();
-
-            return;
-        }
-
-        // =====================================================
-        // START
-        // =====================================================
-
-        activePuzzleTable.BeginPuzzle(
-            pendingInventory,
-            cameraComponent,
-            puzzleProgressText,
-            puzzleTimerText
-        );
-
-        Cursor.lockState =
-            CursorLockMode.None;
-
-        Cursor.visible =
-            true;
-
-        isInPuzzleMode =
-            true;
-
-        resultIsFailure =
-            false;
-
-        Debug.Log(
-            "[PUZZLE MODE] Puzzle started."
+        runtimePieces.Add(
+            pieceObject
         );
     }
 
     // =========================================================
-    // PUZZLE COMPLETE
+    // CREATE RUNTIME VISUAL
     // =========================================================
 
-    private void HandlePuzzleCompleted()
+    private GameObject CreateRuntimePieceVisual(
+        PuzzlePieceEntry entry)
     {
-        if (!isInPuzzleMode)
-            return;
-
-        resultIsFailure =
-            false;
-
-        isShowingPuzzleResult =
-            true;
-
-        // -----------------------------------------------------
-        // TEXT
-        // -----------------------------------------------------
-
-        if (resultTitleText != null)
+        if (entry == null ||
+            entry.item == null ||
+            entry.solvedTarget == null)
         {
-            resultTitleText.text =
-                "PUZZLE COMPLETE";
+            return null;
         }
 
-        if (resultMessageText != null)
-        {
-            resultMessageText.text =
-                "The map has been restored.";
-        }
-
-        // -----------------------------------------------------
-        // BUTTON
-        // -----------------------------------------------------
-
-        SetResultButtonText(
-            "CONTINUE"
-        );
-
-        // -----------------------------------------------------
-        // HIDE PUZZLE HUD
-        // -----------------------------------------------------
-
-        HidePlayerPuzzleHUD();
-
-        // -----------------------------------------------------
-        // SHOW RESULT
-        // -----------------------------------------------------
-
-        if (puzzleResultPanel != null)
-        {
-            puzzleResultPanel.SetActive(true);
-        }
-        else
-        {
-            Debug.LogWarning(
-                "[PUZZLE MODE] Puzzle Result Panel is missing."
-            );
-        }
-
-        Cursor.lockState =
-            CursorLockMode.None;
-
-        Cursor.visible =
-            true;
-
-        Debug.Log(
-            "[PUZZLE MODE] PUZZLE COMPLETE result shown."
-        );
-    }
-
-    // =========================================================
-    // PUZZLE FAILED
-    // =========================================================
-
-    private void HandlePuzzleFailed()
-    {
-        if (!isInPuzzleMode)
-            return;
-
-        resultIsFailure =
-            true;
-
-        isShowingPuzzleResult =
-            true;
-
-        // -----------------------------------------------------
-        // TEXT
-        // -----------------------------------------------------
-
-        if (resultTitleText != null)
-        {
-            resultTitleText.text =
-                "TIME'S UP";
-        }
-
-        if (resultMessageText != null)
-        {
-            resultMessageText.text =
-                "The map was not completed in time.";
-        }
-
-        // -----------------------------------------------------
-        // BUTTON
-        // -----------------------------------------------------
-
-        SetResultButtonText(
-            "RETRY"
-        );
-
-        // -----------------------------------------------------
-        // HIDE PUZZLE HUD
-        // -----------------------------------------------------
-
-        HidePlayerPuzzleHUD();
-
-        // -----------------------------------------------------
-        // SHOW RESULT
-        // -----------------------------------------------------
-
-        if (puzzleResultPanel != null)
-        {
-            puzzleResultPanel.SetActive(true);
-        }
-        else
-        {
-            Debug.LogWarning(
-                "[PUZZLE MODE] Puzzle Result Panel is missing."
-            );
-        }
-
-        Cursor.lockState =
-            CursorLockMode.None;
-
-        Cursor.visible =
-            true;
-
-        Debug.Log(
-            "[PUZZLE MODE] TIME'S UP result shown."
-        );
-    }
-
-    // =========================================================
-    // RESULT BUTTON
-    // =========================================================
-
-    private void ContinueAfterPuzzleResult()
-    {
-        if (!isShowingPuzzleResult)
-            return;
-
-        // =====================================================
-        // FAILURE → RETRY
-        // =====================================================
-
-        if (resultIsFailure)
-        {
-            RetryPuzzle();
-
-            return;
-        }
-
-        // =====================================================
-        // SUCCESS → CONTINUE
-        // =====================================================
-
-        isShowingPuzzleResult =
-            false;
-
-        if (puzzleResultPanel != null)
-        {
-            puzzleResultPanel.SetActive(false);
-        }
-
-        Debug.Log(
-            "[PUZZLE MODE] CONTINUE clicked."
-        );
-
-        ExitPuzzleMode();
-    }
-
-    // =========================================================
-    // RETRY PUZZLE
-    // =========================================================
-
-    private void RetryPuzzle()
-    {
-        if (activePuzzleTable == null)
-        {
-            Debug.LogError(
-                "[PUZZLE MODE] Cannot retry. " +
-                "Active puzzle table is missing."
+        GameObject pieceObject =
+            Instantiate(
+                entry.solvedTarget.gameObject,
+                entry.solvedTarget.parent
             );
 
-            return;
-        }
+        pieceObject.name =
+            $"Runtime_{entry.item.itemName}";
 
-        if (playerCamera == null)
-        {
-            Debug.LogError(
-                "[PUZZLE MODE] Cannot retry. " +
-                "Player camera is missing."
-            );
-
-            return;
-        }
-
-        Camera cameraComponent =
-            playerCamera.GetComponent<Camera>();
-
-        if (cameraComponent == null)
-        {
-            Debug.LogError(
-                "[PUZZLE MODE] Cannot retry. " +
-                "Camera component is missing."
-            );
-
-            return;
-        }
-
-        // -----------------------------------------------------
-        // CLOSE FAILURE PANEL
-        // -----------------------------------------------------
-
-        isShowingPuzzleResult =
-            false;
-
-        resultIsFailure =
-            false;
-
-        if (puzzleResultPanel != null)
-        {
-            puzzleResultPanel.SetActive(false);
-        }
-
-        // -----------------------------------------------------
-        // ERASE FAILED ATTEMPT
-        // -----------------------------------------------------
-
-        activePuzzleTable.ResetFailedAttempt();
-
-        // -----------------------------------------------------
-        // START FRESH ATTEMPT
-        // -----------------------------------------------------
-
-        activePuzzleTable.BeginPuzzle(
-            pendingInventory,
-            cameraComponent,
-            puzzleProgressText,
-            puzzleTimerText
-        );
-
-        Cursor.lockState =
-            CursorLockMode.None;
-
-        Cursor.visible =
-            true;
-
-        Debug.Log(
-            "[PUZZLE MODE] RETRY clicked. " +
-            "New attempt started from 0/8."
-        );
-    }
-
-    // =========================================================
-    // SET RESULT BUTTON LABEL
-    // =========================================================
-
-    private void SetResultButtonText(
-        string text)
-    {
-        if (continueButton == null)
-            return;
-
-        TMP_Text buttonText =
-            continueButton.GetComponentInChildren<TMP_Text>(
+        PuzzleTarget[] targetComponents =
+            pieceObject.GetComponentsInChildren<PuzzleTarget>(
                 true
             );
 
-        if (buttonText != null)
+        foreach (PuzzleTarget target
+                 in targetComponents)
         {
-            buttonText.text =
-                text;
-        }
-    }
-
-    // =========================================================
-    // HIDE PUZZLE HUD
-    // =========================================================
-
-    private void HidePlayerPuzzleHUD()
-    {
-        if (puzzleProgressText != null)
-        {
-            puzzleProgressText.gameObject.SetActive(
-                false
-            );
+            if (target != null)
+            {
+                Destroy(target);
+            }
         }
 
-        if (puzzleTimerText != null)
-        {
-            puzzleTimerText.gameObject.SetActive(
-                false
-            );
-        }
-    }
-
-    // =========================================================
-    // CANCEL FAILED START
-    // =========================================================
-
-    private void CancelPuzzleStart()
-    {
-        isShowingPuzzleIntro =
-            false;
-
-        isShowingPuzzleResult =
-            false;
-
-        resultIsFailure =
-            false;
-
-        isInPuzzleMode =
-            false;
-
-        if (puzzleIntroPanel != null)
-        {
-            puzzleIntroPanel.SetActive(false);
-        }
-
-        if (puzzleResultPanel != null)
-        {
-            puzzleResultPanel.SetActive(false);
-        }
-
-        if (activePuzzleTable != null)
-        {
-            activePuzzleTable.PuzzleCompleted -=
-                HandlePuzzleCompleted;
-
-            activePuzzleTable.PuzzleFailed -=
-                HandlePuzzleFailed;
-
-            activePuzzleTable =
-                null;
-        }
-
-        RestorePlayerControls();
-
-        ClearPendingPuzzle();
-
-        if (cursorRelockRoutine != null)
-        {
-            StopCoroutine(
-                cursorRelockRoutine
-            );
-        }
-
-        cursorRelockRoutine =
-            StartCoroutine(
-                RelockCursorNextFrame()
-            );
-    }
-
-    // =========================================================
-    // ESC WHILE INTRO OPEN
-    // =========================================================
-
-    private void ClosePuzzleIntro()
-    {
-        if (!isShowingPuzzleIntro)
-            return;
-
-        isShowingPuzzleIntro =
-            false;
-
-        if (puzzleIntroPanel != null)
-        {
-            puzzleIntroPanel.SetActive(false);
-        }
-
-        // Player did NOT press BEGIN,
-        // so intro should still appear next time.
-
-        ClearPendingPuzzle();
-
-        RestorePlayerControls();
-
-        if (cursorRelockRoutine != null)
-        {
-            StopCoroutine(
-                cursorRelockRoutine
-            );
-        }
-
-        cursorRelockRoutine =
-            StartCoroutine(
-                RelockCursorNextFrame()
+        Renderer[] renderers =
+            pieceObject.GetComponentsInChildren<Renderer>(
+                true
             );
 
-        Debug.Log(
-            "[PUZZLE MODE] Instructions closed without BEGIN."
-        );
-    }
-
-    // =========================================================
-    // EXIT PUZZLE
-    // =========================================================
-
-    public void ExitPuzzleMode()
-    {
-        if (!isInPuzzleMode)
-            return;
-
-        isInPuzzleMode =
-            false;
-
-        isShowingPuzzleResult =
-            false;
-
-        resultIsFailure =
-            false;
-
-        // -----------------------------------------------------
-        // HIDE RESULT
-        // -----------------------------------------------------
-
-        if (puzzleResultPanel != null)
+        foreach (Renderer renderer
+                 in renderers)
         {
-            puzzleResultPanel.SetActive(false);
-        }
+            if (renderer == null)
+                continue;
 
-        // -----------------------------------------------------
-        // END ACTIVE PUZZLE
-        // -----------------------------------------------------
-
-        if (activePuzzleTable != null)
-        {
-            activePuzzleTable.PuzzleCompleted -=
-                HandlePuzzleCompleted;
-
-            activePuzzleTable.PuzzleFailed -=
-                HandlePuzzleFailed;
-
-            activePuzzleTable.EndPuzzle();
-
-            activePuzzleTable =
-                null;
-        }
-
-        // -----------------------------------------------------
-        // RESTORE CAMERA
-        // -----------------------------------------------------
-
-        if (playerCamera != null)
-        {
-            playerCamera.localPosition =
-                originalCameraLocalPosition;
-
-            playerCamera.localRotation =
-                originalCameraLocalRotation;
-        }
-
-        // -----------------------------------------------------
-        // RESTORE PLAYER
-        // -----------------------------------------------------
-
-        RestorePlayerControls();
-
-        ClearPendingPuzzle();
-
-        // -----------------------------------------------------
-        // RELOCK CURSOR
-        // -----------------------------------------------------
-
-        if (cursorRelockRoutine != null)
-        {
-            StopCoroutine(
-                cursorRelockRoutine
-            );
-        }
-
-        cursorRelockRoutine =
-            StartCoroutine(
-                RelockCursorNextFrame()
-            );
-
-        Debug.Log(
-            "[PUZZLE MODE] Exited puzzle mode."
-        );
-    }
-
-    // =========================================================
-    // SAVE PLAYER STATE
-    // =========================================================
-
-    private void SavePlayerControlStates()
-    {
-        if (playerController != null)
-        {
-            playerControllerWasEnabled =
-                playerController.enabled;
-        }
-
-        if (playerInteractor != null)
-        {
-            playerInteractorWasEnabled =
-                playerInteractor.enabled;
-        }
-
-        if (cameraController != null)
-        {
-            cameraControllerWasEnabled =
-                cameraController.enabled;
-        }
-
-        if (footstepsAudioSource != null)
-        {
-            footstepsWasMuted =
-                footstepsAudioSource.mute;
-        }
-    }
-
-    // =========================================================
-    // DISABLE PLAYER
-    // =========================================================
-
-    private void DisablePlayerControls()
-    {
-        // Stop and mute footsteps immediately.
-        if (footstepsAudioSource != null)
-        {
-            footstepsAudioSource.Stop();
-
-            footstepsAudioSource.mute =
+            renderer.enabled =
                 true;
+
+            if (puzzlePieceMaterial != null)
+            {
+                renderer.sharedMaterial =
+                    puzzlePieceMaterial;
+            }
         }
 
-        if (playerController != null)
+        if (runtimePiecesRoot != null)
         {
-            playerController.enabled =
-                false;
+            pieceObject.transform.SetParent(
+                runtimePiecesRoot,
+                true
+            );
         }
 
-        if (playerInteractor != null)
-        {
-            playerInteractor.enabled =
-                false;
-        }
-
-        if (cameraController != null)
-        {
-            cameraController.enabled =
-                false;
-        }
+        return pieceObject;
     }
 
     // =========================================================
-    // RESTORE PLAYER
+    // COLLIDER
     // =========================================================
 
-    private void RestorePlayerControls()
+    private void EnsurePieceCollider(
+        GameObject pieceObject)
     {
-        if (playerController != null)
+        if (pieceObject == null)
+            return;
+
+        Collider[] colliders =
+            pieceObject.GetComponentsInChildren<Collider>(
+                true
+            );
+
+        if (colliders.Length > 0)
         {
-            playerController.enabled =
-                playerControllerWasEnabled;
+            foreach (Collider col in colliders)
+            {
+                if (col != null)
+                {
+                    col.enabled =
+                        true;
+                }
+            }
+
+            return;
         }
 
-        if (playerInteractor != null)
+        MeshFilter meshFilter =
+            pieceObject.GetComponentInChildren<MeshFilter>(
+                true
+            );
+
+        if (meshFilter == null ||
+            meshFilter.sharedMesh == null)
         {
-            playerInteractor.enabled =
-                playerInteractorWasEnabled;
+            Debug.LogWarning(
+                $"[PUZZLE] No collider or mesh found on " +
+                $"{pieceObject.name}."
+            );
+
+            return;
         }
 
-        if (cameraController != null)
-        {
-            cameraController.enabled =
-                cameraControllerWasEnabled;
-        }
+        MeshCollider meshCollider =
+            meshFilter.gameObject
+                .AddComponent<MeshCollider>();
 
-        if (footstepsAudioSource != null)
-        {
-            footstepsAudioSource.Stop();
-
-            footstepsAudioSource.mute =
-                footstepsWasMuted;
-        }
+        meshCollider.sharedMesh =
+            meshFilter.sharedMesh;
     }
 
     // =========================================================
-    // CLEAR PENDING DATA
+    // PIECE SNAPPED
     // =========================================================
 
-    private void ClearPendingPuzzle()
+    public void NotifyPieceSnapped(
+        PuzzleRuntimePiece piece)
     {
-        pendingPuzzleCameraPoint =
-            null;
+        if (piece == null ||
+            piece.Item == null ||
+            timerExpired ||
+            puzzleCompleted)
+        {
+            return;
+        }
 
-        pendingPuzzleTable =
-            null;
+        int itemId =
+            piece.Item.itemId;
 
-        pendingInventory =
-            null;
-    }
+        // =====================================================
+        // SHARED MULTIPLAYER SOLVE
+        // =====================================================
 
-    // =========================================================
-    // CURSOR
-    // =========================================================
+        if (HasSharedNetworkState())
+        {
+            int pieceIndex =
+                FindPieceIndexByItemId(
+                    itemId
+                );
 
-    private IEnumerator RelockCursorNextFrame()
-    {
-        yield return null;
+            if (pieceIndex < 0)
+            {
+                Debug.LogError(
+                    $"[PUZZLE NETWORK] Could not map item " +
+                    $"{itemId} to a puzzle index."
+                );
 
-        yield return
-            new WaitForEndOfFrame();
+                return;
+            }
 
-        Cursor.lockState =
-            CursorLockMode.Locked;
+            PuzzleNetworkState state =
+                PuzzleNetworkState.Instance;
 
-        Cursor.visible =
-            false;
+            if (state.PuzzleCompleted ||
+                state.PuzzleFailed)
+            {
+                return;
+            }
 
-        cursorRelockRoutine =
-            null;
+            // Optimistic local update for instant feedback.
+            AddSolvedEntryLocal(
+                pieceIndex,
+                true
+            );
+
+            snappedCount =
+                solvedItemIds.Count;
+
+            UpdateProgressUI();
+
+            state.RPC_SolvePiece(
+                pieceIndex
+            );
+
+            Debug.Log(
+                $"[PUZZLE NETWORK] Requested solve for " +
+                $"piece {pieceIndex + 1}. " +
+                $"Local progress: {snappedCount}/{pieces.Length}"
+            );
+
+            // Completion is NOT decided locally.
+            // PuzzleNetworkState is authoritative and will
+            // replicate PuzzleCompleted to every player.
+            return;
+        }
+
+        // =====================================================
+        // OFFLINE / STANDALONE SOLVE
+        // =====================================================
+
+        if (!solvedItemIds.Add(itemId))
+        {
+            return;
+        }
+
+        snappedCount =
+            solvedItemIds.Count;
+
+        UpdateProgressUI();
+
+        foreach (PuzzlePieceEntry entry in pieces)
+        {
+            if (entry == null || entry.item == null)
+                continue;
+
+            if (entry.item == piece.Item ||
+                entry.item.itemId == itemId)
+            {
+                if (entry.guideRenderer != null)
+                {
+                    entry.guideRenderer.enabled = false;
+                }
+
+                break;
+            }
+        }
 
         Debug.Log(
-            "[PUZZLE MODE] Mouse locked again."
+            $"[PUZZLE] Correct! " +
+            $"{piece.Item.itemName} snapped. " +
+            $"Progress: {snappedCount}/{pieces.Length}"
         );
+
+        if (snappedCount >= pieces.Length)
+        {
+            puzzleCompleted = true;
+            timerStarted = false;
+            puzzleActive = false;
+            selectedPiece = null;
+
+            StopTimerAudio();
+            UpdateTimerUI();
+            HideWorldTimer();
+
+            PuzzleCompleted?.Invoke();
+        }
+    }
+
+    // =========================================================
+    // RESET GUIDES
+    // =========================================================
+
+    private void ResetGuidePieces()
+    {
+        if (pieces == null)
+            return;
+
+        foreach (PuzzlePieceEntry entry in pieces)
+        {
+            if (entry == null)
+                continue;
+
+            if (entry.guideRenderer != null)
+            {
+                entry.guideRenderer.enabled =
+                    true;
+            }
+        }
+    }
+
+    // =========================================================
+    // APPLY SAVED GUIDES
+    // =========================================================
+
+    private void ApplySolvedGuideState()
+    {
+        if (pieces == null)
+            return;
+
+        foreach (PuzzlePieceEntry entry in pieces)
+        {
+            if (entry == null ||
+                entry.item == null ||
+                entry.guideRenderer == null)
+            {
+                continue;
+            }
+
+            bool isSolved =
+                solvedItemIds.Contains(
+                    entry.item.itemId
+                );
+
+            entry.guideRenderer.enabled =
+                !isSolved;
+        }
+    }
+
+    // =========================================================
+    // CLEAR RUNTIME PIECES
+    // =========================================================
+
+    private void ClearRuntimePieces()
+    {
+        foreach (GameObject piece in runtimePieces)
+        {
+            if (piece != null)
+            {
+                Destroy(piece);
+            }
+        }
+
+        runtimePieces.Clear();
     }
 }

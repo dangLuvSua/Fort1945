@@ -3990,6 +3990,7 @@ GameObject:
   - component: {fileID: 4128960301456763861}
   - component: {fileID: 9112613739244612209}
   - component: {fileID: 7360835904123039923}
+  - component: {fileID: 4890513603171239246}
   m_Layer: 0
   m_Name: Bar
   m_TagString: Untagged
@@ -4120,6 +4121,27 @@ MonoBehaviour:
   openDuration: 3
   blockingColliders: []
   unlockAudio: {fileID: 4276093308026986636}
+--- !u!65 &4890513603171239246
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2119737777230385403}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.79991025, y: 0.020000063, z: 0.40082842}
+  m_Center: {x: 0.32080302, y: -0.0000009846248, z: 0.19041422}
 --- !u!1 &2195297623173588357
 GameObject:
   m_ObjectHideFlags: 0
