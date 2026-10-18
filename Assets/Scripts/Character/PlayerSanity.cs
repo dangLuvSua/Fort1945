@@ -82,7 +82,7 @@ public class PlayerSanity : NetworkBehaviour
 
     private void Update()
     {
-        if (Object == null || !Object.HasInputAuthority)
+        if (Object == null || !Object.HasStateAuthority)
             return;
 
         if (localCamera == null)
