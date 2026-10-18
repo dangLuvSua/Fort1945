@@ -197,7 +197,9 @@ public class PlayerController : NetworkBehaviour
         // Apply scene-specific character controller height & camera position
         ApplySceneHeight();
 
-        isLocal = Object.HasInputAuthority;
+        // The game uses Fusion Shared mode: the local player owns their
+        // object through State Authority.
+        isLocal = Object.HasStateAuthority;
 
         TryFindAnimator();
 
@@ -308,7 +310,7 @@ public class PlayerController : NetworkBehaviour
         if (Object == null)
             return;
 
-        if (!Object.HasInputAuthority)
+        if (!Object.HasStateAuthority)
             return;
 
         if (Keyboard.current != null &&
