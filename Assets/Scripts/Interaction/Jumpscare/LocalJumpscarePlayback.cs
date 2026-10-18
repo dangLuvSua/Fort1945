@@ -27,6 +27,9 @@ public sealed class LocalJumpscarePlayback : MonoBehaviour
     [SerializeField] private AudioMixerGroup mixerGroup;
     [SerializeField] private JumpscareClipSet[] variants;
 
+    [Header("Video Appearance")]
+    [SerializeField, Range(0f, 1f)] private float videoOpacity = 0.6f;
+
     [Header("Vignette")]
     [SerializeField, Range(0f, 1f)] private float vignetteStrength = 0.65f;
     [SerializeField, Min(0f)] private float vignetteFadeIn = 0.12f;
@@ -67,6 +70,8 @@ public sealed class LocalJumpscarePlayback : MonoBehaviour
 
             if (videoPlayer != null && videoPlayer.targetTexture != null)
                 videoImage.texture = videoPlayer.targetTexture;
+
+            ApplyVideoOpacity();
         }
 
         CreateVignetteOverlay();
@@ -226,7 +231,10 @@ public sealed class LocalJumpscarePlayback : MonoBehaviour
         source.frameReady -= OnVideoFrameReady;
 
         if (videoImage != null)
+        {
+            ApplyVideoOpacity();
             videoImage.enabled = true;
+        }
 
         FadeVignette(vignetteStrength, vignetteFadeIn);
     }
@@ -352,5 +360,20 @@ public sealed class LocalJumpscarePlayback : MonoBehaviour
         videoPlayer.frameReady -= OnVideoFrameReady;
         videoPlayer.loopPointReached -= OnVideoFinished;
         videoPlayer.errorReceived -= OnVideoError;
+    }
+
+    private void OnValidate()
+    {
+        ApplyVideoOpacity();
+    }
+
+    private void ApplyVideoOpacity()
+    {
+        if (videoImage != null)
+        {
+            Color color = videoImage.color;
+            color.a = Mathf.Clamp01(videoOpacity);
+            videoImage.color = color;
+        }
     }
 }
