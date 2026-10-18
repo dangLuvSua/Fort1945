@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dffecc99a2dea9b439750e0edf8e7d7b, type: 3}
+  m_Name: HPP19
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemId: 3019
+  itemName: Hard Map Piece 19
+  icon: {fileID: 21300000, guid: 064188b7c95e7eb4cbda797422ab8c1c, type: 3}
+  description: A torn piece of the Fort Santiago map.
+  category: 2
+  isStackable: 0
+  maxStackSize: 1
+  heldPrefab: {fileID: 3754099032284177157, guid: 9c45e2e6c458ea34dac23a5eb2198eea, type: 3}
+  worldPrefab: {fileID: 5290687999525144174, guid: 9c45e2e6c458ea34dac23a5eb2198eea, type: 3}
