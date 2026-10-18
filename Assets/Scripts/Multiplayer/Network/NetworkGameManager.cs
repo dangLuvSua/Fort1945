@@ -929,6 +929,27 @@ public class NetworkGameManager : NetworkBehaviour
     // MAIN UPDATE
     // =========================================================
 
+    public override void FixedUpdateNetwork()
+    {
+        if (!networkStateReady || Runner == null ||
+            !Runner.IsSharedModeMasterClient ||
+            !Object.HasStateAuthority)
+        {
+            return;
+        }
+
+        // This scene NetworkObject follows the Shared Mode master. Keep the
+        // replicated player reference in sync after authority transfers;
+        // leave GameStarted and mission progress untouched.
+        if (HostPlayer != Runner.LocalPlayer)
+        {
+            HostPlayer = Runner.LocalPlayer;
+            Debug.Log(
+                $"[GAME MANAGER] Host handoff completed to {HostPlayer}."
+            );
+        }
+    }
+
     private void Update()
     {
         if (Runner == null)

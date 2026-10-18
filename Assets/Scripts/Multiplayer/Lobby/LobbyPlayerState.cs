@@ -39,6 +39,20 @@ public class LobbyPlayerState : NetworkBehaviour
         }
     }
 
+    public override void FixedUpdateNetwork()
+    {
+        // This player owns its player object in Shared Mode. Update the
+        // replicated host marker if master-client ownership changes later.
+        if (Object == null || !Object.HasStateAuthority || Runner == null)
+            return;
+
+        bool isCurrentMaster = Runner.IsSharedModeMasterClient;
+        if ((bool)IsHost != isCurrentMaster)
+        {
+            IsHost = isCurrentMaster;
+        }
+    }
+
 
     private void InitializePlayerData()
     {
