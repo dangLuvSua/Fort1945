@@ -193,7 +193,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.5}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -301,9 +301,22 @@ MonoBehaviour:
   audioSource: {fileID: 8970100206588805703}
   mixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
   variants:
-  - video: {fileID: 32900000, guid: c77018c6b38efd640baa45b5670b8c12, type: 3}
-    scream: {fileID: 8300000, guid: f4c1db1e8179d244981085cd87f6c2d2, type: 3}
+  - video: {fileID: 32900000, guid: fd5c7bce683fb714486e26bcf2fc03c8, type: 3}
+    scream: {fileID: 8300000, guid: 3377e8b34a614054eb06e3603caf17b3, type: 3}
     followUpSfx: {fileID: 8300000, guid: 41749104894ecb945a5daf05297bdbc1, type: 3}
+  - video: {fileID: 32900000, guid: 1787d01810342c5428010e2742c1632c, type: 3}
+    scream: {fileID: 8300000, guid: 3377e8b34a614054eb06e3603caf17b3, type: 3}
+    followUpSfx: {fileID: 8300000, guid: 41749104894ecb945a5daf05297bdbc1, type: 3}
+  - video: {fileID: 32900000, guid: 93dd6d391cd73884dbacc591b3270a7a, type: 3}
+    scream: {fileID: 8300000, guid: 4e380e6147edf3242b79e61f0ef579c2, type: 3}
+    followUpSfx: {fileID: 8300000, guid: 41749104894ecb945a5daf05297bdbc1, type: 3}
+  - video: {fileID: 32900000, guid: ca2a48ab2d07aed4aa97c0c1d50ceb66, type: 3}
+    scream: {fileID: 8300000, guid: 64431d54a1460f74c861db81022206a0, type: 3}
+    followUpSfx: {fileID: 8300000, guid: 41749104894ecb945a5daf05297bdbc1, type: 3}
+  - video: {fileID: 32900000, guid: 9dde02e2c3248bb4ebf4e419df460cc6, type: 3}
+    scream: {fileID: 8300000, guid: bdc94ef2f46c4a244a573f98a048de6d, type: 3}
+    followUpSfx: {fileID: 8300000, guid: 41749104894ecb945a5daf05297bdbc1, type: 3}
+  videoOpacity: 0.5
   vignetteStrength: 0.683
   vignetteFadeIn: 0.12
   vignetteFadeOut: 0.2

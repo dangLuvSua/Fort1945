@@ -2816,6 +2816,77 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8215733146352944146, guid: a64d1449c062d9644911d0b71e207663, type: 3}
   m_PrefabInstance: {fileID: 8474524742945892415}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1236878089
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1236878092}
+  - component: {fileID: 1236878091}
+  - component: {fileID: 1236878090}
+  m_Layer: 0
+  m_Name: DungeonJumpscareSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1236878090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1236878089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce0a4e5c972644a4aaad1e9c5dd635cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DungeonJumpscareSpawner
+  dungeonGenerator: {fileID: 749619190}
+  jumpscareTriggerPrefab: {fileID: 8772457569926790046, guid: 056d4d1ca9949d84d846b461cb98da44, type: 3}
+  corridorTriggers: 3
+  roomTriggers: 2
+  excludePlayerSpawnRoom: 1
+  centerHeightAboveBoundsBottom: 1.2
+--- !u!114 &1236878091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1236878089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 2591882600
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 1236878090}
+  ForceRemoteRenderTimeframe: 0
+--- !u!4 &1236878092
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1236878089}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4.74147, y: 22.56751, z: -390.15152}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1265257393
 GameObject:
   m_ObjectHideFlags: 0
@@ -5561,3 +5632,4 @@ SceneRoots:
   - {fileID: 1678901025}
   - {fileID: 168789134}
   - {fileID: 1879114104}
+  - {fileID: 1236878092}
