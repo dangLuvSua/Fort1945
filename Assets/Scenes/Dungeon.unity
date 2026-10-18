@@ -328,7 +328,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 12
+  m_Spacing: 328
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
@@ -985,7 +985,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.5}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2851,7 +2851,8 @@ MonoBehaviour:
   corridorTriggers: 3
   roomTriggers: 2
   excludePlayerSpawnRoom: 1
-  centerHeightAboveBoundsBottom: 1.2
+  spawnPointName: JumpscareSpawnPoint
+  showDebugLogs: 1
 --- !u!114 &1236878091
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3502,6 +3503,21 @@ MonoBehaviour:
   floorRayDistance: 10
   minDistanceBetweenPieces: 8
   maxSpawnPointAttempts: 30
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  clearSpaceRadius: 0.4
+  clearSpaceHeight: 1.1
+  clearSpaceBottomOffset: 0.05
+  maxFloorHeightDifference: 0.6
+  minimumFloorNormalY: 0.7
+  navMeshSearchRadius: 1.25
+  navMeshSampleDistance: 0.4
+  navMeshAttemptsPerPoint: 12
+  minimumWalkableRadius: 0.65
+  playerClearanceRadius: 0.5
+  playerClearanceHeight: 1.7
+  logRejectedSpawnPoints: 0
   allowStandaloneTesting: 1
   standaloneDifficulty: 0
 --- !u!114 &1726281406 stripped
@@ -5076,7 +5092,7 @@ PrefabInstance:
     - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
       propertyPath: variants.Array.data[1].video
       value: 
-      objectReference: {fileID: 32900000, guid: b467b1bf11fce3f4ab48529ee29b9d9b, type: 3}
+      objectReference: {fileID: 32900000, guid: 93dd6d391cd73884dbacc591b3270a7a, type: 3}
     - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
       propertyPath: variants.Array.data[2].video
       value: 
@@ -5084,7 +5100,7 @@ PrefabInstance:
     - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
       propertyPath: variants.Array.data[3].video
       value: 
-      objectReference: {fileID: 32900000, guid: 1ef33a55f4381394ea0380689ba6c0f9, type: 3}
+      objectReference: {fileID: 32900000, guid: ca2a48ab2d07aed4aa97c0c1d50ceb66, type: 3}
     - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
       propertyPath: variants.Array.data[0].scream
       value: 

@@ -115,23 +115,13 @@ public class DungeonOtherPlayerItem : MonoBehaviour
             return;
         }
 
-        NetworkRunner runner = playerState.Runner;
+        // LobbyPlayerState is attached to the same PlayerRoot NetworkObject
+        // as the stats. Use that object directly; InputAuthority is not the
+        // reliable ownership lookup in Fusion Shared Mode.
+        NetworkObject playerObject = playerState.Object;
 
-        if (runner == null || !runner.IsRunning)
-            return;
-
-        // Identify the player represented by this list entry.
-        PlayerRef targetPlayer =
-            playerState.Object.InputAuthority;
-
-        if (!runner.TryGetPlayerObject(
-            targetPlayer,
-            out NetworkObject playerObject))
-        {
-            return;
-        }
-
-        if (playerObject == null || !playerObject.IsValid)
+        if (playerObject == null || !playerObject.IsValid ||
+            !playerObject.IsInSimulation)
             return;
 
 
