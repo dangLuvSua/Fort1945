@@ -985,7 +985,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.5}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2816,6 +2816,78 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8215733146352944146, guid: a64d1449c062d9644911d0b71e207663, type: 3}
   m_PrefabInstance: {fileID: 8474524742945892415}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1236878089
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1236878092}
+  - component: {fileID: 1236878091}
+  - component: {fileID: 1236878090}
+  m_Layer: 0
+  m_Name: DungeonJumpscareSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1236878090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1236878089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce0a4e5c972644a4aaad1e9c5dd635cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DungeonJumpscareSpawner
+  dungeonGenerator: {fileID: 749619190}
+  jumpscareTriggerPrefab: {fileID: 8772457569926790046, guid: 056d4d1ca9949d84d846b461cb98da44, type: 3}
+  corridorTriggers: 3
+  roomTriggers: 2
+  excludePlayerSpawnRoom: 1
+  spawnPointName: JumpscareSpawnPoint
+  showDebugLogs: 1
+--- !u!114 &1236878091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1236878089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 2591882600
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 1236878090}
+  ForceRemoteRenderTimeframe: 0
+--- !u!4 &1236878092
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1236878089}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4.74147, y: 22.56751, z: -390.15152}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1265257393
 GameObject:
   m_ObjectHideFlags: 0
@@ -3431,6 +3503,21 @@ MonoBehaviour:
   floorRayDistance: 10
   minDistanceBetweenPieces: 8
   maxSpawnPointAttempts: 30
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  clearSpaceRadius: 0.4
+  clearSpaceHeight: 1.1
+  clearSpaceBottomOffset: 0.05
+  maxFloorHeightDifference: 0.6
+  minimumFloorNormalY: 0.7
+  navMeshSearchRadius: 1.25
+  navMeshSampleDistance: 0.4
+  navMeshAttemptsPerPoint: 12
+  minimumWalkableRadius: 0.65
+  playerClearanceRadius: 0.5
+  playerClearanceHeight: 1.7
+  logRejectedSpawnPoints: 0
   allowStandaloneTesting: 1
   standaloneDifficulty: 0
 --- !u!114 &1726281406 stripped
@@ -4995,13 +5082,53 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 580016218}
     - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
+      propertyPath: variants.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
       propertyPath: variants.Array.data[0].video
       value: 
       objectReference: {fileID: 32900000, guid: fd5c7bce683fb714486e26bcf2fc03c8, type: 3}
     - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
+      propertyPath: variants.Array.data[1].video
+      value: 
+      objectReference: {fileID: 32900000, guid: 93dd6d391cd73884dbacc591b3270a7a, type: 3}
+    - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
+      propertyPath: variants.Array.data[2].video
+      value: 
+      objectReference: {fileID: 32900000, guid: 9dde02e2c3248bb4ebf4e419df460cc6, type: 3}
+    - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
+      propertyPath: variants.Array.data[3].video
+      value: 
+      objectReference: {fileID: 32900000, guid: ca2a48ab2d07aed4aa97c0c1d50ceb66, type: 3}
+    - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
       propertyPath: variants.Array.data[0].scream
       value: 
       objectReference: {fileID: 8300000, guid: 3377e8b34a614054eb06e3603caf17b3, type: 3}
+    - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
+      propertyPath: variants.Array.data[1].scream
+      value: 
+      objectReference: {fileID: 8300000, guid: 4e380e6147edf3242b79e61f0ef579c2, type: 3}
+    - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
+      propertyPath: variants.Array.data[2].scream
+      value: 
+      objectReference: {fileID: 8300000, guid: bdc94ef2f46c4a244a573f98a048de6d, type: 3}
+    - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
+      propertyPath: variants.Array.data[3].scream
+      value: 
+      objectReference: {fileID: 8300000, guid: 64431d54a1460f74c861db81022206a0, type: 3}
+    - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
+      propertyPath: variants.Array.data[1].followUpSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: 41749104894ecb945a5daf05297bdbc1, type: 3}
+    - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
+      propertyPath: variants.Array.data[2].followUpSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: 41749104894ecb945a5daf05297bdbc1, type: 3}
+    - target: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
+      propertyPath: variants.Array.data[3].followUpSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: 41749104894ecb945a5daf05297bdbc1, type: 3}
     - target: {fileID: 4445198947567455013, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5521,3 +5648,4 @@ SceneRoots:
   - {fileID: 1678901025}
   - {fileID: 168789134}
   - {fileID: 1879114104}
+  - {fileID: 1236878092}

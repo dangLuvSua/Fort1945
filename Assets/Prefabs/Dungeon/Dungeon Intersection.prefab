@@ -46,6 +46,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DungeonConnector
   connectorType: 1
   used: 0
+--- !u!1 &1723622891473735963
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1272736305785655353}
+  m_Layer: 0
+  m_Name: JumpscareSpawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1272736305785655353
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1723622891473735963}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -13.3, y: 1, z: -176.53117}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8921923809785073255}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1797740276491666755
 GameObject:
   m_ObjectHideFlags: 0
@@ -3175,6 +3206,9 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: de12a4549a46906408ef900e3b31c9ed, type: 3}
       insertIndex: 0
+      addedObject: {fileID: 1272736305785655353}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: de12a4549a46906408ef900e3b31c9ed, type: 3}
+      insertIndex: 1
       addedObject: {fileID: 5982264686802074388}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: de12a4549a46906408ef900e3b31c9ed, type: 3}
       insertIndex: -1
