@@ -1,4 +1,4 @@
-﻿using UnityEngine.SceneManagement;
+using UnityEngine.SceneManagement;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
@@ -108,20 +108,32 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float dungeonCenterY = 0.75f;
 
     [Tooltip("Camera local Y position in the taller scene.")]
-    [SerializeField] private float dungeonCameraY = 1.5f;
+    [SerializeField] private float dungeonCameraY = 1.3f;
 
     [Header("Default Sizing (Other Scenes)")]
-    [SerializeField] private float defaultHeight = 3.0f;
-    [SerializeField] private float defaultCenterY = 0.9f;
-    [SerializeField] private float defaultCameraY = 1.5f;
+    [SerializeField] private float defaultHeight = 1.5f;
+    [SerializeField] private float defaultCenterY = 0.75f;
+    [SerializeField] private float defaultCameraY = 1.3f;
 
 
     // =========================================================
-    // PLAYER BODY
+    // PLAYER BODY & SCALING
     // =========================================================
 
     [Header("Player Body")]
     [SerializeField] private GameObject playerBody;
+
+    [Header("Scene-Specific Model Scaling")]
+    [Tooltip("If true, scales the player model and adjusts collider depending on the active scene.")]
+    [SerializeField] private bool enableSceneScaleAdjustment = true;
+
+    [Tooltip("Player scale in the dungeon scene.")]
+    [SerializeField] private float dungeonPlayerScale = 1.25f;
+
+    [Tooltip("Player scale in default scenes.")]
+    [SerializeField] private float defaultPlayerScale = 1.0f;
+
+    private float baseColliderRadius = -1f;
 
 
     // =========================================================
@@ -196,6 +208,7 @@ public class PlayerController : NetworkBehaviour
 
         // Apply scene-specific character controller height & camera position
         ApplySceneHeight();
+        ApplySceneScale();
 
         // The game uses Fusion Shared mode: the local player owns their
         // object through State Authority.
@@ -786,6 +799,7 @@ public class PlayerController : NetworkBehaviour
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         ApplySceneHeight();
+        ApplySceneScale();
     }
 
     public void ApplySceneHeight()
@@ -813,6 +827,50 @@ public class PlayerController : NetworkBehaviour
         }
 
         Debug.Log($"[PlayerController] Scene: '{currentScene}' | Height: {targetHeight} | CenterY: {targetCenterY} | CameraY: {targetCameraY}");
+    }
+
+    public void ApplySceneScale()
+    {
+        if (!enableSceneScaleAdjustment || characterController == null)
+            return;
+
+        if (baseColliderRadius <= 0f)
+            baseColliderRadius = characterController.radius;
+
+        string currentScene = SceneManager.GetActiveScene().name;
+        bool isDungeon = currentScene.Equals(tallerSceneName, System.StringComparison.OrdinalIgnoreCase);
+
+        float targetScale = isDungeon ? dungeonPlayerScale : defaultPlayerScale;
+
+        // Scale player body if assigned, otherwise find "Player" child or use transform
+        Transform bodyTransform = playerBody != null 
+            ? playerBody.transform 
+            : transform.Find("Player");
+
+        if (bodyTransform != null)
+        {
+            bodyTransform.localScale = Vector3.one * targetScale;
+        }
+
+        // Proportional collider adjustment based on current scene sizing
+        characterController.enabled = false;
+        characterController.height *= targetScale;
+        characterController.center = new Vector3(
+            characterController.center.x,
+            characterController.center.y * targetScale,
+            characterController.center.z
+        );
+        characterController.radius = baseColliderRadius * targetScale;
+        characterController.enabled = true;
+
+        if (cameraHolder != null)
+        {
+            Vector3 camPos = cameraHolder.localPosition;
+            camPos.y *= targetScale;
+            cameraHolder.localPosition = camPos;
+        }
+
+        Debug.Log($"[PlayerController] Scene: '{currentScene}' | Applied Player Scale: {targetScale} | Collider Height: {characterController.height}");
     }
 
 
