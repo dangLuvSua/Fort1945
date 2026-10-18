@@ -22,7 +22,12 @@ public class PuzzleModeController : NetworkBehaviour
     [SerializeField]
     private CameraController cameraController;
 
+    // =========================================================
+    // FOOTSTEPS
+    // =========================================================
+
     [Header("Footsteps")]
+
     [SerializeField]
     private AudioSource footstepsAudioSource;
 
@@ -48,7 +53,7 @@ public class PuzzleModeController : NetworkBehaviour
     private TMP_Text puzzleTimerText;
 
     // =========================================================
-    // PUZZLE INTRO / INSTRUCTIONS
+    // PUZZLE INTRO
     // =========================================================
 
     [Header("Puzzle Instructions")]
@@ -62,6 +67,25 @@ public class PuzzleModeController : NetworkBehaviour
     private Button beginButton;
 
     // =========================================================
+    // PUZZLE RESULT
+    // =========================================================
+
+    [Header("Puzzle Result")]
+
+    [Tooltip("Panel used for puzzle success and failure.")]
+    [SerializeField]
+    private GameObject puzzleResultPanel;
+
+    [SerializeField]
+    private TMP_Text resultTitleText;
+
+    [SerializeField]
+    private TMP_Text resultMessageText;
+
+    [SerializeField]
+    private Button continueButton;
+
+    // =========================================================
     // STATE
     // =========================================================
 
@@ -69,8 +93,13 @@ public class PuzzleModeController : NetworkBehaviour
 
     private bool isShowingPuzzleIntro;
 
-    // Becomes true after BEGIN is clicked once.
-    // After this, pressing E opens the puzzle directly.
+    private bool isShowingPuzzleResult;
+
+    // True when result panel currently represents
+    // TIME'S UP instead of success.
+    private bool resultIsFailure;
+
+    // Once BEGIN is pressed, intro does not appear again.
     private bool hasSeenPuzzleIntro;
 
     private Vector3 originalCameraLocalPosition;
@@ -105,26 +134,44 @@ public class PuzzleModeController : NetworkBehaviour
     public bool IsShowingPuzzleIntro =>
         isShowingPuzzleIntro;
 
+    public bool IsShowingPuzzleResult =>
+        isShowingPuzzleResult;
+
     // =========================================================
     // SPAWNED
     // =========================================================
 
     public override void Spawned()
     {
-        // Only the local player controls their puzzle UI.
+        // Only local player controls their own puzzle UI.
         if (Object != null &&
             !Object.HasInputAuthority)
         {
             return;
         }
 
-        // Intro starts hidden.
+        // -----------------------------------------------------
+        // HIDE INTRO
+        // -----------------------------------------------------
+
         if (puzzleIntroPanel != null)
         {
             puzzleIntroPanel.SetActive(false);
         }
 
-        // Connect BEGIN button automatically.
+        // -----------------------------------------------------
+        // HIDE RESULT
+        // -----------------------------------------------------
+
+        if (puzzleResultPanel != null)
+        {
+            puzzleResultPanel.SetActive(false);
+        }
+
+        // -----------------------------------------------------
+        // BEGIN BUTTON
+        // -----------------------------------------------------
+
         if (beginButton != null)
         {
             beginButton.onClick.RemoveListener(
@@ -133,6 +180,21 @@ public class PuzzleModeController : NetworkBehaviour
 
             beginButton.onClick.AddListener(
                 BeginPuzzleFromIntro
+            );
+        }
+
+        // -----------------------------------------------------
+        // RESULT BUTTON
+        // -----------------------------------------------------
+
+        if (continueButton != null)
+        {
+            continueButton.onClick.RemoveListener(
+                ContinueAfterPuzzleResult
+            );
+
+            continueButton.onClick.AddListener(
+                ContinueAfterPuzzleResult
             );
         }
     }
@@ -149,6 +211,22 @@ public class PuzzleModeController : NetworkBehaviour
                 BeginPuzzleFromIntro
             );
         }
+
+        if (continueButton != null)
+        {
+            continueButton.onClick.RemoveListener(
+                ContinueAfterPuzzleResult
+            );
+        }
+
+        if (activePuzzleTable != null)
+        {
+            activePuzzleTable.PuzzleCompleted -=
+                HandlePuzzleCompleted;
+
+            activePuzzleTable.PuzzleFailed -=
+                HandlePuzzleFailed;
+        }
     }
 
     // =========================================================
@@ -158,7 +236,17 @@ public class PuzzleModeController : NetworkBehaviour
     private void Update()
     {
         // -----------------------------------------------------
-        // ESC WHILE READING INSTRUCTIONS
+        // RESULT SCREEN
+        // -----------------------------------------------------
+
+        if (isShowingPuzzleResult)
+        {
+            // Player must use CONTINUE or RETRY.
+            return;
+        }
+
+        // -----------------------------------------------------
+        // ESC WHILE READING INTRO
         // -----------------------------------------------------
 
         if (isShowingPuzzleIntro)
@@ -196,7 +284,8 @@ public class PuzzleModeController : NetworkBehaviour
         PlayerInventory inventory)
     {
         if (isInPuzzleMode ||
-            isShowingPuzzleIntro)
+            isShowingPuzzleIntro ||
+            isShowingPuzzleResult)
         {
             return;
         }
@@ -239,7 +328,7 @@ public class PuzzleModeController : NetworkBehaviour
         }
 
         // -----------------------------------------------------
-        // STORE PUZZLE DATA
+        // STORE DATA
         // -----------------------------------------------------
 
         pendingPuzzleCameraPoint =
@@ -254,21 +343,22 @@ public class PuzzleModeController : NetworkBehaviour
         // Save normal player states.
         SavePlayerControlStates();
 
-        // Stop player movement/look and silence footsteps.
+        // Disable movement/look and silence footsteps.
         DisablePlayerControls();
 
-        // Cancel any pending cursor relock.
+        // Stop pending cursor relock.
         if (cursorRelockRoutine != null)
         {
             StopCoroutine(
                 cursorRelockRoutine
             );
 
-            cursorRelockRoutine = null;
+            cursorRelockRoutine =
+                null;
         }
 
         // =====================================================
-        // INTRO WAS ALREADY COMPLETED
+        // INTRO ALREADY SEEN
         // =====================================================
 
         if (hasSeenPuzzleIntro)
@@ -284,7 +374,7 @@ public class PuzzleModeController : NetworkBehaviour
         }
 
         // =====================================================
-        // FIRST TIME - SHOW INSTRUCTIONS
+        // FIRST TIME
         // =====================================================
 
         isShowingPuzzleIntro =
@@ -297,7 +387,7 @@ public class PuzzleModeController : NetworkBehaviour
         else
         {
             Debug.LogWarning(
-                "[PUZZLE MODE] Puzzle Intro Panel is missing. " +
+                "[PUZZLE MODE] Puzzle Intro Panel missing. " +
                 "Starting puzzle directly."
             );
 
@@ -312,7 +402,6 @@ public class PuzzleModeController : NetworkBehaviour
             return;
         }
 
-        // Cursor must be available for BEGIN.
         Cursor.lockState =
             CursorLockMode.None;
 
@@ -333,11 +422,9 @@ public class PuzzleModeController : NetworkBehaviour
         if (!isShowingPuzzleIntro)
             return;
 
-        // The player has accepted/read the intro.
         hasSeenPuzzleIntro =
             true;
 
-        // Hide parchment.
         if (puzzleIntroPanel != null)
         {
             puzzleIntroPanel.SetActive(false);
@@ -363,7 +450,7 @@ public class PuzzleModeController : NetworkBehaviour
         if (pendingPuzzleCameraPoint == null)
         {
             Debug.LogError(
-                "[PUZZLE MODE] Pending PuzzleCameraPoint is missing."
+                "[PUZZLE MODE] Pending PuzzleCameraPoint missing."
             );
 
             CancelPuzzleStart();
@@ -374,7 +461,7 @@ public class PuzzleModeController : NetworkBehaviour
         if (pendingPuzzleTable == null)
         {
             Debug.LogError(
-                "[PUZZLE MODE] Pending PuzzleTableController is missing."
+                "[PUZZLE MODE] Pending PuzzleTableController missing."
             );
 
             CancelPuzzleStart();
@@ -385,7 +472,7 @@ public class PuzzleModeController : NetworkBehaviour
         if (playerCamera == null)
         {
             Debug.LogError(
-                "[PUZZLE MODE] Player Camera is missing."
+                "[PUZZLE MODE] Player Camera missing."
             );
 
             CancelPuzzleStart();
@@ -394,7 +481,7 @@ public class PuzzleModeController : NetworkBehaviour
         }
 
         // -----------------------------------------------------
-        // SAVE NORMAL CAMERA
+        // SAVE CAMERA
         // -----------------------------------------------------
 
         originalCameraLocalPosition =
@@ -404,7 +491,7 @@ public class PuzzleModeController : NetworkBehaviour
             playerCamera.localRotation;
 
         // -----------------------------------------------------
-        // MOVE CAMERA TO PUZZLE
+        // MOVE CAMERA
         // -----------------------------------------------------
 
         playerCamera.SetPositionAndRotation(
@@ -412,8 +499,41 @@ public class PuzzleModeController : NetworkBehaviour
             pendingPuzzleCameraPoint.rotation
         );
 
+        // -----------------------------------------------------
+        // REMOVE OLD EVENT SUBSCRIPTIONS
+        // -----------------------------------------------------
+
+        if (activePuzzleTable != null)
+        {
+            activePuzzleTable.PuzzleCompleted -=
+                HandlePuzzleCompleted;
+
+            activePuzzleTable.PuzzleFailed -=
+                HandlePuzzleFailed;
+        }
+
         activePuzzleTable =
             pendingPuzzleTable;
+
+        // -----------------------------------------------------
+        // SUBSCRIBE TO RESULT EVENTS
+        // -----------------------------------------------------
+
+        activePuzzleTable.PuzzleCompleted -=
+            HandlePuzzleCompleted;
+
+        activePuzzleTable.PuzzleFailed -=
+            HandlePuzzleFailed;
+
+        activePuzzleTable.PuzzleCompleted +=
+            HandlePuzzleCompleted;
+
+        activePuzzleTable.PuzzleFailed +=
+            HandlePuzzleFailed;
+
+        // -----------------------------------------------------
+        // CAMERA COMPONENT
+        // -----------------------------------------------------
 
         Camera cameraComponent =
             playerCamera.GetComponent<Camera>();
@@ -430,15 +550,7 @@ public class PuzzleModeController : NetworkBehaviour
         }
 
         // =====================================================
-        // START PUZZLE
-        //
-        // PuzzleTableController handles:
-        // - spawning pieces
-        // - progress UI
-        // - timer
-        // - timer SFX
-        // - world-space timer
-        // - saved puzzle progress
+        // START
         // =====================================================
 
         activePuzzleTable.BeginPuzzle(
@@ -448,7 +560,6 @@ public class PuzzleModeController : NetworkBehaviour
             puzzleTimerText
         );
 
-        // Mouse remains unlocked so pieces can be dragged.
         Cursor.lockState =
             CursorLockMode.None;
 
@@ -458,18 +569,334 @@ public class PuzzleModeController : NetworkBehaviour
         isInPuzzleMode =
             true;
 
+        resultIsFailure =
+            false;
+
         Debug.Log(
             "[PUZZLE MODE] Puzzle started."
         );
     }
 
     // =========================================================
-    // CANCEL FAILED PUZZLE START
+    // PUZZLE COMPLETE
+    // =========================================================
+
+    private void HandlePuzzleCompleted()
+    {
+        if (!isInPuzzleMode)
+            return;
+
+        resultIsFailure =
+            false;
+
+        isShowingPuzzleResult =
+            true;
+
+        // -----------------------------------------------------
+        // TEXT
+        // -----------------------------------------------------
+
+        if (resultTitleText != null)
+        {
+            resultTitleText.text =
+                "PUZZLE COMPLETE";
+        }
+
+        if (resultMessageText != null)
+        {
+            resultMessageText.text =
+                "The map has been restored.";
+        }
+
+        // -----------------------------------------------------
+        // BUTTON
+        // -----------------------------------------------------
+
+        SetResultButtonText(
+            "CONTINUE"
+        );
+
+        // -----------------------------------------------------
+        // HIDE PUZZLE HUD
+        // -----------------------------------------------------
+
+        HidePlayerPuzzleHUD();
+
+        // -----------------------------------------------------
+        // SHOW RESULT
+        // -----------------------------------------------------
+
+        if (puzzleResultPanel != null)
+        {
+            puzzleResultPanel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[PUZZLE MODE] Puzzle Result Panel is missing."
+            );
+        }
+
+        Cursor.lockState =
+            CursorLockMode.None;
+
+        Cursor.visible =
+            true;
+
+        Debug.Log(
+            "[PUZZLE MODE] PUZZLE COMPLETE result shown."
+        );
+    }
+
+    // =========================================================
+    // PUZZLE FAILED
+    // =========================================================
+
+    private void HandlePuzzleFailed()
+    {
+        if (!isInPuzzleMode)
+            return;
+
+        resultIsFailure =
+            true;
+
+        isShowingPuzzleResult =
+            true;
+
+        // -----------------------------------------------------
+        // TEXT
+        // -----------------------------------------------------
+
+        if (resultTitleText != null)
+        {
+            resultTitleText.text =
+                "TIME'S UP";
+        }
+
+        if (resultMessageText != null)
+        {
+            resultMessageText.text =
+                "The map was not completed in time.";
+        }
+
+        // -----------------------------------------------------
+        // BUTTON
+        // -----------------------------------------------------
+
+        SetResultButtonText(
+            "RETRY"
+        );
+
+        // -----------------------------------------------------
+        // HIDE PUZZLE HUD
+        // -----------------------------------------------------
+
+        HidePlayerPuzzleHUD();
+
+        // -----------------------------------------------------
+        // SHOW RESULT
+        // -----------------------------------------------------
+
+        if (puzzleResultPanel != null)
+        {
+            puzzleResultPanel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[PUZZLE MODE] Puzzle Result Panel is missing."
+            );
+        }
+
+        Cursor.lockState =
+            CursorLockMode.None;
+
+        Cursor.visible =
+            true;
+
+        Debug.Log(
+            "[PUZZLE MODE] TIME'S UP result shown."
+        );
+    }
+
+    // =========================================================
+    // RESULT BUTTON
+    // =========================================================
+
+    private void ContinueAfterPuzzleResult()
+    {
+        if (!isShowingPuzzleResult)
+            return;
+
+        // =====================================================
+        // FAILURE → RETRY
+        // =====================================================
+
+        if (resultIsFailure)
+        {
+            RetryPuzzle();
+
+            return;
+        }
+
+        // =====================================================
+        // SUCCESS → CONTINUE
+        // =====================================================
+
+        isShowingPuzzleResult =
+            false;
+
+        if (puzzleResultPanel != null)
+        {
+            puzzleResultPanel.SetActive(false);
+        }
+
+        Debug.Log(
+            "[PUZZLE MODE] CONTINUE clicked."
+        );
+
+        ExitPuzzleMode();
+    }
+
+    // =========================================================
+    // RETRY PUZZLE
+    // =========================================================
+
+    private void RetryPuzzle()
+    {
+        if (activePuzzleTable == null)
+        {
+            Debug.LogError(
+                "[PUZZLE MODE] Cannot retry. " +
+                "Active puzzle table is missing."
+            );
+
+            return;
+        }
+
+        if (playerCamera == null)
+        {
+            Debug.LogError(
+                "[PUZZLE MODE] Cannot retry. " +
+                "Player camera is missing."
+            );
+
+            return;
+        }
+
+        Camera cameraComponent =
+            playerCamera.GetComponent<Camera>();
+
+        if (cameraComponent == null)
+        {
+            Debug.LogError(
+                "[PUZZLE MODE] Cannot retry. " +
+                "Camera component is missing."
+            );
+
+            return;
+        }
+
+        // -----------------------------------------------------
+        // CLOSE FAILURE PANEL
+        // -----------------------------------------------------
+
+        isShowingPuzzleResult =
+            false;
+
+        resultIsFailure =
+            false;
+
+        if (puzzleResultPanel != null)
+        {
+            puzzleResultPanel.SetActive(false);
+        }
+
+        // -----------------------------------------------------
+        // ERASE FAILED ATTEMPT
+        // -----------------------------------------------------
+
+        activePuzzleTable.ResetFailedAttempt();
+
+        // -----------------------------------------------------
+        // START FRESH ATTEMPT
+        // -----------------------------------------------------
+
+        activePuzzleTable.BeginPuzzle(
+            pendingInventory,
+            cameraComponent,
+            puzzleProgressText,
+            puzzleTimerText
+        );
+
+        Cursor.lockState =
+            CursorLockMode.None;
+
+        Cursor.visible =
+            true;
+
+        Debug.Log(
+            "[PUZZLE MODE] RETRY clicked. " +
+            "New attempt started from 0/8."
+        );
+    }
+
+    // =========================================================
+    // SET RESULT BUTTON LABEL
+    // =========================================================
+
+    private void SetResultButtonText(
+        string text)
+    {
+        if (continueButton == null)
+            return;
+
+        TMP_Text buttonText =
+            continueButton.GetComponentInChildren<TMP_Text>(
+                true
+            );
+
+        if (buttonText != null)
+        {
+            buttonText.text =
+                text;
+        }
+    }
+
+    // =========================================================
+    // HIDE PUZZLE HUD
+    // =========================================================
+
+    private void HidePlayerPuzzleHUD()
+    {
+        if (puzzleProgressText != null)
+        {
+            puzzleProgressText.gameObject.SetActive(
+                false
+            );
+        }
+
+        if (puzzleTimerText != null)
+        {
+            puzzleTimerText.gameObject.SetActive(
+                false
+            );
+        }
+    }
+
+    // =========================================================
+    // CANCEL FAILED START
     // =========================================================
 
     private void CancelPuzzleStart()
     {
         isShowingPuzzleIntro =
+            false;
+
+        isShowingPuzzleResult =
+            false;
+
+        resultIsFailure =
             false;
 
         isInPuzzleMode =
@@ -478,6 +905,23 @@ public class PuzzleModeController : NetworkBehaviour
         if (puzzleIntroPanel != null)
         {
             puzzleIntroPanel.SetActive(false);
+        }
+
+        if (puzzleResultPanel != null)
+        {
+            puzzleResultPanel.SetActive(false);
+        }
+
+        if (activePuzzleTable != null)
+        {
+            activePuzzleTable.PuzzleCompleted -=
+                HandlePuzzleCompleted;
+
+            activePuzzleTable.PuzzleFailed -=
+                HandlePuzzleFailed;
+
+            activePuzzleTable =
+                null;
         }
 
         RestorePlayerControls();
@@ -498,7 +942,7 @@ public class PuzzleModeController : NetworkBehaviour
     }
 
     // =========================================================
-    // ESC WHILE READING INTRO
+    // ESC WHILE INTRO OPEN
     // =========================================================
 
     private void ClosePuzzleIntro()
@@ -514,13 +958,8 @@ public class PuzzleModeController : NetworkBehaviour
             puzzleIntroPanel.SetActive(false);
         }
 
-        // IMPORTANT:
-        //
-        // We DO NOT set hasSeenPuzzleIntro here.
-        //
-        // If the player closes the instructions
-        // without pressing BEGIN, pressing E again
-        // should show the instructions again.
+        // Player did NOT press BEGIN,
+        // so intro should still appear next time.
 
         ClearPendingPuzzle();
 
@@ -544,7 +983,7 @@ public class PuzzleModeController : NetworkBehaviour
     }
 
     // =========================================================
-    // EXIT ACTUAL PUZZLE
+    // EXIT PUZZLE
     // =========================================================
 
     public void ExitPuzzleMode()
@@ -555,12 +994,33 @@ public class PuzzleModeController : NetworkBehaviour
         isInPuzzleMode =
             false;
 
+        isShowingPuzzleResult =
+            false;
+
+        resultIsFailure =
+            false;
+
         // -----------------------------------------------------
-        // CLOSE PUZZLE VIEW
+        // HIDE RESULT
+        // -----------------------------------------------------
+
+        if (puzzleResultPanel != null)
+        {
+            puzzleResultPanel.SetActive(false);
+        }
+
+        // -----------------------------------------------------
+        // END ACTIVE PUZZLE
         // -----------------------------------------------------
 
         if (activePuzzleTable != null)
         {
+            activePuzzleTable.PuzzleCompleted -=
+                HandlePuzzleCompleted;
+
+            activePuzzleTable.PuzzleFailed -=
+                HandlePuzzleFailed;
+
             activePuzzleTable.EndPuzzle();
 
             activePuzzleTable =
@@ -568,7 +1028,7 @@ public class PuzzleModeController : NetworkBehaviour
         }
 
         // -----------------------------------------------------
-        // RESTORE NORMAL CAMERA
+        // RESTORE CAMERA
         // -----------------------------------------------------
 
         if (playerCamera != null)
@@ -580,12 +1040,18 @@ public class PuzzleModeController : NetworkBehaviour
                 originalCameraLocalRotation;
         }
 
+        // -----------------------------------------------------
+        // RESTORE PLAYER
+        // -----------------------------------------------------
+
         RestorePlayerControls();
 
         ClearPendingPuzzle();
 
-        // Wait before locking because Unity also
-        // processes Escape for the Editor cursor.
+        // -----------------------------------------------------
+        // RELOCK CURSOR
+        // -----------------------------------------------------
+
         if (cursorRelockRoutine != null)
         {
             StopCoroutine(
@@ -604,7 +1070,7 @@ public class PuzzleModeController : NetworkBehaviour
     }
 
     // =========================================================
-    // SAVE PLAYER STATES
+    // SAVE PLAYER STATE
     // =========================================================
 
     private void SavePlayerControlStates()
@@ -627,8 +1093,6 @@ public class PuzzleModeController : NetworkBehaviour
                 cameraController.enabled;
         }
 
-        // Remember the previous footstep mute state so we
-        // can restore it exactly after leaving the puzzle.
         if (footstepsAudioSource != null)
         {
             footstepsWasMuted =
@@ -637,19 +1101,18 @@ public class PuzzleModeController : NetworkBehaviour
     }
 
     // =========================================================
-    // DISABLE PLAYER CONTROLS
+    // DISABLE PLAYER
     // =========================================================
 
     private void DisablePlayerControls()
     {
-        // Stop the current footstep immediately and keep the
-        // source muted for the whole intro/puzzle state.
-        // This prevents the footstep system from replaying audio
-        // if E is pressed while the player is still walking.
+        // Stop and mute footsteps immediately.
         if (footstepsAudioSource != null)
         {
             footstepsAudioSource.Stop();
-            footstepsAudioSource.mute = true;
+
+            footstepsAudioSource.mute =
+                true;
         }
 
         if (playerController != null)
@@ -672,7 +1135,7 @@ public class PuzzleModeController : NetworkBehaviour
     }
 
     // =========================================================
-    // RESTORE PLAYER CONTROLS
+    // RESTORE PLAYER
     // =========================================================
 
     private void RestorePlayerControls()
@@ -695,18 +1158,17 @@ public class PuzzleModeController : NetworkBehaviour
                 cameraControllerWasEnabled;
         }
 
-        // Stop any stale footstep and restore the mute state
-        // that existed before entering the puzzle.
         if (footstepsAudioSource != null)
         {
             footstepsAudioSource.Stop();
+
             footstepsAudioSource.mute =
                 footstepsWasMuted;
         }
     }
 
     // =========================================================
-    // CLEAR PENDING PUZZLE DATA
+    // CLEAR PENDING DATA
     // =========================================================
 
     private void ClearPendingPuzzle()

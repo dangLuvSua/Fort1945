@@ -507,7 +507,7 @@ MonoBehaviour:
   snapDistance: 0.18
   snapRotationTolerance: 20
   rotationStep: 90
-  puzzleDuration: 15
+  puzzleDuration: 60
   normalTimerAudioSource: {fileID: 6200718603921897278}
   finalCountdownAudioSource: {fileID: 6750748836010195966}
   worldTimerText: {fileID: 7002589509367532270}
