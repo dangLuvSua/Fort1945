@@ -258,9 +258,33 @@ public class PlayerSanity : NetworkBehaviour
     {
         if (Object == null ||
             !Object.IsValid ||
-            !Object.HasStateAuthority ||
             damage <= 0f)
             return;
+
+        // Shared Mode world objects (for example, a pickup or jumpscare)
+        // may have a different State Authority from the player. Ask this
+        // player's State Authority to apply the change instead of silently
+        // dropping damage when the caller is not the authority.
+        if (!Object.HasStateAuthority)
+        {
+            RPC_RequestSanityDamage(damage);
+            return;
+        }
+
+        ApplySanityDamageStateAuthority(damage);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_RequestSanityDamage(float damage, RpcInfo info = default)
+    {
+        if (!Object.HasStateAuthority || info.Source == PlayerRef.None || damage <= 0f)
+            return;
+
+        ApplySanityDamageStateAuthority(damage);
+    }
+
+    private void ApplySanityDamageStateAuthority(float damage)
+    {
 
         CurrentSanity = Mathf.Clamp(
             CurrentSanity - damage,
