@@ -66,6 +66,9 @@ public class PlayerSanity : NetworkBehaviour
     [Networked]
     public float CurrentSanity { get; set; }
 
+    [Networked]
+    private NetworkBool StatsInitialized { get; set; }
+
     public float MaxSanity => maxSanity;
 
     public float SanityPercent =>
@@ -229,18 +232,19 @@ public class PlayerSanity : NetworkBehaviour
 
     public override void Spawned()
     {
-        if (Object.HasStateAuthority)
-        {
-            CurrentSanity = Mathf.Clamp(
-                startingSanity, 0f, maxSanity
-            );
-        }
+        EnsureInitialized();
     }
 
     public override void FixedUpdateNetwork()
     {
         if (!Object.HasStateAuthority)
             return;
+
+        if (!StatsInitialized)
+        {
+            EnsureInitialized();
+            return;
+        }
 
         if (allowRecovery &&
             CurrentSanity > 0f &&
@@ -251,6 +255,15 @@ public class PlayerSanity : NetworkBehaviour
                 CurrentSanity + recoveryPerSecond * Runner.DeltaTime
             );
         }
+    }
+
+    private void EnsureInitialized()
+    {
+        if (Object == null || !Object.HasStateAuthority || StatsInitialized)
+            return;
+
+        CurrentSanity = Mathf.Clamp(startingSanity, 0f, maxSanity);
+        StatsInitialized = true;
     }
 
     /// <summary>Apply sanity damage. Must be called by State Authority.</summary>
@@ -271,6 +284,7 @@ public class PlayerSanity : NetworkBehaviour
             return;
         }
 
+        EnsureInitialized();
         ApplySanityDamageStateAuthority(damage);
     }
 
@@ -280,6 +294,7 @@ public class PlayerSanity : NetworkBehaviour
         if (!Object.HasStateAuthority || info.Source == PlayerRef.None || damage <= 0f)
             return;
 
+        EnsureInitialized();
         ApplySanityDamageStateAuthority(damage);
     }
 
@@ -311,6 +326,7 @@ public class PlayerSanity : NetworkBehaviour
             amount <= 0f)
             return;
 
+        EnsureInitialized();
         CurrentSanity = Mathf.Clamp(
             CurrentSanity + amount,
             0f,
@@ -321,7 +337,11 @@ public class PlayerSanity : NetworkBehaviour
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RPC_RequestCrossRevive(PlayerRef reviver)
     {
-        if (!Object.HasStateAuthority || !CanBeHealedByCross)
+        if (!Object.HasStateAuthority)
+            return;
+
+        EnsureInitialized();
+        if (!CanBeHealedByCross)
             return;
 
         PlayerInventory reviverInventory = FindInventory(reviver);

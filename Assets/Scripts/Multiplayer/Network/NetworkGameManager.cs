@@ -110,6 +110,9 @@ public class NetworkGameManager : NetworkBehaviour
     public NetworkBool AllPlayersEnteredGate { get; private set; }
 
     [Networked]
+    public NetworkBool GateObjectiveShown { get; private set; }
+
+    [Networked]
     public NetworkBool SoldierStarted { get; private set; }
 
     [Networked]
@@ -570,6 +573,7 @@ public class NetworkGameManager : NetworkBehaviour
             MissionItemsSpawned = false;
 
             AllPlayersEnteredGate = false;
+            GateObjectiveShown = false;
 
             // -------------------------------------------------
             // SOLDIER FLOW
@@ -1039,11 +1043,17 @@ public class NetworkGameManager : NetworkBehaviour
         }
 
         // -------------------------------------------------
-        // Only State Authority decides completion.
+        // Only State Authority updates shared gate progress.
+        // Show the objective the first time any player enters.
         // -------------------------------------------------
-
         if (!Object.HasStateAuthority)
             return;
+
+        if (playersInsideGate > 0 && !GateObjectiveShown)
+        {
+            GateObjectiveShown = true;
+            RPC_OnFirstPlayerEnteredGate();
+        }
 
         if (totalPlayers < 1 ||
             playersInsideGate < totalPlayers)
@@ -2652,8 +2662,13 @@ public class NetworkGameManager : NetworkBehaviour
 
         // Existing world tag / ping
         TriggerLocalPing();
+    }
 
-        // Existing Mission System
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_OnFirstPlayerEnteredGate()
+    {
+        Debug.Log("[GAME] First player entered the gate; showing objective.");
+
         MissionManager.ShowRaw(
             "FIND THE SOLDIER",
             "Find the soldier and ask him how to get out of Fort Santiago.",

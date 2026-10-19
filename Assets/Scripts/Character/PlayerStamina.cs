@@ -26,6 +26,9 @@ public class PlayerStamina : NetworkBehaviour
     [Networked]
     public float Current { get; private set; }
 
+    [Networked]
+    private NetworkBool StatsInitialized { get; set; }
+
 
     public float Max => maxStamina;
 
@@ -43,15 +46,25 @@ public class PlayerStamina : NetworkBehaviour
 
     public override void Spawned()
     {
-        // Only the player who owns this player object
-        // initializes and changes its stamina.
-        if (Object.HasStateAuthority)
-        {
-            Current = maxStamina;
+        EnsureInitialized();
+    }
 
-            regenTimer = 0f;
-            exhausted = false;
-        }
+    public override void FixedUpdateNetwork()
+    {
+        // In Shared Mode authority can be assigned after Spawned() on a
+        // peer. Keep initialization authority-owned and retry until it sticks.
+        EnsureInitialized();
+    }
+
+    private void EnsureInitialized()
+    {
+        if (Object == null || !Object.HasStateAuthority || StatsInitialized)
+            return;
+
+        Current = maxStamina;
+        regenTimer = 0f;
+        exhausted = false;
+        StatsInitialized = true;
     }
 
 
@@ -71,6 +84,8 @@ public class PlayerStamina : NetworkBehaviour
         {
             return false;
         }
+
+        EnsureInitialized();
 
 
         // -------------------------------------------------

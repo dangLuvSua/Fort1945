@@ -12,6 +12,7 @@ public class GateController : NetworkBehaviour
     [SerializeField] private string openTriggerName = "Open";
 
     private bool previousGameStarted;
+    private bool previousAllPlayersEnteredGate;
     private bool gateInitialized;
 
     public override void Spawned()
@@ -30,12 +31,18 @@ public class GateController : NetworkBehaviour
         bool gameStarted =
             manager.GameStarted;
 
+        bool allPlayersEnteredGate =
+            manager.AllPlayersEnteredGate;
+
         previousGameStarted =
             gameStarted;
 
+        previousAllPlayersEnteredGate =
+            allPlayersEnteredGate;
+
         gateInitialized = true;
 
-        UpdateGate(gameStarted);
+        UpdateGate(gameStarted, allPlayersEnteredGate, gameStarted);
     }
 
     private void Update()
@@ -55,6 +62,9 @@ public class GateController : NetworkBehaviour
         bool gameStarted =
             manager.GameStarted;
 
+        bool allPlayersEnteredGate =
+            manager.AllPlayersEnteredGate;
+
         // Initialize the gate if Spawned() happened before
         // NetworkGameManager became ready.
         if (!gateInitialized)
@@ -62,33 +72,47 @@ public class GateController : NetworkBehaviour
             previousGameStarted =
                 gameStarted;
 
+            previousAllPlayersEnteredGate =
+                allPlayersEnteredGate;
+
             gateInitialized = true;
 
-            UpdateGate(gameStarted);
+            UpdateGate(gameStarted, allPlayersEnteredGate, gameStarted);
 
             return;
         }
 
-        // Only update the gate when GameStarted changes.
-        if (gameStarted != previousGameStarted)
+        // Open when the game starts, then close once all players have entered.
+        if (gameStarted != previousGameStarted ||
+            allPlayersEnteredGate != previousAllPlayersEnteredGate)
         {
+            bool shouldPlayOpenAnimation =
+                gameStarted && !previousGameStarted;
+
             previousGameStarted =
                 gameStarted;
 
-            UpdateGate(gameStarted);
+            previousAllPlayersEnteredGate =
+                allPlayersEnteredGate;
+
+            UpdateGate(gameStarted, allPlayersEnteredGate, shouldPlayOpenAnimation);
         }
     }
 
-    private void UpdateGate(bool open)
+    private void UpdateGate(
+        bool gameStarted,
+        bool allPlayersEnteredGate,
+        bool playOpenAnimation)
     {
-        // Block the gate until the game starts.
+        // Keep the main gate blocked until the game starts, then block it
+        // again after every player has crossed into the starting area.
         if (gateBlocker != null)
         {
-            gateBlocker.SetActive(!open);
+            gateBlocker.SetActive(!gameStarted || allPlayersEnteredGate);
         }
 
-        // Open animation when the game starts.
-        if (open &&
+        // Play the open animation when the game starts.
+        if (playOpenAnimation &&
             gateAnimator != null)
         {
             gateAnimator.SetTrigger(
