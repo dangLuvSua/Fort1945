@@ -6148,6 +6148,12 @@ MonoBehaviour:
   playerInteractor: {fileID: 7925084007181689668}
   cameraController: {fileID: 1313644337388063740}
   footstepsAudioSource: {fileID: 6173354848598811326}
+  puzzleAudioSource: {fileID: 6173354848598811326}
+  tableOpenClip: {fileID: 8300000, guid: 57ae774107e5a4d48b443a0077d4e3b5, type: 3}
+  tableCloseClip: {fileID: 8300000, guid: 241d659cd8a93f246a19282d1beca00d, type: 3}
+  parchmentOpenClip: {fileID: 8300000, guid: 56894c16be2340347a4d438389e78f8e, type: 3}
+  buttonClickClip: {fileID: 8300000, guid: e064a8c33d955be4286cfbb464bac6f8, type: 3}
+  flowAudioVolume: 0.8
   playerCamera: {fileID: 5854169451270767622}
   puzzleProgressText: {fileID: 1401650358523188267}
   puzzleTimerText: {fileID: 3136333155522109400}

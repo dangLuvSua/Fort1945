@@ -22,12 +22,36 @@ public class PuzzleModeController : NetworkBehaviour
     private CameraController cameraController;
 
     // =========================================================
-    // FOOTSTEPS
+    // FOOTSTEPS & AUDIO
     // =========================================================
 
     [Header("Footsteps")]
     [SerializeField]
     private AudioSource footstepsAudioSource;
+
+    [Header("Puzzle Flow Audio")]
+    [SerializeField]
+    private AudioSource puzzleAudioSource;
+
+    [Tooltip("Sound played when entering or opening the puzzle table view.")]
+    [SerializeField]
+    private AudioClip tableOpenClip;
+
+    [Tooltip("Sound played when leaving the puzzle table.")]
+    [SerializeField]
+    private AudioClip tableCloseClip;
+
+    [Tooltip("Sound played when the Lost Map intro parchment panel appears.")]
+    [SerializeField]
+    private AudioClip parchmentOpenClip;
+
+    [Tooltip("Sound played when clicking Begin, Retry, or Continue.")]
+    [SerializeField]
+    private AudioClip buttonClickClip;
+
+    [Range(0f, 1f)]
+    [SerializeField]
+    private float flowAudioVolume = 0.8f;
 
     // =========================================================
     // CAMERA
@@ -321,6 +345,8 @@ public class PuzzleModeController : NetworkBehaviour
         // First interaction: show parchment.
         isShowingPuzzleIntro = true;
 
+        PlayFlowAudio(parchmentOpenClip);
+
         if (puzzleIntroPanel != null)
         {
             puzzleIntroPanel.SetActive(true);
@@ -360,6 +386,8 @@ public class PuzzleModeController : NetworkBehaviour
         {
             return;
         }
+
+        PlayFlowAudio(buttonClickClip, 1.05f);
 
         hasSeenPuzzleIntro = true;
 
@@ -429,6 +457,8 @@ public class PuzzleModeController : NetworkBehaviour
             pendingPuzzleCameraPoint.position,
             pendingPuzzleCameraPoint.rotation
         );
+
+        PlayFlowAudio(tableOpenClip);
 
         // Remove subscriptions from any previous table.
         UnsubscribeFromActiveTable();
@@ -620,6 +650,8 @@ public class PuzzleModeController : NetworkBehaviour
             return;
         }
 
+        PlayFlowAudio(buttonClickClip, 1.0f);
+
         if (resultIsFailure)
         {
             RetryPuzzle();
@@ -647,6 +679,8 @@ public class PuzzleModeController : NetworkBehaviour
 
     private void RetryPuzzle()
     {
+        PlayFlowAudio(buttonClickClip, 0.95f);
+
         if (activePuzzleTable == null)
         {
             Debug.LogError(
@@ -761,6 +795,8 @@ public class PuzzleModeController : NetworkBehaviour
             return;
         }
 
+        PlayFlowAudio(tableCloseClip);
+
         isShowingPuzzleIntro = false;
 
         if (puzzleIntroPanel != null)
@@ -822,6 +858,8 @@ public class PuzzleModeController : NetworkBehaviour
         {
             return;
         }
+
+        PlayFlowAudio(tableCloseClip);
 
         isInPuzzleMode = false;
         isShowingPuzzleResult = false;
@@ -1022,5 +1060,26 @@ public class PuzzleModeController : NetworkBehaviour
         Debug.Log(
             "[PUZZLE MODE] Mouse locked again."
         );
+    }
+
+    // =========================================================
+    // AUDIO HELPER
+    // =========================================================
+
+    private void PlayFlowAudio(AudioClip clip, float pitch = 1f)
+    {
+        if (clip == null)
+            return;
+
+        if (puzzleAudioSource == null)
+        {
+            puzzleAudioSource = GetComponent<AudioSource>();
+        }
+
+        if (puzzleAudioSource != null)
+        {
+            puzzleAudioSource.pitch = pitch;
+            puzzleAudioSource.PlayOneShot(clip, flowAudioVolume);
+        }
     }
 }
