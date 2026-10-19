@@ -284,7 +284,12 @@ public class LobbyUI : MonoBehaviour
             return;
         }
 
-        if (loadingScreenPrefab == null)
+        loadingScreenInstance =
+            FindFirstObjectByType<LoadingProgressUI>(
+                FindObjectsInactive.Include
+            );
+
+        if (loadingScreenInstance == null && loadingScreenPrefab == null)
         {
             Debug.LogError(
                 "[LOBBY UI] Loading Screen prefab is not assigned."
@@ -295,10 +300,13 @@ public class LobbyUI : MonoBehaviour
 
         isLoading = true;
 
-        loadingScreenInstance =
-            Instantiate(
-                loadingScreenPrefab
-            );
+        if (loadingScreenInstance == null)
+        {
+            loadingScreenInstance =
+                Instantiate(
+                    loadingScreenPrefab
+                );
+        }
 
         // Keep the loading screen alive while
         // Fusion changes scenes.
@@ -313,6 +321,11 @@ public class LobbyUI : MonoBehaviour
         Debug.Log(
             $"[LOBBY UI] Loading screen shown: {message}"
         );
+    }
+
+    public void ShowJoinLoadingScreen()
+    {
+        ShowLoadingScreen("JOINING LOBBY...");
     }
 
     // =====================================================

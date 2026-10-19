@@ -219,6 +219,22 @@ public class LobbyItem : MonoBehaviour
             return;
         }
 
+        LobbyUI lobbyUI =
+            FindFirstObjectByType<LobbyUI>();
+
+        if (lobbyUI != null)
+        {
+            // Create the persistent loading UI before starting Fusion's
+            // join/spawn flow. NetworkRunnerHandler will reuse this instance.
+            lobbyUI.ShowJoinLoadingScreen();
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[LOBBY ITEM] LobbyUI not found; continuing without its loading screen."
+            );
+        }
+
         NetworkRunnerHandler.Instance.JoinGame(
             sessionName
         );

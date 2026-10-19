@@ -132,7 +132,7 @@ public class PlayerNameTag : MonoBehaviour
             transform.rotation = Quaternion.LookRotation(
                 directionToCamera,
                 Vector3.up
-            );
+            ) * Quaternion.Euler(0f, 180f, 0f);
         }
     }
 }

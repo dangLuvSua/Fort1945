@@ -15616,6 +15616,8 @@ MonoBehaviour:
   soldierAgent: {fileID: 879666356}
   _AllPlayersEnteredGate:
     RawValue: 0
+  _GateObjectiveShown:
+    RawValue: 0
   _SoldierStarted:
     RawValue: 0
   _SoldierReachedDoor:
@@ -99941,7 +99943,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoldierGuidePrompt
   range: 10
-  tagOffset: {x: 0, y: 3.7, z: 0}
+  tagOffset: {x: 0, y: 2.5, z: 0}
   worldTagPrefab: {fileID: 1000000001, guid: aabbccddeeff00112233445566778899, type: 3}
   promptText: Follow the soldier
   promptColor: {r: 1, g: 0.13774192, b: 0, a: 1}

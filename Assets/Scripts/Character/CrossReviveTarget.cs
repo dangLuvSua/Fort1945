@@ -11,10 +11,11 @@ public class CrossReviveTarget : MonoBehaviour, IHoldInteractable, IKeyHoldInter
     private PlayerInventory reviverInventory;
 
     public Key HoldKey => Key.R;
-    public string Prompt => sanity != null && sanity.IsInsane
+    public string Prompt => sanity != null && sanity.IsNetworkSpawned && sanity.IsInsane
         ? "[R] HOLD TO REVIVE"
         : "[R] HOLD TO HEAL TEAMMATE";
-    public bool CanInteract => sanity != null && sanity.CanBeHealedByCross && HasSelectedCross();
+    public bool CanInteract => sanity != null && sanity.IsNetworkSpawned &&
+                               sanity.CanBeHealedByCross && HasSelectedCross();
     public int Priority => 20;
     public float HoldDuration => holdDuration;
 
@@ -37,7 +38,8 @@ public class CrossReviveTarget : MonoBehaviour, IHoldInteractable, IKeyHoldInter
     public void HoldCompleted(PlayerInventory inventory)
     {
         reviverInventory = inventory;
-        if (!CanInteract || inventory == null || sanity.Object == null ||
+        if (!CanInteract || inventory == null || !sanity.IsNetworkSpawned ||
+            sanity.Object == null ||
             !sanity.Object.IsValid || inventory.Object == null ||
             !inventory.Object.IsValid)
             return;
