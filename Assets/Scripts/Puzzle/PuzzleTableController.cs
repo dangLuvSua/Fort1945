@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 
 public class PuzzleTableController : MonoBehaviour
 {
@@ -137,6 +138,43 @@ public class PuzzleTableController : MonoBehaviour
     [SerializeField]
     private AudioSource finalCountdownAudioSource;
 
+    [Header("Piece Interaction Audio")]
+    [Tooltip("AudioSource used for one-shot piece sounds (grab, rotate, release, snap).")]
+    [SerializeField]
+    private AudioSource pieceAudioSource;
+
+    [Tooltip("AudioSource looped while dragging a piece across the table.")]
+    [SerializeField]
+    private AudioSource pieceDragAudioSource;
+
+    [Tooltip("Sound played when selecting/grabbing a piece.")]
+    [SerializeField]
+    private AudioClip pieceGrabClip;
+
+    [Tooltip("Sound played when dragging a piece (looping friction/scraping sound).")]
+    [SerializeField]
+    private AudioClip pieceDragClip;
+
+    [Tooltip("Sound played when rotating a piece with Q or R, and when dropped without snapping.")]
+    [SerializeField]
+    private AudioClip pieceRotateClip;
+
+    [Tooltip("Sound played when releasing a piece without snapping (dull drop/thud). If unassigned, pieceRotateClip will be used.")]
+    [SerializeField]
+    private AudioClip pieceDropClip;
+
+    [Tooltip("Sound played when a piece successfully snaps into its correct slot.")]
+    [SerializeField]
+    private AudioClip pieceSnapClip;
+
+    [Range(0f, 1f)]
+    [SerializeField]
+    private float pieceAudioVolume = 0.85f;
+
+    [Range(0f, 1f)]
+    [SerializeField]
+    private float pieceDragVolume = 0.6f;
+
     [Header("World Timer UI")]
     [Tooltip("Timer text attached to the World Space Canvas above the table.")]
     [SerializeField]
@@ -151,6 +189,7 @@ public class PuzzleTableController : MonoBehaviour
     private Camera puzzleCamera;
     private PlayerInventory currentInventory;
     private PuzzleRuntimePiece selectedPiece;
+    private Vector3 lastDragPosition;
 
     private bool puzzleActive;
     private int snappedCount;
@@ -999,6 +1038,8 @@ public class PuzzleTableController : MonoBehaviour
     {
         ReleaseNetworkGrabsOnExit();
 
+        StopPieceDragAudio();
+
         puzzleActive =
             false;
 
@@ -1431,12 +1472,14 @@ public class PuzzleTableController : MonoBehaviour
         if (runtimePiece != null)
         {
             runtimePiece.LockToSolvedTarget();
+            PlayPieceAudio(pieceSnapClip, Random.Range(0.98f, 1.02f));
         }
         else
         {
             SpawnSolvedRuntimePiece(
                 entry
             );
+            PlayPieceAudio(pieceSnapClip, Random.Range(0.98f, 1.02f));
         }
     }
 
@@ -2118,6 +2161,14 @@ public class PuzzleTableController : MonoBehaviour
 
         selectedPiece =
             bestPiece;
+
+        lastDragPosition =
+            selectedPiece.transform.position;
+
+        PlayPieceAudio(
+            pieceGrabClip,
+            Random.Range(0.95f, 1.05f)
+        );
     }
 
     private void DragSelectedPiece()
@@ -2213,6 +2264,14 @@ public class PuzzleTableController : MonoBehaviour
                 localHit
             );
 
+        float moveDistSqr =
+            (selectedPiece.transform.position - lastDragPosition).sqrMagnitude;
+
+        SetPieceDragAudio(moveDistSqr > 0.00002f);
+
+        lastDragPosition =
+            selectedPiece.transform.position;
+
         SendSelectedPiecePose(
             false
         );
@@ -2238,6 +2297,11 @@ public class PuzzleTableController : MonoBehaviour
             ) *
             selectedPiece.transform.rotation;
 
+        PlayPieceAudio(
+            pieceRotateClip,
+            Random.Range(0.93f, 1.07f)
+        );
+
         SendSelectedPiecePose(
             true
         );
@@ -2260,10 +2324,28 @@ public class PuzzleTableController : MonoBehaviour
                 )
                 : -1;
 
-        releasingPiece.TrySnap(
+        StopPieceDragAudio();
+
+        bool snapped = releasingPiece.TrySnap(
             snapDistance,
             snapRotationTolerance
         );
+
+        if (snapped)
+        {
+            PlayPieceAudio(
+                pieceSnapClip,
+                Random.Range(0.98f, 1.02f)
+            );
+        }
+        else
+        {
+            AudioClip dropClip = pieceDropClip != null ? pieceDropClip : pieceRotateClip;
+            PlayPieceAudio(
+                dropClip,
+                Random.Range(0.92f, 1.05f)
+            );
+        }
 
         if (HasSharedNetworkState() &&
             pieceIndex >= 0)
@@ -2348,6 +2430,14 @@ public class PuzzleTableController : MonoBehaviour
 
         selectedPiece =
             pendingGrabPiece;
+
+        lastDragPosition =
+            selectedPiece.transform.position;
+
+        PlayPieceAudio(
+            pieceGrabClip,
+            Random.Range(0.95f, 1.05f)
+        );
 
         pendingGrabPiece =
             null;
@@ -3292,5 +3382,62 @@ public class PuzzleTableController : MonoBehaviour
         }
 
         runtimePieces.Clear();
+    }
+
+    // =========================================================
+    // PIECE AUDIO HELPERS
+    // =========================================================
+
+    private void PlayPieceAudio(AudioClip clip, float pitch = 1f, float volumeMultiplier = 1f)
+    {
+        if (clip == null)
+            return;
+
+        if (pieceAudioSource == null)
+        {
+            pieceAudioSource = GetComponent<AudioSource>();
+        }
+
+        if (pieceAudioSource != null)
+        {
+            pieceAudioSource.pitch = pitch;
+            pieceAudioSource.PlayOneShot(clip, pieceAudioVolume * volumeMultiplier);
+        }
+    }
+
+    private void SetPieceDragAudio(bool isMoving)
+    {
+        if (pieceDragAudioSource == null || pieceDragClip == null)
+            return;
+
+        if (pieceDragAudioSource.clip != pieceDragClip)
+        {
+            pieceDragAudioSource.clip = pieceDragClip;
+            pieceDragAudioSource.loop = true;
+            pieceDragAudioSource.volume = pieceDragVolume;
+        }
+
+        if (isMoving)
+        {
+            if (!pieceDragAudioSource.isPlaying)
+            {
+                pieceDragAudioSource.Play();
+            }
+        }
+        else
+        {
+            if (pieceDragAudioSource.isPlaying)
+            {
+                pieceDragAudioSource.Pause();
+            }
+        }
+    }
+
+    private void StopPieceDragAudio()
+    {
+        if (pieceDragAudioSource != null && pieceDragAudioSource.isPlaying)
+        {
+            pieceDragAudioSource.Stop();
+        }
     }
 }
