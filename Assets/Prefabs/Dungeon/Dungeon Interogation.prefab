@@ -3032,9 +3032,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7046244fb903c344b87a47acbfe6d38a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PuzzleTableController
-  testModeShowAllPieces: 1
-  puzzlePieceMaterial: {fileID: 2100000, guid: 661f2665df804bd478ee7b52fc262de8, type: 2}
-  pieces:
+  activeDifficulty: 0
+  autoUseSelectedGameDifficulty: 1
+  easyPieces:
   - item: {fileID: 11400000, guid: 29563df8547299d4dab97ab84f0e65d9, type: 2}
     solvedTarget: {fileID: 8018519556141925028}
     guideRenderer: {fileID: 8581421199912115238}
@@ -3059,6 +3059,10 @@ MonoBehaviour:
   - item: {fileID: 11400000, guid: d19d98b361c579a4d8ff4bcf99dad3e2, type: 2}
     solvedTarget: {fileID: 1482909129418694556}
     guideRenderer: {fileID: 6047447997488011162}
+  mediumPieces: []
+  hardPieces: []
+  testModeShowAllPieces: 1
+  puzzlePieceMaterial: {fileID: 2100000, guid: 661f2665df804bd478ee7b52fc262de8, type: 2}
   scatterCenter: {fileID: 5369215454066703713}
   scatterSize: {x: 1.2, y: 1.2}
   surfaceOffset: 0.02
@@ -3067,6 +3071,8 @@ MonoBehaviour:
   snapDistance: 0.18
   snapRotationTolerance: 20
   rotationStep: 90
+  networkDragUpdatesPerSecond: 20
+  networkRemoteFollowSpeed: 24
   puzzleDuration: 15
   normalTimerAudioSource: {fileID: 1694162421169291252}
   finalCountdownAudioSource: {fileID: 2780430180548876188}
