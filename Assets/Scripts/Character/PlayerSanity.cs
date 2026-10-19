@@ -54,6 +54,7 @@ public class PlayerSanity : NetworkBehaviour
     [SerializeField, Min(0.1f)] private float lowSanityAudioFadeSpeed = 2f;
 
     private Camera localCamera;
+    private bool networkSpawned;
     private Volume sanityVolume;
     private VolumeProfile sanityProfile;
     private Vignette sanityVignette;
@@ -76,9 +77,14 @@ public class PlayerSanity : NetworkBehaviour
             ? Mathf.Clamp01(CurrentSanity / maxSanity)
             : 0f;
 
-    public bool IsInsane => CurrentSanity <= 0f;
+    public bool IsNetworkSpawned =>
+        networkSpawned && Object != null && Object.IsValid && Object.IsInSimulation;
+
+    public bool IsInsane => IsNetworkSpawned && CurrentSanity <= 0f;
     public bool CanBeHealedByCross =>
-        CurrentSanity < maxSanity && SanityPercent <= crossHealThresholdPercent;
+        IsNetworkSpawned &&
+        CurrentSanity < maxSanity &&
+        SanityPercent <= crossHealThresholdPercent;
 
     public float LowSanitySeverity =>
         Mathf.InverseLerp(visionEffectsStartPercent, 0f, SanityPercent);
@@ -233,6 +239,12 @@ public class PlayerSanity : NetworkBehaviour
     public override void Spawned()
     {
         EnsureInitialized();
+        networkSpawned = true;
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        networkSpawned = false;
     }
 
     public override void FixedUpdateNetwork()

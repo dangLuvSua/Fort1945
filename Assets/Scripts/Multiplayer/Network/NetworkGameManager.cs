@@ -3920,10 +3920,9 @@ public class NetworkGameManager : NetworkBehaviour
 
             if (playerObject == null)
             {
-                Debug.LogWarning(
-                    $"[GAME MANAGER] No player object found for {player}."
-                );
-
+                // A player can join before the scene callback has spawned
+                // and registered their PlayerObject. The next ready-check
+                // frame will retry, so this is an expected transient state.
                 return false;
             }
 
