@@ -29,9 +29,8 @@ public class SoldierFootstepAudio : MonoBehaviour
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
 
-        // SoldierGuideModel is the child.
-        // SoldierGuide is the object actually moving.
-        movementRoot = transform.parent;
+        // If attached to a child model, track parent. Otherwise track self.
+        movementRoot = transform.parent != null ? transform.parent : transform;
     }
 
     private void Start()
