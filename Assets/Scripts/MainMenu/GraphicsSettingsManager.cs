@@ -76,6 +76,11 @@ public class GraphicsSettingsManager : MonoBehaviour
 
         PlayerPrefs.SetInt(QualityKey, qualityIndex);
         PlayerPrefs.Save();
+
+        if (UnityEngine.EventSystems.EventSystem.current != null)
+        {
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+        }
     }
 
 
@@ -158,6 +163,11 @@ public class GraphicsSettingsManager : MonoBehaviour
         );
 
         PlayerPrefs.Save();
+
+        if (UnityEngine.EventSystems.EventSystem.current != null)
+        {
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+        }
     }
 
 
