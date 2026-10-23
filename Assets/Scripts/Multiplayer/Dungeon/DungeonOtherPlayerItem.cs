@@ -1,4 +1,4 @@
-
+﻿
 using Fusion;
 using TMPro;
 using UnityEngine;
@@ -120,8 +120,7 @@ public class DungeonOtherPlayerItem : MonoBehaviour
         // reliable ownership lookup in Fusion Shared Mode.
         NetworkObject playerObject = playerState.Object;
 
-        if (playerObject == null || !playerObject.IsValid ||
-            !playerObject.IsInSimulation)
+        if (playerObject == null || !playerObject.IsValid)
             return;
 
 
@@ -206,8 +205,7 @@ public class DungeonOtherPlayerItem : MonoBehaviour
             return;
 
         if (playerSanity.Object == null ||
-            !playerSanity.Object.IsValid ||
-            !playerSanity.Object.IsInSimulation)
+            !playerSanity.Object.IsValid)
         {
             return;
         }

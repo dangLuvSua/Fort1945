@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections;
 using Fusion;
 using UnityEngine;
@@ -1152,25 +1152,47 @@ public class NetworkGameManager : NetworkBehaviour
         if (Runner == null)
             return;
 
+        if (cachedGateObject == null)
+        {
+            cachedGateObject = GameObject.Find(gateTriggerName);
+        }
+
+        if (cachedGateObject == null)
+        {
+            Debug.LogWarning("[GATE TRIGGER] GateTrigger was not found in the scene.");
+            return;
+        }
+
+        BoxCollider boxCollider = cachedGateObject.GetComponent<BoxCollider>();
+
+        if (boxCollider == null)
+        {
+            Debug.LogError("[GATE TRIGGER] GateTrigger does not have a BoxCollider.");
+            return;
+        }
+
         foreach (PlayerRef player in Runner.ActivePlayers)
         {
-            // Include players whose network object has not spawned yet so a
-            // transient null PlayerObject cannot complete the gate objective.
             totalOut++;
 
-            NetworkObject playerObject =
-                Runner.GetPlayerObject(player);
+            NetworkObject playerObject = Runner.GetPlayerObject(player);
 
             if (playerObject == null)
                 continue;
 
-            Vector3 delta =
-                playerObject.transform.position -
-                center;
+            // Convert player position into the collider's local space
+            Vector3 localPosition = boxCollider.transform.InverseTransformPoint(playerObject.transform.position);
 
-            if (Mathf.Abs(delta.x) <= halfExtents.x &&
-                Mathf.Abs(delta.y) <= halfExtents.y &&
-                Mathf.Abs(delta.z) <= halfExtents.z)
+            // Account for the BoxCollider's center offset
+            localPosition -= boxCollider.center;
+
+            Vector3 halfSize = boxCollider.size * 0.5f;
+
+            bool inside = Mathf.Abs(localPosition.x) <= halfSize.x &&
+                          Mathf.Abs(localPosition.y) <= halfSize.y &&
+                          Mathf.Abs(localPosition.z) <= halfSize.z;
+
+            if (inside)
             {
                 insideOut++;
             }
@@ -3024,6 +3046,7 @@ public class NetworkGameManager : NetworkBehaviour
             }
         }
     }
+
 
     private GameObject GetDungeonEntryZoneObject()
     {
