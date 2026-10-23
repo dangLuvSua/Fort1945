@@ -17,7 +17,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 18
   m_IsActive: 1
 --- !u!4 &4608742998782612680
 Transform:
@@ -164,7 +164,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 18
   m_IsActive: 1
 --- !u!4 &1640730375770008658
 Transform:
@@ -311,7 +311,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 18
   m_IsActive: 1
 --- !u!4 &7001803926203904943
 Transform:
@@ -461,6 +461,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: DungeonTorches
       objectReference: {fileID: 0}
+    - target: {fileID: 5963328770836976303, guid: 116faf7bc31051548b193c8d6b182556, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     - target: {fileID: 6733626483035602963, guid: 116faf7bc31051548b193c8d6b182556, type: 3}
       propertyPath: m_LocalPosition.x
       value: -109.87732
@@ -500,6 +504,10 @@ PrefabInstance:
     - target: {fileID: 6733626483035602963, guid: 116faf7bc31051548b193c8d6b182556, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7019793452539158456, guid: 116faf7bc31051548b193c8d6b182556, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -568,29 +576,73 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -8362356830007192780, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     - target: {fileID: -7081006241495486395, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
       propertyPath: m_Layer
       value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: -7081006241495486395, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     - target: {fileID: -5000136268434582860, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
       propertyPath: m_Layer
       value: 13
       objectReference: {fileID: 0}
+    - target: {fileID: -5000136268434582860, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     - target: {fileID: -3459033384749091094, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
       propertyPath: m_Layer
       value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: -3459033384749091094, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     - target: {fileID: -2865116772995484349, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
       propertyPath: m_Layer
       value: 9
       objectReference: {fileID: 0}
+    - target: {fileID: -2865116772995484349, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
       propertyPath: m_Name
       value: Dungeon Entance - Fort
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 3381744916587547034, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 5662802493810888804, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 6420227198744345489, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
     - target: {fileID: 6906181367671061281, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
       propertyPath: m_Layer
       value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: 6906181367671061281, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 7671882556223847964, guid: d720fc837fba19d42aed2ddad4142092, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -31,6 +31,9 @@ public class MissionProgressPanelUI : MonoBehaviour
     private readonly List<TeamObjective> teamObjectives =
         new List<TeamObjective>();
 
+    private readonly Dictionary<string, TMP_Text> progressTextRows =
+        new Dictionary<string, TMP_Text>();
+
     private bool layoutAdded;
 
     // =========================================================
@@ -163,7 +166,7 @@ public class MissionProgressPanelUI : MonoBehaviour
 
             SetProgress(
                 objective.ItemId,
-                manager.GetTeamItemCount(objective.ItemId),
+                Mathf.Clamp(manager.GetTeamItemCount(objective.ItemId) - objective.Baseline, 0, objective.Required),
                 objective.Required);
         }
     }
@@ -221,7 +224,77 @@ public class MissionProgressPanelUI : MonoBehaviour
         EnsureContentLayout();
     }
 
+    public void SetMission(MissionData mission)
+    {
+        if (mission == null)
+            return;
+
+        // Keep mission details in the separate mission notification panel.
+        // The progress panel content begins with the required item rows.
+        SetMission(mission.title);
+    }
+
+    public void SetProgressText(string key, string text)
+    {
+        EnsureInitialized();
+        if (content == null || string.IsNullOrEmpty(key))
+            return;
+
+        if (!progressTextRows.TryGetValue(key, out TMP_Text row) || row == null)
+        {
+            GameObject rowObject = new GameObject(key, typeof(RectTransform));
+            rowObject.transform.SetParent(content, false);
+            row = rowObject.AddComponent<TextMeshProUGUI>();
+            row.font = titleText != null ? titleText.font : null;
+            row.fontSharedMaterial = titleText != null ? titleText.fontSharedMaterial : null;
+            row.fontSize = 22f;
+            row.color = Color.white;
+            row.alignment = TextAlignmentOptions.Left;
+
+            LayoutElement layout = rowObject.AddComponent<LayoutElement>();
+            layout.preferredHeight = 34f;
+            progressTextRows[key] = row;
+        }
+
+        row.text = text;
+    }
+
+    public static void ToggleVisibility()
+    {
+        Transform[] allTransforms = Object.FindObjectsByType<Transform>(
+            FindObjectsInactive.Include);
+        bool currentlyVisible = false;
+        bool found = false;
+
+        foreach (Transform candidate in allTransforms)
+        {
+            if (candidate == null || candidate.name != "MissionProgressPanel")
+                continue;
+
+            found = true;
+            currentlyVisible |= candidate.gameObject.activeInHierarchy;
+        }
+
+        if (!found)
+        {
+            Debug.LogWarning("[MISSION PROGRESS] Cannot toggle: panel was not found.");
+            return;
+        }
+
+        bool show = !currentlyVisible;
+        foreach (Transform candidate in allTransforms)
+        {
+            if (candidate != null && candidate.name == "MissionProgressPanel")
+                candidate.gameObject.SetActive(show);
+        }
+    }
+
     public void AddItemRow(ItemData itemData, int required)
+    {
+        AddItemRow(itemData, required, 0);
+    }
+
+    public void AddItemRow(ItemData itemData, int required, int baseline)
     {
         EnsureInitialized();
 
@@ -256,7 +329,7 @@ public class MissionProgressPanelUI : MonoBehaviour
                 );
 
         rows.Add(row);
-        teamObjectives.Add(new TeamObjective(itemData.itemId, required));
+        teamObjectives.Add(new TeamObjective(itemData.itemId, required, baseline));
     }
 
     public void SetProgress(
@@ -288,6 +361,13 @@ public class MissionProgressPanelUI : MonoBehaviour
 
         rows.Clear();
         teamObjectives.Clear();
+
+        foreach (TMP_Text row in progressTextRows.Values)
+        {
+            if (row != null)
+                Object.Destroy(row.gameObject);
+        }
+        progressTextRows.Clear();
     }
 
     // =========================================================
@@ -575,11 +655,13 @@ public class MissionProgressPanelUI : MonoBehaviour
     {
         public int ItemId { get; }
         public int Required { get; }
+        public int Baseline { get; }
 
-        public TeamObjective(int itemId, int required)
+        public TeamObjective(int itemId, int required, int baseline)
         {
             ItemId = itemId;
             Required = required;
+            Baseline = baseline;
         }
     }
 }

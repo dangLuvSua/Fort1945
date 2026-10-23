@@ -181,6 +181,8 @@ public class PuzzlePieceSpawner : NetworkBehaviour
     private bool dungeonReady;
     private bool puzzleSpawned;
     private bool isSubscribed;
+    private PuzzleDifficultySet activePuzzleSet;
+    private bool puzzleCollectionReported;
 
     // =========================================================
     // FUSION SPAWN
@@ -312,7 +314,10 @@ public class PuzzlePieceSpawner : NetworkBehaviour
     public override void FixedUpdateNetwork()
     {
         if (puzzleSpawned)
+        {
+            TrackPuzzlePieceCollection();
             return;
+        }
 
         if (!dungeonReady)
             return;
@@ -328,6 +333,11 @@ public class PuzzlePieceSpawner : NetworkBehaviour
         {
             return;
         }
+
+        PhaseManager phaseManager = PhaseManager.Instance;
+        if (phaseManager != null && phaseManager.PhaseInitialized &&
+            phaseManager.CurrentPhase < 2)
+            return;
 
         // -----------------------------------------------------
         // WAIT FOR NAVMESH
@@ -389,10 +399,32 @@ public class PuzzlePieceSpawner : NetworkBehaviour
             return;
         }
 
-        puzzleSpawned =
-            SpawnPuzzleSet(
-                set
-            );
+        puzzleSpawned = SpawnPuzzleSet(set);
+        if (puzzleSpawned)
+            activePuzzleSet = set;
+    }
+
+    private void TrackPuzzlePieceCollection()
+    {
+        if (puzzleCollectionReported || activePuzzleSet == null ||
+            Object == null || !Object.HasStateAuthority)
+            return;
+
+        NetworkGameManager manager = NetworkGameManager.Instance;
+        PhaseManager phaseManager = PhaseManager.Instance;
+        if (manager == null || !manager.IsNetworkStateReady || phaseManager == null ||
+            !phaseManager.PhaseInitialized || phaseManager.CurrentPhase != 2)
+            return;
+
+        foreach (ItemData piece in activePuzzleSet.pieces)
+        {
+            if (piece == null || manager.GetTeamItemCount(piece.itemId) < 1)
+                return;
+        }
+
+        puzzleCollectionReported = true;
+        phaseManager.ReportPuzzlePiecesCollected();
+        Debug.Log("[PUZZLE SPAWNER] All difficulty puzzle pieces collected.", this);
     }
 
     // =========================================================

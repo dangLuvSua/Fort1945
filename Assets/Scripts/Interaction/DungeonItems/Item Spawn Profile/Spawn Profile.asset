@@ -15,65 +15,188 @@ MonoBehaviour:
   rules:
   - phase: 1
     difficulty: 0
-    totalItemsToSpawn: 5
+    missionTitle: PHASE 1 - FIND THE EQUIPMENT
+    missionDescription: Find and collect all required equipment.
+    missionData: {fileID: 11400000, guid: 638584a960ce4b348ed0896945cefbb1, type: 2}
+    completionMode: 0
+    requiredPhotoCaptures: 0
+    requirePuzzlePieces: 0
+    totalItemsToSpawn: 4
+    spawnEveryEntry: 1
     items:
     - item: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
       weight: 10
       minQuantity: 1
       maxQuantity: 1
+      maxSpawnsPerPhase: 3
     - item: {fileID: 11400000, guid: 49c7c78e778e32040a342553e0e83829, type: 2}
       weight: 10
       minQuantity: 1
       maxQuantity: 1
+      maxSpawnsPerPhase: 1
     - item: {fileID: 11400000, guid: 4e79d39b7f5292347bab8d08e48bc3ab, type: 2}
       weight: 10
       minQuantity: 1
       maxQuantity: 1
+      maxSpawnsPerPhase: 1
+    - item: {fileID: 11400000, guid: d98faaf2d5a8a2b46adbd30d840696f4, type: 2}
+      weight: 10
+      minQuantity: 1
+      maxQuantity: 1
+      maxSpawnsPerPhase: 1
+    - item: {fileID: 11400000, guid: fc37cc7252e517d44b276fe898ee6a8d, type: 2}
+      weight: 10
+      minQuantity: 1
+      maxQuantity: 1
+      maxSpawnsPerPhase: 1
   - phase: 1
     difficulty: 1
+    missionTitle: PHASE 1 - FIND THE EQUIPMENT
+    missionDescription: Find and collect all required equipment.
+    missionData: {fileID: 11400000, guid: 638584a960ce4b348ed0896945cefbb1, type: 2}
+    completionMode: 0
+    requiredPhotoCaptures: 0
+    requirePuzzlePieces: 0
     totalItemsToSpawn: 5
+    spawnEveryEntry: 1
     items:
     - item: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
       weight: 10
       minQuantity: 1
       maxQuantity: 1
+      maxSpawnsPerPhase: 2
     - item: {fileID: 11400000, guid: 49c7c78e778e32040a342553e0e83829, type: 2}
       weight: 10
       minQuantity: 1
       maxQuantity: 1
+      maxSpawnsPerPhase: 1
     - item: {fileID: 11400000, guid: 4e79d39b7f5292347bab8d08e48bc3ab, type: 2}
       weight: 10
       minQuantity: 1
       maxQuantity: 1
+      maxSpawnsPerPhase: 1
+    - item: {fileID: 11400000, guid: fc37cc7252e517d44b276fe898ee6a8d, type: 2}
+      weight: 10
+      minQuantity: 1
+      maxQuantity: 1
+      maxSpawnsPerPhase: 1
+    - item: {fileID: 11400000, guid: d98faaf2d5a8a2b46adbd30d840696f4, type: 2}
+      weight: 10
+      minQuantity: 1
+      maxQuantity: 1
+      maxSpawnsPerPhase: 1
   - phase: 1
     difficulty: 2
+    missionTitle: PHASE 1 - FIND THE EQUIPMENT
+    missionDescription: Find and collect all required equipment.
+    missionData: {fileID: 11400000, guid: 638584a960ce4b348ed0896945cefbb1, type: 2}
+    completionMode: 0
+    requiredPhotoCaptures: 0
+    requirePuzzlePieces: 0
     totalItemsToSpawn: 5
+    spawnEveryEntry: 1
     items:
     - item: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
       weight: 10
       minQuantity: 1
       maxQuantity: 1
+      maxSpawnsPerPhase: 1
     - item: {fileID: 11400000, guid: 49c7c78e778e32040a342553e0e83829, type: 2}
       weight: 10
       minQuantity: 1
       maxQuantity: 1
+      maxSpawnsPerPhase: 1
     - item: {fileID: 11400000, guid: 4e79d39b7f5292347bab8d08e48bc3ab, type: 2}
       weight: 10
       minQuantity: 1
       maxQuantity: 1
+      maxSpawnsPerPhase: 1
+    - item: {fileID: 11400000, guid: d98faaf2d5a8a2b46adbd30d840696f4, type: 2}
+      weight: 10
+      minQuantity: 1
+      maxQuantity: 1
+      maxSpawnsPerPhase: 1
+  - phase: 2
+    difficulty: 0
+    missionTitle: PHASE 2 - TAKE PHOTOS AND FIND PUZZLE PIECES
+    missionDescription: Take 4 valid pictures of the Mystery Statue and the statue
+      inside the prison, collect every puzzle piece, and find Prison Key 2 and the
+      Interrogation Room Key.
+    missionData: {fileID: 11400000, guid: 4e54cc3c3f124b989ca1894bc7ed793e, type: 2}
+    completionMode: 1
+    requiredPhotoCaptures: 4
+    requirePuzzlePieces: 1
+    totalItemsToSpawn: 1
+    items:
+    - item: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
+      weight: 10
+      minQuantity: 1
+      maxQuantity: 2
+      maxSpawnsPerPhase: 3
+  - phase: 2
+    difficulty: 1
+    missionTitle: PHASE 2 - TAKE PHOTOS AND FIND PUZZLE PIECES
+    missionDescription: Take 4 valid pictures of the Mystery Statue and the statue
+      inside the prison, collect every puzzle piece, and find Prison Key 2 and the
+      Interrogation Room Key.
+    missionData: {fileID: 11400000, guid: 4e54cc3c3f124b989ca1894bc7ed793e, type: 2}
+    completionMode: 1
+    requiredPhotoCaptures: 4
+    requirePuzzlePieces: 1
+    totalItemsToSpawn: 3
+    items:
+    - item: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
+      weight: 10
+      minQuantity: 1
+      maxQuantity: 2
+      maxSpawnsPerPhase: 2
+  - phase: 2
+    difficulty: 2
+    missionTitle: PHASE 2 - TAKE PHOTOS AND FIND PUZZLE PIECES
+    missionDescription: Take 4 valid pictures of the Mystery Statue and the statue
+      inside the prison, collect every puzzle piece, and find Prison Key 2 and the
+      Interrogation Room Key.
+    missionData: {fileID: 11400000, guid: 4e54cc3c3f124b989ca1894bc7ed793e, type: 2}
+    completionMode: 1
+    requiredPhotoCaptures: 4
+    requirePuzzlePieces: 1
+    totalItemsToSpawn: 3
+    items:
+    - item: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
+      weight: 10
+      minQuantity: 1
+      maxQuantity: 1
+      maxSpawnsPerPhase: 1
   - phase: 3
     difficulty: 0
-    totalItemsToSpawn: 5
-    items:
-    - item: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
-      weight: 10
-      minQuantity: 1
-      maxQuantity: 1
-    - item: {fileID: 11400000, guid: 49c7c78e778e32040a342553e0e83829, type: 2}
-      weight: 10
-      minQuantity: 1
-      maxQuantity: 1
-    - item: {fileID: 11400000, guid: 4e79d39b7f5292347bab8d08e48bc3ab, type: 2}
-      weight: 10
-      minQuantity: 1
-      maxQuantity: 1
+    missionTitle: PHASE 3 - SOLVE THE INTERROGATION BOARD
+    missionDescription: Connect the puzzle pieces and match the photographs to the
+      board descriptions.
+    missionData: {fileID: 11400000, guid: bdd1290a026d408ab0806b529a87aad2, type: 2}
+    completionMode: 2
+    requiredPhotoCaptures: 0
+    requirePuzzlePieces: 0
+    totalItemsToSpawn: 0
+    items: []
+  - phase: 3
+    difficulty: 1
+    missionTitle: PHASE 3 - SOLVE THE INTERROGATION BOARD
+    missionDescription: Connect the puzzle pieces and match the photographs to the
+      board descriptions.
+    missionData: {fileID: 11400000, guid: bdd1290a026d408ab0806b529a87aad2, type: 2}
+    completionMode: 2
+    requiredPhotoCaptures: 0
+    requirePuzzlePieces: 0
+    totalItemsToSpawn: 0
+    items: []
+  - phase: 3
+    difficulty: 2
+    missionTitle: PHASE 3 - SOLVE THE INTERROGATION BOARD
+    missionDescription: Connect the puzzle pieces and match the photographs to the
+      board descriptions.
+    missionData: {fileID: 11400000, guid: bdd1290a026d408ab0806b529a87aad2, type: 2}
+    completionMode: 2
+    requiredPhotoCaptures: 0
+    requirePuzzlePieces: 0
+    totalItemsToSpawn: 0
+    items: []

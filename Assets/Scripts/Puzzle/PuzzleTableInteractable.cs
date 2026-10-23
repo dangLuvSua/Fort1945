@@ -145,6 +145,13 @@ public class PuzzleTableInteractable :
         puzzleHasBeenCompleted =
             true;
 
+        PhaseManager phaseManager = PhaseManager.Instance;
+        if (phaseManager != null && phaseManager.PhaseInitialized &&
+            phaseManager.CurrentPhase >= 3)
+        {
+            phaseManager.ReportExternalPhaseComplete();
+        }
+
         Debug.Log(
             "[PUZZLE TABLE] Puzzle completed. " +
             "Table interaction has been disabled."
