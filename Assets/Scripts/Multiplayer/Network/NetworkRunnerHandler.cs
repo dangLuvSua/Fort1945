@@ -122,6 +122,7 @@ public class NetworkRunnerHandler :
     private PlayerInventory.InventoryTransferSnapshot dungeonInventorySnapshot;
 
     private string currentSessionName;
+    private Coroutine failureModalCoroutine;
 
     public void CaptureLocalInventoryForDungeon()
     {
@@ -413,7 +414,8 @@ public class NetworkRunnerHandler :
         await StartRunner(
             GameMode.Shared,
             sessionName,
-            lobbyName
+            lobbyName,
+            enableClientSessionCreation: true
         );
     }
 
@@ -577,7 +579,8 @@ public class NetworkRunnerHandler :
     private async Task StartRunner(
         GameMode gameMode,
         string sessionName,
-        string lobbyName = null)
+        string lobbyName = null,
+        bool enableClientSessionCreation = false)
     {
         if (runner != null)
         {
@@ -650,6 +653,11 @@ public class NetworkRunnerHandler :
                 PlayerCount =
                     maxPlayers,
 
+                // Shared mode creates a session by default when the requested
+                // name does not exist. Only the explicit Create flow may do so.
+                EnableClientSessionCreation =
+                    enableClientSessionCreation,
+
                 SceneManager =
                     sceneManager,
 
@@ -696,9 +704,10 @@ public class NetworkRunnerHandler :
             );
 
 
-            LoadingFailed(
-                "FAILED TO CONNECT"
-            );
+            LoadingFailed(enableClientSessionCreation
+                ? "Could not create the lobby. Check your connection and try again."
+                : "Lobby not found, full, or closed. Check the lobby code and try again.",
+                showImmediately: !enableClientSessionCreation);
 
 
             if (runner != null)
@@ -1921,7 +1930,8 @@ public class NetworkRunnerHandler :
     // =========================================================
 
     private void LoadingFailed(
-        string message)
+        string message,
+        bool showImmediately = false)
     {
         Debug.LogError(
             $"[LOADING] {message}"
@@ -1942,9 +1952,21 @@ public class NetworkRunnerHandler :
 
         // Give the player a brief moment to see the
         // failure message before removing the loading UI.
-        StartCoroutine(
-            RemoveLoadingScreenAfterFailure()
-        );
+        if (showImmediately)
+        {
+            if (failureModalCoroutine != null)
+            {
+                StopCoroutine(failureModalCoroutine);
+                failureModalCoroutine = null;
+            }
+
+            RemoveLoadingScreen();
+            ShowFailureModal(message);
+            return;
+        }
+
+        if (failureModalCoroutine != null) StopCoroutine(failureModalCoroutine);
+        failureModalCoroutine = StartCoroutine(RemoveLoadingScreenAfterFailure(message));
     }
 
 
@@ -1953,20 +1975,32 @@ public class NetworkRunnerHandler :
     // =========================================================
 
     private System.Collections.IEnumerator
-        RemoveLoadingScreenAfterFailure()
+        RemoveLoadingScreenAfterFailure(string message)
     {
         yield return new WaitForSeconds(
             1.5f
         );
 
 
+        RemoveLoadingScreen();
+        ShowFailureModal(message);
+        failureModalCoroutine = null;
+    }
+
+    private void RemoveLoadingScreen()
+    {
         if (loadingScreen != null)
         {
-            Destroy(
-                loadingScreen.gameObject
-            );
-
+            Destroy(loadingScreen.gameObject);
             loadingScreen = null;
+        }
+    }
+
+    private void ShowFailureModal(string message)
+    {
+        if (CanvasManager.Instance != null)
+        {
+            CanvasManager.Instance.ShowInfo("LOBBY CONNECTION FAILED", message);
         }
     }
 }

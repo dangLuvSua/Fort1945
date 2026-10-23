@@ -52,6 +52,7 @@ public class LobbyUI : MonoBehaviour
 
         if (isLoading)
         {
+            ShowMessage("PLEASE WAIT", "A lobby connection is already in progress.");
             Debug.LogWarning(
                 "[LOBBY UI] A lobby connection is already in progress."
             );
@@ -66,6 +67,7 @@ public class LobbyUI : MonoBehaviour
 
         if (lobbyNameInput == null)
         {
+            ShowMessage("UNAVAILABLE", "Lobby creation is not configured correctly.");
             Debug.LogError(
                 "Lobby name input field is not assigned."
             );
@@ -80,6 +82,7 @@ public class LobbyUI : MonoBehaviour
 
         if (string.IsNullOrEmpty(lobbyName))
         {
+            ShowMessage("LOBBY NAME REQUIRED", "Enter a name for your lobby before creating it.");
             Debug.LogWarning(
                 "Lobby name cannot be empty."
             );
@@ -130,6 +133,7 @@ public class LobbyUI : MonoBehaviour
 
         if (NetworkRunnerHandler.Instance == null)
         {
+            ShowMessage("CONNECTION ERROR", "The network service is unavailable. Please try again.");
             Debug.LogError(
                 "NetworkRunnerHandler instance was not found."
             );
@@ -170,6 +174,7 @@ public class LobbyUI : MonoBehaviour
 
         if (isLoading)
         {
+            ShowMessage("PLEASE WAIT", "A lobby connection is already in progress.");
             Debug.LogWarning(
                 "[LOBBY UI] A lobby connection is already in progress."
             );
@@ -184,6 +189,7 @@ public class LobbyUI : MonoBehaviour
 
         if (joinLobbyCodeInput == null)
         {
+            ShowMessage("UNAVAILABLE", "Lobby joining is not configured correctly.");
             Debug.LogError(
                 "Join lobby code input field is not assigned."
             );
@@ -198,6 +204,7 @@ public class LobbyUI : MonoBehaviour
 
         if (string.IsNullOrEmpty(lobbyCode))
         {
+            ShowMessage("LOBBY CODE REQUIRED", "Enter a lobby code to join a lobby.");
             Debug.LogWarning(
                 "Lobby code cannot be empty."
             );
@@ -241,6 +248,7 @@ public class LobbyUI : MonoBehaviour
 
         if (NetworkRunnerHandler.Instance == null)
         {
+            ShowMessage("CONNECTION ERROR", "The network service is unavailable. Please try again.");
             Debug.LogError(
                 "NetworkRunnerHandler instance was not found."
             );
@@ -265,6 +273,11 @@ public class LobbyUI : MonoBehaviour
         NetworkRunnerHandler.Instance.JoinGame(
             lobbyCode
         );
+    }
+
+    private void ShowMessage(string title, string message)
+    {
+        if (CanvasManager.Instance != null) CanvasManager.Instance.ShowInfo(title, message);
     }
 
 

@@ -2,9 +2,21 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
 using TMPro;
+using UnityEngine.UI;
+using UnityEngine.Events;
 
 public class CanvasManager : MonoBehaviour
 {
+    public static CanvasManager Instance { get; private set; }
+
+    [Header("Confirmation / Information Modal")]
+    [SerializeField] private GameObject modalRoot;
+    [SerializeField] private TMP_Text modalTitle;
+    [SerializeField] private TMP_Text modalMessage;
+    [SerializeField] private Button modalConfirmButton;
+    [SerializeField] private TMP_Text modalConfirmLabel;
+    [SerializeField] private Button modalCancelButton;
+    private Image modalBackdrop;
     // =====================================================
     // MAIN CANVASES
     // =====================================================
@@ -102,8 +114,101 @@ public class CanvasManager : MonoBehaviour
 
     private void Start()
     {
+        Instance = this;
+        if (modalRoot != null) modalRoot.SetActive(false);
         SetCharacterSelectionCamera(false);
         SetCharacterSelectionObjects(false);
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    public void ShowInfo(string title, string message)
+    {
+        ShowModal(title, message, "OK", null, false);
+    }
+
+    public void ShowConfirmation(string title, string message, string confirmText, UnityAction onConfirm)
+    {
+        ShowModal(title, message, confirmText, onConfirm, true);
+    }
+
+    public void ConfirmQuitGame()
+    {
+        ShowConfirmation("QUIT GAME?", "Are you sure you want to quit?", "QUIT", QuitGame);
+    }
+
+    public void ConfirmLeaveLobby()
+    {
+        ShowConfirmation("LEAVE LOBBY?", "Are you sure you want to leave this lobby?", "LEAVE", () =>
+        {
+            if (NetworkRunnerHandler.Instance != null) NetworkRunnerHandler.Instance.Disconnect();
+            SceneManager.LoadScene("MainMenu");
+        });
+    }
+
+    private void QuitGame()
+    {
+        Application.Quit();
+    }
+
+    private void ShowModal(string title, string message, string confirmText, UnityAction onConfirm, bool confirmation)
+    {
+        if (modalRoot == null || modalTitle == null || modalMessage == null || modalConfirmButton == null || modalCancelButton == null)
+        {
+            Debug.LogWarning("CanvasManager: Assign the modal root, title, message, confirm button, and cancel button in the Inspector.");
+            return;
+        }
+
+        modalTitle.text = title;
+        modalMessage.text = message;
+        if (modalConfirmLabel != null) modalConfirmLabel.text = confirmText;
+        modalCancelButton.gameObject.SetActive(confirmation);
+        modalConfirmButton.onClick.RemoveAllListeners();
+        modalConfirmButton.onClick.AddListener(() => { CloseModal(); onConfirm?.Invoke(); });
+        modalCancelButton.onClick.RemoveAllListeners();
+        modalCancelButton.onClick.AddListener(CloseModal);
+        Canvas modalCanvas = modalRoot.GetComponent<Canvas>();
+        if (modalCanvas == null) modalCanvas = modalRoot.AddComponent<Canvas>();
+        modalCanvas.overrideSorting = true;
+        modalCanvas.sortingOrder = short.MaxValue;
+        modalRoot.GetComponent<RectTransform>().localScale = Vector3.one;
+        if (modalRoot.GetComponent<GraphicRaycaster>() == null) modalRoot.AddComponent<GraphicRaycaster>();
+        EnsureModalBackdrop();
+        modalRoot.transform.SetAsLastSibling();
+        modalRoot.SetActive(true);
+    }
+
+    private void EnsureModalBackdrop()
+    {
+        if (modalBackdrop == null)
+        {
+            Transform existing = modalRoot.transform.Find("Modal Backdrop");
+            if (existing != null) modalBackdrop = existing.GetComponent<Image>();
+        }
+
+        if (modalBackdrop == null)
+        {
+            GameObject backdrop = new GameObject("Modal Backdrop", typeof(RectTransform), typeof(Image));
+            backdrop.transform.SetParent(modalRoot.transform, false);
+            modalBackdrop = backdrop.GetComponent<Image>();
+        }
+
+        RectTransform backdropRect = modalBackdrop.rectTransform;
+        backdropRect.anchorMin = Vector2.zero;
+        backdropRect.anchorMax = Vector2.one;
+        backdropRect.offsetMin = Vector2.zero;
+        backdropRect.offsetMax = Vector2.zero;
+        modalBackdrop.color = new Color(0f, 0f, 0f, 0.88f);
+        modalBackdrop.raycastTarget = true;
+        modalBackdrop.transform.SetAsFirstSibling();
+    }
+
+    private void CloseModal()
+    {
+        if (modalRoot != null) modalRoot.SetActive(false);
     }
 
 
