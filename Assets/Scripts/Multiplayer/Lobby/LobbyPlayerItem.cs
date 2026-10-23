@@ -1,4 +1,4 @@
-using Fusion;
+﻿using Fusion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -120,8 +120,7 @@ public class LobbyPlayerItem : MonoBehaviour
 
 
         NetworkObject playerObject = playerState.Object;
-        if (playerObject == null || !playerObject.IsValid ||
-            !playerObject.IsInSimulation)
+        if (playerObject == null || !playerObject.IsValid)
             return;
 
 
@@ -188,8 +187,7 @@ public class LobbyPlayerItem : MonoBehaviour
 
 
         NetworkObject playerObject = playerState.Object;
-        if (playerObject == null || !playerObject.IsValid ||
-            !playerObject.IsInSimulation)
+        if (playerObject == null || !playerObject.IsValid)
             return;
 
 
@@ -279,8 +277,7 @@ public class LobbyPlayerItem : MonoBehaviour
             return;
 
         if (playerSanity.Object == null ||
-            !playerSanity.Object.IsValid ||
-            !playerSanity.Object.IsInSimulation)
+            !playerSanity.Object.IsValid)
         {
             return;
         }
