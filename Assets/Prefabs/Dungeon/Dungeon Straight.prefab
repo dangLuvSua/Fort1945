@@ -223,6 +223,38 @@ MonoBehaviour:
   flickerRange: 0
   baseRange: 6
   rangeStrength: 0.3
+--- !u!1 &3132534502778179390
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2497503936634580257}
+  m_Layer: 0
+  m_Name: ItemSpawnPoints
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2497503936634580257
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3132534502778179390}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -13.2, y: 0.15, z: -32.56}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7059740950524134022}
+  m_Father: {fileID: 335743345391075861}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3362781530189768174
 GameObject:
   m_ObjectHideFlags: 0
@@ -956,6 +988,51 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DungeonConnector
   connectorType: 0
   used: 0
+--- !u!1 &8382981290128896730
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7059740950524134022}
+  - component: {fileID: 5547643102464343397}
+  m_Layer: 0
+  m_Name: SP_01
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7059740950524134022
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8382981290128896730}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.22, y: 0.065, z: -0.254}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2497503936634580257}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5547643102464343397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8382981290128896730}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c79f2da3e0c364648b53853171c30d15, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemSpawnPoint
+  canSpawnItems: 1
 --- !u!1001 &225872357124859390
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1089,9 +1166,12 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: fbfc67941dc48fd4b8dfcaea4e6dfd78, type: 3}
       insertIndex: 0
-      addedObject: {fileID: 6674992983881891344}
+      addedObject: {fileID: 2497503936634580257}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: fbfc67941dc48fd4b8dfcaea4e6dfd78, type: 3}
       insertIndex: 1
+      addedObject: {fileID: 6674992983881891344}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: fbfc67941dc48fd4b8dfcaea4e6dfd78, type: 3}
+      insertIndex: 2
       addedObject: {fileID: 1038796848698071223}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: fbfc67941dc48fd4b8dfcaea4e6dfd78, type: 3}
       insertIndex: -1
