@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemId: 3019
   itemName: Hard Map Piece 19
-  icon: {fileID: 21300000, guid: 064188b7c95e7eb4cbda797422ab8c1c, type: 3}
+  icon: {fileID: 21300000, guid: 9140d07a78fe06046b39304c232841d7, type: 3}
   description: A torn piece of the Fort Santiago map.
   category: 2
   isStackable: 0
