@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemId: 2008
   itemName: Medium Map Piece 08
-  icon: {fileID: 21300000, guid: 7bab5270d8a8ed44384f6dab93fa2c40, type: 3}
+  icon: {fileID: 21300000, guid: 06d03ceb5182b644f8567ec85d38a85b, type: 3}
   description: ' A torn piece of the Fort Santiago map.'
   category: 2
   isStackable: 0
