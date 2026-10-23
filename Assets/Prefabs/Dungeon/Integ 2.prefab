@@ -1081,8 +1081,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1317852831211819585}
   - component: {fileID: 7316968157187359736}
-  - component: {fileID: 2375531710609206736}
-  - component: {fileID: 6909805138769247851}
   m_Layer: 0
   m_Name: Jigsaw Puzzle
   m_TagString: Untagged
@@ -1288,8 +1286,8 @@ MonoBehaviour:
   puzzleDuration: 60
   normalTimerAudioSource: {fileID: 6200718603921897278}
   finalCountdownAudioSource: {fileID: 6750748836010195966}
-  pieceAudioSource: {fileID: 2375531710609206736}
-  pieceDragAudioSource: {fileID: 6909805138769247851}
+  pieceAudioSource: {fileID: 0}
+  pieceDragAudioSource: {fileID: 0}
   pieceGrabClip: {fileID: 8300000, guid: 6dcbfdda34e22bd4e8f4e3bdc7efe49a, type: 3}
   pieceDragClip: {fileID: 8300000, guid: a2fb635b0a30547419d84c15500704f8, type: 3}
   pieceRotateClip: {fileID: 8300000, guid: 69045e2a584bfc8438ed540584c2ea53, type: 3}
