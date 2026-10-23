@@ -1057,6 +1057,35 @@ public class DungeonGenerator : MonoBehaviour
 
 
 
+    /// <summary>
+    /// Returns generated mystery spawn markers and camera-photo targets for
+    /// phase-specific evidence and key placement.
+    /// </summary>
+    public List<Transform> GetMissionItemSpawnTargets()
+    {
+        List<Transform> targets = new List<Transform>();
+        foreach (GameObject piece in generatedPieces)
+        {
+            if (piece == null)
+                continue;
+
+            foreach (Transform child in piece.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == piece.transform)
+                    continue;
+
+                bool isMysterySpawnPoint = child.name.StartsWith(
+                    "MSP", System.StringComparison.OrdinalIgnoreCase);
+                bool isCameraTarget = child.GetComponent<CameraPhotoPoint>() != null;
+
+                if ((isMysterySpawnPoint || isCameraTarget) && !targets.Contains(child))
+                    targets.Add(child);
+            }
+        }
+
+        return targets;
+    }
+
     // =========================================================
 
     // PLAYER SPAWN POINTS

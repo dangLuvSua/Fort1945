@@ -66,33 +66,31 @@ public class MissionManager : MonoBehaviour
     /// Populates and shows the mission panel using a <see cref="MissionData"/> asset.
     /// </summary>
     /// <param name="data">The mission data asset to display.</param>
-    public static void Show(MissionData data)
-    {
-        if (Instance == null)
-        {
-            Debug.LogWarning("[MISSION MANAGER] Show() called but no Instance exists in the scene.");
-            return;
-        }
+    public static bool HasMissionPanel => ResolveMissionPanel() != null;
 
+    public static void Show(MissionData data, Action onAcknowledge = null)
+    {
         if (data == null)
         {
             Debug.LogWarning("[MISSION MANAGER] Show() called with a null MissionData asset — ignoring.");
             return;
         }
 
-        if (Instance.missionPanel == null)
+        MissionPanel panel = ResolveMissionPanel();
+        if (panel == null)
         {
-            Debug.LogWarning("[MISSION MANAGER] missionPanel reference is not assigned.");
+            Debug.LogWarning("[MISSION MANAGER] No MissionPanel exists in the loaded scene.");
             return;
         }
 
-        Instance.missionPanel.Show(
+        panel.Show(
             data.title,
             data.description,
             data.icon,
             data.autoDuration,
             data.titleColor,
-            data.descriptionColor
+            data.descriptionColor,
+            onAcknowledge
         );
     }
 
@@ -109,19 +107,14 @@ public class MissionManager : MonoBehaviour
     /// <param name="autoDuration">Seconds before auto-hide; 0 = persistent.</param>
     public static void ShowRaw(string title, string description, float autoDuration = 0f, Action onAcknowledge = null)
     {
-        if (Instance == null)
+        MissionPanel panel = ResolveMissionPanel();
+        if (panel == null)
         {
-            Debug.LogWarning("[MISSION MANAGER] ShowRaw() called but no Instance exists in the scene.");
+            Debug.LogWarning("[MISSION MANAGER] No MissionPanel exists in the loaded scene.");
             return;
         }
 
-        if (Instance.missionPanel == null)
-        {
-            Debug.LogWarning("[MISSION MANAGER] missionPanel reference is not assigned.");
-            return;
-        }
-
-        Instance.missionPanel.Show(
+        panel.Show(
             title,
             description,
             null,
@@ -141,18 +134,16 @@ public class MissionManager : MonoBehaviour
     /// </summary>
     public static void Hide()
     {
-        if (Instance == null)
-        {
-            Debug.LogWarning("[MISSION MANAGER] Hide() called but no Instance exists in the scene.");
-            return;
-        }
+        MissionPanel panel = ResolveMissionPanel();
+        if (panel != null)
+            panel.Hide();
+    }
 
-        if (Instance.missionPanel == null)
-        {
-            Debug.LogWarning("[MISSION MANAGER] missionPanel reference is not assigned.");
-            return;
-        }
+    private static MissionPanel ResolveMissionPanel()
+    {
+        if (Instance != null && Instance.missionPanel != null)
+            return Instance.missionPanel;
 
-        Instance.missionPanel.Hide();
+        return UnityEngine.Object.FindFirstObjectByType<MissionPanel>(FindObjectsInactive.Include);
     }
 }

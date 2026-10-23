@@ -3,6 +3,7 @@ using System.Collections;
 using Fusion;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.InputSystem;
 
 public enum GameDifficulty
 {
@@ -956,6 +957,11 @@ public class NetworkGameManager : NetworkBehaviour
 
     private void Update()
     {
+        bool capsLockPressed = Input.GetKeyDown(KeyCode.CapsLock) ||
+            (Keyboard.current != null && Keyboard.current.capsLockKey.wasPressedThisFrame);
+        if (capsLockPressed)
+            MissionProgressPanelUI.ToggleVisibility();
+
         if (Runner == null)
             return;
 
@@ -1049,12 +1055,6 @@ public class NetworkGameManager : NetworkBehaviour
         if (!Object.HasStateAuthority)
             return;
 
-        if (playersInsideGate > 0 && !GateObjectiveShown)
-        {
-            GateObjectiveShown = true;
-            RPC_OnFirstPlayerEnteredGate();
-        }
-
         if (totalPlayers < 1 ||
             playersInsideGate < totalPlayers)
         {
@@ -1066,6 +1066,7 @@ public class NetworkGameManager : NetworkBehaviour
         // -------------------------------------------------
 
         AllPlayersEnteredGate = true;
+        GateObjectiveShown = true;
 
         // IMPORTANT:
         // Soldier does NOT start here.
@@ -1131,6 +1132,7 @@ public class NetworkGameManager : NetworkBehaviour
             "[GAME MANAGER] Mission: Find the Soldier."
         );
 
+        RPC_OnAllPlayersEnteredGateObjective();
         RPC_OnAllPlayersEntered();
     }
 
@@ -1152,13 +1154,15 @@ public class NetworkGameManager : NetworkBehaviour
 
         foreach (PlayerRef player in Runner.ActivePlayers)
         {
+            // Include players whose network object has not spawned yet so a
+            // transient null PlayerObject cannot complete the gate objective.
+            totalOut++;
+
             NetworkObject playerObject =
                 Runner.GetPlayerObject(player);
 
             if (playerObject == null)
                 continue;
-
-            totalOut++;
 
             Vector3 delta =
                 playerObject.transform.position -
@@ -2040,12 +2044,14 @@ public class NetworkGameManager : NetworkBehaviour
         PlayerInventory localInventory = GetLocalPlayerInventory();
         ItemData candle = ResolveCandleItem(localInventory);
         ItemData key = ResolveKeyItem(localInventory);
+        int difficultyAdjustedCandleCount =
+            GetDifficultyAdjustedCandleCount();
 
         bool itemsSpawned = spawner.SpawnMissionItems(
             Runner,
             candle,
             key,
-            candlesRequiredPerPlayer,
+            difficultyAdjustedCandleCount,
             keysToSpawn,
             manualReferenceHeights
         );
@@ -2085,7 +2091,7 @@ public class NetworkGameManager : NetworkBehaviour
             fortMission,
             ResolveCandleItem(localInventory),
             ResolveKeyItem(localInventory),
-            candlesRequiredPerPlayer,
+            GetDifficultyAdjustedCandleCount(),
             keysToSpawn,
             manualReferenceHeights
         );
@@ -2102,6 +2108,17 @@ public class NetworkGameManager : NetworkBehaviour
     public ItemData CandleItem => candleItem;
     public ItemData KeyItem => keyItem;
     public MissionData FortMission => fortMission;
+
+    public int GetDifficultyAdjustedCandleCount(GameDifficulty difficulty)
+    {
+        DifficultySettings settings = DifficultyDatabase.Get(difficulty);
+        return Mathf.Max(1, candlesRequiredPerPlayer + settings.additionalItems);
+    }
+
+    private int GetDifficultyAdjustedCandleCount()
+    {
+        return GetDifficultyAdjustedCandleCount(Difficulty);
+    }
 
     // =========================================================
     // GATE UNLOCK REQUESTS
@@ -2513,10 +2530,11 @@ public class NetworkGameManager : NetworkBehaviour
         // -------------------------------------------------
         // Candles are a team objective. Any player can collect them; only
         // their combined inventory total matters for unlocking the gate.
+        int requiredCandles = GetDifficultyAdjustedCandleCount();
         int teamCandles = GetTeamItemCount(GetCandleItemId());
-        if (teamCandles < candlesRequiredPerPlayer)
+        if (teamCandles < requiredCandles)
         {
-            Debug.LogWarning($"[GATE] Team has {teamCandles}/{candlesRequiredPerPlayer} required candles.");
+            Debug.LogWarning($"[GATE] Team has {teamCandles}/{requiredCandles} required candles for {Difficulty} difficulty.");
             return false;
         }
 
@@ -2665,9 +2683,9 @@ public class NetworkGameManager : NetworkBehaviour
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_OnFirstPlayerEnteredGate()
+    private void RPC_OnAllPlayersEnteredGateObjective()
     {
-        Debug.Log("[GAME] First player entered the gate; showing objective.");
+        Debug.Log("[GAME] All players entered the gate; showing objective.");
 
         MissionManager.ShowRaw(
             "FIND THE SOLDIER",

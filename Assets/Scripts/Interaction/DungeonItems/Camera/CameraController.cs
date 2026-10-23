@@ -34,6 +34,7 @@ public class CameraController : NetworkBehaviour
     private Texture2D capturedPhoto;
     private bool isCameraOpen;
     private bool captureInProgress;
+    private bool capturedPhotoValidForMission;
 
     public bool IsCameraOpen => isCameraOpen;
 
@@ -252,6 +253,9 @@ public class CameraController : NetworkBehaviour
                         "[CAMERA] Could not share photo with other camera holders.", this);
                 }
 
+                if (storedLocally && capturedPhotoValidForMission)
+                    PhaseManager.Instance?.ReportPhotoCaptured();
+
                 if (shutterAudio != null)
                     shutterAudio.Play();
 
@@ -267,6 +271,8 @@ public class CameraController : NetworkBehaviour
 
     private IEnumerator CapturePhoto()
     {
+        capturedPhotoValidForMission = false;
+
         if (!photoRenderTexture.IsCreated())
             photoRenderTexture.Create();
 
@@ -283,9 +289,19 @@ public class CameraController : NetworkBehaviour
             {
                 if (capturedPhoto != null)
                     Destroy(capturedPhoto);
-                capturedPhoto = photoPoint.IsWholeObjectInFrame(cameraViewCamera)
+                capturedPhotoValidForMission =
+                    photoPoint.IsWholeObjectInFrame(cameraViewCamera);
+                capturedPhoto = capturedPhotoValidForMission
                     ? Instantiate(photoPoint.Photo)
                     : CreateBlackPhoto();
+
+                if (!capturedPhotoValidForMission)
+                {
+                    Debug.Log(
+                        "[CAMERA] Target was not fully inside the frame. " +
+                        "Black photo does not count toward the photo mission.",
+                        this);
+                }
                 yield break;
             }
         }
