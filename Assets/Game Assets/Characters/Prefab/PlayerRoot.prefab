@@ -5779,6 +5779,7 @@ MonoBehaviour:
   playerBody: {fileID: 2751663222661193382}
   enableSceneScaleAdjustment: 1
   dungeonPlayerScale: 2
+  dungeonWallClearance: 0.05
   defaultPlayerScale: 1
   speedParameter: Speed
 --- !u!114 &2481270183145079181
@@ -6115,8 +6116,7 @@ MonoBehaviour:
     m_Bits: 0
   photoPointMask:
     serializedVersion: 2
-    m_Bits: 4294967295
-  photoPointRange: 25
+    m_Bits: 16384
   flashDuration: 0.12
   shutterAudio: {fileID: 6949312827365826505}
 --- !u!114 &5247716031049982711

@@ -12,6 +12,21 @@ public sealed class CameraPhotoPoint : MonoBehaviour
 
     public Texture2D Photo => photo;
 
+    public Vector3 PhotoAimPosition
+    {
+        get
+        {
+            Collider[] colliders = GetComponentsInChildren<Collider>(true);
+            foreach (Collider photoCollider in colliders)
+            {
+                if (photoCollider != null && photoCollider.enabled && photoCollider.isTrigger)
+                    return photoCollider.bounds.center;
+            }
+
+            return transform.position;
+        }
+    }
+
     /// <summary>Returns true only when this photo point's trigger is fully inside the camera frame.</summary>
     public bool IsWholeObjectInFrame(Camera camera)
     {

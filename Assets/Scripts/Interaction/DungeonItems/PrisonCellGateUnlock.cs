@@ -47,14 +47,15 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
     {
         get
         {
+            // Closing an open gate is allowed from either side of the cell.
+            if (unlocked && gateOpen)
+                return closePrompt;
+
             if (!IsViewerOnOutsideSide())
                 return string.Empty;
 
             if (unlocked)
             {
-                if (gateOpen)
-                    return closePrompt;
-
                 return HasRequiredKey()
                     ? reopenPrompt
                     : $"EQUIP {requiredKeyName}, THEN HOLD [E] TO OPEN";
@@ -68,7 +69,8 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
 
     // Don't expose this gate as an interaction target from inside the cell.
     // This also prevents PlayerInteractor from starting its hold-progress UI.
-    public bool CanInteract => enabled && !unlockPending && !gateTogglePending && IsViewerOnOutsideSide();
+    public bool CanInteract => enabled && !unlockPending && !gateTogglePending &&
+        (IsViewerOnOutsideSide() || (unlocked && gateOpen));
     public bool CanTapInteract => unlocked && gateOpen && !gateTogglePending;
     public int Priority => 40;
     public float HoldDuration => holdDuration;
@@ -120,13 +122,21 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
     public void TapInteract(PlayerInventory inventory)
     {
         viewerInventory = inventory;
-        if (CanTapInteract && IsPlayerOnOutsideSide(inventory))
+        if (CanTapInteract)
             CloseGate();
     }
 
     public void HoldCompleted(PlayerInventory inventory)
     {
         viewerInventory = inventory;
+
+        // Closing is permitted from inside or outside. Unlocking/reopening
+        // still requires the player to operate the gate from the corridor.
+        if (unlocked && gateOpen)
+        {
+            RequestGateOpenState(false);
+            return;
+        }
 
         if (!IsPlayerOnOutsideSide(inventory))
         {
@@ -145,7 +155,7 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
                 return;
             }
 
-            RequestGateOpenState(!gateOpen);
+            RequestGateOpenState(true);
             return;
         }
 
@@ -337,7 +347,7 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
     }
 
     /// <summary>Validates a remote gate request against the authoritative player position.</summary>
-    public bool IsValidAuthorityRequest(Transform playerRoot)
+    public bool IsValidAuthorityRequest(Transform playerRoot, bool requireOutsideSide = true)
     {
         if (playerRoot == null || gateToRotate == null || !enabled || !gameObject.activeInHierarchy)
             return false;
@@ -351,8 +361,9 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
             : gateToRotate.forward;
         outsideDirection.y = 0f;
         playerOffset.y = 0f;
-        return outsideDirection.sqrMagnitude > 0.0001f &&
-               Vector3.Dot(playerOffset, outsideDirection.normalized) > 0.05f;
+        return !requireOutsideSide ||
+               (outsideDirection.sqrMagnitude > 0.0001f &&
+                Vector3.Dot(playerOffset, outsideDirection.normalized) > 0.05f);
     }
 
     private IEnumerator AnimateGate(bool open)
