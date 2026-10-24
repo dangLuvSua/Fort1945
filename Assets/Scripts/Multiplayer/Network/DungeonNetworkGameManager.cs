@@ -88,7 +88,7 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
             return;
 
         PrisonCellGateUnlock gate = FindGate(cellNumber);
-        if (gate == null || !gate.IsValidAuthorityRequest(playerObject.transform))
+        if (gate == null || !gate.IsValidAuthorityRequest(playerObject.transform, open))
             return;
 
         PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();

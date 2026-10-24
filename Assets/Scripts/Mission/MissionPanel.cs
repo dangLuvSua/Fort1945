@@ -240,7 +240,10 @@ public class MissionPanel : MonoBehaviour
 
         SetCanvasBackgroundVisible(true);
         if (panelRoot != null)
+        {
             panelRoot.SetActive(true);
+            EnsurePanelOnTop();
+        }
 
 
         // -----------------------------------------------------
@@ -382,5 +385,28 @@ public class MissionPanel : MonoBehaviour
 
         if (canvasBackgroundObject != null)
             canvasBackgroundObject.SetActive(visible);
+    }
+
+    private void EnsurePanelOnTop()
+    {
+        Canvas sortingCanvas = panelRoot.GetComponent<Canvas>();
+        if (sortingCanvas == null)
+            sortingCanvas = panelRoot.AddComponent<Canvas>();
+
+        sortingCanvas.overrideSorting = true;
+        sortingCanvas.sortingOrder = 100;
+
+        // A nested Canvas needs its own GraphicRaycaster for the OK button.
+        GraphicRaycaster raycaster = panelRoot.GetComponent<GraphicRaycaster>();
+        if (raycaster == null)
+            raycaster = panelRoot.AddComponent<GraphicRaycaster>();
+        raycaster.enabled = true;
+
+        // The full-panel background is visual only; let clicks reach buttons.
+        Image background = panelRoot.GetComponent<Image>();
+        if (background != null)
+            background.raycastTarget = false;
+
+        panelRoot.transform.SetAsLastSibling();
     }
 }

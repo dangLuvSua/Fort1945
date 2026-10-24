@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -24,7 +25,6 @@ public class CameraController : NetworkBehaviour
     // Spawned photo targets can be on Default (or a project-specific layer),
     // so this must include every layer unless deliberately narrowed in data.
     [SerializeField] private LayerMask photoPointMask = ~0;
-    [SerializeField, Min(0.1f)] private float photoPointRange = 30f;
 
     [Header("Flash")]
     [SerializeField, Min(0.01f)] private float flashDuration = 0.12f;
@@ -37,6 +37,8 @@ public class CameraController : NetworkBehaviour
     private bool isCameraOpen;
     private bool captureInProgress;
     private bool capturedPhotoValidForMission;
+    private readonly Dictionary<GameObject, bool> hudVisibilityBeforeCamera =
+        new Dictionary<GameObject, bool>();
 
     public bool IsCameraOpen => isCameraOpen;
 
@@ -160,6 +162,7 @@ public class CameraController : NetworkBehaviour
         }
 
         isCameraOpen = true;
+        HideGameplayHud();
         SetQuickBarVisible(false);
 
         if (inventory != null)
@@ -187,6 +190,7 @@ public class CameraController : NetworkBehaviour
     public void CloseCamera()
     {
         isCameraOpen = false;
+        RestoreGameplayHud();
         SetQuickBarVisible(true);
 
         if (inventory != null)
@@ -278,26 +282,61 @@ public class CameraController : NetworkBehaviour
         if (!photoRenderTexture.IsCreated())
             photoRenderTexture.Create();
 
-        // Configured photo points are selected by their trigger volume in
-        // the camera frame. A ray hit is deliberately not required, so bars
-        // or other colliders in front of the target do not hide its photo.
+        // Select the configured photo point actually under the viewfinder
+        // center. RaycastAll lets photo triggers still match when bars or
+        // other colliders sit in front of the statue.
         CameraPhotoPoint selectedPhotoPoint = null;
         float nearestPhotoPointDepth = float.MaxValue;
-        CameraPhotoPoint[] photoPoints = FindObjectsByType<CameraPhotoPoint>(
-            FindObjectsSortMode.None);
-        foreach (CameraPhotoPoint candidate in photoPoints)
+        Ray centerRay = cameraViewCamera.ViewportPointToRay(
+            new Vector3(0.5f, 0.5f, 0f));
+        RaycastHit[] photoHits = Physics.RaycastAll(
+            centerRay,
+            Mathf.Infinity,
+            ~0,
+            QueryTriggerInteraction.Collide);
+        foreach (RaycastHit hit in photoHits)
         {
+            CameraPhotoPoint candidate = hit.collider != null
+                ? hit.collider.GetComponentInParent<CameraPhotoPoint>()
+                : null;
             if (candidate == null || candidate.Photo == null ||
                 (photoPointMask.value & (1 << candidate.gameObject.layer)) == 0 ||
-                !candidate.IsWholeObjectInFrame(cameraViewCamera))
-                continue;
-
-            float depth = cameraViewCamera.WorldToViewportPoint(candidate.transform.position).z;
-            if (depth <= 0f || depth > photoPointRange || depth >= nearestPhotoPointDepth)
+                hit.distance >= nearestPhotoPointDepth)
                 continue;
 
             selectedPhotoPoint = candidate;
-            nearestPhotoPointDepth = depth;
+            nearestPhotoPointDepth = hit.distance;
+        }
+
+        // A small PhotoTrigger can be visible without the center ray crossing
+        // its collider. In that case, use the nearest configured point whose
+        // trigger center is inside the camera frame.
+        bool usedVisiblePointFallback = false;
+        if (selectedPhotoPoint == null)
+        {
+            CameraPhotoPoint[] photoPoints = FindObjectsByType<CameraPhotoPoint>(
+                FindObjectsSortMode.None);
+            foreach (CameraPhotoPoint candidate in photoPoints)
+            {
+                if (candidate == null || candidate.Photo == null ||
+                    (photoPointMask.value & (1 << candidate.gameObject.layer)) == 0)
+                    continue;
+
+                if (TrySelectVisiblePoint(candidate, candidate.PhotoAimPosition,
+                        ref selectedPhotoPoint, ref nearestPhotoPointDepth))
+                    usedVisiblePointFallback = true;
+
+                // Some imported statue prefabs have a trigger positioned off
+                // the visible mesh. Use visible renderer centers as a backup.
+                Renderer[] renderers = candidate.GetComponentsInChildren<Renderer>();
+                foreach (Renderer targetRenderer in renderers)
+                {
+                    if (targetRenderer != null && targetRenderer.enabled &&
+                        TrySelectVisiblePoint(candidate, targetRenderer.bounds.center,
+                            ref selectedPhotoPoint, ref nearestPhotoPointDepth))
+                        usedVisiblePointFallback = true;
+                }
+            }
         }
 
         if (selectedPhotoPoint != null)
@@ -305,9 +344,17 @@ public class CameraController : NetworkBehaviour
             if (capturedPhoto != null)
                 Destroy(capturedPhoto);
             capturedPhotoValidForMission = true;
-            capturedPhoto = Instantiate(selectedPhotoPoint.Photo);
+            capturedPhoto = CreateReadableCopy(selectedPhotoPoint.Photo);
+            string selectionMethod = usedVisiblePointFallback
+                ? "visible trigger"
+                : "viewfinder center hit";
+            Debug.Log(
+                $"[CAMERA] Showing assigned photo for '{selectedPhotoPoint.name}' " +
+                $"({selectionMethod}).", this);
             yield break;
         }
+
+        Debug.Log("[CAMERA] No configured photo point or visible target was found; capturing the scene.", this);
 
         RenderTexture previousActive = RenderTexture.active;
         float previousAspect = cameraViewCamera.aspect;
@@ -361,6 +408,64 @@ public class CameraController : NetworkBehaviour
         }
     }
 
+    private bool TrySelectVisiblePoint(
+        CameraPhotoPoint candidate,
+        Vector3 worldPosition,
+        ref CameraPhotoPoint selectedPhotoPoint,
+        ref float nearestDepth)
+    {
+        Vector3 viewportPoint = cameraViewCamera.WorldToViewportPoint(worldPosition);
+        if (viewportPoint.z <= 0f || viewportPoint.x < 0f || viewportPoint.x > 1f ||
+            viewportPoint.y < 0f || viewportPoint.y > 1f ||
+            viewportPoint.z >= nearestDepth)
+            return false;
+
+        selectedPhotoPoint = candidate;
+        nearestDepth = viewportPoint.z;
+        return true;
+    }
+
+    private static Texture2D CreateReadableCopy(Texture2D source)
+    {
+        if (source == null)
+            return null;
+
+        if (source.isReadable)
+            return Instantiate(source);
+
+        RenderTexture temporary = RenderTexture.GetTemporary(
+            source.width,
+            source.height,
+            0,
+            RenderTextureFormat.ARGB32,
+            RenderTextureReadWrite.sRGB);
+        RenderTexture previousActive = RenderTexture.active;
+
+        try
+        {
+            Graphics.Blit(source, temporary);
+            RenderTexture.active = temporary;
+
+            Texture2D readableCopy = new Texture2D(
+                source.width,
+                source.height,
+                TextureFormat.RGBA32,
+                false);
+            readableCopy.name = source.name + " (Readable Copy)";
+            readableCopy.ReadPixels(
+                new Rect(0, 0, source.width, source.height),
+                0,
+                0);
+            readableCopy.Apply();
+            return readableCopy;
+        }
+        finally
+        {
+            RenderTexture.active = previousActive;
+            RenderTexture.ReleaseTemporary(temporary);
+        }
+    }
+
     private static Texture2D CreateBlackPhoto()
     {
         Texture2D blackPhoto = new Texture2D(2, 2, TextureFormat.RGB24, false);
@@ -396,8 +501,49 @@ public class CameraController : NetworkBehaviour
             inventoryUI.SetQuickBarVisible(visible);
     }
 
+    private void HideGameplayHud()
+    {
+        hudVisibilityBeforeCamera.Clear();
+        string[] hudObjectNames =
+        {
+            "MyPlayerPanel",
+            "CompassPanel",
+            "MissionProgressPanel"
+        };
+
+        Transform[] allTransforms = FindObjectsByType<Transform>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        foreach (Transform candidate in allTransforms)
+        {
+            if (candidate == null || !System.Array.Exists(
+                    hudObjectNames, objectName => candidate.name == objectName))
+                continue;
+
+            GameObject hudObject = candidate.gameObject;
+            if (!hudVisibilityBeforeCamera.ContainsKey(hudObject))
+                hudVisibilityBeforeCamera.Add(hudObject, hudObject.activeSelf);
+
+            hudObject.SetActive(false);
+        }
+    }
+
+    private void RestoreGameplayHud()
+    {
+        foreach (KeyValuePair<GameObject, bool> entry in hudVisibilityBeforeCamera)
+        {
+            if (entry.Key != null)
+                entry.Key.SetActive(entry.Value);
+        }
+
+        hudVisibilityBeforeCamera.Clear();
+    }
+
     private void OnDestroy()
     {
+        RestoreGameplayHud();
+
         if (isCameraOpen)
             SetQuickBarVisible(true);
 

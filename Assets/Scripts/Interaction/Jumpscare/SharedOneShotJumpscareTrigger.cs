@@ -9,6 +9,10 @@ public sealed class SharedOneShotJumpscareTrigger : NetworkBehaviour
     [SerializeField] private LocalJumpscarePlayback playbackPrefab;
     [SerializeField] private Collider detectionCollider;
     [SerializeField] private BoxCollider randomSpawnArea;
+    [Header("After Effect")]
+    [SerializeField, Min(0f)] private float extremeDizzinessRange = 8f;
+    [SerializeField, Min(0f)] private float mildDizzinessDuration = 2f;
+    [SerializeField, Min(0f)] private float extremeDizzinessDuration = 5f;
 
     [Header("Sanity Penalty")]
     [SerializeField, Min(0f)] private float easySanityDamage = 5f;
@@ -82,6 +86,17 @@ public sealed class SharedOneShotJumpscareTrigger : NetworkBehaviour
             ? RandomPoint(randomSpawnArea) : transform.position;
         LocalJumpscarePlayback playback = Instantiate(
             playbackPrefab, position, transform.rotation);
+        if (Runner.TryGetPlayerObject(player, out NetworkObject playerObject) && playerObject != null)
+        {
+            PlayerController playerController = playerObject.GetComponent<PlayerController>();
+            if (playerController != null)
+            {
+                bool extreme = Vector3.Distance(playerObject.transform.position, transform.position) >
+                               extremeDizzinessRange;
+                playerController.ApplyJumpscareDizziness(extreme ? 1f : 0.45f,
+                    extreme ? extremeDizzinessDuration : mildDizzinessDuration);
+            }
+        }
         playback.Play();
     }
 
