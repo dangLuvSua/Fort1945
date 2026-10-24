@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
 
@@ -21,6 +22,8 @@ public class ChestLoot : NetworkBehaviour
     [SerializeField] private bool showGizmo = true;
 
     private NetworkObject spawnedItem;
+    private ChestState chestState;
+    private bool lootSpawned;
 
     // =========================================================
     // SPAWN
@@ -32,7 +35,23 @@ public class ChestLoot : NetworkBehaviour
         if (!Object.HasStateAuthority)
             return;
 
-        SpawnItem();
+        chestState = GetComponent<ChestState>();
+        if (chestState == null)
+            SpawnItem();
+    }
+
+    public override void FixedUpdateNetwork()
+    {
+        if (lootSpawned || Object == null || !Object.HasStateAuthority)
+            return;
+
+        // Pick from the active mission only when the chest is opened, so its
+        // contents match the phase in which the team finds it.
+        if (chestState == null)
+            chestState = GetComponent<ChestState>();
+
+        if (chestState != null && chestState.IsOpen)
+            SpawnItem();
     }
 
     // =========================================================
@@ -41,16 +60,9 @@ public class ChestLoot : NetworkBehaviour
 
     private void SpawnItem()
     {
-        if (possibleItems == null ||
-            possibleItems.Length == 0)
-        {
-            Debug.LogWarning(
-                $"[CHEST LOOT] {name} has no possible items.",
-                this
-            );
-
+        if (lootSpawned)
             return;
-        }
+        lootSpawned = true;
 
         if (itemPrefab == null)
         {
@@ -89,13 +101,22 @@ public class ChestLoot : NetworkBehaviour
         // CHOOSE ITEM
         // =====================================================
 
-        ItemData selectedItem =
-            possibleItems[
-                Random.Range(
-                    0,
-                    possibleItems.Length
-                )
-            ];
+        List<ItemData> phaseItems = null;
+        ItemRandomSpawner itemSpawner = FindFirstObjectByType<ItemRandomSpawner>();
+        if (itemSpawner != null)
+            phaseItems = itemSpawner.GetCurrentPhaseRequiredItems();
+
+        ItemData[] choices = possibleItems;
+        if (phaseItems != null && phaseItems.Count > 0)
+            choices = phaseItems.ToArray();
+
+        if (choices == null || choices.Length == 0)
+        {
+            Debug.LogWarning($"[CHEST LOOT] {name} has no items eligible for the active phase.", this);
+            return;
+        }
+
+        ItemData selectedItem = choices[Random.Range(0, choices.Length)];
 
         if (selectedItem == null)
         {
@@ -134,7 +155,8 @@ public class ChestLoot : NetworkBehaviour
                 if (pickup != null)
                 {
                     pickup.Initialize(
-                        selectedItem.itemId
+                        selectedItem.itemId,
+                        Object
                     );
                 }
                 else

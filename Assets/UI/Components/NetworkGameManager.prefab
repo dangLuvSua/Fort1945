@@ -1,0 +1,144 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2239244527223363517
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8333477654746423387}
+  - component: {fileID: 4535117320291622515}
+  - component: {fileID: 8826004852834541962}
+  m_Layer: 0
+  m_Name: NetworkGameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8333477654746423387
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2239244527223363517}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -61.98972, y: 1.99597, z: -3.00353}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4535117320291622515
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2239244527223363517}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 595593992
+  SendPriority: 1
+  EnableInterpolation: 1
+  Flags: 262146
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 8826004852834541962}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &8826004852834541962
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2239244527223363517}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e439618522c4d78458ee05c098d63efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkGameManager
+  fortMissionItemSpawner: {fileID: 0}
+  _Difficulty: 1
+  _GameStarted:
+    RawValue: 0
+  _LobbyLocked:
+    RawValue: 0
+  soldierVisual: {fileID: 0}
+  soldierAgent: {fileID: 0}
+  _AllPlayersEnteredGate:
+    RawValue: 0
+  _GateObjectiveShown:
+    RawValue: 0
+  _SoldierStarted:
+    RawValue: 0
+  _SoldierReachedDoor:
+    RawValue: 0
+  _ZoneActive:
+    RawValue: 0
+  _ZoneGreen:
+    RawValue: 0
+  _TeleportStarted:
+    RawValue: 0
+  _MissionItemsSpawned:
+    RawValue: 0
+  _DungeonGateUnlocked:
+    RawValue: 0
+  _PrisonCell1Unlocked:
+    RawValue: 0
+  _PrisonCell2Unlocked:
+    RawValue: 0
+  _PrisonCell1GateOpen:
+    RawValue: 0
+  _PrisonCell2GateOpen:
+    RawValue: 0
+  _InterrogationRoomUnlocked:
+    RawValue: 0
+  _InterrogationRoomGateOpen:
+    RawValue: 0
+  _SoldierInteractionStarted:
+    RawValue: 0
+  _SoldierDialogueActive:
+    RawValue: 0
+  soldierDialogueDuration: 3
+  _SoldierPosition: {x: 0, y: 0, z: 0}
+  _SoldierProgress: 0
+  _TeleportCountdown: 0
+  _DungeonSeed: 0
+  gateTriggerName: GateTrigger
+  dungeonEntryZoneName: DungeonEntryZone
+  zoneFallbackOffset: {x: 30, y: 0, z: 0}
+  gateHalfExtents: {x: 4, y: 3.5, z: 4}
+  zoneHalfExtents: {x: 3.5, y: 2.5, z: 3.5}
+  soldierModelObjectName: SoldierGuideModel
+  soldierWalkSpeed: 2.8
+  startFromModelPosition: 1
+  soldierModelForwardYawOffset: 0
+  soldierDestinationObjectName: SoldierDungeonDestination
+  soldierNavSpeed: 1.8
+  soldierNavAcceleration: 6
+  soldierNavStoppingDistance: 1
+  soldierNavAngularSpeed: 360
+  soldierNetworkLerpSpeed: 12
+  soldierSpeedParameter: Speed
+  soldierWalkingParameter: IsWalking
+  soldierAnimationSpeed: 1
+  soldierBobAmount: 0.03
+  teleportDelaySeconds: 5
+  worldTagPoint: {fileID: 0}
+  gateTagPoint: {fileID: 0}
+  candleItem: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
+  keyItem: {fileID: 11400000, guid: 9a368eb8725ca474c9c21303fa617951, type: 2}
+  fallbackCandleItemId: 203
+  fallbackKeyItemId: 103
+  candlesRequiredPerPlayer: 2
+  keysToSpawn: 1
+  manualReferenceHeights: []
+  fortMission: {fileID: 11400000, guid: c2cd88e1347ba564ab2ddf86c8d6b70c, type: 2}

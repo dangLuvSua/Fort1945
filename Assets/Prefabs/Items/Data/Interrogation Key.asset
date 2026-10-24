@@ -20,5 +20,5 @@ MonoBehaviour:
   category: 0
   isStackable: 0
   maxStackSize: 1
-  heldPrefab: {fileID: 374289202576707483, guid: 78df1db2fbc8ec64f949fac0c05bf693, type: 3}
-  worldPrefab: {fileID: 1434193415856722423, guid: 78df1db2fbc8ec64f949fac0c05bf693, type: 3}
+  heldPrefab: {fileID: 374289202576707483, guid: b9f2614a9c8cb394f8b57b83b1a3e44f, type: 3}
+  worldPrefab: {fileID: 1434193415856722423, guid: b9f2614a9c8cb394f8b57b83b1a3e44f, type: 3}
