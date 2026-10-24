@@ -723,9 +723,19 @@ public class ItemRandomSpawner : NetworkBehaviour
         {
             foreach (ItemSpawnProfile.ItemSpawnEntry entry in rule.items)
             {
-                if (entry?.item == null || entry.item.worldPrefab == null ||
-                    IsGuaranteedPrisonKey(entry.item) ||
-                    (phaseCandle != null && entry.item.itemId == phaseCandle.itemId))
+                if (entry?.item == null || entry.item.worldPrefab == null)
+                    continue;
+
+                // Guaranteed keys spawn in their own pass, but if the active
+                // phase lists one as a required entry it still belongs in the
+                // objective totals and progress panel.
+                if (IsGuaranteedPrisonKey(entry.item))
+                {
+                    spawnedRequirements[entry.item.itemId] = 1;
+                    continue;
+                }
+
+                if (phaseCandle != null && entry.item.itemId == phaseCandle.itemId)
                     continue;
 
                 int requiredForEntry = Mathf.Max(0, entry.minQuantity);

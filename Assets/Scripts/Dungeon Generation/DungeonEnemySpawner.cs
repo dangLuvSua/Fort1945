@@ -77,8 +77,8 @@ public class DungeonEnemySpawner : MonoBehaviour
 
         pending = false;
 
-        // Host lang ang nag-i-spawn ng enemies
-        if (!runner.IsServer && !runner.IsSharedModeMasterClient)
+        // Spawn through the active game session, once, from its state authority.
+        if (!runner.IsSharedModeMasterClient && !runner.IsServer)
             return;
 
         SpawnEnemies();
@@ -91,11 +91,19 @@ public class DungeonEnemySpawner : MonoBehaviour
 
         runner = null;
 
-        foreach (NetworkRunner r in FindObjectsByType<NetworkRunner>(
-                     FindObjectsInactive.Include,
-                     FindObjectsSortMode.None))
+        NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
+        if (handler != null && handler.GameRunner != null && handler.GameRunner.IsRunning)
         {
-            if (r != null && r.IsRunning)
+            runner = handler.GameRunner;
+            return;
+        }
+
+        NetworkRunner[] runners = FindObjectsByType<NetworkRunner>(
+                     FindObjectsInactive.Include,
+                     FindObjectsSortMode.None);
+        foreach (NetworkRunner r in runners)
+        {
+            if (r != null && r.IsRunning && (r.IsSharedModeMasterClient || r.IsServer))
             {
                 runner = r;
                 return;

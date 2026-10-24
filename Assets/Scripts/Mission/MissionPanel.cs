@@ -66,8 +66,11 @@ public class MissionPanel : MonoBehaviour
     // =========================================================
 
     private Coroutine autoHideCoroutine;
+    private Coroutine deactivateCoroutine;
     private bool isShowing;
     private Action pendingAcknowledge;
+    private GameObject canvasBackgroundObject;
+    private Image canvasBackgroundImage;
 
 
     // =========================================================
@@ -88,6 +91,7 @@ public class MissionPanel : MonoBehaviour
         // Start hidden.
         panelRoot.SetActive(false);
         isShowing = false;
+        SetCanvasBackgroundVisible(false);
 
         // Connect OK button automatically.
         if (okButton != null)
@@ -106,6 +110,9 @@ public class MissionPanel : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (canvasBackgroundObject != null)
+            canvasBackgroundObject.SetActive(false);
+
         if (okButton != null)
         {
             okButton.onClick.RemoveListener(OnOkButtonClicked);
@@ -170,6 +177,12 @@ public class MissionPanel : MonoBehaviour
             autoHideCoroutine = null;
         }
 
+        if (deactivateCoroutine != null)
+        {
+            StopCoroutine(deactivateCoroutine);
+            deactivateCoroutine = null;
+        }
+
 
         // -----------------------------------------------------
         // Title
@@ -209,27 +222,23 @@ public class MissionPanel : MonoBehaviour
         // Icon
         // -----------------------------------------------------
 
-        if (iconImage != null)
+        if (iconImage != null && icon != null)
         {
-            if (icon != null)
-            {
-                iconImage.sprite = icon;
-
-                if (iconContainer != null)
-                    iconContainer.SetActive(true);
-            }
-            else
-            {
-                if (iconContainer != null)
-                    iconContainer.SetActive(false);
-            }
+            iconImage.sprite = icon;
         }
+
+        // ShowRaw (used for interaction errors) passes a null icon. Always
+        // toggle the container independently so stale mission icons cannot
+        // remain visible when the panel is reused.
+        if (iconContainer != null)
+            iconContainer.SetActive(icon != null);
 
 
         // -----------------------------------------------------
         // Show Panel
         // -----------------------------------------------------
 
+        SetCanvasBackgroundVisible(true);
         if (panelRoot != null)
             panelRoot.SetActive(true);
 
@@ -289,14 +298,14 @@ public class MissionPanel : MonoBehaviour
         {
             panelAnimator.SetTrigger(hideTrigger);
 
-            StartCoroutine(
-                DeactivateAfterDelay(0.5f)
-            );
+            deactivateCoroutine = StartCoroutine(DeactivateAfterDelay(0.5f));
         }
         else
         {
             if (panelRoot != null)
                 panelRoot.SetActive(false);
+
+            SetCanvasBackgroundVisible(false);
         }
 
 
@@ -324,5 +333,54 @@ public class MissionPanel : MonoBehaviour
 
         if (panelRoot != null)
             panelRoot.SetActive(false);
+
+        SetCanvasBackgroundVisible(false);
+        deactivateCoroutine = null;
+    }
+
+    private void SetCanvasBackgroundVisible(bool visible)
+    {
+        if (canvasBackgroundObject == null)
+        {
+            Canvas targetCanvas = GetComponentInParent<Canvas>(true);
+            if (targetCanvas == null)
+                return;
+
+            Transform existing = targetCanvas.transform.Find("MissionPanelBackgroundOverlay");
+            if (existing != null)
+            {
+                canvasBackgroundObject = existing.gameObject;
+                canvasBackgroundImage = existing.GetComponent<Image>();
+            }
+            else
+            {
+                canvasBackgroundObject = new GameObject(
+                    "MissionPanelBackgroundOverlay",
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(Image));
+                canvasBackgroundObject.transform.SetParent(targetCanvas.transform, false);
+                canvasBackgroundObject.transform.SetAsFirstSibling();
+
+                RectTransform rect = (RectTransform)canvasBackgroundObject.transform;
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+
+                canvasBackgroundImage = canvasBackgroundObject.GetComponent<Image>();
+                canvasBackgroundImage.color = new Color(0f, 0f, 0f, 0.75f);
+                canvasBackgroundImage.raycastTarget = false;
+            }
+        }
+
+        if (canvasBackgroundImage != null)
+        {
+            canvasBackgroundImage.color = new Color(0f, 0f, 0f, 0.75f);
+            canvasBackgroundImage.raycastTarget = false;
+        }
+
+        if (canvasBackgroundObject != null)
+            canvasBackgroundObject.SetActive(visible);
     }
 }

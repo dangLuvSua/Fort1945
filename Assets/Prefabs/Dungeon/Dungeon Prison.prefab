@@ -1410,10 +1410,13 @@ MonoBehaviour:
   closePrompt: '[E] CLOSE'
   reopenPrompt: '[E] HOLD TO OPEN'
   outsideSidePoint: {fileID: 3261150405411427537}
+  authorityInteractionDistance: 4
   gateToRotate: {fileID: 8654427928524047120}
   openRotationOffset: {x: 0, y: 90, z: 0}
   openDuration: 1.25
-  blockingColliders: []
+  blockingColliders:
+  - {fileID: 9016745696567753202}
+  - {fileID: 7852310070983930861}
   unlockAudio: {fileID: 7443667705770632898}
 --- !u!82 &7443667705770632898
 AudioSource:
@@ -1867,10 +1870,13 @@ MonoBehaviour:
   closePrompt: '[E] CLOSE'
   reopenPrompt: '[E] HOLD TO OPEN'
   outsideSidePoint: {fileID: 7073766743784206521}
+  authorityInteractionDistance: 4
   gateToRotate: {fileID: 8029488860717730947}
   openRotationOffset: {x: 0, y: 90, z: 0}
   openDuration: 1.25
-  blockingColliders: []
+  blockingColliders:
+  - {fileID: 505426667486179936}
+  - {fileID: 9088651827206621215}
   unlockAudio: {fileID: 5732175984584846209}
 --- !u!82 &5732175984584846209
 AudioSource:

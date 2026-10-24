@@ -278,34 +278,35 @@ public class CameraController : NetworkBehaviour
         if (!photoRenderTexture.IsCreated())
             photoRenderTexture.Create();
 
-        // Configured points represent fixed evidence/photos. Any other view
-        // is captured from the live camera render below.
-        Ray ray = new Ray(cameraViewCamera.transform.position,
-            cameraViewCamera.transform.forward);
-        if (Physics.Raycast(ray, out RaycastHit hit, photoPointRange,
-                photoPointMask, QueryTriggerInteraction.Collide))
+        // Configured photo points are selected by their trigger volume in
+        // the camera frame. A ray hit is deliberately not required, so bars
+        // or other colliders in front of the target do not hide its photo.
+        CameraPhotoPoint selectedPhotoPoint = null;
+        float nearestPhotoPointDepth = float.MaxValue;
+        CameraPhotoPoint[] photoPoints = FindObjectsByType<CameraPhotoPoint>(
+            FindObjectsSortMode.None);
+        foreach (CameraPhotoPoint candidate in photoPoints)
         {
-            CameraPhotoPoint photoPoint =
-                hit.collider.GetComponentInParent<CameraPhotoPoint>();
-            if (photoPoint != null && photoPoint.Photo != null)
-            {
-                if (capturedPhoto != null)
-                    Destroy(capturedPhoto);
-                capturedPhotoValidForMission =
-                    photoPoint.IsWholeObjectInFrame(cameraViewCamera);
-                capturedPhoto = capturedPhotoValidForMission
-                    ? Instantiate(photoPoint.Photo)
-                    : CreateBlackPhoto();
+            if (candidate == null || candidate.Photo == null ||
+                (photoPointMask.value & (1 << candidate.gameObject.layer)) == 0 ||
+                !candidate.IsWholeObjectInFrame(cameraViewCamera))
+                continue;
 
-                if (!capturedPhotoValidForMission)
-                {
-                    Debug.Log(
-                        "[CAMERA] Target was not fully inside the frame. " +
-                        "Black photo does not count toward the photo mission.",
-                        this);
-                }
-                yield break;
-            }
+            float depth = cameraViewCamera.WorldToViewportPoint(candidate.transform.position).z;
+            if (depth <= 0f || depth > photoPointRange || depth >= nearestPhotoPointDepth)
+                continue;
+
+            selectedPhotoPoint = candidate;
+            nearestPhotoPointDepth = depth;
+        }
+
+        if (selectedPhotoPoint != null)
+        {
+            if (capturedPhoto != null)
+                Destroy(capturedPhoto);
+            capturedPhotoValidForMission = true;
+            capturedPhoto = Instantiate(selectedPhotoPoint.Photo);
+            yield break;
         }
 
         RenderTexture previousActive = RenderTexture.active;

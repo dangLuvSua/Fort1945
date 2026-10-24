@@ -3,7 +3,6 @@ using System.Collections;
 using Fusion;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.InputSystem;
 
 public enum GameDifficulty
 {
@@ -966,11 +965,6 @@ public class NetworkGameManager : NetworkBehaviour
 
     private void Update()
     {
-        bool capsLockPressed = Input.GetKeyDown(KeyCode.CapsLock) ||
-            (Keyboard.current != null && Keyboard.current.capsLockKey.wasPressedThisFrame);
-        if (capsLockPressed)
-            MissionProgressPanelUI.ToggleVisibility();
-
         if (Runner == null)
             return;
 
@@ -2176,9 +2170,11 @@ public class NetworkGameManager : NetworkBehaviour
             return;
 
         PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
-        if (inventory == null || !inventory.HasItemId(requiredKeyId))
+        PrisonCellGateUnlock gate = FindPrisonCellGate(cellNumber);
+        if (inventory == null || !HasEquippedItem(inventory, requiredKeyId) ||
+            gate == null || !gate.IsValidAuthorityRequest(playerObject.transform))
         {
-            Debug.LogWarning($"[PRISON GATE] Player {info.Source} requested cell {cellNumber} without its prison key.", this);
+            Debug.LogWarning($"[PRISON GATE] Rejected invalid unlock request for cell {cellNumber} from player {info.Source}.", this);
             return;
         }
 
@@ -2215,10 +2211,42 @@ public class NetworkGameManager : NetworkBehaviour
             playerObject == null)
             return;
 
-        if (cellNumber == 1 && PrisonCell1Unlocked)
+        if (cellNumber != 1 && cellNumber != 2)
+            return;
+
+        bool alreadyUnlocked = cellNumber == 1 ? PrisonCell1Unlocked : PrisonCell2Unlocked;
+        PrisonCellGateUnlock gate = FindPrisonCellGate(cellNumber);
+        if (!alreadyUnlocked || gate == null || !gate.IsValidAuthorityRequest(playerObject.transform))
+            return;
+
+        PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
+        if (open && !HasEquippedItem(inventory, cellNumber == 1 ? 102 : 104))
+            return;
+
+        if (cellNumber == 1)
             PrisonCell1GateOpen = open;
-        else if (cellNumber == 2 && PrisonCell2Unlocked)
+        else
             PrisonCell2GateOpen = open;
+    }
+
+    private PrisonCellGateUnlock FindPrisonCellGate(int cellNumber)
+    {
+        PrisonCellGateUnlock[] gates = FindObjectsByType<PrisonCellGateUnlock>(FindObjectsSortMode.None);
+        foreach (PrisonCellGateUnlock gate in gates)
+        {
+            if (gate != null && gate.CellNumber == cellNumber)
+                return gate;
+        }
+        return null;
+    }
+
+    private static bool HasEquippedItem(PlayerInventory inventory, int itemId)
+    {
+        if (inventory == null || !inventory.HasItemId(itemId))
+            return false;
+
+        int selectedSlot = inventory.SelectedSlot;
+        return selectedSlot >= 0 && inventory.GetQuickBarItemIdAt(selectedSlot) == itemId;
     }
 
     public void RequestInterrogationRoomUnlock(int keyItemId)

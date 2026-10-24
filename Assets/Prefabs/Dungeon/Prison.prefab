@@ -5590,7 +5590,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1eb4d50697ca4d7cbad71a4709e86c58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PrisonCellGateUnlock
-  cellNumber: 1
+  cellNumber: 2
   requiredKeyItemId: 104
   requiredKeyName: PRISON KEY 2
   cellName: CELL 2
