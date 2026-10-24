@@ -18,7 +18,28 @@ public class SaltController : NetworkBehaviour
 
     [Tooltip("Minimum time between spray requests.")]
     [SerializeField, Min(0.05f)]
-    private float sprayCooldown = 0.5f;
+    private float sprayCooldown = 2f;
+
+    [Header("Salt Repel")]
+    [Tooltip("Gaano kalayo ang naaabot ng asin. Tinutugma sa SaltSprayVFX particles.")]
+    [SerializeField, Min(0.1f)]
+    private float sprayHitRange = 3.5f;
+
+    [Tooltip("Half-angle ng hit cone. Tinutugma sa particle cone ng SaltSprayVFX.")]
+    [SerializeField, Range(1f, 90f)]
+    private float sprayHitHalfAngle = 20f;
+
+    [Tooltip("Gaano katagal natutulala at lumalayo ang crawler pagkatapos matamaan.")]
+    [SerializeField, Min(0.1f)]
+    private float saltStunDuration = 3f;
+
+    [Tooltip("Gaano kalayo lumayo ang crawler mula sa player.")]
+    [SerializeField, Min(0.1f)]
+    private float saltRepelDistance = 5f;
+
+    [Tooltip("Mga layer na humaharang sa salt spray. Iwanang Everything kung walang wall check.")]
+    [SerializeField]
+    private LayerMask sprayObstacleMask = ~0;
 
     [Header("Visual Search")]
     [SerializeField, Min(0.05f)]
@@ -104,6 +125,8 @@ public class SaltController : NetworkBehaviour
         if (!IsHoldingSalt())
             return;
 
+        RepelCrawlersNearSpray();
+
         RPC_PlaySaltSpray();
     }
 
@@ -132,6 +155,82 @@ public class SaltController : NetworkBehaviour
         );
 
         saltSprayVFX.Play(true);
+    }
+
+    private void RepelCrawlersNearSpray()
+    {
+        Vector3 origin;
+        Vector3 forward;
+
+        if (saltSprayVFX != null)
+        {
+            // Gamitin ang totoong VFX transform para tugma ang hit sa nakikita.
+            origin = saltSprayVFX.transform.position;
+            forward = saltSprayVFX.transform.forward;
+        }
+        else
+        {
+            origin =
+                transform.position +
+                Vector3.up * 1.2f +
+                transform.forward * 0.6f;
+
+            forward = transform.forward;
+        }
+
+        float maxDistanceSqr = sprayHitRange * sprayHitRange;
+
+        PrisonerCrawler[] crawlers =
+            FindObjectsByType<PrisonerCrawler>();
+
+        foreach (PrisonerCrawler crawler in crawlers)
+        {
+            if (crawler == null)
+                continue;
+
+            Vector3 target =
+                crawler.transform.position + Vector3.up * 1f;
+
+            Vector3 toTarget = target - origin;
+
+            if (toTarget.sqrMagnitude > maxDistanceSqr)
+                continue;
+
+            if (Vector3.Angle(forward, toTarget) > sprayHitHalfAngle)
+                continue;
+
+            if (!HasSaltLineOfSight(origin, target, crawler))
+                continue;
+
+            crawler.ApplySaltRepel(
+                origin,
+                saltStunDuration,
+                saltRepelDistance
+            );
+        }
+    }
+
+    private bool HasSaltLineOfSight(
+        Vector3 origin,
+        Vector3 target,
+        PrisonerCrawler crawler)
+    {
+        if (sprayObstacleMask.value == 0)
+            return true;
+
+        if (!Physics.Linecast(
+                origin,
+                target,
+                out RaycastHit hit,
+                sprayObstacleMask,
+                QueryTriggerInteraction.Ignore))
+        {
+            return true;
+        }
+
+        // Okay lang kung ang crawler mismo ang unang natamaan.
+        return hit.collider.GetComponentInParent<PrisonerCrawler>() ==
+               crawler;
     }
 
     private void FindSaltSprayVisual()

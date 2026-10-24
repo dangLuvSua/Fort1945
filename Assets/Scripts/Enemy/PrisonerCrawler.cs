@@ -47,6 +47,9 @@ public class PrisonerCrawler : NetworkBehaviour
     private bool isReturning;
     private float ignorePlayersUntil;
 
+    // Salt stun/repel timer (state authority lang)
+    private float saltStunUntil;
+
     // =========================================================
     // SPAWNED
     // =========================================================
@@ -157,6 +160,105 @@ public class PrisonerCrawler : NetworkBehaviour
     }
 
     // =========================================================
+    // SALT STUN / REPEL
+    // =========================================================
+
+    public void ApplySaltRepel(
+        Vector3 sourcePosition,
+        float stunDuration,
+        float repelDistance)
+    {
+        if (Object == null || !Object.IsValid)
+            return;
+
+        if (stunDuration <= 0f || repelDistance <= 0f)
+            return;
+
+        if (!Object.HasStateAuthority)
+        {
+            RPC_RequestSaltRepel(
+                sourcePosition,
+                stunDuration,
+                repelDistance
+            );
+
+            return;
+        }
+
+        ApplySaltRepelStateAuthority(
+            sourcePosition,
+            stunDuration,
+            repelDistance
+        );
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_RequestSaltRepel(
+        Vector3 sourcePosition,
+        float stunDuration,
+        float repelDistance,
+        RpcInfo info = default)
+    {
+        if (!Object.HasStateAuthority)
+            return;
+
+        ApplySaltRepelStateAuthority(
+            sourcePosition,
+            stunDuration,
+            repelDistance
+        );
+    }
+
+    private void ApplySaltRepelStateAuthority(
+        Vector3 sourcePosition,
+        float stunDuration,
+        float repelDistance)
+    {
+        if (agent == null ||
+            !agent.enabled ||
+            !agent.isOnNavMesh ||
+            isReturning ||
+            !IsAwake)
+        {
+            return;
+        }
+
+        // Kung paulit-ulit ang spray, pahabain lang ang stun.
+        saltStunUntil = Mathf.Max(
+            saltStunUntil,
+            Time.time + stunDuration
+        );
+
+        cachedTarget = null;
+        scanTimer = 0f;
+
+        Vector3 away = transform.position - sourcePosition;
+        away.y = 0f;
+
+        if (away.sqrMagnitude < 0.0001f)
+            away = -transform.forward;
+
+        away.Normalize();
+
+        Vector3 repelTarget =
+            transform.position + away * repelDistance;
+
+        if (NavMesh.SamplePosition(
+                repelTarget,
+                out NavMeshHit hit,
+                2f,
+                NavMesh.AllAreas))
+        {
+            agent.stoppingDistance = stopDistance;
+            agent.SetDestination(hit.position);
+        }
+        else
+        {
+            agent.ResetPath();
+        }
+    }
+
+    // =========================================================
     // AI (HOST LANG)
     // =========================================================
 
@@ -182,6 +284,22 @@ public class PrisonerCrawler : NetworkBehaviour
         {
             UpdateReturn();
             return;
+        }
+
+        // Natamaan ng asin: lumayo muna at huwag munang humabol
+        if (saltStunUntil > 0f)
+        {
+            if (Time.time < saltStunUntil)
+                return;
+
+            saltStunUntil = 0f;
+
+            agent.ResetPath();
+            agent.stoppingDistance = stopDistance;
+
+            scanTimer = 0f;
+            repathTimer = 0f;
+            cachedTarget = null;
         }
 
         // Kakabalik lang, magpahinga muna bago pumansin ulit

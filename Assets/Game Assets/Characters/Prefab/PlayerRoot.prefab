@@ -6094,7 +6094,7 @@ MonoBehaviour:
   sprayKey: 20
   saltItem: {fileID: 11400000, guid: 49c7c78e778e32040a342553e0e83829, type: 2}
   saltSprayVFX: {fileID: 6746067635408783740}
-  sprayCooldown: 0.5
+  sprayCooldown: 2
   visualSearchInterval: 0.5
 --- !u!114 &1313644337388063740
 MonoBehaviour:
