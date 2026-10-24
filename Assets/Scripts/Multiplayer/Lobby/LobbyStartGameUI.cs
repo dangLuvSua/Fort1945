@@ -48,7 +48,7 @@ public class LobbyStartGameUI : MonoBehaviour
     {
         FindManager();
 
-        if (manager == null)
+        if (manager == null || manager.Object == null || !manager.Object.IsValid)
             return;
 
         UpdateHudTransition();
