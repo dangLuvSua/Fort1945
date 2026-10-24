@@ -12,6 +12,10 @@ public sealed class LocalJumpscareTrigger : MonoBehaviour
     [SerializeField] private bool disableColliderAfterUse = true;
     [Tooltip("Optional bounds for choosing a random world spawn position.")]
     [SerializeField] private BoxCollider randomSpawnArea;
+    [Header("After Effect")]
+    [SerializeField, Min(0f)] private float extremeDizzinessRange = 8f;
+    [SerializeField, Min(0f)] private float mildDizzinessDuration = 2f;
+    [SerializeField, Min(0f)] private float extremeDizzinessDuration = 5f;
 
     private bool hasTriggered;
     private Collider triggerCollider;
@@ -56,12 +60,30 @@ public sealed class LocalJumpscareTrigger : MonoBehaviour
             return;
         }
 
+        PlayerController localPlayer = FindLocalPlayer();
+        if (localPlayer != null)
+        {
+            bool extreme = Vector3.Distance(localPlayer.transform.position, transform.position) >
+                           extremeDizzinessRange;
+            localPlayer.ApplyJumpscareDizziness(extreme ? 1f : 0.45f,
+                extreme ? extremeDizzinessDuration : mildDizzinessDuration);
+        }
+
         Vector3 position = randomSpawnArea != null
             ? RandomPoint(randomSpawnArea)
             : transform.position;
         LocalJumpscarePlayback playback = Instantiate(
             playbackPrefab, position, transform.rotation);
         playback.Play();
+    }
+
+    private static PlayerController FindLocalPlayer()
+    {
+        PlayerController[] players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        foreach (PlayerController player in players)
+            if (player.Object != null && player.Object.IsValid && player.Object.HasInputAuthority)
+                return player;
+        return null;
     }
 
     private static Vector3 RandomPoint(BoxCollider box)

@@ -50,6 +50,12 @@ public class PlayerController : NetworkBehaviour
     [SerializeField, Min(0f)] private float dizzyCameraRollSpeed = 1.5f;
     [SerializeField, Range(0.1f, 1f)] private float lowestSanityLookMultiplier = 0.4f;
     [SerializeField, Range(0f, 1f)] private float disableSprintAtSanityPercent = 0.25f;
+    [SerializeField, Min(0f)] private float jumpscareDizzinessRecoveryTime = 3f;
+    [SerializeField, Range(0f, 20f)] private float jumpscareDizzinessRoll = 7f;
+
+    private float jumpscareDizzinessUntil;
+    private float jumpscareDizzinessDuration;
+    private float jumpscareDizzinessStrength;
 
 
     // =========================================================
@@ -437,11 +443,35 @@ public class PlayerController : NetworkBehaviour
             float sanitySeverity = playerSanity != null
                 ? playerSanity.LowSanitySeverity
                 : 0f;
+            float jumpscareSeverity = GetJumpscareDizzinessSeverity();
             float dizzyRoll = Mathf.Sin(Time.time * dizzyCameraRollSpeed) *
-                              maximumDizzyCameraRoll * sanitySeverity;
+                              (maximumDizzyCameraRoll * sanitySeverity +
+                               jumpscareDizzinessRoll * jumpscareSeverity);
             cameraHolder.localRotation =
                 Quaternion.Euler(pitch, 0f, dizzyRoll);
         }
+    }
+
+    /// <summary>Applies a temporary camera sway after a jumpscare.</summary>
+    public void ApplyJumpscareDizziness(float strength = 1f, float duration = -1f)
+    {
+        jumpscareDizzinessStrength = Mathf.Clamp01(strength);
+        float effectDuration = duration > 0f ? duration : jumpscareDizzinessRecoveryTime;
+        jumpscareDizzinessDuration = Mathf.Max(0.01f, effectDuration);
+        jumpscareDizzinessUntil = Time.unscaledTime + effectDuration;
+    }
+
+    private float GetJumpscareDizzinessSeverity()
+    {
+        if (jumpscareDizzinessStrength <= 0f || jumpscareDizzinessUntil <= Time.unscaledTime)
+        {
+            jumpscareDizzinessStrength = 0f;
+            return 0f;
+        }
+
+        float remaining = jumpscareDizzinessUntil - Time.unscaledTime;
+        return jumpscareDizzinessStrength * Mathf.Clamp01(
+            remaining / jumpscareDizzinessDuration);
     }
 
 
