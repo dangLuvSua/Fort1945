@@ -5,13 +5,25 @@ public class InGameOptionsController : MonoBehaviour
 {
     public static InGameOptionsController Instance { get; private set; }
 
-    [Header("Options Canvas Reference")]
-    [SerializeField] private GameObject optionsCanvas;
+    [Header("Main Containers")]
+    [SerializeField] private GameObject inGameSettingsRoot;
 
-    [Header("Optional Settings Button on HUD")]
-    [SerializeField] private GameObject hudSettingsButton;
+    [Header("Sub-Panels")]
+    [SerializeField] private GameObject audioPanel;
+    [SerializeField] private GameObject controlsPanel;
+    [SerializeField] private GameObject graphicsPanel;
+    [SerializeField] private GameObject leaveModalPanel;
 
-    public bool IsOpen => optionsCanvas != null && optionsCanvas.activeSelf;
+    public bool IsAnyPanelOpen
+    {
+        get
+        {
+            return (audioPanel != null && audioPanel.activeSelf) ||
+                   (controlsPanel != null && controlsPanel.activeSelf) ||
+                   (graphicsPanel != null && graphicsPanel.activeSelf) ||
+                   (leaveModalPanel != null && leaveModalPanel.activeSelf);
+        }
+    }
 
     private void Awake()
     {
@@ -25,61 +37,112 @@ public class InGameOptionsController : MonoBehaviour
 
     private void Start()
     {
-        if (optionsCanvas != null)
-        {
-            optionsCanvas.SetActive(false);
-        }
+        CloseAllPanels();
     }
 
     private void Update()
     {
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
-            ToggleOptions();
+            if (IsAnyPanelOpen)
+            {
+                CloseAllPanels();
+            }
+            else
+            {
+                // By default, pressing Esc toggles the main in-game settings bar/panel
+                ToggleSettingsRoot();
+            }
         }
     }
 
-    public void ToggleOptions()
+    public void ToggleSettingsRoot()
     {
-        if (IsOpen)
+        if (inGameSettingsRoot != null)
         {
-            CloseOptions();
-        }
-        else
-        {
-            OpenOptions();
+            bool willOpen = !inGameSettingsRoot.activeSelf;
+            inGameSettingsRoot.SetActive(willOpen);
+
+            if (willOpen)
+            {
+                UnlockCursor();
+            }
+            else
+            {
+                CloseAllPanels();
+                LockCursor();
+            }
         }
     }
 
-    public void OpenOptions()
-    {
-        if (optionsCanvas != null)
-        {
-            optionsCanvas.SetActive(true);
-        }
+    // ==========================================
+    // INDIVIDUAL BUTTON TRIGGERS
+    // ==========================================
 
+    public void OpenAudioPanel()
+    {
+        gameObject.SetActive(true);
+        HideSubPanels();
+        if (audioPanel != null) audioPanel.SetActive(true);
+        UnlockCursor();
+    }
+
+    public void OpenControlsPanel()
+    {
+        gameObject.SetActive(true);
+        HideSubPanels();
+        if (controlsPanel != null) controlsPanel.SetActive(true);
+        UnlockCursor();
+    }
+
+    public void OpenGraphicsPanel()
+    {
+        gameObject.SetActive(true);
+        HideSubPanels();
+        if (graphicsPanel != null) graphicsPanel.SetActive(true);
+        UnlockCursor();
+    }
+
+    public void OpenLeaveModal()
+    {
+        gameObject.SetActive(true);
+        HideSubPanels();
+        if (leaveModalPanel != null) leaveModalPanel.SetActive(true);
+        UnlockCursor();
+    }
+
+    // ==========================================
+    // CLOSING & CURSOR
+    // ==========================================
+
+    public void CloseAllPanels()
+    {
+        HideSubPanels();
+        
+        // If settings bar is not open either, lock cursor
+        if (inGameSettingsRoot == null || !inGameSettingsRoot.activeSelf)
+        {
+            LockCursor();
+        }
+    }
+
+    private void HideSubPanels()
+    {
+        if (audioPanel != null) audioPanel.SetActive(false);
+        if (controlsPanel != null) controlsPanel.SetActive(false);
+        if (graphicsPanel != null) graphicsPanel.SetActive(false);
+        if (leaveModalPanel != null) leaveModalPanel.SetActive(false);
+    }
+
+    private void UnlockCursor()
+    {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-
-        if (hudSettingsButton != null)
-        {
-            hudSettingsButton.SetActive(false);
-        }
     }
 
-    public void CloseOptions()
+    private void LockCursor()
     {
-        if (optionsCanvas != null)
-        {
-            optionsCanvas.SetActive(false);
-        }
-
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-
-        if (hudSettingsButton != null)
-        {
-            hudSettingsButton.SetActive(true);
-        }
     }
 }

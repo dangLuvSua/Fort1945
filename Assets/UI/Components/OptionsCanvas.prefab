@@ -4946,7 +4946,6 @@ GameObject:
   - component: {fileID: 673389556303808426}
   - component: {fileID: -7300176689886401011}
   - component: {fileID: 2031775195152781625}
-  - component: {fileID: 6077636105909252720}
   m_Layer: 5
   m_Name: OptionsCanvas
   m_TagString: Untagged
@@ -5087,26 +5086,6 @@ MonoBehaviour:
   defaultBGMVolume: 1
   defaultSFXVolume: 1
   defaultMainMenuVolume: 1
---- !u!114 &6077636105909252720
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2832434343468456428}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8434c03f39a66da4486056da71d52492, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GraphicsSettingsManager
-  qualityDropdown: {fileID: 0}
-  resolutionDropdown: {fileID: 0}
-  fullscreenToggle: {fileID: 0}
-  vSyncToggle: {fileID: 0}
-  brightnessSlider: {fileID: 0}
-  minBrightness: 0.5
-  maxBrightness: 1.5
-  brightnessOverlay: {fileID: 0}
 --- !u!1 &2845022403475618208
 GameObject:
   m_ObjectHideFlags: 0
