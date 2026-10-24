@@ -5,431 +5,1009 @@ using TMPro;
 
 public class PlayerInteractor : NetworkBehaviour
 {
-[Header("Interaction")]
-[SerializeField] private Camera cam;
-[SerializeField] private PlayerInventory inventory;
-[SerializeField] private GameObject uiRoot;
-[SerializeField] private GameObject promptText;
-[SerializeField] private TMP_Text promptLabel;
-[SerializeField, Min(0.1f)] private float range = 3f;
-[SerializeField] private LayerMask mask = ~0;
+    // =========================================================
+    // INTERACTION
+    // =========================================================
 
-[Header("Hold Interaction UI")]
-[SerializeField] private InteractionPrompt holdPrompt;
-[SerializeField] private bool createFallbackSlider = true;
+    [Header("Interaction")]
 
-private bool isLocal;
+    [SerializeField]
+    private Camera cam;
 
-private IHoldInteractable currentHoldTarget;
-private HoldInteractionSliderUI holdSlider;
-private bool ownsPromptInstance;
-private InteractionPrompt holdPromptPrefab;
+    [SerializeField]
+    private PlayerInventory inventory;
 
-private float holdProgress;
-private bool holdStarted;
-private bool ownsHoldPrompt;
+    [SerializeField]
+    private GameObject uiRoot;
 
-public override void Spawned()
-{
-    isLocal = Object.HasInputAuthority;
+    [SerializeField]
+    private GameObject promptText;
 
-    if (uiRoot != null)
-        uiRoot.SetActive(isLocal);
+    [SerializeField]
+    private TMP_Text promptLabel;
 
-    if (!isLocal)
-        return;
+    [SerializeField, Min(0.1f)]
+    private float range = 3f;
 
-    if (cam == null)
-        cam = GetComponentInChildren<Camera>();
+    [SerializeField]
+    private LayerMask mask = ~0;
 
-    if (inventory == null)
-        inventory = GetComponentInParent<PlayerInventory>();
+    // =========================================================
+    // HOLD INTERACTION UI
+    // =========================================================
 
-    if (promptLabel == null && promptText != null)
-        promptLabel = promptText.GetComponent<TMP_Text>();
+    [Header("Hold Interaction UI")]
 
-    if (promptText != null)
-        promptText.SetActive(false);
+    [SerializeField]
+    private InteractionPrompt holdPrompt;
 
-    // Use a live scene instance when one exists. Otherwise instantiate the
-    // assigned prefab under this local player's UI root.
-    if (holdPrompt == null || !holdPrompt.gameObject.scene.IsValid())
+    [SerializeField]
+    private bool createFallbackSlider = true;
+
+    // =========================================================
+    // RUNTIME
+    // =========================================================
+
+    private bool isLocal;
+
+    private IHoldInteractable currentHoldTarget;
+
+    private HoldInteractionSliderUI holdSlider;
+
+    // True when this PlayerInteractor instantiated its own
+    // InteractionPrompt.
+    private bool ownsPromptInstance;
+
+    // Keeps the original prefab reference so the prompt can be
+    // recreated if necessary.
+    private InteractionPrompt holdPromptPrefab;
+
+    private float holdProgress;
+
+    private bool holdStarted;
+
+    // True while this interactor currently owns/displays
+    // the shared hold prompt.
+    private bool ownsHoldPrompt;
+
+    // =========================================================
+    // FUSION SPAWN
+    // =========================================================
+
+    public override void Spawned()
     {
-        InteractionPrompt promptPrefab = holdPrompt;
-        holdPromptPrefab = promptPrefab;
-        holdPrompt = FindInteractionPrompt();
+        isLocal =
+            Object.HasInputAuthority;
 
-        if (holdPrompt == null && promptPrefab != null && uiRoot != null)
+        if (uiRoot != null)
         {
-            holdPrompt = Instantiate(promptPrefab, uiRoot.transform, false);
-            holdPrompt.gameObject.name = "InteractionPrompt";
-            ownsPromptInstance = true;
+            uiRoot.SetActive(
+                isLocal
+            );
+        }
+
+        if (!isLocal)
+        {
+            return;
+        }
+
+        // -----------------------------------------------------
+        // FIND PLAYER REFERENCES
+        // -----------------------------------------------------
+
+        if (cam == null)
+        {
+            cam =
+                GetComponentInChildren<Camera>();
+        }
+
+        if (inventory == null)
+        {
+            inventory =
+                GetComponentInParent<PlayerInventory>();
+        }
+
+        if (promptLabel == null &&
+            promptText != null)
+        {
+            promptLabel =
+                promptText.GetComponent<TMP_Text>();
+        }
+
+        // -----------------------------------------------------
+        // REMEMBER PROMPT PREFAB
+        // -----------------------------------------------------
+
+        if (holdPrompt != null &&
+            !holdPrompt.gameObject.scene.IsValid())
+        {
+            holdPromptPrefab =
+                holdPrompt;
+        }
+
+        // -----------------------------------------------------
+        // CREATE / FIND INTERACTION UI
+        // -----------------------------------------------------
+
+        EnsureInteractionUI();
+
+        // -----------------------------------------------------
+        // RESET INTERACTION STATE
+        // -----------------------------------------------------
+
+        ResetInteractionState();
+
+        // -----------------------------------------------------
+        // VALIDATION
+        // -----------------------------------------------------
+
+        if (cam == null)
+        {
+            Debug.LogError(
+                "[INTERACTOR] No camera assigned or found.",
+                this
+            );
+        }
+
+        if (inventory == null)
+        {
+            Debug.LogError(
+                "[INTERACTOR] PlayerInventory not found.",
+                this
+            );
         }
     }
 
-    if (holdPrompt != null)
+    // =========================================================
+    // ENABLE
+    // =========================================================
+
+    private void OnEnable()
     {
-        // The prefab root is authored inactive. Activate once so Awake runs
-        // and initializes its slider before the first interaction displays it.
-        holdPrompt.gameObject.SetActive(true);
-        holdPrompt.Hide();
-        ownsHoldPrompt = false;
-    }
-    else if (createFallbackSlider && uiRoot != null)
-    {
-        holdSlider =
-            HoldInteractionSliderUI.Create(uiRoot.transform);
-    }
-
-    if (cam == null)
-    {
-        Debug.LogError(
-            "[INTERACTOR] No camera assigned or found.",
-            this
-        );
-    }
-
-    if (inventory == null)
-    {
-        Debug.LogError(
-            "[INTERACTOR] PlayerInventory not found.",
-            this
-        );
-    }
-}
-
-private void Update()
-{
-    if (!isLocal || cam == null || inventory == null)
-        return;
-
-    if (Keyboard.current == null)
-        return;
-
-    Ray ray = cam.ViewportPointToRay(
-        new Vector3(0.5f, 0.5f, 0f)
-    );
-
-    IInteractable target = null;
-    int bestPriority = int.MinValue;
-    float bestDist = float.MaxValue;
-
-    RaycastHit[] hits = Physics.RaycastAll(
-        ray,
-        range,
-        mask,
-        QueryTriggerInteraction.Ignore
-    );
-
-    foreach (RaycastHit hit in hits)
-    {
-        IInteractable candidate =
-            hit.collider.GetComponentInParent<IInteractable>();
-
-        if (candidate is IHoldInteractable candidateHold)
-            candidateHold.UpdateContext(inventory);
-
-        if (candidate == null || !candidate.CanInteract)
-            continue;
-
-        if (candidate.Priority > bestPriority ||
-            (candidate.Priority == bestPriority &&
-             hit.distance < bestDist))
+        // OnEnable can run before Fusion Spawned().
+        // Do nothing until we know this is the local player.
+        if (!isLocal)
         {
-            target = candidate;
-            bestPriority = candidate.Priority;
-            bestDist = hit.distance;
+            return;
         }
+
+        // Puzzle mode disables PlayerInteractor.
+        //
+        // When PuzzleModeController enables it again,
+        // rebuild/refresh the interaction UI instead of relying
+        // on Spawned(), because Spawned() only runs once.
+        EnsureInteractionUI();
+
+        ResetInteractionState();
+
+        Debug.Log(
+            "[INTERACTOR] Interaction system re-enabled and refreshed."
+        );
     }
 
-    // The room-side volume is authoritative: a ray may hit scenery or an
-    // interactable behind the bars, but the player should still get the
-    // inside gate's open prompt while standing in this zone.
-    InterrogationRoomGateUnlock[] roomGates =
-        FindObjectsByType<InterrogationRoomGateUnlock>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None
-        );
-    Transform playerRoot = inventory.transform.root;
-    foreach (InterrogationRoomGateUnlock gate in roomGates)
+    // =========================================================
+    // UPDATE
+    // =========================================================
+
+    private void Update()
     {
-        if (gate != null && gate.CanInteract &&
-            gate.IsPlayerInInsideInteractionZone(playerRoot))
+        if (!isLocal ||
+            cam == null ||
+            inventory == null)
         {
-            target = gate;
-            break;
+            return;
         }
-    }
 
-    // Locktrigger is intentionally a trigger volume and is ignored by the
-    // raycast above. Allow the gate interaction to activate from proximity
-    // while the player stands in that volume, without requiring a precise aim.
-    if (target == null)
-    {
-        DungeonGateUnlock[] gates = FindObjectsByType<DungeonGateUnlock>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None
-        );
-
-        foreach (DungeonGateUnlock gate in gates)
+        if (Keyboard.current == null)
         {
-            if (gate != null && gate.CanInteract &&
-                gate.IsPlayerInsideLockTrigger(playerRoot))
+            return;
+        }
+
+        Ray ray =
+            cam.ViewportPointToRay(
+                new Vector3(
+                    0.5f,
+                    0.5f,
+                    0f
+                )
+            );
+
+        IInteractable target =
+            null;
+
+        int bestPriority =
+            int.MinValue;
+
+        float bestDist =
+            float.MaxValue;
+
+        // -----------------------------------------------------
+        // NORMAL RAYCAST INTERACTION
+        // -----------------------------------------------------
+
+        RaycastHit[] hits =
+            Physics.RaycastAll(
+                ray,
+                range,
+                mask,
+                QueryTriggerInteraction.Ignore
+            );
+
+        foreach (RaycastHit hit in hits)
+        {
+            IInteractable candidate =
+                hit.collider
+                    .GetComponentInParent<IInteractable>();
+
+            if (candidate is IHoldInteractable candidateHold)
             {
-                target = gate;
+                candidateHold.UpdateContext(
+                    inventory
+                );
+            }
+
+            if (candidate == null ||
+                !candidate.CanInteract)
+            {
+                continue;
+            }
+
+            if (candidate.Priority > bestPriority ||
+                (
+                    candidate.Priority == bestPriority &&
+                    hit.distance < bestDist
+                ))
+            {
+                target =
+                    candidate;
+
+                bestPriority =
+                    candidate.Priority;
+
+                bestDist =
+                    hit.distance;
+            }
+        }
+
+        // =====================================================
+        // INTERROGATION ROOM GATE
+        // =====================================================
+
+        InterrogationRoomGateUnlock[] roomGates =
+            FindObjectsByType<InterrogationRoomGateUnlock>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None
+            );
+
+        Transform playerRoot =
+            inventory.transform.root;
+
+        // -----------------------------------------------------
+        // INSIDE INTERACTION ZONE
+        // -----------------------------------------------------
+
+        foreach (InterrogationRoomGateUnlock gate
+                 in roomGates)
+        {
+            if (gate != null &&
+                gate.CanInteract &&
+                gate.IsPlayerInInsideInteractionZone(
+                    playerRoot
+                ))
+            {
+                target =
+                    gate;
+
                 break;
             }
         }
 
-        // Interrogation room gates have a narrow door collider, which can be
-        // difficult to hit from the room side. Keep the exit interaction
-        // available when the player is standing close to that gate.
+        // =====================================================
+        // PROXIMITY / TRIGGER FALLBACKS
+        // =====================================================
+
         if (target == null)
         {
-            foreach (InterrogationRoomGateUnlock gate in roomGates)
+            DungeonGateUnlock[] gates =
+                FindObjectsByType<DungeonGateUnlock>(
+                    FindObjectsInactive.Exclude,
+                    FindObjectsSortMode.None
+                );
+
+            // -------------------------------------------------
+            // DUNGEON LOCK TRIGGER
+            // -------------------------------------------------
+
+            foreach (DungeonGateUnlock gate
+                     in gates)
             {
-                if (gate != null && gate.CanInteract &&
-                    gate.IsPlayerNearGate(playerRoot, range))
+                if (gate != null &&
+                    gate.CanInteract &&
+                    gate.IsPlayerInsideLockTrigger(
+                        playerRoot
+                    ))
                 {
-                    target = gate;
+                    target =
+                        gate;
+
                     break;
                 }
             }
+
+            // -------------------------------------------------
+            // INTERROGATION GATE PROXIMITY
+            // -------------------------------------------------
+
+            if (target == null)
+            {
+                foreach (InterrogationRoomGateUnlock gate
+                         in roomGates)
+                {
+                    if (gate != null &&
+                        gate.CanInteract &&
+                        gate.IsPlayerNearGate(
+                            playerRoot,
+                            range
+                        ))
+                    {
+                        target =
+                            gate;
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        // =====================================================
+        // HOLD TARGET
+        // =====================================================
+
+        IHoldInteractable holdTarget =
+            target as IHoldInteractable;
+
+        if (holdTarget != null)
+        {
+            holdTarget.UpdateContext(
+                inventory
+            );
+        }
+
+        // -----------------------------------------------------
+        // UPDATE PROMPT
+        // -----------------------------------------------------
+
+        UpdatePrompt(
+            target,
+            holdTarget
+        );
+
+        // -----------------------------------------------------
+        // TARGET CHANGED
+        // -----------------------------------------------------
+
+        if (currentHoldTarget != null &&
+            currentHoldTarget != holdTarget)
+        {
+            CancelHold();
+        }
+
+        // =====================================================
+        // QUICK TAP HOLD INTERACTION
+        // =====================================================
+
+        if (holdTarget is IQuickTapHoldInteractable quickTapTarget &&
+            quickTapTarget.CanTapInteract)
+        {
+            if (currentHoldTarget != null)
+            {
+                CancelHold();
+            }
+
+            if (Keyboard.current.eKey.wasPressedThisFrame)
+            {
+                quickTapTarget.TapInteract(
+                    inventory
+                );
+            }
+
+            return;
+        }
+
+        // =====================================================
+        // BEGIN TRACKING HOLD TARGET
+        // =====================================================
+
+        if (holdTarget != null &&
+            currentHoldTarget == null)
+        {
+            currentHoldTarget =
+                holdTarget;
+
+            holdProgress =
+                0f;
+
+            holdStarted =
+                false;
+        }
+
+        // -----------------------------------------------------
+        // PROCESS HOLD
+        // -----------------------------------------------------
+
+        if (currentHoldTarget != null)
+        {
+            ProcessHoldInput();
+        }
+
+        // =====================================================
+        // NORMAL PRESS INTERACTION
+        // =====================================================
+
+        if (target != null &&
+            holdTarget == null &&
+            Keyboard.current.eKey.wasPressedThisFrame)
+        {
+            target.Interact(
+                inventory
+            );
         }
     }
 
-    IHoldInteractable holdTarget =
-        target as IHoldInteractable;
+    // =========================================================
+    // PROMPT
+    // =========================================================
 
-    if (holdTarget != null)
-        holdTarget.UpdateContext(inventory);
-
-    UpdatePrompt(target, holdTarget);
-
-    // Cancel only when the player stops targeting the object.
-    if (currentHoldTarget != null &&
-        currentHoldTarget != holdTarget)
+    private void UpdatePrompt(
+        IInteractable target,
+        IHoldInteractable holdTarget)
     {
-        CancelHold();
+        // -----------------------------------------------------
+        // HOLD INTERACTION PROMPT
+        // -----------------------------------------------------
+
+        if (holdTarget != null &&
+            holdPrompt != null)
+        {
+            if (promptText != null)
+            {
+                promptText.SetActive(
+                    false
+                );
+            }
+
+            holdPrompt.ShowFor(
+                this,
+                holdTarget.Prompt
+            );
+
+            ownsHoldPrompt =
+                true;
+
+            return;
+        }
+
+        // -----------------------------------------------------
+        // HIDE HOLD PROMPT
+        // -----------------------------------------------------
+
+        if (holdPrompt != null &&
+            ownsHoldPrompt)
+        {
+            holdPrompt.HideFor(
+                this
+            );
+
+            ownsHoldPrompt =
+                false;
+        }
+
+        // -----------------------------------------------------
+        // NORMAL INTERACTION PROMPT
+        // -----------------------------------------------------
+
+        if (promptLabel != null)
+        {
+            promptLabel.text =
+                target != null
+                    ? target.Prompt
+                    : string.Empty;
+        }
+
+        if (promptText != null)
+        {
+            promptText.SetActive(
+                target != null
+            );
+        }
+
+        if (holdSlider != null &&
+            !holdStarted)
+        {
+            holdSlider.Hide();
+        }
     }
 
-    if (holdTarget is IQuickTapHoldInteractable quickTapTarget &&
-        quickTapTarget.CanTapInteract)
+    // =========================================================
+    // HOLD INPUT
+    // =========================================================
+
+    private void ProcessHoldInput()
     {
-        if (currentHoldTarget != null)
+        if (currentHoldTarget == null ||
+            Keyboard.current == null)
+        {
+            return;
+        }
+
+        Key holdKey =
+            currentHoldTarget is IKeyHoldInteractable keyHold
+                ? keyHold.HoldKey
+                : Key.E;
+
+        bool keyPressed =
+            Keyboard.current[
+                holdKey
+            ].wasPressedThisFrame;
+
+        bool keyHeld =
+            Keyboard.current[
+                holdKey
+            ].isPressed;
+
+        // -----------------------------------------------------
+        // HOLD START
+        // -----------------------------------------------------
+
+        if (keyPressed &&
+            !holdStarted)
+        {
+            holdStarted =
+                true;
+
+            holdProgress =
+                0f;
+
+            currentHoldTarget.HoldStarted(
+                inventory
+            );
+
+            if (holdPrompt != null)
+            {
+                holdPrompt.ShowProgressFor(
+                    this,
+                    currentHoldTarget.Prompt,
+                    0f
+                );
+
+                ownsHoldPrompt =
+                    true;
+            }
+            else if (holdSlider != null)
+            {
+                holdSlider.Show();
+
+                holdSlider.SetProgress(
+                    0f
+                );
+            }
+        }
+
+        if (!holdStarted)
+        {
+            return;
+        }
+
+        // -----------------------------------------------------
+        // PLAYER RELEASED KEY
+        // -----------------------------------------------------
+
+        if (!keyHeld)
+        {
             CancelHold();
 
-        if (Keyboard.current.eKey.wasPressedThisFrame)
-            quickTapTarget.TapInteract(inventory);
+            return;
+        }
 
-        return;
-    }
+        // -----------------------------------------------------
+        // ADVANCE HOLD
+        // -----------------------------------------------------
 
-    if (holdTarget != null &&
-        currentHoldTarget == null)
-    {
-        currentHoldTarget = holdTarget;
-        holdProgress = 0f;
-        holdStarted = false;
-    }
+        holdProgress +=
+            Time.deltaTime;
 
-    if (currentHoldTarget != null)
-        ProcessHoldInput();
+        float duration =
+            Mathf.Max(
+                0.01f,
+                currentHoldTarget.HoldDuration
+            );
 
-    // Preserve normal press-to-interact behavior.
-    if (target != null &&
-        holdTarget == null &&
-        Keyboard.current.eKey.wasPressedThisFrame)
-    {
-        target.Interact(inventory);
-    }
-}
-
-private void UpdatePrompt(
-    IInteractable target,
-    IHoldInteractable holdTarget)
-{
-    if (holdTarget != null && holdPrompt != null)
-    {
-        if (promptText != null)
-            promptText.SetActive(false);
-
-        holdPrompt.ShowFor(this, holdTarget.Prompt);
-        ownsHoldPrompt = true;
-        return;
-    }
-
-    if (holdPrompt != null && ownsHoldPrompt)
-    {
-        holdPrompt.HideFor(this);
-        ownsHoldPrompt = false;
-    }
-
-    if (promptLabel != null)
-    {
-        promptLabel.text =
-            target != null ? target.Prompt : string.Empty;
-    }
-
-    if (promptText != null)
-        promptText.SetActive(target != null);
-
-    if (holdSlider != null && !holdStarted)
-        holdSlider.Hide();
-}
-
-private void ProcessHoldInput()
-{
-    Key holdKey = currentHoldTarget is IKeyHoldInteractable keyHold
-        ? keyHold.HoldKey
-        : Key.E;
-    bool ePressed = Keyboard.current[holdKey].wasPressedThisFrame;
-    bool eHeld = Keyboard.current[holdKey].isPressed;
-
-    if (ePressed && !holdStarted)
-    {
-        holdStarted = true;
-        holdProgress = 0f;
-
-        currentHoldTarget.HoldStarted(inventory);
+        float progress =
+            Mathf.Clamp01(
+                holdProgress /
+                duration
+            );
 
         if (holdPrompt != null)
         {
-            holdPrompt.ShowProgressFor(
+            holdPrompt.SetProgressFor(
                 this,
-                currentHoldTarget.Prompt,
-                0f
+                progress
             );
-            ownsHoldPrompt = true;
         }
         else if (holdSlider != null)
         {
-            holdSlider.Show();
-            holdSlider.SetProgress(0f);
+            holdSlider.SetProgress(
+                progress
+            );
+        }
+
+        // -----------------------------------------------------
+        // HOLD COMPLETE
+        // -----------------------------------------------------
+
+        if (holdProgress >= duration)
+        {
+            IHoldInteractable completedTarget =
+                currentHoldTarget;
+
+            holdStarted =
+                false;
+
+            holdProgress =
+                0f;
+
+            currentHoldTarget =
+                null;
+
+            if (holdPrompt != null &&
+                ownsHoldPrompt)
+            {
+                holdPrompt.HideFor(
+                    this
+                );
+
+                ownsHoldPrompt =
+                    false;
+            }
+
+            if (holdSlider != null)
+            {
+                holdSlider.Hide();
+            }
+
+            completedTarget.HoldCompleted(
+                inventory
+            );
         }
     }
 
-    if (!holdStarted)
-        return;
+    // =========================================================
+    // CANCEL HOLD
+    // =========================================================
 
-    if (!eHeld)
+    private void CancelHold()
     {
-        CancelHold();
-        return;
-    }
-
-    holdProgress += Time.deltaTime;
-
-    float duration =
-        Mathf.Max(0.01f, currentHoldTarget.HoldDuration);
-
-    float progress =
-        Mathf.Clamp01(holdProgress / duration);
-
-    if (holdPrompt != null)
-    {
-        holdPrompt.SetProgressFor(this, progress);
-    }
-    else if (holdSlider != null)
-    {
-        holdSlider.SetProgress(progress);
-    }
-
-    if (holdProgress >= duration)
-    {
-        IHoldInteractable completedTarget =
-            currentHoldTarget;
-
-        holdStarted = false;
-        holdProgress = 0f;
-        currentHoldTarget = null;
-
-        if (holdPrompt != null && ownsHoldPrompt)
+        if (holdStarted &&
+            currentHoldTarget != null)
         {
-            holdPrompt.HideFor(this);
-            ownsHoldPrompt = false;
+            currentHoldTarget.HoldCancelled();
+        }
+
+        holdStarted =
+            false;
+
+        holdProgress =
+            0f;
+
+        currentHoldTarget =
+            null;
+
+        if (holdPrompt != null &&
+            ownsHoldPrompt)
+        {
+            holdPrompt.HideFor(
+                this
+            );
+
+            ownsHoldPrompt =
+                false;
         }
 
         if (holdSlider != null)
-            holdSlider.Hide();
-
-        completedTarget.HoldCompleted(inventory);
-    }
-}
-
-private void CancelHold()
-{
-    if (holdStarted && currentHoldTarget != null)
-        currentHoldTarget.HoldCancelled();
-
-    holdStarted = false;
-    holdProgress = 0f;
-    currentHoldTarget = null;
-
-    if (holdPrompt != null && ownsHoldPrompt)
-    {
-        holdPrompt.HideFor(this);
-        ownsHoldPrompt = false;
-    }
-
-    if (holdSlider != null)
-        holdSlider.Hide();
-}
-
-private InteractionPrompt FindInteractionPrompt()
-{
-    InteractionPrompt[] prompts =
-        FindObjectsByType<InteractionPrompt>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None
-        );
-
-    foreach (InteractionPrompt prompt in prompts)
-    {
-        if (prompt != null &&
-            prompt.gameObject.name == "InteractionPrompt")
         {
-            return prompt;
+            holdSlider.Hide();
         }
     }
 
-    return null;
-}
+    // =========================================================
+    // RESET INTERACTION STATE
+    // =========================================================
 
-private void OnDisable()
-{
-    // Cancel any active hold interaction.
-    if (holdStarted && currentHoldTarget != null)
-        currentHoldTarget.HoldCancelled();
-
-    holdStarted = false;
-    holdProgress = 0f;
-    currentHoldTarget = null;
-
-    // Hide normal interaction prompt.
-    if (promptText != null)
-        promptText.SetActive(false);
-
-    if (promptLabel != null)
-        promptLabel.text = string.Empty;
-
-    // Hide hold interaction prompt.
-    if (holdPrompt != null && ownsHoldPrompt)
+    public void ResetInteractionState()
     {
-        holdPrompt.HideFor(this);
-        ownsHoldPrompt = false;
+        // -----------------------------------------------------
+        // CANCEL ACTIVE HOLD
+        // -----------------------------------------------------
+
+        if (holdStarted &&
+            currentHoldTarget != null)
+        {
+            currentHoldTarget.HoldCancelled();
+        }
+
+        holdStarted =
+            false;
+
+        holdProgress =
+            0f;
+
+        currentHoldTarget =
+            null;
+
+        // -----------------------------------------------------
+        // RESET NORMAL PROMPT
+        // -----------------------------------------------------
+
+        if (promptText != null)
+        {
+            promptText.SetActive(
+                false
+            );
+        }
+
+        if (promptLabel != null)
+        {
+            promptLabel.text =
+                string.Empty;
+        }
+
+        // -----------------------------------------------------
+        // RESET HOLD PROMPT
+        // -----------------------------------------------------
+
+        if (holdPrompt != null)
+        {
+            holdPrompt.HideFor(
+                this
+            );
+
+            holdPrompt.Hide();
+
+            ownsHoldPrompt =
+                false;
+        }
+
+        // -----------------------------------------------------
+        // RESET FALLBACK SLIDER
+        // -----------------------------------------------------
+
+        if (holdSlider != null)
+        {
+            holdSlider.Hide();
+        }
     }
 
-    // Hide fallback slider.
-    if (holdSlider != null)
-        holdSlider.Hide();
+    // =========================================================
+    // ENSURE INTERACTION UI
+    // =========================================================
 
-    if (ownsPromptInstance && holdPrompt != null)
+    private void EnsureInteractionUI()
     {
-        Destroy(holdPrompt.gameObject);
-        holdPrompt = holdPromptPrefab;
-        ownsPromptInstance = false;
-    }
-}
+        if (!isLocal)
+        {
+            return;
+        }
 
+        // -----------------------------------------------------
+        // NORMAL TEXT
+        // -----------------------------------------------------
+
+        if (promptLabel == null &&
+            promptText != null)
+        {
+            promptLabel =
+                promptText.GetComponent<TMP_Text>();
+        }
+
+        // -----------------------------------------------------
+        // VALID LIVE HOLD PROMPT ALREADY EXISTS
+        // -----------------------------------------------------
+
+        if (holdPrompt != null &&
+            holdPrompt.gameObject.scene.IsValid())
+        {
+            holdPrompt.gameObject.SetActive(
+                true
+            );
+
+            holdPrompt.Hide();
+
+            ownsHoldPrompt =
+                false;
+
+            return;
+        }
+
+        // -----------------------------------------------------
+        // REMEMBER PREFAB
+        // -----------------------------------------------------
+
+        if (holdPrompt != null &&
+            !holdPrompt.gameObject.scene.IsValid())
+        {
+            holdPromptPrefab =
+                holdPrompt;
+        }
+
+        // -----------------------------------------------------
+        // LOOK UNDER THIS PLAYER'S UI FIRST
+        // -----------------------------------------------------
+
+        holdPrompt =
+            FindInteractionPromptUnderUIRoot();
+
+        // -----------------------------------------------------
+        // LEGACY GLOBAL FALLBACK
+        // -----------------------------------------------------
+
+        if (holdPrompt == null)
+        {
+            holdPrompt =
+                FindInteractionPrompt();
+        }
+
+        // -----------------------------------------------------
+        // CREATE LOCAL PROMPT
+        // -----------------------------------------------------
+
+        if (holdPrompt == null &&
+            holdPromptPrefab != null &&
+            uiRoot != null)
+        {
+            holdPrompt =
+                Instantiate(
+                    holdPromptPrefab,
+                    uiRoot.transform,
+                    false
+                );
+
+            holdPrompt.gameObject.name =
+                "InteractionPrompt";
+
+            ownsPromptInstance =
+                true;
+        }
+
+        // -----------------------------------------------------
+        // INITIALIZE HOLD PROMPT
+        // -----------------------------------------------------
+
+        if (holdPrompt != null)
+        {
+            holdPrompt.gameObject.SetActive(
+                true
+            );
+
+            holdPrompt.Hide();
+
+            ownsHoldPrompt =
+                false;
+
+            return;
+        }
+
+        // -----------------------------------------------------
+        // FALLBACK SLIDER
+        // -----------------------------------------------------
+
+        if (createFallbackSlider &&
+            uiRoot != null &&
+            holdSlider == null)
+        {
+            holdSlider =
+                HoldInteractionSliderUI.Create(
+                    uiRoot.transform
+                );
+        }
+    }
+
+    // =========================================================
+    // FIND PROMPT UNDER LOCAL UI
+    // =========================================================
+
+    private InteractionPrompt FindInteractionPromptUnderUIRoot()
+    {
+        if (uiRoot == null)
+        {
+            return null;
+        }
+
+        InteractionPrompt[] prompts =
+            uiRoot.GetComponentsInChildren<InteractionPrompt>(
+                true
+            );
+
+        foreach (InteractionPrompt prompt
+                 in prompts)
+        {
+            if (prompt != null &&
+                prompt.gameObject.name ==
+                "InteractionPrompt")
+            {
+                return prompt;
+            }
+        }
+
+        return null;
+    }
+
+    // =========================================================
+    // FIND PROMPT
+    // =========================================================
+
+    private InteractionPrompt FindInteractionPrompt()
+    {
+        InteractionPrompt[] prompts =
+            FindObjectsByType<InteractionPrompt>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None
+            );
+
+        foreach (InteractionPrompt prompt
+                 in prompts)
+        {
+            if (prompt != null &&
+                prompt.gameObject.name ==
+                "InteractionPrompt")
+            {
+                return prompt;
+            }
+        }
+
+        return null;
+    }
+
+    // =========================================================
+    // DISABLE
+    // =========================================================
+
+    private void OnDisable()
+    {
+        // IMPORTANT:
+        //
+        // Do NOT destroy the InteractionPrompt here.
+        //
+        // PuzzleModeController temporarily disables this
+        // component. If we destroy the prompt here, Fusion's
+        // Spawned() will not run again when this component is
+        // re-enabled.
+
+        ResetInteractionState();
+    }
+
+    // =========================================================
+    // DESTROY
+    // =========================================================
+
+    private void OnDestroy()
+    {
+        // Only clean up the prompt when the actual player object
+        // is being destroyed, NOT when puzzle mode temporarily
+        // disables PlayerInteractor.
+
+        if (ownsPromptInstance &&
+            holdPrompt != null)
+        {
+            Destroy(
+                holdPrompt.gameObject
+            );
+
+            holdPrompt =
+                null;
+
+            ownsPromptInstance =
+                false;
+        }
+    }
 }
