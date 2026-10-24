@@ -955,6 +955,25 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>Teleports this player's state authority to the Fort 2 ending marker.</summary>
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcTeleportToEnding(Vector3 position, Quaternion rotation)
+    {
+        if (Object == null || !Object.HasStateAuthority)
+            return;
+
+        if (characterController == null)
+            characterController = GetComponent<CharacterController>();
+
+        if (characterController == null)
+        {
+            Debug.LogError($"[ENDING] Player {Object.Id} has no CharacterController; ending teleport aborted.", this);
+            return;
+        }
+
+        Teleport(position, rotation);
+    }
+
     /// <summary>Resolves and teleports this player to the prison cell on this player's state authority.</summary>
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RpcTeleportPlayerToPrisonCell()

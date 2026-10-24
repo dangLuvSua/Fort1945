@@ -227,9 +227,16 @@ public class PuzzleModeController : NetworkBehaviour
 
     private void Update()
     {
-        // Result screen remains open until button is pressed.
+        // ESC also exits from the result screen so normal player controls
+        // and interaction prompts return without requiring the UI button.
         if (isShowingPuzzleResult)
         {
+            if (Keyboard.current != null &&
+                Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                ExitPuzzleMode();
+            }
+
             return;
         }
 

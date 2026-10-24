@@ -29,6 +29,8 @@ public class NetworkRunnerHandler :
 
     public static NetworkRunnerHandler Instance { get; private set; }
 
+    public bool IsSceneAuthority => runner != null && runner.IsSceneAuthority;
+
 
     // =========================================================
     // NETWORK
@@ -61,6 +63,10 @@ public class NetworkRunnerHandler :
 
     [SerializeField]
     private int gameSceneBuildIndex = 2;
+
+    [Tooltip("Build index of Fort2, used when returning from the Dungeon.")]
+    [SerializeField]
+    private int fort2SceneBuildIndex = 3;
 
     [Tooltip(
         "Build index of the Dungeon scene used when the squad enters the dungeon."
@@ -873,6 +879,30 @@ public class NetworkRunnerHandler :
             dungeonScene,
             LoadSceneMode.Single
         );
+    }
+
+    public bool LoadFort2Scene()
+    {
+        if (runner == null)
+        {
+            Debug.LogError("[ENDING] Cannot load Fort2 because the NetworkRunner is missing.");
+            return false;
+        }
+
+        if (!runner.IsSceneAuthority)
+        {
+            Debug.LogWarning("[ENDING] This client is not Fusion scene authority; waiting for the authority to load Fort2.");
+            return true;
+        }
+
+        // Fort2 is build index 3 in EditorBuildSettings. Use its build index
+        // directly, since this scene is not always registered in the current
+        // network scene manager's path lookup after the Dungeon is loaded.
+        SceneRef fort2 = SceneRef.FromIndex(fort2SceneBuildIndex);
+        Debug.Log($"[ENDING] Loading Fort2 through Fusion (build index {fort2SceneBuildIndex}, SceneRef {fort2}).");
+
+        runner.LoadScene(fort2, LoadSceneMode.Single);
+        return true;
     }
 
 

@@ -5010,6 +5010,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PhaseManager
   startingPhase: 1
   totalPhases: 3
+  endingFadeDuration: 3
+  endingSpawnPointName: EndingSpawnPoint
+  testCompletePhases: 0
+  testReturnToFort2: 0
   _CurrentPhase: 1
   _PhaseInitialized:
     RawValue: 0

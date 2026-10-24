@@ -142,6 +142,25 @@ private void Update()
         }
     }
 
+    // The room-side volume is authoritative: a ray may hit scenery or an
+    // interactable behind the bars, but the player should still get the
+    // inside gate's open prompt while standing in this zone.
+    InterrogationRoomGateUnlock[] roomGates =
+        FindObjectsByType<InterrogationRoomGateUnlock>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None
+        );
+    Transform playerRoot = inventory.transform.root;
+    foreach (InterrogationRoomGateUnlock gate in roomGates)
+    {
+        if (gate != null && gate.CanInteract &&
+            gate.IsPlayerInInsideInteractionZone(playerRoot))
+        {
+            target = gate;
+            break;
+        }
+    }
+
     // Locktrigger is intentionally a trigger volume and is ignored by the
     // raycast above. Allow the gate interaction to activate from proximity
     // while the player stands in that volume, without requiring a precise aim.
@@ -152,7 +171,6 @@ private void Update()
             FindObjectsSortMode.None
         );
 
-        Transform playerRoot = inventory.transform.root;
         foreach (DungeonGateUnlock gate in gates)
         {
             if (gate != null && gate.CanInteract &&
@@ -160,6 +178,22 @@ private void Update()
             {
                 target = gate;
                 break;
+            }
+        }
+
+        // Interrogation room gates have a narrow door collider, which can be
+        // difficult to hit from the room side. Keep the exit interaction
+        // available when the player is standing close to that gate.
+        if (target == null)
+        {
+            foreach (InterrogationRoomGateUnlock gate in roomGates)
+            {
+                if (gate != null && gate.CanInteract &&
+                    gate.IsPlayerNearGate(playerRoot, range))
+                {
+                    target = gate;
+                    break;
+                }
             }
         }
     }
