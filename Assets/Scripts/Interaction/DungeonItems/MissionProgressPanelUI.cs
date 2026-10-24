@@ -328,7 +328,9 @@ public class MissionProgressPanelUI : MonoBehaviour
         foreach (Transform candidate in allTransforms)
         {
             if (candidate != null && candidate.name == "MissionProgressPanel")
+            {
                 candidate.gameObject.SetActive(show);
+            }
         }
     }
 

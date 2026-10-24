@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f319dd85a07a6844ac0bd9072925ed2, type: 3}
   m_Name: Fort2 Phase 2
   m_EditorClassIdentifier: Assembly-CSharp::MissionData
-  title: PHASE 2 - TAKE PHOTOS AND FIND PUZZLE PIECES
+  title: PHASE 2 - FIND THE EVIDENCES
   description: Take 4 valid pictures of the "People of History", collect every puzzle
     piece, and find Prison Key 2 and the Interrogation Room Key.
   icon: {fileID: 21300000, guid: 0bf4a89b627470f4090e0ed68cb9eb15, type: 3}

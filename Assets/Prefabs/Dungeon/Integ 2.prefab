@@ -10798,7 +10798,9 @@ MonoBehaviour:
   gateToRotate: {fileID: 8100164295008910242}
   openRotationOffset: {x: 0, y: 90, z: 0}
   openDuration: 3
-  blockingColliders: []
+  blockingColliders:
+  - {fileID: 9112613739244612209}
+  - {fileID: 1351131379423730333}
   unlockAudio: {fileID: 4276093308026986636}
 --- !u!65 &4890513603171239246
 BoxCollider:
