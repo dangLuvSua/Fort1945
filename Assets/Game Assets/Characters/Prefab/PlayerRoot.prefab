@@ -6115,7 +6115,7 @@ MonoBehaviour:
     m_Bits: 0
   photoPointMask:
     serializedVersion: 2
-    m_Bits: 16384
+    m_Bits: 4294967295
   photoPointRange: 25
   flashDuration: 0.12
   shutterAudio: {fileID: 6949312827365826505}

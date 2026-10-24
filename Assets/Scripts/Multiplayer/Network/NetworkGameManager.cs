@@ -487,6 +487,15 @@ public class NetworkGameManager : NetworkBehaviour
         }
     }
 
+    /// <summary>Returns the active scene manager, recovering if its static reference was lost on a scene transition.</summary>
+    public static NetworkGameManager ResolveInstance()
+    {
+        if (Instance == null)
+            Instance = FindFirstObjectByType<NetworkGameManager>();
+
+        return Instance;
+    }
+
 
     // =========================================================
     // UNITY - AWAKE

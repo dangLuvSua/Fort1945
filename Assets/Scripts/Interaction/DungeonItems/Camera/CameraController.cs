@@ -21,6 +21,8 @@ public class CameraController : NetworkBehaviour
     [Tooltip("Layer containing ghosts invisible to the normal player view.")]
     [SerializeField] private LayerMask photoGhostLayer;
     [Tooltip("Layers checked to find a configured camera photo point.")]
+    // Spawned photo targets can be on Default (or a project-specific layer),
+    // so this must include every layer unless deliberately narrowed in data.
     [SerializeField] private LayerMask photoPointMask = ~0;
     [SerializeField, Min(0.1f)] private float photoPointRange = 30f;
 

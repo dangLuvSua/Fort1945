@@ -46,7 +46,12 @@ public class ItemRandomSpawner : NetworkBehaviour
     private bool prisonKeysSpawned;
     private readonly HashSet<int> spawnedGuaranteedKeyIds = new HashSet<int>();
     private readonly Dictionary<int, int> phaseItemRequirements = new Dictionary<int, int>();
-    private readonly Dictionary<int, int> phaseItemBaselines = new Dictionary<int, int>();
+    [Networked]
+    private int NetworkObjectivePhase { get; set; }
+    [Networked, Capacity(32)]
+    private NetworkArray<int> NetworkObjectiveItemIds => default;
+    [Networked, Capacity(32)]
+    private NetworkArray<int> NetworkObjectiveRequired => default;
     private readonly Dictionary<ItemSpawnProfile.ItemSpawnEntry, int> phaseEntrySpawnCounts =
         new Dictionary<ItemSpawnProfile.ItemSpawnEntry, int>();
     private int displayedPhase = -1;
@@ -226,45 +231,10 @@ public class ItemRandomSpawner : NetworkBehaviour
         if (phase != lastProcessedPhase && phase != preparingPhase)
         {
             phaseItemRequirements.Clear();
-            phaseItemBaselines.Clear();
             phaseEntrySpawnCounts.Clear();
             phaseItemsSpawned = false;
             preparingPhase = phase;
-
-            if (rule.items != null)
-            {
-                foreach (ItemSpawnProfile.ItemSpawnEntry entry in rule.items)
-                {
-                    if (entry?.item == null || phaseItemBaselines.ContainsKey(entry.item.itemId))
-                        continue;
-
-                    phaseItemBaselines[entry.item.itemId] =
-                        gameManager != null
-                            ? gameManager.GetTeamItemCount(entry.item.itemId)
-                            : 0;
-                }
-            }
-
-            if (phase == 2 && phaseTwoGuaranteedItems != null)
-            {
-                foreach (ItemData item in phaseTwoGuaranteedItems)
-                {
-                    if (item == null || phaseItemBaselines.ContainsKey(item.itemId))
-                        continue;
-
-                    phaseItemBaselines[item.itemId] = gameManager != null
-                        ? gameManager.GetTeamItemCount(item.itemId)
-                        : 0;
-                }
-            }
-
-            ItemData phaseCandle = ResolveCandleItem(rule, gameManager);
-            if (phaseCandle != null && !phaseItemBaselines.ContainsKey(phaseCandle.itemId))
-            {
-                phaseItemBaselines[phaseCandle.itemId] = gameManager != null
-                    ? gameManager.GetTeamItemCount(phaseCandle.itemId)
-                    : 0;
-            }
+            ClearNetworkObjectiveRequirements();
         }
 
         if (phase != lastProcessedPhase)
@@ -276,6 +246,7 @@ public class ItemRandomSpawner : NetworkBehaviour
             if (!spawned)
                 return;
 
+            PublishPhaseObjectiveRequirements();
             phaseItemsSpawned = true;
             lastProcessedPhase = phase;
             preparingPhase = -1;
@@ -405,7 +376,8 @@ public class ItemRandomSpawner : NetworkBehaviour
         if (missionProgressPanel == null)
             return;
 
-        foreach (KeyValuePair<int, int> requirement in phaseItemRequirements)
+        List<KeyValuePair<int, int>> requirements = GetVisibleObjectiveRequirements();
+        foreach (KeyValuePair<int, int> requirement in requirements)
         {
             if (configuredObjectiveItemIds.Contains(requirement.Key))
                 continue;
@@ -414,12 +386,135 @@ public class ItemRandomSpawner : NetworkBehaviour
             if (item == null)
                 continue;
 
-            int baseline = phaseItemBaselines.TryGetValue(requirement.Key, out int value)
-                ? value
-                : 0;
-            missionProgressPanel.AddItemRow(item, requirement.Value, baseline);
+            missionProgressPanel.AddItemRow(item, requirement.Value);
             configuredObjectiveItemIds.Add(requirement.Key);
         }
+
+        // Candles are spawned as a phase requirement even when a proxy has
+        // not received the objective metadata yet. Build this row from the
+        // shared phase configuration so candle pickups remain visible.
+        NetworkGameManager manager = NetworkGameManager.Instance;
+        GameDifficulty difficulty = manager != null && manager.IsNetworkStateReady
+            ? manager.Difficulty
+            : standaloneDifficulty;
+        ItemData phaseCandle = ResolveCandleItem(rule, manager);
+        if (phaseCandle != null &&
+            !configuredObjectiveItemIds.Contains(phaseCandle.itemId))
+        {
+            missionProgressPanel.AddItemRow(
+                phaseCandle,
+                GetPhaseCandleCount(difficulty));
+            configuredObjectiveItemIds.Add(phaseCandle.itemId);
+        }
+    }
+
+    private List<KeyValuePair<int, int>> GetVisibleObjectiveRequirements()
+    {
+        List<KeyValuePair<int, int>> requirements =
+            new List<KeyValuePair<int, int>>();
+
+        if (Object != null && Object.IsValid && Runner != null && Runner.IsRunning)
+        {
+            int currentPhase = phaseManager != null && phaseManager.PhaseInitialized
+                ? phaseManager.CurrentPhase
+                : -1;
+
+            for (int i = 0; i < 32 && NetworkObjectivePhase == currentPhase; i++)
+            {
+                int itemId = NetworkObjectiveItemIds.Get(i);
+                int required = NetworkObjectiveRequired.Get(i);
+                if (itemId > 0 && required > 0)
+                    requirements.Add(new KeyValuePair<int, int>(itemId, required));
+            }
+        }
+
+        if (requirements.Count == 0 && (Object == null || Object.HasStateAuthority))
+        {
+            foreach (KeyValuePair<int, int> requirement in phaseItemRequirements)
+                requirements.Add(requirement);
+        }
+
+        return requirements;
+    }
+
+    private void ClearNetworkObjectiveRequirements()
+    {
+        if (Object == null || !Object.HasStateAuthority)
+            return;
+
+        for (int i = 0; i < 32; i++)
+        {
+            NetworkObjectiveItemIds.Set(i, 0);
+            NetworkObjectiveRequired.Set(i, 0);
+        }
+        NetworkObjectivePhase = 0;
+    }
+
+    private void PublishPhaseObjectiveRequirements()
+    {
+        if (Object == null || !Object.HasStateAuthority)
+            return;
+
+        ClearNetworkObjectiveRequirements();
+        NetworkObjectivePhase = phaseManager != null && phaseManager.PhaseInitialized
+            ? phaseManager.CurrentPhase
+            : Mathf.Max(1, standalonePhase);
+        int index = 0;
+        foreach (KeyValuePair<int, int> requirement in phaseItemRequirements)
+        {
+            if (index >= 32)
+            {
+                Debug.LogWarning(
+                    "[ITEM SPAWNER] More than 32 objective item types; " +
+                    "some progress rows cannot be synchronized.", this);
+                break;
+            }
+
+            NetworkObjectiveItemIds.Set(index, requirement.Key);
+            NetworkObjectiveRequired.Set(index, requirement.Value);
+            index++;
+        }
+    }
+
+    /// <summary>Returns eligible loot items configured for the active phase.</summary>
+    public List<ItemData> GetCurrentPhaseRequiredItems()
+    {
+        List<ItemData> items = new List<ItemData>();
+        if (itemHandler == null)
+            return items;
+
+        if (phaseManager == null)
+            phaseManager = PhaseManager.Instance;
+
+        NetworkGameManager manager = NetworkGameManager.Instance;
+        GameDifficulty difficulty = manager != null && manager.IsNetworkStateReady
+            ? manager.Difficulty
+            : standaloneDifficulty;
+        int phase = phaseManager != null && phaseManager.PhaseInitialized
+            ? phaseManager.CurrentPhase
+            : Mathf.Max(1, standalonePhase);
+        ItemSpawnProfile.PhaseSpawnRule rule = itemHandler.GetSpawnRule(difficulty, phase);
+
+        if (rule?.items != null)
+        {
+            foreach (ItemSpawnProfile.ItemSpawnEntry entry in rule.items)
+                AddUniqueLootItem(items, entry?.item);
+        }
+
+        AddUniqueLootItem(items, ResolveCandleItem(rule, manager));
+        if (phase == 2 && phaseTwoGuaranteedItems != null)
+        {
+            foreach (ItemData item in phaseTwoGuaranteedItems)
+                AddUniqueLootItem(items, item);
+        }
+
+        return items;
+    }
+
+    private static void AddUniqueLootItem(List<ItemData> items, ItemData item)
+    {
+        if (item != null && item.itemId > 0 && !items.Contains(item))
+            items.Add(item);
     }
 
     private ItemData FindPhaseItemData(ItemSpawnProfile.PhaseSpawnRule rule, int itemId)
@@ -456,10 +551,7 @@ public class ItemRandomSpawner : NetworkBehaviour
 
         foreach (KeyValuePair<int, int> requirement in phaseItemRequirements)
         {
-            int baseline = phaseItemBaselines.TryGetValue(requirement.Key, out int value)
-                ? value
-                : 0;
-            int collected = manager.GetTeamItemCount(requirement.Key) - baseline;
+            int collected = manager.GetTeamItemCount(requirement.Key);
             if (collected < requirement.Value)
                 return false;
         }
@@ -480,11 +572,8 @@ public class ItemRandomSpawner : NetworkBehaviour
             if (manager == null)
                 continue;
 
-            int baseline = phaseItemBaselines.TryGetValue(requirement.Key, out int value)
-                ? value
-                : 0;
             collected += Mathf.Clamp(
-                manager.GetTeamItemCount(requirement.Key) - baseline,
+                manager.GetTeamItemCount(requirement.Key),
                 0,
                 requirement.Value);
         }
