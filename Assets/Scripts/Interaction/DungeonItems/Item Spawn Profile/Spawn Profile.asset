@@ -118,7 +118,7 @@ MonoBehaviour:
       maxSpawnsPerPhase: 1
   - phase: 2
     difficulty: 0
-    missionTitle: PHASE 2 - TAKE PHOTOS AND FIND PUZZLE PIECES
+    missionTitle: PHASE 2 - FIND THE EVIDENCES
     missionDescription: Take 4 valid pictures of the Mystery Statue and the statue
       inside the prison, collect every puzzle piece, and find Prison Key 2 and the
       Interrogation Room Key.
@@ -127,6 +127,7 @@ MonoBehaviour:
     requiredPhotoCaptures: 4
     requirePuzzlePieces: 1
     totalItemsToSpawn: 1
+    spawnEveryEntry: 0
     items:
     - item: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
       weight: 10
@@ -135,7 +136,7 @@ MonoBehaviour:
       maxSpawnsPerPhase: 3
   - phase: 2
     difficulty: 1
-    missionTitle: PHASE 2 - TAKE PHOTOS AND FIND PUZZLE PIECES
+    missionTitle: PHASE 2 - FIND THE EVIDENCES
     missionDescription: Take 4 valid pictures of the Mystery Statue and the statue
       inside the prison, collect every puzzle piece, and find Prison Key 2 and the
       Interrogation Room Key.
@@ -144,6 +145,7 @@ MonoBehaviour:
     requiredPhotoCaptures: 4
     requirePuzzlePieces: 1
     totalItemsToSpawn: 3
+    spawnEveryEntry: 0
     items:
     - item: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
       weight: 10
@@ -152,7 +154,7 @@ MonoBehaviour:
       maxSpawnsPerPhase: 2
   - phase: 2
     difficulty: 2
-    missionTitle: PHASE 2 - TAKE PHOTOS AND FIND PUZZLE PIECES
+    missionTitle: PHASE 2 - FIND THE EVIDENCES
     missionDescription: Take 4 valid pictures of the Mystery Statue and the statue
       inside the prison, collect every puzzle piece, and find Prison Key 2 and the
       Interrogation Room Key.
@@ -161,6 +163,7 @@ MonoBehaviour:
     requiredPhotoCaptures: 4
     requirePuzzlePieces: 1
     totalItemsToSpawn: 3
+    spawnEveryEntry: 0
     items:
     - item: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
       weight: 10
@@ -169,7 +172,7 @@ MonoBehaviour:
       maxSpawnsPerPhase: 1
   - phase: 3
     difficulty: 0
-    missionTitle: PHASE 3 - SOLVE THE INTERROGATION BOARD
+    missionTitle: PHASE 3 - INTERROGATE
     missionDescription: Connect the puzzle pieces and match the photographs to the
       board descriptions.
     missionData: {fileID: 11400000, guid: bdd1290a026d408ab0806b529a87aad2, type: 2}
@@ -177,10 +180,11 @@ MonoBehaviour:
     requiredPhotoCaptures: 0
     requirePuzzlePieces: 0
     totalItemsToSpawn: 0
+    spawnEveryEntry: 0
     items: []
   - phase: 3
     difficulty: 1
-    missionTitle: PHASE 3 - SOLVE THE INTERROGATION BOARD
+    missionTitle: PHASE 3 - INTERROGATE
     missionDescription: Connect the puzzle pieces and match the photographs to the
       board descriptions.
     missionData: {fileID: 11400000, guid: bdd1290a026d408ab0806b529a87aad2, type: 2}
@@ -188,10 +192,11 @@ MonoBehaviour:
     requiredPhotoCaptures: 0
     requirePuzzlePieces: 0
     totalItemsToSpawn: 0
+    spawnEveryEntry: 0
     items: []
   - phase: 3
     difficulty: 2
-    missionTitle: PHASE 3 - SOLVE THE INTERROGATION BOARD
+    missionTitle: PHASE 3 - INTERROGATE
     missionDescription: Connect the puzzle pieces and match the photographs to the
       board descriptions.
     missionData: {fileID: 11400000, guid: bdd1290a026d408ab0806b529a87aad2, type: 2}
@@ -199,4 +204,5 @@ MonoBehaviour:
     requiredPhotoCaptures: 0
     requirePuzzlePieces: 0
     totalItemsToSpawn: 0
+    spawnEveryEntry: 0
     items: []

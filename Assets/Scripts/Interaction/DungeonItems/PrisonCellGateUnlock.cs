@@ -1,4 +1,5 @@
 using System.Collections;
+using Fusion;
 using UnityEngine;
 
 /// <summary>Hold-to-unlock interaction for one dungeon prison cell.</summary>
@@ -19,6 +20,7 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
     [Header("Approach Side")]
     [Tooltip("Place this empty transform in the corridor/outside the cell. The gate can only be unlocked from this side.")]
     [SerializeField] private Transform outsideSidePoint;
+    [SerializeField, Min(0.5f)] private float authorityInteractionDistance = 4f;
 
     [Header("Gate")]
     [Tooltip("Assign the gate leaf/hinge transform. If empty, the component's transform is used.")]
@@ -37,6 +39,9 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
     private bool gateOpen;
     private bool gateTogglePending;
     private Coroutine gateMotionRoutine;
+    private float requestPendingSince;
+
+    public int CellNumber => cellNumber;
 
     public string Prompt
     {
@@ -79,7 +84,10 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
 
     private void Update()
     {
-        NetworkGameManager manager = NetworkGameManager.Instance;
+        if ((unlockPending || gateTogglePending) && Time.unscaledTime - requestPendingSince > 4f)
+            ShowRequestRejectedMessage();
+
+        DungeonNetworkGameManager manager = DungeonNetworkGameManager.ResolveInstance();
         if (manager == null || !manager.IsNetworkStateReady)
             return;
 
@@ -133,10 +141,7 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
         {
             if (!gateOpen && !HasRequiredKey())
             {
-                MissionManager.ShowRaw(
-                    "PRISON KEY REQUIRED",
-                    $"Equip {requiredKeyName} to reopen {cellName}.",
-                    3f);
+                ShowKeyError($"Equip {requiredKeyName} to reopen {cellName}.");
                 return;
             }
 
@@ -146,18 +151,28 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
 
         if (!HasRequiredKey())
         {
-            MissionManager.ShowRaw(
-                "PRISON KEY REQUIRED",
-                $"Find and equip {requiredKeyName} to unlock {cellName}.",
-                3f);
+            ShowKeyError($"Find and equip {requiredKeyName} to unlock {cellName}.");
             return;
         }
 
-        NetworkGameManager manager = NetworkGameManager.Instance;
-        if (manager != null && manager.IsNetworkStateReady)
+        DungeonNetworkGameManager manager = DungeonNetworkGameManager.ResolveInstance();
+        if (manager != null)
         {
+            if (!manager.IsNetworkStateReady)
+            {
+                ShowNetworkSyncMessage();
+                return;
+            }
+
             unlockPending = true;
+            requestPendingSince = Time.unscaledTime;
             manager.RequestPrisonCellUnlock(cellNumber, requiredKeyItemId);
+            return;
+        }
+
+        if (IsNetworkSessionRunning())
+        {
+            ShowNetworkSyncMessage();
             return;
         }
 
@@ -176,15 +191,64 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
 
     private void RequestGateOpenState(bool open)
     {
-        NetworkGameManager manager = NetworkGameManager.Instance;
-        if (manager != null && manager.IsNetworkStateReady)
+        DungeonNetworkGameManager manager = DungeonNetworkGameManager.ResolveInstance();
+        if (manager != null)
         {
+            if (!manager.IsNetworkStateReady)
+            {
+                ShowNetworkSyncMessage();
+                return;
+            }
+
             gateTogglePending = true;
+            requestPendingSince = Time.unscaledTime;
             manager.RequestPrisonCellGateState(cellNumber, open);
             return;
         }
 
+        if (IsNetworkSessionRunning())
+        {
+            ShowNetworkSyncMessage();
+            return;
+        }
+
         SetGateOpen(open);
+    }
+
+    private static bool IsNetworkSessionRunning()
+    {
+        NetworkRunner runner = FindFirstObjectByType<NetworkRunner>();
+        return runner != null && runner.IsRunning;
+    }
+
+    private void ShowNetworkSyncMessage()
+    {
+        unlockPending = false;
+        gateTogglePending = false;
+        MissionManager.ShowRaw(
+            "GATE SYNCING",
+            "The shared gate state is not ready yet. Try again in a moment.",
+            2f);
+    }
+
+    private void ShowRequestRejectedMessage()
+    {
+        unlockPending = false;
+        gateTogglePending = false;
+
+        if (viewerInventory != null && !IsPlayerOnOutsideSide(viewerInventory))
+        {
+            MissionManager.ShowRaw(
+                "LOCKED FROM INSIDE",
+                $"{cellName} can only be operated from outside the cell.",
+                3f);
+            return;
+        }
+
+        MissionManager.ShowRaw(
+            "GATE DID NOT OPEN",
+            "The gate request was rejected. Move to the corridor side and try again.",
+            3f);
     }
 
     private void SetGateOpen(bool open)
@@ -196,12 +260,12 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
         unlockPending = false;
         gateTogglePending = false;
 
-        if (open && blockingColliders != null)
+        if (blockingColliders != null)
         {
             foreach (Collider blockingCollider in blockingColliders)
             {
                 if (blockingCollider != null)
-                    blockingCollider.enabled = false;
+                    blockingCollider.enabled = !open;
             }
         }
 
@@ -215,12 +279,38 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
 
     private bool HasRequiredKey()
     {
-        if (viewerInventory == null || !viewerInventory.HasItemId(requiredKeyItemId))
-            return false;
+        return GetEquippedItemId() == requiredKeyItemId &&
+               viewerInventory != null && viewerInventory.HasItemId(requiredKeyItemId);
+    }
+
+    private int GetEquippedItemId()
+    {
+        if (viewerInventory == null)
+            return 0;
 
         int selectedSlot = viewerInventory.SelectedSlot;
-        return selectedSlot >= 0 &&
-               viewerInventory.GetQuickBarItemIdAt(selectedSlot) == requiredKeyItemId;
+        return selectedSlot >= 0
+            ? viewerInventory.GetQuickBarItemIdAt(selectedSlot)
+            : 0;
+    }
+
+    private void ShowKeyError(string missingKeyMessage)
+    {
+        int equippedItemId = GetEquippedItemId();
+        if (equippedItemId > 0 && equippedItemId != requiredKeyItemId)
+        {
+            ItemData equippedItem = viewerInventory.GetItemData(equippedItemId);
+            string equippedName = equippedItem != null
+                ? equippedItem.itemName
+                : $"item {equippedItemId}";
+            MissionManager.ShowRaw(
+                "WRONG KEY EQUIPPED",
+                $"{equippedName} cannot open {cellName}. Equip {requiredKeyName}.",
+                3f);
+            return;
+        }
+
+        MissionManager.ShowRaw("PRISON KEY REQUIRED", missingKeyMessage, 3f);
     }
 
     private bool IsViewerOnOutsideSide()
@@ -246,6 +336,25 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
         return Vector3.Dot(playerOffset, outsideDirection) > 0.05f;
     }
 
+    /// <summary>Validates a remote gate request against the authoritative player position.</summary>
+    public bool IsValidAuthorityRequest(Transform playerRoot)
+    {
+        if (playerRoot == null || gateToRotate == null || !enabled || !gameObject.activeInHierarchy)
+            return false;
+
+        Vector3 playerOffset = playerRoot.position - gateToRotate.position;
+        if (playerOffset.sqrMagnitude > authorityInteractionDistance * authorityInteractionDistance)
+            return false;
+
+        Vector3 outsideDirection = outsideSidePoint != null
+            ? outsideSidePoint.position - gateToRotate.position
+            : gateToRotate.forward;
+        outsideDirection.y = 0f;
+        playerOffset.y = 0f;
+        return outsideDirection.sqrMagnitude > 0.0001f &&
+               Vector3.Dot(playerOffset, outsideDirection.normalized) > 0.05f;
+    }
+
     private IEnumerator AnimateGate(bool open)
     {
         float duration = Mathf.Max(0.05f, openDuration);
@@ -265,14 +374,6 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
         }
 
         gateToRotate.localRotation = targetRotation;
-        if (!open && blockingColliders != null)
-        {
-            foreach (Collider blockingCollider in blockingColliders)
-            {
-                if (blockingCollider != null)
-                    blockingCollider.enabled = true;
-            }
-        }
         gateMotionRoutine = null;
     }
 }

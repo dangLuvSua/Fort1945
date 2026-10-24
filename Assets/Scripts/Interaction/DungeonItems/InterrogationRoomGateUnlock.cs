@@ -1,4 +1,5 @@
 using System.Collections;
+using Fusion;
 using UnityEngine;
 
 /// <summary>Hold-to-unlock interaction for the interrogation room gate.</summary>
@@ -70,7 +71,7 @@ public sealed class InterrogationRoomGateUnlock : MonoBehaviour, IHoldInteractab
 
     private void Update()
     {
-        NetworkGameManager manager = NetworkGameManager.Instance;
+        NetworkGameManager manager = NetworkGameManager.ResolveInstance();
         if (manager == null || !manager.IsNetworkStateReady) return;
 
         unlocked = manager.InterrogationRoomUnlocked;
@@ -118,11 +119,23 @@ public sealed class InterrogationRoomGateUnlock : MonoBehaviour, IHoldInteractab
             return;
         }
 
-        NetworkGameManager manager = NetworkGameManager.Instance;
-        if (manager != null && manager.IsNetworkStateReady)
+        NetworkGameManager manager = NetworkGameManager.ResolveInstance();
+        if (manager != null)
         {
+            if (!manager.IsNetworkStateReady)
+            {
+                ShowNetworkSyncMessage();
+                return;
+            }
+
             unlockPending = true;
             manager.RequestInterrogationRoomUnlock(requiredKeyItemId);
+            return;
+        }
+
+        if (IsNetworkSessionRunning())
+        {
+            ShowNetworkSyncMessage();
             return;
         }
 
@@ -137,14 +150,43 @@ public sealed class InterrogationRoomGateUnlock : MonoBehaviour, IHoldInteractab
 
     private void RequestGateOpenState(bool open)
     {
-        NetworkGameManager manager = NetworkGameManager.Instance;
-        if (manager != null && manager.IsNetworkStateReady)
+        NetworkGameManager manager = NetworkGameManager.ResolveInstance();
+        if (manager != null)
         {
+            if (!manager.IsNetworkStateReady)
+            {
+                ShowNetworkSyncMessage();
+                return;
+            }
+
             gateTogglePending = true;
             manager.RequestInterrogationRoomGateState(open);
             return;
         }
+
+        if (IsNetworkSessionRunning())
+        {
+            ShowNetworkSyncMessage();
+            return;
+        }
+
         SetGateOpen(open);
+    }
+
+    private static bool IsNetworkSessionRunning()
+    {
+        NetworkRunner runner = FindFirstObjectByType<NetworkRunner>();
+        return runner != null && runner.IsRunning;
+    }
+
+    private void ShowNetworkSyncMessage()
+    {
+        unlockPending = false;
+        gateTogglePending = false;
+        MissionManager.ShowRaw(
+            "GATE SYNCING",
+            "The shared gate state is not ready yet. Try again in a moment.",
+            2f);
     }
 
     private void SetGateOpen(bool open)

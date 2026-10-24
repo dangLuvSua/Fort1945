@@ -130,6 +130,9 @@ public class PlayerController : NetworkBehaviour
     [Tooltip("Player scale in the dungeon scene.")]
     [SerializeField] private float dungeonPlayerScale = 1.25f;
 
+    [Tooltip("Extra collision radius in the Dungeon to keep the player slightly clear of walls.")]
+    [SerializeField, Range(0f, 0.2f)] private float dungeonWallClearance = 0.05f;
+
     [Tooltip("Player scale in default scenes.")]
     [SerializeField] private float defaultPlayerScale = 1.0f;
 
@@ -852,7 +855,9 @@ public class PlayerController : NetworkBehaviour
             bodyTransform.localScale = Vector3.one * targetScale;
         }
 
-        // Proportional collider adjustment based on current scene sizing
+        // Match collider height to the visual scale, but keep the capsule's
+        // base width so the enlarged Dungeon model can still pass through
+        // the generated corridor clearance.
         characterController.enabled = false;
         characterController.height *= targetScale;
         characterController.center = new Vector3(
@@ -860,7 +865,8 @@ public class PlayerController : NetworkBehaviour
             characterController.center.y * targetScale,
             characterController.center.z
         );
-        characterController.radius = baseColliderRadius * targetScale;
+        characterController.radius = baseColliderRadius +
+            (isDungeon ? dungeonWallClearance : 0f);
         characterController.enabled = true;
 
         if (cameraHolder != null)

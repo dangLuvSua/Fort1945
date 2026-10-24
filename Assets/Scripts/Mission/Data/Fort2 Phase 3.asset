@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f319dd85a07a6844ac0bd9072925ed2, type: 3}
   m_Name: Fort2 Phase 3
   m_EditorClassIdentifier: Assembly-CSharp::MissionData
-  title: PHASE 3 - SOLVE THE INTERROGATION BOARD
+  title: PHASE 3 - INTERROGATE
   description: Connect the puzzle pieces and match the photographs to the board descriptions.
   icon: {fileID: 21300000, guid: 0bf4a89b627470f4090e0ed68cb9eb15, type: 3}
   autoDuration: 0

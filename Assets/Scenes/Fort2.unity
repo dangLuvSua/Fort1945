@@ -15576,148 +15576,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5804751989703086583}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &210008720
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 210008723}
-  - component: {fileID: 210008722}
-  - component: {fileID: 210008721}
-  m_Layer: 0
-  m_Name: NetworkGameManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &210008721
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 210008720}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e439618522c4d78458ee05c098d63efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NetworkGameManager
-  fortMissionItemSpawner: {fileID: 1276204658}
-  _Difficulty: 1
-  _GameStarted:
-    RawValue: 0
-  _LobbyLocked:
-    RawValue: 0
-  soldierVisual: {fileID: 1605194356}
-  soldierAgent: {fileID: 879666356}
-  _AllPlayersEnteredGate:
-    RawValue: 0
-  _GateObjectiveShown:
-    RawValue: 0
-  _SoldierStarted:
-    RawValue: 0
-  _SoldierReachedDoor:
-    RawValue: 0
-  _ZoneActive:
-    RawValue: 0
-  _ZoneGreen:
-    RawValue: 0
-  _TeleportStarted:
-    RawValue: 0
-  _MissionItemsSpawned:
-    RawValue: 0
-  _DungeonGateUnlocked:
-    RawValue: 0
-  _PrisonCell1Unlocked:
-    RawValue: 0
-  _PrisonCell2Unlocked:
-    RawValue: 0
-  _PrisonCell1GateOpen:
-    RawValue: 0
-  _PrisonCell2GateOpen:
-    RawValue: 0
-  _InterrogationRoomUnlocked:
-    RawValue: 0
-  _InterrogationRoomGateOpen:
-    RawValue: 0
-  _SoldierInteractionStarted:
-    RawValue: 0
-  _SoldierDialogueActive:
-    RawValue: 0
-  soldierDialogueDuration: 3
-  _SoldierPosition: {x: 0, y: 0, z: 0}
-  _SoldierProgress: 0
-  _TeleportCountdown: 0
-  _DungeonSeed: 0
-  gateTriggerName: GateTrigger
-  dungeonEntryZoneName: DungeonEntryZone
-  zoneFallbackOffset: {x: 30, y: 0, z: 0}
-  gateHalfExtents: {x: 4, y: 3.5, z: 4}
-  zoneHalfExtents: {x: 3.5, y: 2.5, z: 3.5}
-  soldierModelObjectName: SoldierGuideModel
-  soldierWalkSpeed: 2.8
-  startFromModelPosition: 1
-  soldierModelForwardYawOffset: 0
-  soldierDestinationObjectName: SoldierDungeonDestination
-  soldierNavSpeed: 1.8
-  soldierNavAcceleration: 6
-  soldierNavStoppingDistance: 1
-  soldierNavAngularSpeed: 360
-  soldierNetworkLerpSpeed: 12
-  soldierSpeedParameter: Speed
-  soldierWalkingParameter: IsWalking
-  soldierAnimationSpeed: 1
-  soldierBobAmount: 0.03
-  teleportDelaySeconds: 5
-  worldTagPoint: {fileID: 1454823006}
-  gateTagPoint: {fileID: 406497505}
-  candleItem: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
-  keyItem: {fileID: 11400000, guid: 9a368eb8725ca474c9c21303fa617951, type: 2}
-  fallbackCandleItemId: 203
-  fallbackKeyItemId: 103
-  candlesRequiredPerPlayer: 2
-  keysToSpawn: 1
-  manualReferenceHeights: []
-  fortMission: {fileID: 11400000, guid: c2cd88e1347ba564ab2ddf86c8d6b70c, type: 2}
---- !u!114 &210008722
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 210008720}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 3296872193
-  SendPriority: 1
-  EnableInterpolation: 1
-  Flags: 262146
-  NestedObjects: []
-  NetworkedBehaviours:
-  - {fileID: 210008721}
-  ForceRemoteRenderTimeframe: 0
---- !u!4 &210008723
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 210008720}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -61.98972, y: 1.99597, z: -3.00353}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!43 &211319599
 Mesh:
   m_ObjectHideFlags: 0
@@ -122197,6 +122055,87 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 18
   m_IsActive: 1
+--- !u!1001 &111469734487776477
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2239244527223363517, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: m_Name
+      value: NetworkGameManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 4535117320291622515, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: SortKey
+      value: 2035314659
+      objectReference: {fileID: 0}
+    - target: {fileID: 8333477654746423387, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -61.98972
+      objectReference: {fileID: 0}
+    - target: {fileID: 8333477654746423387, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.99597
+      objectReference: {fileID: 0}
+    - target: {fileID: 8333477654746423387, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -3.00353
+      objectReference: {fileID: 0}
+    - target: {fileID: 8333477654746423387, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8333477654746423387, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8333477654746423387, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8333477654746423387, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8333477654746423387, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8333477654746423387, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8333477654746423387, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8826004852834541962, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: gateTagPoint
+      value: 
+      objectReference: {fileID: 406497505}
+    - target: {fileID: 8826004852834541962, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: soldierAgent
+      value: 
+      objectReference: {fileID: 879666356}
+    - target: {fileID: 8826004852834541962, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: soldierVisual
+      value: 
+      objectReference: {fileID: 1605194356}
+    - target: {fileID: 8826004852834541962, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: worldTagPoint
+      value: 
+      objectReference: {fileID: 1454823006}
+    - target: {fileID: 8826004852834541962, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
+      propertyPath: fortMissionItemSpawner
+      value: 
+      objectReference: {fileID: 1276204658}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: bef62f82ecb53474daa55d4894c0caf9, type: 3}
 --- !u!1001 &458762124596253233
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -128120,7 +128059,7 @@ SceneRoots:
   - {fileID: 1438607220}
   - {fileID: 19816152}
   - {fileID: 1260497673}
-  - {fileID: 210008723}
+  - {fileID: 111469734487776477}
   - {fileID: 592251972}
   - {fileID: 879666354}
   - {fileID: 1974263786}

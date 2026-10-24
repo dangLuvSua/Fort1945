@@ -12,11 +12,26 @@ public sealed class CameraPhotoPoint : MonoBehaviour
 
     public Texture2D Photo => photo;
 
-    /// <summary>Returns true only when every renderer bound is fully inside the camera frame.</summary>
+    /// <summary>Returns true only when this photo point's trigger is fully inside the camera frame.</summary>
     public bool IsWholeObjectInFrame(Camera camera)
     {
         if (camera == null)
             return false;
+
+        Collider[] colliders = GetComponentsInChildren<Collider>(true);
+        bool hasTrigger = false;
+        foreach (Collider photoCollider in colliders)
+        {
+            if (photoCollider == null || !photoCollider.enabled || !photoCollider.isTrigger)
+                continue;
+
+            hasTrigger = true;
+            if (!BoundsAreFullyInFrame(camera, photoCollider.bounds))
+                return false;
+        }
+
+        if (hasTrigger)
+            return true;
 
         GameObject target = objectThatMustBeVisible != null
             ? objectThatMustBeVisible
@@ -30,23 +45,30 @@ public sealed class CameraPhotoPoint : MonoBehaviour
             if (targetRenderer == null || !targetRenderer.enabled)
                 return false;
 
-            Bounds bounds = targetRenderer.bounds;
-            Vector3 min = bounds.min;
-            Vector3 max = bounds.max;
-            for (int corner = 0; corner < 8; corner++)
-            {
-                Vector3 worldCorner = new Vector3(
-                    (corner & 1) == 0 ? min.x : max.x,
-                    (corner & 2) == 0 ? min.y : max.y,
-                    (corner & 4) == 0 ? min.z : max.z);
-                Vector3 viewport = camera.WorldToViewportPoint(worldCorner);
+            if (!BoundsAreFullyInFrame(camera, targetRenderer.bounds))
+                return false;
+        }
 
-                if (viewport.z < camera.nearClipPlane ||
-                    viewport.z > camera.farClipPlane ||
-                    viewport.x < 0f || viewport.x > 1f ||
-                    viewport.y < 0f || viewport.y > 1f)
-                    return false;
-            }
+        return true;
+    }
+
+    private static bool BoundsAreFullyInFrame(Camera camera, Bounds bounds)
+    {
+        Vector3 min = bounds.min;
+        Vector3 max = bounds.max;
+        for (int corner = 0; corner < 8; corner++)
+        {
+            Vector3 worldCorner = new Vector3(
+                (corner & 1) == 0 ? min.x : max.x,
+                (corner & 2) == 0 ? min.y : max.y,
+                (corner & 4) == 0 ? min.z : max.z);
+            Vector3 viewport = camera.WorldToViewportPoint(worldCorner);
+
+            if (viewport.z < camera.nearClipPlane ||
+                viewport.z > camera.farClipPlane ||
+                viewport.x < 0f || viewport.x > 1f ||
+                viewport.y < 0f || viewport.y > 1f)
+                return false;
         }
 
         return true;

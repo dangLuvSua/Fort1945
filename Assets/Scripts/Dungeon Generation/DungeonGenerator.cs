@@ -288,6 +288,8 @@ public class DungeonGenerator : MonoBehaviour
 
     public bool IsGenerated { get; private set; }
 
+    private bool mysteryCharactersSpawned;
+
     // Runtime pieces are available once OnDungeonGenerated fires.
     public IReadOnlyList<GameObject> GeneratedPieces => generatedPieces;
 
@@ -335,6 +337,20 @@ public class DungeonGenerator : MonoBehaviour
 
         }
 
+    }
+
+    private void Update()
+    {
+        if (mysteryCharactersSpawned || !IsGenerated)
+            return;
+
+        PhaseManager phaseManager = PhaseManager.Instance;
+        if (phaseManager == null || !phaseManager.PhaseInitialized ||
+            phaseManager.CurrentPhase != 2)
+            return;
+
+        SpawnMysteryCharacters();
+        mysteryCharactersSpawned = true;
     }
 
 
@@ -767,8 +783,6 @@ public class DungeonGenerator : MonoBehaviour
 
             SpawnProps();
 
-            SpawnMysteryCharacters();
-
             IsGenerated = true;
 
             OnDungeonGenerated?.Invoke(this);
@@ -970,92 +984,54 @@ public class DungeonGenerator : MonoBehaviour
 
 
     private void SpawnMysteryCharacters()
-
     {
-
         if (mysteryCharacterPrefabs == null || mysteryCharacterPrefabs.Length == 0)
-
         {
-
             if (debugGeneration)
-
                 Debug.Log("No mystery character prefabs assigned.");
-
             return;
-
         }
 
-
-
-        int spawnedCount = 0;
-
-
-
+        List<Transform> points = new List<Transform>();
         foreach (GameObject piece in generatedPieces)
-
         {
-
             if (piece == null)
-
                 continue;
-
-
-
-            List<Transform> points = new List<Transform>();
 
             foreach (Transform child in piece.GetComponentsInChildren<Transform>(true))
-
             {
-
                 if (child != piece.transform &&
-
                     child.name.StartsWith("MSP", System.StringComparison.OrdinalIgnoreCase))
-
-                {
-
                     points.Add(child);
-
-                }
-
             }
-
-
-
-            // One random point and one random character per marked room instance.
-
-            if (points.Count == 0)
-
-                continue;
-
-
-
-            GameObject prefab = GetRandomValidPrefab(mysteryCharacterPrefabs);
-
-            if (prefab == null)
-
-                continue;
-
-
-
-            Transform point = points[Random.Range(0, points.Count)];
-
-            Instantiate(prefab, point.position, point.rotation, point);
-
-            spawnedCount++;
-
         }
 
+        // Spawn each configured statue prefab at most once in this dungeon session.
+        List<GameObject> uniquePrefabs = new List<GameObject>();
+        foreach (GameObject prefab in mysteryCharacterPrefabs)
+        {
+            if (prefab != null && !uniquePrefabs.Contains(prefab))
+                uniquePrefabs.Add(prefab);
+        }
 
+        ShuffleList(uniquePrefabs);
+        ShuffleList(points);
+
+        int spawnCount = Mathf.Min(uniquePrefabs.Count, points.Count);
+        int spawnedCount = 0;
+        for (int i = 0; i < spawnCount; i++)
+        {
+            Transform point = points[i];
+            if (point == null)
+                continue;
+
+            Instantiate(uniquePrefabs[i], point.position, point.rotation, point);
+            spawnedCount++;
+        }
 
         if (debugGeneration)
-
             Debug.Log("Mystery characters spawned: " + spawnedCount);
-
     }
-
-
-
-
 
     /// <summary>
     /// Returns generated mystery spawn markers and camera-photo targets for

@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Fusion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -155,8 +156,6 @@ public class MissionProgressPanelUI : MonoBehaviour
     private void Update()
     {
         NetworkGameManager manager = NetworkGameManager.Instance;
-        if (manager == null || !manager.IsNetworkStateReady)
-            return;
 
         for (int i = 0; i < teamObjectives.Count; i++)
         {
@@ -166,9 +165,53 @@ public class MissionProgressPanelUI : MonoBehaviour
 
             SetProgress(
                 objective.ItemId,
-                Mathf.Clamp(manager.GetTeamItemCount(objective.ItemId) - objective.Baseline, 0, objective.Required),
+                Mathf.Clamp(GetTeamItemCount(objective.ItemId, manager), 0, objective.Required),
                 objective.Required);
         }
+    }
+
+    private static int GetTeamItemCount(int itemId, NetworkGameManager manager)
+    {
+        if (manager != null && manager.IsNetworkStateReady)
+            return manager.GetTeamItemCount(itemId);
+
+        PlayerInventory[] inventories =
+            UnityEngine.Object.FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None);
+        NetworkRunner runner = null;
+        foreach (PlayerInventory inventory in inventories)
+        {
+            if (inventory == null || inventory.Runner == null || !inventory.Runner.IsRunning)
+                continue;
+
+            runner = inventory.Runner;
+            break;
+        }
+
+        if (runner != null)
+        {
+            int total = 0;
+            foreach (PlayerRef player in runner.ActivePlayers)
+            {
+                if (runner.TryGetPlayerObject(player, out NetworkObject playerObject) &&
+                    playerObject != null)
+                {
+                    PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
+                    if (inventory != null)
+                        total += inventory.GetQuantityForItemId(itemId);
+                }
+            }
+
+            return total;
+        }
+
+        foreach (PlayerInventory inventory in inventories)
+        {
+            if (inventory != null &&
+                (inventory.Object == null || inventory.Object.HasInputAuthority))
+                return inventory.GetQuantityForItemId(itemId);
+        }
+
+        return 0;
     }
 
     // =========================================================
@@ -285,7 +328,9 @@ public class MissionProgressPanelUI : MonoBehaviour
         foreach (Transform candidate in allTransforms)
         {
             if (candidate != null && candidate.name == "MissionProgressPanel")
+            {
                 candidate.gameObject.SetActive(show);
+            }
         }
     }
 
@@ -329,7 +374,9 @@ public class MissionProgressPanelUI : MonoBehaviour
                 );
 
         rows.Add(row);
-        teamObjectives.Add(new TeamObjective(itemData.itemId, required, baseline));
+        // Objective rows use the same team-wide inventory total as the Fort
+        // mission panel. A pickup by any player advances the shared count.
+        teamObjectives.Add(new TeamObjective(itemData.itemId, required));
     }
 
     public void SetProgress(
@@ -655,13 +702,10 @@ public class MissionProgressPanelUI : MonoBehaviour
     {
         public int ItemId { get; }
         public int Required { get; }
-        public int Baseline { get; }
-
-        public TeamObjective(int itemId, int required, int baseline)
+        public TeamObjective(int itemId, int required)
         {
             ItemId = itemId;
             Required = required;
-            Baseline = baseline;
         }
     }
 }
