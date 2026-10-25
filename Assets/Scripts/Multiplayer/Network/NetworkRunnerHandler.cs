@@ -129,6 +129,10 @@ public class NetworkRunnerHandler :
 
     private string currentSessionName;
     private Coroutine failureModalCoroutine;
+    private NetworkRunner startingRunner;
+    private bool applicationQuitting;
+    private bool sceneLoadInProgress;
+    private UnityEngine.ThreadPriority previousLoadingPriority;
 
     public void CaptureLocalInventoryForDungeon()
     {
@@ -208,6 +212,7 @@ public class NetworkRunnerHandler :
         Instance = this;
 
         DontDestroyOnLoad(gameObject);
+        Application.runInBackground = true;
 
         Debug.Log(
             "[RUNNER HANDLER] Instance assigned successfully.",
@@ -232,8 +237,15 @@ public class NetworkRunnerHandler :
     {
         if (Instance == this)
         {
+            RestoreLoadingPriority();
             Instance = null;
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+        applicationQuitting = true;
+        Disconnect();
     }
 
 
@@ -273,6 +285,7 @@ public class NetworkRunnerHandler :
 
     private void BeginLoading(string message)
     {
+        CancelPendingFailure();
         LoadingProgressUI ui = GetLoadingScreen();
 
         if (ui == null)
@@ -612,6 +625,8 @@ public class NetworkRunnerHandler :
         runner.name =
             "NetworkRunner";
 
+        DontDestroyOnLoad(runner.gameObject);
+
 
         runner.AddCallbacks(
             this
@@ -692,10 +707,34 @@ public class NetworkRunnerHandler :
         SetLoadingConnecting();
 
 
-        StartGameResult result =
-            await runner.StartGame(
-                startGameArgs
-            );
+        NetworkRunner attemptRunner = runner;
+        startingRunner = attemptRunner;
+        StartGameResult result;
+        try
+        {
+            result = await attemptRunner.StartGame(startGameArgs);
+        }
+        catch (Exception exception)
+        {
+            if (this == null || !ReferenceEquals(runner, attemptRunner))
+                return;
+
+            runner = null;
+            ClearGameSessionState();
+            if (attemptRunner != null) Destroy(attemptRunner.gameObject);
+            Debug.LogException(exception);
+            LoadingFailed("The connection could not be started. Please try again.", true);
+            return;
+        }
+        finally
+        {
+            if (ReferenceEquals(startingRunner, attemptRunner)) startingRunner = null;
+        }
+
+        // A leave request can arrive while StartGame is awaiting the network.
+        // Its eventual result must not load a scene or report a stale failure.
+        if (this == null || applicationQuitting || !ReferenceEquals(runner, attemptRunner))
+            return;
 
 
         // -----------------------------------------------------
@@ -710,20 +749,10 @@ public class NetworkRunnerHandler :
             );
 
 
-            LoadingFailed(enableClientSessionCreation
-                ? "Could not create the lobby. Check your connection and try again."
-                : "Lobby not found, full, or closed. Check the lobby code and try again.",
-                showImmediately: !enableClientSessionCreation);
-
-
-            if (runner != null)
-            {
-                Destroy(
-                    runner.gameObject
-                );
-
-                runner = null;
-            }
+            runner = null;
+            ClearGameSessionState();
+            if (attemptRunner != null) Destroy(attemptRunner.gameObject);
+            LoadingFailed(GetShutdownMessage(result.ShutdownReason), showImmediately: true);
 
 
             return;
@@ -1194,20 +1223,42 @@ public class NetworkRunnerHandler :
         );
 
 
-        if (runner != null)
-        {
-            runner.Shutdown();
+        // Detach both runners BEFORE Shutdown: callbacks may execute synchronously.
+        NetworkRunner gameRunnerToStop = runner;
+        NetworkRunner lobbyRunnerToStop = lobbyRunner;
+        runner = null;
+        lobbyRunner = null;
+        startingRunner = null;
+        CancelPendingFailure();
+        RemoveLoadingScreen();
+        ClearGameSessionState();
 
-            runner = null;
-        }
+        if (gameRunnerToStop != null) _ = gameRunnerToStop.Shutdown();
+        if (lobbyRunnerToStop != null) _ = lobbyRunnerToStop.Shutdown();
+    }
 
+    private void ClearGameSessionState()
+    {
+        SharedPhotosByCameraId.Clear();
+        dungeonInventorySnapshot = null;
+        currentSessionName = null;
+        networkSceneManager = null;
+        RestoreLoadingPriority();
+        DungeonTeleportLoadingOverlay.Hide();
+    }
 
-        if (lobbyRunner != null)
-        {
-            lobbyRunner.Shutdown();
+    private void RestoreLoadingPriority()
+    {
+        if (!sceneLoadInProgress) return;
+        Application.backgroundLoadingPriority = previousLoadingPriority;
+        sceneLoadInProgress = false;
+    }
 
-            lobbyRunner = null;
-        }
+    private void CancelPendingFailure()
+    {
+        if (failureModalCoroutine == null) return;
+        StopCoroutine(failureModalCoroutine);
+        failureModalCoroutine = null;
     }
 
 
@@ -1250,12 +1301,8 @@ public class NetworkRunnerHandler :
         }
 
 
-        if (callbackRunner == runner)
-        {
-            LoadingFailed(
-                "DISCONNECTED"
-            );
-        }
+        // OnShutdown supplies the final reason. Reporting here too duplicates
+        // the failure and can replace the useful reason with a generic message.
     }
 
 
@@ -1269,12 +1316,7 @@ public class NetworkRunnerHandler :
         );
 
 
-        if (callbackRunner == runner)
-        {
-            LoadingFailed(
-                "CONNECTION FAILED"
-            );
-        }
+        // The awaiting StartGame result (or OnShutdown) reports the failure once.
     }
 
 
@@ -1344,7 +1386,9 @@ public class NetworkRunnerHandler :
 
         if (callbackRunner == runner)
         {
-            SharedPhotosByCameraId.Clear();
+            // StartGame returns this reason to StartRunner, which owns startup UI.
+            if (callbackRunner == startingRunner) return;
+
             runner = null;
 
             // The handler may already be in the process of being
@@ -1354,10 +1398,45 @@ public class NetworkRunnerHandler :
                 return;
             }
 
+            ClearGameSessionState();
+            if (applicationQuitting || shutdownReason == ShutdownReason.Ok)
+            {
+                CancelPendingFailure();
+                RemoveLoadingScreen();
+                return;
+            }
+
             LoadingFailed(
-                "NETWORK SHUTDOWN"
+                GetShutdownMessage(shutdownReason)
             );
         }
+    }
+
+    private static string GetShutdownMessage(ShutdownReason reason)
+    {
+        string detail;
+        switch (reason)
+        {
+            case ShutdownReason.DisconnectedByPluginLogic:
+                detail = "The server ended the connection. Please rejoin the lobby.";
+                break;
+            case ShutdownReason.PhotonCloudTimeout:
+            case ShutdownReason.ConnectionTimeout:
+            case ShutdownReason.OperationTimeout:
+                detail = "The network connection timed out. Check your connection and try joining again.";
+                break;
+            case ShutdownReason.GameNotFound:
+            case ShutdownReason.GameClosed:
+                detail = "The lobby no longer exists or is closed. Check the lobby code or create a new lobby.";
+                break;
+            case ShutdownReason.GameIsFull:
+                detail = "The lobby is full. Try another lobby.";
+                break;
+            default:
+                detail = "The connection ended. Please try joining again.";
+                break;
+        }
+        return $"{detail}\nReason: {reason}";
     }
 
 
@@ -1678,6 +1757,13 @@ public class NetworkRunnerHandler :
 
 
         SetLoadingSceneStart();
+        if (!sceneLoadInProgress)
+        {
+            previousLoadingPriority = Application.backgroundLoadingPriority;
+            sceneLoadInProgress = true;
+            // Give networking more frame time while Unity integrates loaded assets.
+            Application.backgroundLoadingPriority = UnityEngine.ThreadPriority.Low;
+        }
     }
 
 
@@ -1707,6 +1793,8 @@ public class NetworkRunnerHandler :
 
             return;
         }
+
+        RestoreLoadingPriority();
 
 
         // ---------------------------------------------------------
@@ -1963,6 +2051,7 @@ public class NetworkRunnerHandler :
         string message,
         bool showImmediately = false)
     {
+        if (applicationQuitting) return;
         Debug.LogError(
             $"[LOADING] {message}"
         );
@@ -1991,7 +2080,7 @@ public class NetworkRunnerHandler :
             }
 
             RemoveLoadingScreen();
-            ShowFailureModal(message);
+            failureModalCoroutine = StartCoroutine(ShowFailureModal(message));
             return;
         }
 
@@ -2007,13 +2096,13 @@ public class NetworkRunnerHandler :
     private System.Collections.IEnumerator
         RemoveLoadingScreenAfterFailure(string message)
     {
-        yield return new WaitForSeconds(
+        yield return new WaitForSecondsRealtime(
             1.5f
         );
 
 
         RemoveLoadingScreen();
-        ShowFailureModal(message);
+        yield return ShowFailureModal(message);
         failureModalCoroutine = null;
     }
 
@@ -2026,11 +2115,22 @@ public class NetworkRunnerHandler :
         }
     }
 
-    private void ShowFailureModal(string message)
+    private System.Collections.IEnumerator ShowFailureModal(string message)
     {
+        // Gameplay scenes have no CanvasManager. Return to a usable menu before
+        // showing the error rather than leaving the player under a loading overlay.
+        if (CanvasManager.Instance == null)
+        {
+            yield return SceneManager.LoadSceneAsync("MainMenu");
+            yield return null; // Allow the menu's Start methods to register their UI.
+        }
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         if (CanvasManager.Instance != null)
         {
-            CanvasManager.Instance.ShowInfo("LOBBY CONNECTION FAILED", message);
+            CanvasManager.Instance.ShowInfo("CONNECTION FAILED", message);
         }
+        failureModalCoroutine = null;
     }
 }
