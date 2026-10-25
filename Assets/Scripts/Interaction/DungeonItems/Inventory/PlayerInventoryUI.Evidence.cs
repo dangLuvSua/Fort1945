@@ -142,11 +142,19 @@ public partial class PlayerInventoryUI
 
     private void UpdateEvidenceSelection()
     {
+        // Bind scene-authored controls before the first placement interaction,
+        // so an initially active SELECT button is hidden during normal browsing.
+        if (selectPhotographButton == null && inventoryPanel != null)
+        {
+            foreach (Button button in inventoryPanel.GetComponentsInChildren<Button>(true))
+                if (button.name == "SelectPhotograph") { selectPhotographButton = button; break; }
+        }
         if (selectPhotographButton == null) return;
-        bool matching = pendingBoard != null && pendingPolaroid >= 0 && galleryTabActive;
-        selectPhotographButton.gameObject.SetActive(matching);
-        selectPhotographButton.interactable = matching && !placementSubmitted &&
+        bool hasSelectedPhoto = pendingBoard != null && pendingBoard.Ready &&
+            pendingPolaroid >= 0 && galleryTabActive && IsInventoryOpen() &&
             IsInventoryReady() && pendingBoard.ResolveCollectedPhoto(inventory, selectedItem) >= 0;
+        selectPhotographButton.gameObject.SetActive(hasSelectedPhoto);
+        selectPhotographButton.interactable = hasSelectedPhoto && !placementSubmitted;
     }
 
     private void SelectEvidencePhotograph()

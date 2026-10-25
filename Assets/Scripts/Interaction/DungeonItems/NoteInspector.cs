@@ -2,8 +2,19 @@
 using UnityEngine;
 using System.Collections;
 
-public class NoteInspector : MonoBehaviour
+public class NoteInspector : MonoBehaviour, IInteractable
 {
+    public string Prompt => "Click to read the clue";
+    public bool CanInteract => isActiveAndEnabled && originalRenderer != null &&
+        activeNote == null && !isZoomed && !isAnimating;
+    public int Priority => 10;
+
+    public void Interact(PlayerInventory inventory)
+    {
+        // This interface supplies the hover prompt. OnMouseDown retains
+        // the note's existing click-to-read behavior.
+    }
+
     [Header("Zoom Configuration")]
     [SerializeField] private float zoomDistance = 0.8f;
     [SerializeField] private float zoomScaleMultiplier = 0.5f;

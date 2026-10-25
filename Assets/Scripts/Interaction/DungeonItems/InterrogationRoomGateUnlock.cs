@@ -21,6 +21,10 @@ public sealed class InterrogationRoomGateUnlock : MonoBehaviour, IHoldInteractab
     [Tooltip("Place this empty transform on the side from which the gate should be operated.")]
     [SerializeField] private Transform outsideSidePoint;
 
+    [Tooltip("Optional trigger volume for operating the gate from inside the room.")]
+    [SerializeField] private Collider insideInteractionZone;
+    [SerializeField, Min(0.1f)] private float insideInteractionRange = 3f;
+
     [Header("Gate")]
     [Tooltip("Assign the gate leaf/hinge transform. If empty, this component's transform is used.")]
     [SerializeField] private Transform gateToRotate;
@@ -215,6 +219,30 @@ public sealed class InterrogationRoomGateUnlock : MonoBehaviour, IHoldInteractab
 
     private bool IsViewerOnOutsideSide() => IsPlayerOnOutsideSide(viewerInventory);
     private bool IsViewerOnInsideSide() => viewerInventory != null && IsPlayerOnInsideSide(viewerInventory.transform.root);
+
+    public bool IsPlayerInInsideInteractionZone(Transform playerRoot)
+    {
+        if (playerRoot == null)
+            return false;
+
+        if (insideInteractionZone != null)
+        {
+            return insideInteractionZone.enabled &&
+                insideInteractionZone.gameObject.activeInHierarchy &&
+                (insideInteractionZone.ClosestPoint(playerRoot.position) - playerRoot.position).sqrMagnitude < 0.0001f;
+        }
+
+        return IsPlayerOnInsideSide(playerRoot) &&
+            IsPlayerNearGate(playerRoot, insideInteractionRange);
+    }
+
+    public bool IsPlayerNearGate(Transform playerRoot, float range)
+    {
+        if (playerRoot == null || gateToRotate == null)
+            return false;
+
+        return (playerRoot.position - gateToRotate.position).sqrMagnitude <= range * range;
+    }
 
     /// <summary>Used by NetworkGameManager to validate a no-key exit request.</summary>
     public bool IsPlayerOnInsideSide(Transform playerRoot)
