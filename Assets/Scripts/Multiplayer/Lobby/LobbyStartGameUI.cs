@@ -24,12 +24,6 @@ public class LobbyStartGameUI : MonoBehaviour
     [SerializeField] private GameObject quickBarSlotsRoot;
 
     [Tooltip(
-        "Header that contains the lobby name + lobby code. " +
-        "Hidden once the game starts."
-    )]
-    [SerializeField] private RectTransform lobbyHeader;
-
-    [Tooltip(
         "Local player panel hidden once the game starts."
     )]
     [SerializeField] private RectTransform myPlayerPanel;
@@ -207,28 +201,6 @@ public class LobbyStartGameUI : MonoBehaviour
         }
 
         // -------------------------------------------------
-        // HIDE LOBBY HEADER (LOBBY NAME + CODE)
-        // -------------------------------------------------
-
-        RectTransform header =
-            ResolveLobbyHeader();
-
-        if (header != null)
-        {
-            header.gameObject.SetActive(false);
-
-            Debug.Log(
-                "[LOBBY START] Lobby header (name + code) hidden."
-            );
-        }
-        else
-        {
-            Debug.LogWarning(
-                "[LOBBY START] Lobby header not found."
-            );
-        }
-
-        // -------------------------------------------------
         // HIDE MY PLAYER PANEL
         // -------------------------------------------------
 
@@ -304,13 +276,6 @@ public class LobbyStartGameUI : MonoBehaviour
         }
     }
 
-    public void HideLobbyCodeHeader()
-    {
-        RectTransform header = ResolveLobbyHeader();
-        if (header != null)
-            header.gameObject.SetActive(false);
-    }
-
     private void ActivateHierarchy(GameObject root)
     {
         if (root == null)
@@ -376,29 +341,6 @@ public class LobbyStartGameUI : MonoBehaviour
             GameObject.Find("DiffLbl");
 
         return difficultyLabel;
-    }
-
-    private RectTransform ResolveLobbyHeader()
-    {
-        if (lobbyHeader != null)
-            return lobbyHeader;
-
-        GameObject lobbyPanel =
-            GameObject.Find("LobbyPanel");
-
-        if (lobbyPanel != null)
-        {
-            Transform header =
-                lobbyPanel.transform.Find("Header");
-
-            if (header != null)
-            {
-                lobbyHeader =
-                    header as RectTransform;
-            }
-        }
-
-        return lobbyHeader;
     }
 
     private RectTransform ResolveMyPlayerPanel()

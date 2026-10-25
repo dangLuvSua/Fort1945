@@ -352,11 +352,6 @@ public class NetworkRunnerHandler :
         StopSceneLoadTimeout();
         sceneLoadInProgress = false;
 
-        LobbyStartGameUI lobbyStartUI =
-            FindFirstObjectByType<LobbyStartGameUI>();
-        if (lobbyStartUI != null)
-            lobbyStartUI.HideLobbyCodeHeader();
-
         LoadingProgressUI ui = GetLoadingScreen();
 
         if (ui == null)
