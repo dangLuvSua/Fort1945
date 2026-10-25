@@ -3,8 +3,8 @@ using UnityEngine.Audio;
 
 /// <summary>
 /// Place this on a trigger just beyond the unlocked dungeon gate. The host
-/// loads the Dungeon scene after the gate is unlocked and every active player
-/// has walked into the trigger volume.
+/// loads the Dungeon scene after the gate is unlocked and all active players
+/// walk into the trigger volume. The transition applies to the whole session.
 /// </summary>
 [RequireComponent(typeof(Collider))]
 public sealed class DungeonSceneTeleportTrigger : MonoBehaviour

@@ -23,6 +23,7 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
     private float playerHeightOffset = 1.1f;
 
     private bool hasCheckedInitialSpawn;
+    private bool lobbyRecoveryComplete;
 
 
     // Important:
@@ -31,6 +32,21 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
     private void OnEnable()
     {
         TrySpawnLocalPlayer();
+    }
+
+    private void Update()
+    {
+        if (Runner == null)
+            return;
+
+        if (!hasCheckedInitialSpawn)
+        {
+            TrySpawnLocalPlayer();
+            return;
+        }
+
+        if (!lobbyRecoveryComplete && Runner.IsSceneAuthority)
+            TryReturnCapturedPlayersToLobby();
     }
 
 
@@ -75,6 +91,8 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
             );
 
             hasCheckedInitialSpawn = true;
+            if (Runner.IsSceneAuthority)
+                TryReturnCapturedPlayersToLobby();
             return;
         }
 
@@ -97,6 +115,52 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
         }
 
         SpawnLocalPlayer(localPlayer);
+    }
+
+    private void TryReturnCapturedPlayersToLobby()
+    {
+        if (Runner == null || !Runner.IsSceneAuthority ||
+            spawnPoints == null || spawnPoints.Length == 0)
+            return;
+
+        PlayerRef[] players = Runner.ActivePlayers
+            .OrderBy(player => player.RawEncoded)
+            .ToArray();
+        if (players.Length == 0)
+            return;
+
+        foreach (PlayerRef player in players)
+        {
+            if (!Runner.TryGetPlayerObject(player, out NetworkObject playerObject) ||
+                playerObject == null ||
+                !playerObject.TryGetComponent(out PlayerController controller) ||
+                !controller.IsCapturedByKempeitai)
+                return;
+        }
+
+        for (int index = 0; index < players.Length; index++)
+        {
+            if (!Runner.TryGetPlayerObject(players[index], out NetworkObject playerObject) ||
+                playerObject == null ||
+                !playerObject.TryGetComponent(out PlayerController controller))
+                continue;
+
+            Transform spawnPoint = spawnPoints[players[index].RawEncoded % spawnPoints.Length];
+            if (spawnPoint == null)
+                continue;
+
+            Vector3 position = TryGetGroundPosition(spawnPoint, out Vector3 groundPosition)
+                ? groundPosition
+                : spawnPoint.position + Vector3.up * playerHeightOffset;
+            controller.RpcReturnToLobby(position, spawnPoint.rotation);
+
+            LobbyPlayerState playerState = playerObject.GetComponent<LobbyPlayerState>();
+            if (playerState != null)
+                playerState.RequestResetReady();
+        }
+
+        Debug.Log("[PLAYER SPAWNER] Returned all captured players to Fort2 lobby spawns; players must ready and start again.", this);
+        lobbyRecoveryComplete = true;
     }
 
 

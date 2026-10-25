@@ -23,8 +23,6 @@ public class PlayerSanity : NetworkBehaviour
     private float recoveryPerSecond = 2f;
 
     [Header("Cross Revive Feedback")]
-    [SerializeField, Min(0.01f), Tooltip("Sanity restored when the Cross is used to revive or heal.")]
-    private float reviveSanity = 25f;
     [SerializeField, Range(0f, 1f), Tooltip("Cross can heal a teammate at or below this sanity percentage.")]
     private float crossHealThresholdPercent = 0.5f;
     [SerializeField, Tooltip("Audio played for every player when a Cross revive completes.")]
@@ -41,6 +39,8 @@ public class PlayerSanity : NetworkBehaviour
     [SerializeField, Range(0f, 1f)] private float maximumBlur = 0.8f;
     [SerializeField, Range(0f, 1f)] private float maximumChromaticAberration = 0.45f;
     [SerializeField, Range(0f, 0.5f)] private float maximumDizzyDistortion = 0.12f;
+    [SerializeField, Tooltip("Color tint applied to the full screen at zero sanity.")]
+    private Color zeroSanityColorFilter = new Color(1f, 0.18f, 0.18f, 1f);
 
     [Header("Low Sanity Audio")]
     [SerializeField, Tooltip("Assign up to three looping whisper clips. Assigned clips overlap.")]
@@ -52,6 +52,11 @@ public class PlayerSanity : NetworkBehaviour
     [SerializeField, Range(0f, 1f)] private float maximumWhisperVolume = 0.45f;
     [SerializeField, Range(0f, 1f)] private float maximumHeartbeatVolume = 0.65f;
     [SerializeField, Min(0.1f)] private float lowSanityAudioFadeSpeed = 2f;
+    [SerializeField, Tooltip("Scream clips played at intervals while sanity is zero.")]
+    private AudioClip[] insanityScreamClips;
+    [SerializeField, Min(0.1f)] private float minimumInsanityScreamInterval = 3f;
+    [SerializeField, Min(0.1f)] private float maximumInsanityScreamInterval = 6f;
+    [SerializeField, Range(0f, 1f)] private float insanityScreamVolume = 0.85f;
 
     private Camera localCamera;
     private bool networkSpawned;
@@ -63,6 +68,9 @@ public class PlayerSanity : NetworkBehaviour
     private LensDistortion sanityDistortion;
     private AudioSource[] whisperSources;
     private AudioSource heartbeatSource;
+    private AudioSource insanityScreamSource;
+    private float nextInsanityScreamTime;
+    private ColorAdjustments sanityColorAdjustments;
 
     [Networked]
     public float CurrentSanity { get; set; }
@@ -98,15 +106,22 @@ public class PlayerSanity : NetworkBehaviour
             SetupLowSanityVision();
 
         float severity = LowSanitySeverity;
-        float pulse = 0.8f + 0.2f * Mathf.Sin(Time.time * visionPulseSpeed * Mathf.PI * 2f);
+        bool fullyInsane = IsInsane;
+        float pulse = fullyInsane
+            ? 1f
+            : 0.8f + 0.2f * Mathf.Sin(Time.time * visionPulseSpeed * Mathf.PI * 2f);
         if (sanityVolume != null)
         {
             sanityVolume.weight = severity * pulse;
 
-            sanityVignette.intensity.value = maximumRedVignette;
-            sanityDepthOfField.gaussianMaxRadius.value = Mathf.Lerp(0.5f, 1.5f, maximumBlur);
-            sanityChromatic.intensity.value = maximumChromaticAberration;
-            sanityDistortion.intensity.value = Mathf.Sin(Time.time * visionPulseSpeed * Mathf.PI * 2f) * maximumDizzyDistortion;
+            sanityVignette.intensity.value = fullyInsane ? 1f : maximumRedVignette;
+            sanityDepthOfField.gaussianMaxRadius.value = Mathf.Lerp(0.5f, 1.5f, fullyInsane ? 1f : maximumBlur);
+            sanityChromatic.intensity.value = fullyInsane ? 1f : maximumChromaticAberration;
+            sanityDistortion.intensity.value = fullyInsane
+                ? maximumDizzyDistortion
+                : Mathf.Sin(Time.time * visionPulseSpeed * Mathf.PI * 2f) * maximumDizzyDistortion;
+            if (sanityColorAdjustments != null)
+                sanityColorAdjustments.colorFilter.value = Color.Lerp(Color.white, zeroSanityColorFilter, severity);
         }
 
         if (whisperSources == null || heartbeatSource == null)
@@ -129,6 +144,11 @@ public class PlayerSanity : NetworkBehaviour
             UpdateLoopingSanityAudio(whisperSources[i], clip, clipVolume);
         }
         UpdateLoopingSanityAudio(heartbeatSource, heartbeatSfx, maximumHeartbeatVolume * severity);
+
+        if (fullyInsane)
+            PlayInsanityScreamsWhenReady();
+        else
+            nextInsanityScreamTime = 0f;
     }
 
     private void SetupLowSanityAudio()
@@ -138,6 +158,8 @@ public class PlayerSanity : NetworkBehaviour
         for (int i = 0; i < whisperSources.Length; i++)
             whisperSources[i] = CreateLowSanityAudioSource();
         heartbeatSource = CreateLowSanityAudioSource();
+        insanityScreamSource = CreateLowSanityAudioSource();
+        insanityScreamSource.loop = false;
     }
 
     private AudioSource CreateLowSanityAudioSource()
@@ -228,6 +250,29 @@ public class PlayerSanity : NetworkBehaviour
         sanityDistortion.intensity.overrideState = true;
         sanityDistortion.scale.overrideState = true;
         sanityDistortion.scale.value = 0.9f;
+
+        sanityColorAdjustments = sanityProfile.Add<ColorAdjustments>(true);
+        sanityColorAdjustments.active = true;
+        sanityColorAdjustments.colorFilter.overrideState = true;
+        sanityColorAdjustments.colorFilter.value = Color.white;
+    }
+
+    private void PlayInsanityScreamsWhenReady()
+    {
+        if (insanityScreamClips == null || insanityScreamClips.Length == 0 ||
+            insanityScreamSource == null || Time.time < nextInsanityScreamTime)
+            return;
+
+        AudioClip clip = insanityScreamClips[Random.Range(0, insanityScreamClips.Length)];
+        if (clip != null)
+        {
+            insanityScreamSource.outputAudioMixerGroup = lowSanityMixerGroup;
+            insanityScreamSource.PlayOneShot(clip, insanityScreamVolume);
+        }
+
+        float minimum = Mathf.Max(0.1f, minimumInsanityScreamInterval);
+        float maximum = Mathf.Max(minimum, maximumInsanityScreamInterval);
+        nextInsanityScreamTime = Time.time + Random.Range(minimum, maximum);
     }
 
     private void OnDestroy()
@@ -363,7 +408,7 @@ public class PlayerSanity : NetworkBehaviour
             Vector3.Distance(transform.position, reviverInventory.transform.position) > 3.5f)
             return;
 
-        CurrentSanity = Mathf.Min(maxSanity, CurrentSanity + reviveSanity);
+        CurrentSanity = maxSanity;
         float feedbackDuration = chantSfx != null
             ? chantSfx.length
             : glowDuration;

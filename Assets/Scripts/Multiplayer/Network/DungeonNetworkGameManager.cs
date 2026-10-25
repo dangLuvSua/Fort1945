@@ -12,6 +12,7 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
     [Networked] public NetworkBool PrisonCell2GateOpen { get; private set; }
 
     private bool networkStateReady;
+    private bool returningCapturedPlayersToLobby;
     public bool IsNetworkStateReady => networkStateReady;
 
     public override void Spawned()
@@ -33,6 +34,37 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
         networkStateReady = false;
         if (Instance == this)
             Instance = null;
+    }
+
+    public override void FixedUpdateNetwork()
+    {
+        if (!networkStateReady || Runner == null || !Object.HasStateAuthority ||
+            !Runner.IsSceneAuthority || returningCapturedPlayersToLobby)
+            return;
+
+        int activePlayerCount = 0;
+        foreach (PlayerRef player in Runner.ActivePlayers)
+        {
+            activePlayerCount++;
+            if (!Runner.TryGetPlayerObject(player, out NetworkObject playerObject) ||
+                playerObject == null ||
+                !playerObject.TryGetComponent(out PlayerController controller) ||
+                !controller.IsCapturedByKempeitai)
+                return;
+        }
+
+        if (activePlayerCount == 0)
+            return;
+
+        returningCapturedPlayersToLobby = true;
+        Debug.Log("[PRISON] All active players have been captured. Returning the group to the Fort2 lobby.", this);
+
+        NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
+        if (handler == null || !handler.LoadFort2Scene())
+        {
+            returningCapturedPlayersToLobby = false;
+            Debug.LogError("[PRISON] Could not return the captured group to Fort2.", this);
+        }
     }
 
     public static DungeonNetworkGameManager ResolveInstance()
