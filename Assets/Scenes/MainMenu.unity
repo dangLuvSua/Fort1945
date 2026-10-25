@@ -6609,7 +6609,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1172129992}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1563866721}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -10892,6 +10892,7 @@ Transform:
   - {fileID: 378702678}
   - {fileID: 933331795}
   - {fileID: 1706975497}
+  - {fileID: 918642044}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1577304980
@@ -14625,6 +14626,14 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 1533302476}
+    - target: {fileID: 4074992680284636102, guid: 9de0040b4f6a62c409f26f448f8ec448, type: 3}
+      propertyPath: m_Color.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4655866420310003920, guid: 9de0040b4f6a62c409f26f448f8ec448, type: 3}
+      propertyPath: m_Color.a
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5654450531237596866, guid: 9de0040b4f6a62c409f26f448f8ec448, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -14729,8 +14738,13 @@ PrefabInstance:
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 657143014}
+    - target: {fileID: 9202063818471468268, guid: 9de0040b4f6a62c409f26f448f8ec448, type: 3}
+      propertyPath: m_Color.a
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 2041065081483913652, guid: 9de0040b4f6a62c409f26f448f8ec448, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9de0040b4f6a62c409f26f448f8ec448, type: 3}
@@ -15008,7 +15022,6 @@ SceneRoots:
   - {fileID: 1438928840}
   - {fileID: 1227655552}
   - {fileID: 308184465}
-  - {fileID: 918642044}
   - {fileID: 1546148068}
   - {fileID: 1563866721}
   - {fileID: 397943325}

@@ -6345,7 +6345,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &3328197954593703402
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6355,7 +6355,7 @@ RectTransform:
   m_GameObject: {fileID: 3488867784545985956}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4861633205386887273}
@@ -6378,7 +6378,7 @@ Canvas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3488867784545985956}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_RenderMode: 0
   m_Camera: {fileID: 0}
@@ -6393,7 +6393,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 10
   m_TargetDisplay: 0
 --- !u!114 &8059276679263778
 MonoBehaviour:
@@ -6425,7 +6425,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3488867784545985956}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
   m_Name: 
@@ -6493,6 +6493,8 @@ MonoBehaviour:
   controlsPanel: {fileID: 413185590279818911}
   graphicsPanel: {fileID: 5289870491709547883}
   leaveModalPanel: {fileID: 5871853377906462578, guid: f9a26a69329e65c46ab30ca71788a105, type: 3}
+  menuDimOpacity: 0.55
+  menuBlurProfile: {fileID: 11400000, guid: d2d77c98d2264cd7b7cab8ec86adb8da, type: 2}
 --- !u!1 &3551746460171061081
 GameObject:
   m_ObjectHideFlags: 0
@@ -14547,7 +14549,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5262770149319466461, guid: 1f4aefa144f3e1c4f8ddfa06d48397c5, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
+      value:
       objectReference: {fileID: 8007729760652821628}
     - target: {fileID: 5262770149319466461, guid: 1f4aefa144f3e1c4f8ddfa06d48397c5, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
@@ -14851,8 +14853,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7851202889603066770, guid: fc4fa886274704a4d87f21e734f00fc2, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: CanvasManager, Assembly-CSharp
+      value: InGameOptionsController, Assembly-CSharp
       objectReference: {fileID: 0}
+    - target: {fileID: 7851202889603066770, guid: fc4fa886274704a4d87f21e734f00fc2, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value:
+      objectReference: {fileID: 8007729760652821628}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

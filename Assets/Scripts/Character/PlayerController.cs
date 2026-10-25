@@ -335,14 +335,27 @@ public class PlayerController : NetworkBehaviour
         if (!Object.HasStateAuthority)
             return;
 
-        if (Keyboard.current != null &&
+        bool optionsOwnCursor = InGameOptionsController.Instance != null &&
+            InGameOptionsController.Instance.isActiveAndEnabled;
+
+        if (!optionsOwnCursor && Keyboard.current != null &&
             Keyboard.current.escapeKey.wasPressedThisFrame)
         {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            // The options canvas is inactive after Back to Game, so its Update
+            // cannot handle Escape until a HUD button opens it again.
+            if (InGameOptionsController.Instance != null)
+            {
+                InGameOptionsController.Instance.ToggleSettingsRoot();
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
         }
 
-        if (Mouse.current != null &&
+        if ((!optionsOwnCursor || !InGameOptionsController.Instance.IsAnyPanelOpen) &&
+            Mouse.current != null &&
             Mouse.current.leftButton.wasPressedThisFrame)
         {
             bool clickedUI =
