@@ -304,6 +304,13 @@ public class LobbyStartGameUI : MonoBehaviour
         }
     }
 
+    public void HideLobbyCodeHeader()
+    {
+        RectTransform header = ResolveLobbyHeader();
+        if (header != null)
+            header.gameObject.SetActive(false);
+    }
+
     private void ActivateHierarchy(GameObject root)
     {
         if (root == null)

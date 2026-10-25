@@ -297,6 +297,9 @@ MonoBehaviour:
   playbackPrefab: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
   detectionCollider: {fileID: 5758593730788477225}
   randomSpawnArea: {fileID: 0}
+  extremeDizzinessRange: 8
+  mildDizzinessDuration: 2
+  extremeDizzinessDuration: 5
   easySanityDamage: 5
   normalSanityDamage: 10
   difficultSanityDamage: 15
