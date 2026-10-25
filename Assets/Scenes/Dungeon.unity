@@ -1458,6 +1458,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5933b9eb0066eb040be5dd1b7d3dcf4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInventoryUI
+  evidenceTabs: {fileID: 0}
+  selectPhotographButton: {fileID: 0}
+  evidenceFeedback: {fileID: 0}
   inventory: {fileID: -2516544739770729294, guid: ddc5dfc990d6831408c4d5f15c7b31fe, type: 3}
   quickSlots:
   - {fileID: 8345692567838258751}
@@ -2724,15 +2727,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6824140804770729041, guid: a8074dd59f43f4d4d9369d63ece24350, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 6824140804770729041, guid: a8074dd59f43f4d4d9369d63ece24350, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 6824140804770729041, guid: a8074dd59f43f4d4d9369d63ece24350, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 6824140804770729041, guid: a8074dd59f43f4d4d9369d63ece24350, type: 3}
       propertyPath: m_AnchoredPosition.y
