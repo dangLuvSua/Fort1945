@@ -19,6 +19,11 @@ public class LobbyUI : MonoBehaviour
     [Header("Join Lobby")]
     [SerializeField] private TMP_InputField joinLobbyCodeInput;
 
+    [Header("Panels Hidden During Connection")]
+    [SerializeField] private GameObject createLobbyPanel;
+    [SerializeField] private GameObject joinLobbyPanel;
+    [SerializeField] private GameObject findLobbyPanel;
+
 
     // =====================================================
     // LOADING SCREEN
@@ -38,6 +43,10 @@ public class LobbyUI : MonoBehaviour
     private LoadingProgressUI loadingScreenInstance;
 
     private bool isLoading;
+    private bool createPanelWasActive;
+    private bool joinPanelWasActive;
+    private bool findPanelWasActive;
+    private bool panelsHiddenForTransition;
 
 
     // =====================================================
@@ -321,19 +330,39 @@ public class LobbyUI : MonoBehaviour
                 );
         }
 
-        // Keep the loading screen alive while
-        // Fusion changes scenes.
-        DontDestroyOnLoad(
-            loadingScreenInstance.gameObject
-        );
-
         loadingScreenInstance.BeginLoading(
             message
         );
 
+        HideLobbyPanelsForTransition();
+
         Debug.Log(
             $"[LOBBY UI] Loading screen shown: {message}"
         );
+    }
+
+    private void HideLobbyPanelsForTransition()
+    {
+        createPanelWasActive = createLobbyPanel != null && createLobbyPanel.activeSelf;
+        joinPanelWasActive = joinLobbyPanel != null && joinLobbyPanel.activeSelf;
+        findPanelWasActive = findLobbyPanel != null && findLobbyPanel.activeSelf;
+        panelsHiddenForTransition = true;
+
+        if (createLobbyPanel != null) createLobbyPanel.SetActive(false);
+        if (joinLobbyPanel != null) joinLobbyPanel.SetActive(false);
+        if (findLobbyPanel != null) findLobbyPanel.SetActive(false);
+    }
+
+    public void RestoreLobbyPanelsAfterFailure()
+    {
+        if (!panelsHiddenForTransition)
+            return;
+
+        if (createLobbyPanel != null) createLobbyPanel.SetActive(createPanelWasActive);
+        if (joinLobbyPanel != null) joinLobbyPanel.SetActive(joinPanelWasActive);
+        if (findLobbyPanel != null) findLobbyPanel.SetActive(findPanelWasActive);
+        isLoading = false;
+        panelsHiddenForTransition = false;
     }
 
     public void ShowJoinLoadingScreen()

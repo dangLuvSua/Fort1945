@@ -11,6 +11,7 @@ public class NetworkRunnerHandler :
     MonoBehaviour,
     INetworkRunnerCallbacks
 {
+    private const string Fort2ScenePath = "Assets/Scenes/Fort2.unity";
     private const int CameraPhotoPacketMagic = 0x46313945;
     private const byte CameraPhotoUpload = 1;
     private const byte CameraPhotoRequest = 2;
@@ -60,13 +61,6 @@ public class NetworkRunnerHandler :
     // =========================================================
 
     [Header("Scenes")]
-
-    [SerializeField]
-    private int gameSceneBuildIndex = 2;
-
-    [Tooltip("Build index of Fort2, used when returning from the Dungeon.")]
-    [SerializeField]
-    private int fort2SceneBuildIndex = 3;
 
     [Tooltip(
         "Build index of the Dungeon scene used when the squad enters the dungeon."
@@ -129,10 +123,9 @@ public class NetworkRunnerHandler :
 
     private string currentSessionName;
     private Coroutine failureModalCoroutine;
-    private NetworkRunner startingRunner;
-    private bool applicationQuitting;
+    private Coroutine sceneLoadTimeoutCoroutine;
+    private bool sceneLoadFallbackInProgress;
     private bool sceneLoadInProgress;
-    private UnityEngine.ThreadPriority previousLoadingPriority;
 
     public void CaptureLocalInventoryForDungeon()
     {
@@ -343,6 +336,11 @@ public class NetworkRunnerHandler :
 
     private void SetLoadingSceneStart()
     {
+        sceneLoadInProgress = true;
+        if (sceneLoadTimeoutCoroutine != null)
+            StopCoroutine(sceneLoadTimeoutCoroutine);
+        sceneLoadTimeoutCoroutine = StartCoroutine(SceneLoadTimeout());
+
         LoadingProgressUI ui = GetLoadingScreen();
 
         if (ui == null)
@@ -360,6 +358,9 @@ public class NetworkRunnerHandler :
 
     private void CompleteLoading()
     {
+        StopSceneLoadTimeout();
+        sceneLoadInProgress = false;
+
         LoadingProgressUI ui = GetLoadingScreen();
 
         if (ui == null)
@@ -386,6 +387,61 @@ public class NetworkRunnerHandler :
         Destroy(ui.gameObject);
 
         loadingScreen = null;
+    }
+
+    private void StopSceneLoadTimeout()
+    {
+        if (sceneLoadTimeoutCoroutine == null)
+            return;
+
+        StopCoroutine(sceneLoadTimeoutCoroutine);
+        sceneLoadTimeoutCoroutine = null;
+    }
+
+    private System.Collections.IEnumerator SceneLoadTimeout()
+    {
+        yield return new WaitForSecondsRealtime(60f);
+        sceneLoadTimeoutCoroutine = null;
+
+        if (!sceneLoadInProgress || loadingScreen == null || sceneLoadFallbackInProgress)
+            yield break;
+
+        Debug.LogError("[LOADING] Scene did not finish loading and spawning within 60 seconds.");
+        yield return ReturnToMainMenuFallback();
+    }
+
+    private System.Collections.IEnumerator ReturnToMainMenuFallback()
+    {
+        if (sceneLoadFallbackInProgress)
+            yield break;
+
+        sceneLoadFallbackInProgress = true;
+        sceneLoadInProgress = false;
+        StopSceneLoadTimeout();
+
+        NetworkRunner stalledRunner = runner;
+        runner = null;
+        networkSceneManager = null;
+        if (stalledRunner != null && stalledRunner.IsRunning)
+            stalledRunner.Shutdown();
+
+        SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+        while (SceneManager.GetActiveScene().name != "MainMenu")
+            yield return null;
+
+        // Let MainMenu's CanvasManager initialize before opening the modal.
+        yield return null;
+        CanvasManager menu = FindFirstObjectByType<CanvasManager>();
+        if (menu != null)
+        {
+            menu.ShowMainMenu();
+            menu.ShowInfo(
+                "SCENE LOAD ERROR",
+                "There was an error loading the scene. Returning to the main menu as a fallback.");
+        }
+
+        RemoveLoadingScreen();
+        sceneLoadFallbackInProgress = false;
     }
 
 
@@ -817,9 +873,20 @@ public class NetworkRunnerHandler :
         }
 
 
+        // The multiplayer entry scene is Fort2. Resolve it by asset path so
+        // a stale Inspector build index cannot send players back to a menu or
+        // into another scene when Build Settings are reordered.
+        int fort2BuildIndex = SceneUtility.GetBuildIndexByScenePath(Fort2ScenePath);
+        if (fort2BuildIndex < 0)
+        {
+            Debug.LogError(
+                $"[GAME] Fort2 is not enabled in Build Settings: {Fort2ScenePath}");
+            LoadingFailed("FORT2 SCENE IS NOT IN BUILD SETTINGS");
+            return;
+        }
+
         Debug.Log(
-            $"[GAME] Loading Lobby scene. " +
-            $"Build Index: {gameSceneBuildIndex}"
+            $"[GAME] Loading Fort2 scene. Build Index: {fort2BuildIndex}"
         );
 
 
@@ -828,7 +895,7 @@ public class NetworkRunnerHandler :
 
         SceneRef lobbyScene =
             SceneRef.FromIndex(
-                gameSceneBuildIndex
+                fort2BuildIndex
             );
 
 
@@ -927,8 +994,15 @@ public class NetworkRunnerHandler :
         // Fort2 is build index 3 in EditorBuildSettings. Use its build index
         // directly, since this scene is not always registered in the current
         // network scene manager's path lookup after the Dungeon is loaded.
-        SceneRef fort2 = SceneRef.FromIndex(fort2SceneBuildIndex);
-        Debug.Log($"[ENDING] Loading Fort2 through Fusion (build index {fort2SceneBuildIndex}, SceneRef {fort2}).");
+        int fort2BuildIndex = SceneUtility.GetBuildIndexByScenePath(Fort2ScenePath);
+        if (fort2BuildIndex < 0)
+        {
+            Debug.LogError($"[ENDING] Fort2 is not enabled in Build Settings: {Fort2ScenePath}");
+            return false;
+        }
+
+        SceneRef fort2 = SceneRef.FromIndex(fort2BuildIndex);
+        Debug.Log($"[ENDING] Loading Fort2 through Fusion (build index {fort2BuildIndex}, SceneRef {fort2}).");
 
         runner.LoadScene(fort2, LoadSceneMode.Single);
         return true;
@@ -2051,7 +2125,19 @@ public class NetworkRunnerHandler :
         string message,
         bool showImmediately = false)
     {
-        if (applicationQuitting) return;
+        StopSceneLoadTimeout();
+
+        if (sceneLoadInProgress && !sceneLoadFallbackInProgress)
+        {
+            Debug.LogError($"[LOADING] {message}. Returning to MainMenu.");
+            StartCoroutine(ReturnToMainMenuFallback());
+            return;
+        }
+
+        LobbyUI lobbyUI = FindFirstObjectByType<LobbyUI>();
+        if (lobbyUI != null)
+            lobbyUI.RestoreLobbyPanelsAfterFailure();
+
         Debug.LogError(
             $"[LOADING] {message}"
         );
