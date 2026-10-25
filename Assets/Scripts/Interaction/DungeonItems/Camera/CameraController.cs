@@ -425,7 +425,7 @@ public class CameraController : NetworkBehaviour
         return true;
     }
 
-    private static Texture2D CreateReadableCopy(Texture2D source)
+    public static Texture2D CreateReadableCopy(Texture2D source)
     {
         if (source == null)
             return null;

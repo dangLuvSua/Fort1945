@@ -106,6 +106,13 @@ private void Update()
     if (Keyboard.current == null)
         return;
 
+    if (PlayerInventoryUI.EvidenceSelectionOpen)
+    {
+        CancelHold();
+        UpdatePrompt(null, null);
+        return;
+    }
+
     Ray ray = cam.ViewportPointToRay(
         new Vector3(0.5f, 0.5f, 0f)
     );
@@ -205,7 +212,9 @@ private void Update()
     // Preserve normal press-to-interact behavior.
     if (target != null &&
         holdTarget == null &&
-        Keyboard.current.eKey.wasPressedThisFrame)
+        (target is PolaroidInteractable
+            ? Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame
+            : Keyboard.current.eKey.wasPressedThisFrame))
     {
         target.Interact(inventory);
     }

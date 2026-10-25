@@ -393,7 +393,7 @@ public class PlayerInventory : NetworkBehaviour
         NetworkRunnerHandler.RequestCameraPhotoLibrary(Runner, itemId);
     }
 
-    private static string GetPhotoContentKey(byte[] bytes)
+    public static string GetPhotoContentKey(byte[] bytes)
     {
         unchecked
         {

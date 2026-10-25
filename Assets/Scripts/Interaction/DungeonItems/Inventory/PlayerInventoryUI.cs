@@ -5,7 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PlayerInventoryUI : MonoBehaviour
+public partial class PlayerInventoryUI : MonoBehaviour
 {
     [Header("Inventory")]
     [SerializeField] private PlayerInventory inventory;
@@ -131,6 +131,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
     public void SetGalleryTabActive(bool active)
     {
+        if (!active) CancelEvidencePlacement();
         if (galleryTabActive == active)
             return;
 
@@ -204,6 +205,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
     private void OnDisable()
     {
+        CancelEvidencePlacement();
         UnsubscribeFromInventory();
         UnsubscribeQuickSlots();
         UnsubscribeDynamicSlotEvents();
@@ -960,6 +962,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
     private void UpdateActionButtons()
     {
+        UpdateEvidenceSelection();
         bool ready = IsInventoryReady();
         bool isCapturedPhoto = ready && inventory.IsCapturedPhoto(selectedItem);
         bool hasSelection = ready && selectedItem != null &&
@@ -1071,6 +1074,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
     public void CloseInventoryPanel()
     {
+        CancelEvidencePlacement();
         if (inventoryPanel == null)
             return;
 

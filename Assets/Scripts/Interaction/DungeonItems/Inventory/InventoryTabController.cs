@@ -24,6 +24,8 @@ public class InventoryTabController : MonoBehaviour
     }
 
     public Tab CurrentTab { get; private set; }
+    public GameObject GalleryPanel => galleryPanel;
+    private bool tabOpened;
 
     private void Awake()
     {
@@ -39,7 +41,7 @@ public class InventoryTabController : MonoBehaviour
 
     private void Start()
     {
-        OpenTab(defaultTab);
+        if (!tabOpened) OpenTab(defaultTab);
     }
 
     private void OnDestroy()
@@ -79,6 +81,7 @@ public class InventoryTabController : MonoBehaviour
 
     public void OpenTab(Tab tab)
     {
+        tabOpened = true;
         CurrentTab = tab;
 
         if (itemPanel != null)
