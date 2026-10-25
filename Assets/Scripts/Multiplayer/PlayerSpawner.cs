@@ -1,4 +1,5 @@
 using Fusion;
+using System.Linq;
 using UnityEngine;
 
 public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
@@ -168,6 +169,60 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
             $"Position: {spawnPosition}\n" +
             $"Rotation: {spawnRotation.eulerAngles}"
         );
+    }
+
+    /// <summary>Places existing connected players at Fort2's ending spawn markers.</summary>
+    public bool PlaceExistingPlayersAt(Transform spawnParent)
+    {
+        if (Runner == null || !Runner.IsSceneAuthority)
+        {
+            Debug.LogWarning("[PLAYER SPAWNER] Ending placement must be requested by Fusion scene authority.", this);
+            return false;
+        }
+
+        if (spawnParent == null)
+        {
+            Debug.LogError("[PLAYER SPAWNER] Ending spawn parent is missing.", this);
+            return false;
+        }
+
+        Transform[] endingPoints = Enumerable.Range(1, 4)
+            .Select(index => spawnParent.Find($"ESP_{index:00}"))
+            .ToArray();
+        if (endingPoints.Any(point => point == null))
+        {
+            Debug.LogError("[PLAYER SPAWNER] EndingSpawnPoint must contain ESP_01 through ESP_04.", this);
+            return false;
+        }
+
+        PlayerRef[] players = Runner.ActivePlayers
+            .OrderBy(player => player.RawEncoded)
+            .ToArray();
+
+        for (int index = 0; index < players.Length && index < endingPoints.Length; index++)
+        {
+            NetworkObject playerObject = Runner.GetPlayerObject(players[index]);
+            PlayerController controller = playerObject != null
+                ? playerObject.GetComponent<PlayerController>()
+                : null;
+            if (controller == null)
+            {
+                Debug.LogWarning($"[PLAYER SPAWNER] No existing player object was found for {players[index]}.", this);
+                continue;
+            }
+
+            Transform point = endingPoints[index];
+            Vector3 position = TryGetGroundPosition(point, out Vector3 groundPosition)
+                ? groundPosition
+                : point.position + Vector3.up * playerHeightOffset;
+            controller.RpcTeleportToEnding(position, point.rotation);
+            Debug.Log($"[PLAYER SPAWNER] Returned {players[index]} to {point.name} at {position}.", this);
+        }
+
+        if (players.Length > endingPoints.Length)
+            Debug.LogWarning($"[PLAYER SPAWNER] {players.Length} players connected; only the first four can use the ending spawn points.", this);
+
+        return true;
     }
 
 

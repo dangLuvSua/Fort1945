@@ -5757,6 +5757,8 @@ MonoBehaviour:
   dizzyCameraRollSpeed: 1.5
   lowestSanityLookMultiplier: 0.4
   disableSprintAtSanityPercent: 0.25
+  jumpscareDizzinessRecoveryTime: 3
+  jumpscareDizzinessRoll: 7
   groundLayers:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -5920,8 +5922,8 @@ MonoBehaviour:
   throwForce: 2.75
   throwUp: 1.5
   itemCatalog:
-  - {fileID: 11400000, guid: 83911e1fa10d6b546a50ebe92b8da173, type: 2}
   - {fileID: 11400000, guid: d98faaf2d5a8a2b46adbd30d840696f4, type: 2}
+  - {fileID: 11400000, guid: 7623e8308b325a24cb3752c1a93ecc4c, type: 2}
   - {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
   - {fileID: 11400000, guid: fc37cc7252e517d44b276fe898ee6a8d, type: 2}
   - {fileID: 11400000, guid: 4e79d39b7f5292347bab8d08e48bc3ab, type: 2}
@@ -6092,7 +6094,7 @@ MonoBehaviour:
   sprayKey: 20
   saltItem: {fileID: 11400000, guid: 49c7c78e778e32040a342553e0e83829, type: 2}
   saltSprayVFX: {fileID: 6746067635408783740}
-  sprayCooldown: 0.5
+  sprayCooldown: 2
   visualSearchInterval: 0.5
 --- !u!114 &1313644337388063740
 MonoBehaviour:

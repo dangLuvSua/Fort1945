@@ -398,7 +398,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: EQUIP INTERROGATION KEY, THEN HOLD [E] TO OPEN
+  m_text: '[E] HOLD TO OPEN'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 67a1f2b2a596bad41a6655a3596d101e, type: 2}
   m_sharedMaterial: {fileID: 6102132331762098321, guid: 67a1f2b2a596bad41a6655a3596d101e, type: 2}

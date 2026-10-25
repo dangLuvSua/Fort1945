@@ -15,11 +15,13 @@ public sealed class InterrogationRoomGateUnlock : MonoBehaviour, IHoldInteractab
     [SerializeField] private string unlockPrompt = "[E] HOLD TO UNLOCK";
     [SerializeField] private string closePrompt = "[E] CLOSE";
     [SerializeField] private string reopenPrompt = "[E] HOLD TO OPEN";
-    [SerializeField] private string exitPrompt = "[E] HOLD TO EXIT";
+    [SerializeField] private string exitPrompt = "[E] OPEN";
 
     [Header("Approach Side")]
     [Tooltip("Place this empty transform on the side from which the gate should be operated.")]
     [SerializeField] private Transform outsideSidePoint;
+    [Tooltip("Trigger volume on the room side. A child collider named 'Inside' is found automatically if this is empty.")]
+    [SerializeField] private Collider insideInteractionTrigger;
 
     [Tooltip("Optional trigger volume for operating the gate from inside the room.")]
     [SerializeField] private Collider insideInteractionZone;
@@ -48,7 +50,7 @@ public sealed class InterrogationRoomGateUnlock : MonoBehaviour, IHoldInteractab
         get
         {
             if (gateOpen) return closePrompt;
-            if (IsViewerOnInsideSide()) return exitPrompt;
+            if (IsViewerInsideExitZone()) return exitPrompt;
             if (unlocked)
             {
                 return HasRequiredKey()
@@ -62,13 +64,49 @@ public sealed class InterrogationRoomGateUnlock : MonoBehaviour, IHoldInteractab
     }
 
     public bool CanInteract => enabled && !unlockPending && !gateTogglePending;
-    public bool CanTapInteract => gateOpen && !gateTogglePending;
+    public bool CanTapInteract => !gateTogglePending &&
+                                  (gateOpen || IsViewerInsideExitZone());
     public int Priority => 40;
     public float HoldDuration => holdDuration;
+
+    /// <summary>Allows PlayerInteractor to find this gate when its narrow door collider is hard to aim at.</summary>
+    public bool IsPlayerNearGate(Transform playerRoot, float maxDistance)
+    {
+        if (playerRoot == null)
+            return false;
+
+        if (IsPlayerInsideTrigger(playerRoot, insideInteractionTrigger))
+            return true;
+
+        if (gateToRotate == null)
+            return false;
+
+        Vector3 offset = playerRoot.position - gateToRotate.position;
+        offset.y = 0f;
+        return offset.sqrMagnitude <= maxDistance * maxDistance;
+    }
+
+    public bool IsPlayerInInsideInteractionZone(Transform playerRoot)
+    {
+        return IsPlayerInsideTrigger(playerRoot, insideInteractionTrigger);
+    }
 
     private void Awake()
     {
         if (gateToRotate == null) gateToRotate = transform;
+        if (insideInteractionTrigger == null)
+        {
+            Transform[] children = GetComponentsInChildren<Transform>(true);
+            foreach (Transform child in children)
+            {
+                if (child.name == "Inside" && child != transform)
+                {
+                    insideInteractionTrigger = child.GetComponent<Collider>();
+                    if (insideInteractionTrigger != null)
+                        break;
+                }
+            }
+        }
         closedRotation = gateToRotate.localRotation;
         openRotation = closedRotation * Quaternion.Euler(openRotationOffset);
     }
@@ -91,7 +129,13 @@ public sealed class InterrogationRoomGateUnlock : MonoBehaviour, IHoldInteractab
     public void TapInteract(PlayerInventory inventory)
     {
         viewerInventory = inventory;
-        if (CanTapInteract) CloseGate();
+        if (!CanTapInteract)
+            return;
+
+        if (gateOpen)
+            CloseGate();
+        else
+            RequestGateOpenState(true);
     }
 
     public void HoldCompleted(PlayerInventory inventory)
@@ -103,7 +147,7 @@ public sealed class InterrogationRoomGateUnlock : MonoBehaviour, IHoldInteractab
             return;
         }
 
-        bool playerInside = inventory != null && IsPlayerOnInsideSide(inventory.transform.root);
+        bool playerInside = inventory != null && IsPlayerInsideExitZone(inventory.transform.root);
         if (playerInside)
         {
             RequestGateOpenState(true);
@@ -218,7 +262,31 @@ public sealed class InterrogationRoomGateUnlock : MonoBehaviour, IHoldInteractab
     }
 
     private bool IsViewerOnOutsideSide() => IsPlayerOnOutsideSide(viewerInventory);
-    private bool IsViewerOnInsideSide() => viewerInventory != null && IsPlayerOnInsideSide(viewerInventory.transform.root);
+    private bool IsViewerInsideExitZone() => viewerInventory != null && IsPlayerInsideExitZone(viewerInventory.transform.root);
+
+    private bool IsPlayerInsideExitZone(Transform playerRoot)
+    {
+        return IsPlayerInsideTrigger(playerRoot, insideInteractionTrigger) ||
+               IsPlayerOnInsideSide(playerRoot);
+    }
+
+    private static bool IsPlayerInsideTrigger(Transform playerRoot, Collider trigger)
+    {
+        if (playerRoot == null || trigger == null || !trigger.enabled)
+            return false;
+
+        Collider[] playerColliders = playerRoot.GetComponentsInChildren<Collider>();
+        foreach (Collider playerCollider in playerColliders)
+        {
+            if (playerCollider == null || !playerCollider.enabled || playerCollider.isTrigger)
+                continue;
+
+            if (trigger.bounds.Intersects(playerCollider.bounds))
+                return true;
+        }
+
+        return trigger.bounds.Contains(playerRoot.position);
+    }
 
     public bool IsPlayerInInsideInteractionZone(Transform playerRoot)
     {
