@@ -2376,23 +2376,30 @@ public class NetworkGameManager : NetworkBehaviour
         RPC_OnGateUnlocked();
     }
 
-    /// <summary>Called by a separate scene trigger after the party walks through the open gate.</summary>
+    /// <summary>Called by a separate scene trigger when all active players reach the open gate.</summary>
     public bool TryLoadDungeonFromTeleportTrigger(Collider teleportTrigger)
     {
         if (teleportTrigger == null || Runner == null || Object == null ||
             !Object.HasStateAuthority || !DungeonGateUnlocked || TeleportStarted)
             return false;
 
+        bool hasActivePlayers = false;
         foreach (PlayerRef player in Runner.ActivePlayers)
         {
+            hasActivePlayers = true;
             if (!Runner.TryGetPlayerObject(player, out NetworkObject playerObject) ||
-                playerObject == null ||
-                !PlayerOverlapsTrigger(playerObject.transform, teleportTrigger))
+                playerObject == null)
+                return false;
+
+            if (!PlayerOverlapsTrigger(playerObject.transform, teleportTrigger))
                 return false;
         }
 
+        if (!hasActivePlayers)
+            return false;
+
         TeleportStarted = true;
-        Debug.Log("[GAME MANAGER] All players reached the teleport trigger. Loading Dungeon.");
+        Debug.Log("[GAME MANAGER] All active players reached the teleport trigger. Loading Dungeon for the session.");
 
         if (NetworkRunnerHandler.Instance == null)
         {
@@ -2492,8 +2499,17 @@ public class NetworkGameManager : NetworkBehaviour
         GameObject lockTrigger = GameObject.Find("Locktrigger");
         if (lockTrigger != null)
         {
-            Destroy(lockTrigger);
-            Debug.Log("[GAME MANAGER] Locktrigger destroyed after gate-unlocked acknowledgement.");
+            DungeonGateUnlock gate = lockTrigger.GetComponent<DungeonGateUnlock>();
+            if (gate != null)
+            {
+                gate.AcknowledgeUnlockNotice();
+                Debug.Log("[GAME MANAGER] Locktrigger will be removed after the gate finishes opening.");
+            }
+            else
+            {
+                Destroy(lockTrigger);
+                Debug.Log("[GAME MANAGER] Locktrigger destroyed after gate-unlocked acknowledgement.");
+            }
         }
     }
 

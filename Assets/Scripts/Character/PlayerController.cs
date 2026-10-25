@@ -6,6 +6,9 @@ using Fusion;
 
 public class PlayerController : NetworkBehaviour
 {
+    [Networked]
+    public NetworkBool IsCapturedByKempeitai { get; private set; }
+
     // =========================================================
     // INPUT
     // =========================================================
@@ -194,6 +197,11 @@ public class PlayerController : NetworkBehaviour
 
     private bool isLocal;
     private bool inputInitialized;
+    private bool incapacitatedPoseApplied;
+    private Vector3 standingPositionBeforeIncapacitation;
+    private Quaternion standingRotationBeforeIncapacitation;
+    private Vector3 incapacitationPivotLocal;
+    private bool characterControllerWasEnabled;
 
     private float animatorSearchTimer;
 
@@ -333,7 +341,18 @@ public class PlayerController : NetworkBehaviour
             return;
 
         if (!Object.HasStateAuthority)
+        {
+            UpdateProxyIncapacitationCollider();
             return;
+        }
+
+        if (playerSanity != null && playerSanity.IsInsane)
+        {
+            moveInput = Vector2.zero;
+            runInput = false;
+            jumpRequested = false;
+            return;
+        }
 
         bool optionsOwnCursor = InGameOptionsController.Instance != null &&
             InGameOptionsController.Instance.isActiveAndEnabled;
@@ -507,6 +526,9 @@ public class PlayerController : NetworkBehaviour
                 $"error={error:F3}m, moveInput={moveInput}, locked={Time.time < movementLockedUntil}.", this);
         }
 
+        if (UpdateIncapacitatedPose())
+            return;
+
         // Apply horizontal player rotation
         transform.rotation = Quaternion.Euler(0f, yaw, 0f);
 
@@ -533,6 +555,75 @@ public class PlayerController : NetworkBehaviour
                 $"controllerBottom={(characterController != null ? characterController.bounds.min.y : float.NaN):F3}, " +
                 $"verticalVelocity={verticalVelocity:F3}.", this);
         }
+    }
+
+    private bool UpdateIncapacitatedPose()
+    {
+        bool shouldBeIncapacitated = playerSanity != null && playerSanity.IsInsane;
+        if (!shouldBeIncapacitated)
+        {
+            if (incapacitatedPoseApplied)
+                RestoreStandingPose();
+            return false;
+        }
+
+        if (!incapacitatedPoseApplied)
+        {
+            standingPositionBeforeIncapacitation = transform.position;
+            standingRotationBeforeIncapacitation = transform.rotation;
+            incapacitationPivotLocal = characterController != null
+                ? Vector3.up * Mathf.Max(0.05f, characterController.radius)
+                : Vector3.up * 0.25f;
+            characterControllerWasEnabled = characterController != null && characterController.enabled;
+            incapacitatedPoseApplied = true;
+
+            if (characterController != null)
+                characterController.enabled = false;
+        }
+
+        moveInput = Vector2.zero;
+        runInput = false;
+        jumpRequested = false;
+        currentVelocity = Vector3.zero;
+        verticalVelocity = 0f;
+        NetworkAnimationSpeed = 0f;
+
+        Quaternion lyingRotation = standingRotationBeforeIncapacitation * Quaternion.Euler(0f, 0f, 90f);
+        Vector3 pivotWorld = standingPositionBeforeIncapacitation +
+                             standingRotationBeforeIncapacitation * incapacitationPivotLocal;
+        transform.SetPositionAndRotation(
+            pivotWorld - lyingRotation * incapacitationPivotLocal,
+            lyingRotation);
+        return true;
+    }
+
+    private void RestoreStandingPose()
+    {
+        transform.SetPositionAndRotation(
+            standingPositionBeforeIncapacitation,
+            standingRotationBeforeIncapacitation);
+
+        if (networkTransform != null)
+            networkTransform.Teleport(
+                standingPositionBeforeIncapacitation,
+                standingRotationBeforeIncapacitation);
+
+        if (characterController != null)
+            characterController.enabled = characterControllerWasEnabled;
+
+        incapacitatedPoseApplied = false;
+        currentVelocity = Vector3.zero;
+        verticalVelocity = 0f;
+    }
+
+    private void UpdateProxyIncapacitationCollider()
+    {
+        if (characterController == null || playerSanity == null)
+            return;
+
+        bool shouldBeEnabled = !playerSanity.IsInsane;
+        if (characterController.enabled != shouldBeEnabled)
+            characterController.enabled = shouldBeEnabled;
     }
 
 
@@ -1018,6 +1109,7 @@ public class PlayerController : NetworkBehaviour
         Vector3 playerRootPosition = position + Vector3.up * bottomOffset;
 
         Teleport(playerRootPosition, rotation);
+        IsCapturedByKempeitai = true;
         expectedTeleportPosition = playerRootPosition;
         verifyTeleportOnNextNetworkTick = true;
         verifyTeleportAfterMovement = true;
@@ -1025,6 +1117,21 @@ public class PlayerController : NetworkBehaviour
             $"[PRISON TELEPORT] Player {Object.Id} moved from {previousPosition} to {transform.position} " +
             $"on state authority. Floor={position}, CharacterController bottom offset={bottomOffset:F2}, " +
             $"lock=0.25s.", this);
+    }
+
+    /// <summary>Returns this player to the Fort2 lobby spawn and clears the capture state.</summary>
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcReturnToLobby(Vector3 position, Quaternion rotation)
+    {
+        if (Object == null || !Object.HasStateAuthority)
+            return;
+
+        if (characterController == null)
+            characterController = GetComponent<CharacterController>();
+
+        IsCapturedByKempeitai = false;
+        isBeingCaptured = false;
+        Teleport(position, rotation);
     }
 
     // Ilagay ang parehong [Rpc(...)] attribute ng RpcTeleportPlayerToPrisonCell

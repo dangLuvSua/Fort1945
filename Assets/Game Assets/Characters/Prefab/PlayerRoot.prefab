@@ -6057,7 +6057,6 @@ MonoBehaviour:
   startingSanity: 100
   allowRecovery: 0
   recoveryPerSecond: 2
-  reviveSanity: 8
   crossHealThresholdPercent: 0.5
   chantSfx: {fileID: 8300000, guid: 609b385f84aeac9498e713f0ba212850, type: 3}
   chantMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
@@ -6065,19 +6064,26 @@ MonoBehaviour:
   reviveGlowColor: {r: 1, g: 0.87919176, b: 0.4575472, a: 1}
   visionEffectsStartPercent: 0.612
   visionPulseSpeed: 1.6
-  maximumRedVignette: 0.723
-  maximumBlur: 0.903
-  maximumChromaticAberration: 0.72
+  maximumRedVignette: 1
+  maximumBlur: 1
+  maximumChromaticAberration: 1
   maximumDizzyDistortion: 0.308
+  zeroSanityColorFilter: {r: 1, g: 0.18, b: 0.18, a: 1}
   whisperSfxClips:
   - {fileID: 8300000, guid: 70a40ad92b73d2048adcae8c35a27a54, type: 3}
   - {fileID: 8300000, guid: 171ca965c3f66b741aba02a94e661e07, type: 3}
   - {fileID: 8300000, guid: f14ff588c6b90a54fbf008ea57f7181e, type: 3}
   heartbeatSfx: {fileID: 8300000, guid: fbe03328ad617364d89f638e475d262a, type: 3}
   lowSanityMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
-  maximumWhisperVolume: 0.45
+  maximumWhisperVolume: 0.8
   maximumHeartbeatVolume: 0.65
   lowSanityAudioFadeSpeed: 2
+  insanityScreamClips:
+  - {fileID: 8300000, guid: 4c3af05ee84d2d349adbc64db9d834be, type: 3}
+  - {fileID: 8300000, guid: 7efb28bda4a99274fa7ed2cdb8efc1f7, type: 3}
+  minimumInsanityScreamInterval: 3
+  maximumInsanityScreamInterval: 6
+  insanityScreamVolume: 0.85
   _CurrentSanity: 0
 --- !u!114 &676268940557445744
 MonoBehaviour:

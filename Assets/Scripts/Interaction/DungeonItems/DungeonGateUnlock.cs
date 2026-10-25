@@ -83,6 +83,8 @@ public class DungeonGateUnlock : MonoBehaviour, IHoldInteractable
 
     private bool interactionZoneBuilt;
     private bool gateUnlocked;
+    private bool unlockNoticeAcknowledged;
+    private bool doorOpenAnimationComplete;
     private Quaternion closedLocalRotation;
     private Quaternion openLocalRotation;
     private bool doorRotationInitialized;
@@ -316,7 +318,11 @@ public class DungeonGateUnlock : MonoBehaviour, IHoldInteractable
         if (doorToRotate != null)
             StartCoroutine(RotateDoorOpen());
         else
+        {
+            doorOpenAnimationComplete = true;
             Debug.LogWarning("[GATE] Door To Rotate is not assigned; gate unlocked without door movement.", this);
+            DestroyLockTriggerIfReady();
+        }
 
         if (unlockAudio != null)
         {
@@ -351,6 +357,30 @@ public class DungeonGateUnlock : MonoBehaviour, IHoldInteractable
         }
 
         doorToRotate.localRotation = openLocalRotation;
+        doorOpenAnimationComplete = true;
+        DestroyLockTriggerIfReady();
+    }
+
+    /// <summary>Called when the player acknowledges the gate-unlocked notice.</summary>
+    public void AcknowledgeUnlockNotice()
+    {
+        if (!gateUnlocked)
+            return;
+
+        unlockNoticeAcknowledged = true;
+        foreach (Collider interactionCollider in GetComponentsInChildren<Collider>())
+        {
+            if (interactionCollider != null)
+                interactionCollider.enabled = false;
+        }
+
+        DestroyLockTriggerIfReady();
+    }
+
+    private void DestroyLockTriggerIfReady()
+    {
+        if (unlockNoticeAcknowledged && doorOpenAnimationComplete)
+            Destroy(gameObject);
     }
 
     // =========================================================

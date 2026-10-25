@@ -121,4 +121,19 @@ public class LobbyPlayerState : NetworkBehaviour
             $"Ready = {IsReady}"
         );
     }
+
+    public void RequestResetReady()
+    {
+        if (Object == null || !Object.IsValid || Runner == null || !Runner.IsRunning)
+            return;
+
+        RPC_ResetReady();
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_ResetReady(RpcInfo info = default)
+    {
+        if (Object != null && Object.HasStateAuthority)
+            IsReady = false;
+    }
 }
