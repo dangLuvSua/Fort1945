@@ -1271,7 +1271,7 @@ MonoBehaviour:
   - item: {fileID: 11400000, guid: 958980f066207474e80707dc59def085, type: 2}
     solvedTarget: {fileID: 3339664099270294760}
     guideRenderer: {fileID: 7407090517667793550}
-  testModeShowAllPieces: 0
+  testModeShowAllPieces: 1
   puzzlePieceMaterial: {fileID: 2100000, guid: 661f2665df804bd478ee7b52fc262de8, type: 2}
   scatterCenter: {fileID: 3887775595933109279}
   scatterSize: {x: 1.2, y: 1.2}
