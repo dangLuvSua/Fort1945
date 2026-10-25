@@ -5,37 +5,84 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Drives the user's MissionProgressPanel (MissionTitle + Content container):
-/// - sets the mission title from the MissionData asset
-/// - builds one ItemRow per required item ([icon] [Name  X/Y])
-/// - updates counts live and turns them green when complete
+/// Drives the MissionProgressPanel.
 ///
-/// The rows are generated at runtime inside the "Content" container so no
-/// prefab or scene wiring is required. If the panel is missing from the
-/// scene, callers fall back to the text-based MissionManager panel.
+/// Normal mission items use the ItemRow prefab.
+///
+/// Extra mission progress such as:
+/// - VALID STATUE PHOTOS: 0/4
+/// - PUZZLE PIECES: 0/8
+///
+/// also uses the same ItemRow prefab layout.
+///
+/// Puzzle requirements:
+/// Easy      = PP1-PP8      = 1001-1008
+/// Normal    = MPP1-MPP16   = 2001-2016
+/// Difficult = HPP1-HPP24   = 3001-3024
 /// </summary>
 public class MissionProgressPanelUI : MonoBehaviour
 {
+    // =========================================================
+    // ITEM ROWS
+    // =========================================================
+
     [Header("Item Rows")]
-    [Tooltip("Optional ItemRow prefab instantiated for each required item. Falls back to code-built rows when empty.")]
-    [SerializeField] private GameObject itemRowPrefab;
+
+    [Tooltip(
+        "ItemRow prefab used for normal objectives and extra " +
+        "progress rows such as statue photos and puzzle pieces."
+    )]
+    [SerializeField]
+    private GameObject itemRowPrefab;
+
+    // =========================================================
+    // RUNTIME REFERENCES
+    // =========================================================
 
     private GameObject panelRoot;
+
     private TMP_Text titleText;
+
     private RectTransform content;
+
+    // =========================================================
+    // NORMAL ITEM ROWS
+    // =========================================================
 
     private readonly List<ItemRowUI> rows =
         new List<ItemRowUI>();
 
-    // Objective progress is calculated from all active players' replicated
-    // inventories, so every client's local HUD shows the same team total.
+    // Team-wide objective tracking.
     private readonly List<TeamObjective> teamObjectives =
         new List<TeamObjective>();
 
-    private readonly Dictionary<string, TMP_Text> progressTextRows =
-        new Dictionary<string, TMP_Text>();
+    // =========================================================
+    // EXTRA PROGRESS ROWS
+    // =========================================================
+
+    // Examples:
+    //
+    // ValidStatuePhotos
+    // PuzzlePieces
+    //
+    // These now use the exact same ItemRow prefab layout.
+    private readonly Dictionary<string, ProgressTextRowUI>
+        progressTextRows =
+            new Dictionary<string, ProgressTextRowUI>();
 
     private bool layoutAdded;
+
+    // =========================================================
+    // COLORS
+    // =========================================================
+
+    private static readonly Color CompletedColor =
+        new Color(
+            0.3f,
+            1f,
+            0.35f,
+            1f
+        );
 
     // =========================================================
     // FACTORY
@@ -49,8 +96,8 @@ public class MissionProgressPanelUI : MonoBehaviour
         if (panel == null)
         {
             Debug.LogWarning(
-                "[MISSION PROGRESS] MissionProgressPanel was " +
-                "not found in the scene."
+                "[MISSION PROGRESS] MissionProgressPanel " +
+                "was not found in the scene."
             );
 
             return null;
@@ -66,31 +113,48 @@ public class MissionProgressPanelUI : MonoBehaviour
         }
 
         ui.EnsureInitialized();
+
         return ui;
     }
+
+    // =========================================================
+    // FIND PANEL
+    // =========================================================
 
     private static GameObject FindMissionProgressPanel()
     {
         GameObject active =
-            GameObject.Find("MissionProgressPanel");
+            GameObject.Find(
+                "MissionProgressPanel"
+            );
 
         if (active != null)
         {
             return active;
         }
 
-        // The panel is deactivated until the mission starts,
-        // so GameObject.Find cannot see it.
         Transform[] allTransforms =
             Object.FindObjectsByType<Transform>(
-                FindObjectsInactive.Include
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None
             );
 
-        for (int i = 0; i < allTransforms.Length; i++)
+        for (int i = 0;
+             i < allTransforms.Length;
+             i++)
         {
-            if (allTransforms[i].name == "MissionProgressPanel")
+            Transform candidate =
+                allTransforms[i];
+
+            if (candidate == null)
             {
-                return allTransforms[i].gameObject;
+                continue;
+            }
+
+            if (candidate.name ==
+                "MissionProgressPanel")
+            {
+                return candidate.gameObject;
             }
         }
 
@@ -98,20 +162,31 @@ public class MissionProgressPanelUI : MonoBehaviour
     }
 
     // =========================================================
-    // UNITY
+    // INITIALIZATION
     // =========================================================
 
     public void EnsureInitialized()
     {
+        // -----------------------------------------------------
+        // PANEL ROOT
+        // -----------------------------------------------------
+
         if (panelRoot == null)
         {
-            panelRoot = gameObject;
+            panelRoot =
+                gameObject;
         }
+
+        // -----------------------------------------------------
+        // TITLE
+        // -----------------------------------------------------
 
         if (titleText == null)
         {
             Transform titleTransform =
-                transform.Find("MissionTitle");
+                transform.Find(
+                    "MissionTitle"
+                );
 
             titleText =
                 titleTransform != null
@@ -120,14 +195,23 @@ public class MissionProgressPanelUI : MonoBehaviour
 
             if (titleText == null)
             {
-                titleText = GetComponentInChildren<TMP_Text>(true);
+                titleText =
+                    GetComponentInChildren<TMP_Text>(
+                        true
+                    );
             }
         }
+
+        // -----------------------------------------------------
+        // CONTENT
+        // -----------------------------------------------------
 
         if (content == null)
         {
             Transform contentTransform =
-                transform.Find("Content");
+                transform.Find(
+                    "Content"
+                );
 
             content =
                 contentTransform != null
@@ -136,17 +220,27 @@ public class MissionProgressPanelUI : MonoBehaviour
 
             if (content == null)
             {
-                foreach (Transform child in transform)
+                foreach (Transform child
+                         in transform)
                 {
-                    if (child.name.Equals("Content", System.StringComparison.OrdinalIgnoreCase))
+                    if (child.name.Equals(
+                            "Content",
+                            System.StringComparison
+                                .OrdinalIgnoreCase))
                     {
-                        content = child as RectTransform;
+                        content =
+                            child as RectTransform;
+
                         break;
                     }
                 }
             }
         }
     }
+
+    // =========================================================
+    // UNITY
+    // =========================================================
 
     private void Awake()
     {
@@ -155,95 +249,464 @@ public class MissionProgressPanelUI : MonoBehaviour
 
     private void Update()
     {
-        NetworkGameManager manager = NetworkGameManager.Instance;
+        NetworkGameManager manager =
+            NetworkGameManager.Instance;
 
-        for (int i = 0; i < teamObjectives.Count; i++)
+        // -----------------------------------------------------
+        // NORMAL MISSION ITEMS
+        // -----------------------------------------------------
+
+        for (int i = 0;
+             i < teamObjectives.Count;
+             i++)
         {
-            TeamObjective objective = teamObjectives[i];
+            TeamObjective objective =
+                teamObjectives[i];
+
             if (objective == null)
+            {
                 continue;
+            }
+
+            int collected =
+                Mathf.Clamp(
+                    GetTeamItemCount(
+                        objective.ItemId,
+                        manager
+                    ),
+                    0,
+                    objective.Required
+                );
 
             SetProgress(
                 objective.ItemId,
-                Mathf.Clamp(GetTeamItemCount(objective.ItemId, manager), 0, objective.Required),
-                objective.Required);
+                collected,
+                objective.Required
+            );
         }
+
+        // -----------------------------------------------------
+        // PUZZLE COLLECTION
+        // -----------------------------------------------------
+
+        UpdatePuzzlePieceProgress(
+            manager
+        );
     }
 
-    private static int GetTeamItemCount(int itemId, NetworkGameManager manager)
+    // =========================================================
+    // TEAM ITEM COUNT
+    // =========================================================
+
+    private static int GetTeamItemCount(
+        int itemId,
+        NetworkGameManager manager)
     {
-        if (manager != null && manager.IsNetworkStateReady)
-            return manager.GetTeamItemCount(itemId);
+        // -----------------------------------------------------
+        // NETWORK GAME MANAGER
+        // -----------------------------------------------------
+
+        if (manager != null &&
+            manager.IsNetworkStateReady)
+        {
+            return manager.GetTeamItemCount(
+                itemId
+            );
+        }
+
+        // -----------------------------------------------------
+        // FALLBACK INVENTORIES
+        // -----------------------------------------------------
 
         PlayerInventory[] inventories =
-            UnityEngine.Object.FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None);
-        NetworkRunner runner = null;
-        foreach (PlayerInventory inventory in inventories)
-        {
-            if (inventory == null || inventory.Runner == null || !inventory.Runner.IsRunning)
-                continue;
+            Object.FindObjectsByType<PlayerInventory>(
+                FindObjectsSortMode.None
+            );
 
-            runner = inventory.Runner;
+        NetworkRunner runner =
+            null;
+
+        foreach (PlayerInventory inventory
+                 in inventories)
+        {
+            if (inventory == null ||
+                inventory.Runner == null ||
+                !inventory.Runner.IsRunning)
+            {
+                continue;
+            }
+
+            runner =
+                inventory.Runner;
+
             break;
         }
 
+        // -----------------------------------------------------
+        // MULTIPLAYER FALLBACK
+        // -----------------------------------------------------
+
         if (runner != null)
         {
-            int total = 0;
-            foreach (PlayerRef player in runner.ActivePlayers)
+            int total =
+                0;
+
+            foreach (PlayerRef player
+                     in runner.ActivePlayers)
             {
-                if (runner.TryGetPlayerObject(player, out NetworkObject playerObject) &&
-                    playerObject != null)
+                if (!runner.TryGetPlayerObject(
+                        player,
+                        out NetworkObject playerObject))
                 {
-                    PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
-                    if (inventory != null)
-                        total += inventory.GetQuantityForItemId(itemId);
+                    continue;
                 }
+
+                if (playerObject == null)
+                {
+                    continue;
+                }
+
+                PlayerInventory inventory =
+                    playerObject
+                        .GetComponent<PlayerInventory>();
+
+                if (inventory == null)
+                {
+                    continue;
+                }
+
+                total +=
+                    inventory.GetQuantityForItemId(
+                        itemId
+                    );
             }
 
             return total;
         }
 
-        foreach (PlayerInventory inventory in inventories)
+        // -----------------------------------------------------
+        // LOCAL / STANDALONE FALLBACK
+        // -----------------------------------------------------
+
+        foreach (PlayerInventory inventory
+                 in inventories)
         {
-            if (inventory != null &&
-                (inventory.Object == null || inventory.Object.HasInputAuthority))
-                return inventory.GetQuantityForItemId(itemId);
+            if (inventory == null)
+            {
+                continue;
+            }
+
+            if (inventory.Object == null ||
+                inventory.Object.HasInputAuthority)
+            {
+                return
+                    inventory.GetQuantityForItemId(
+                        itemId
+                    );
+            }
         }
 
         return 0;
     }
 
     // =========================================================
-    // PUBLIC API
+    // PUZZLE COLLECTION PROGRESS
     // =========================================================
 
-    public void Show(string title)
+    private void UpdatePuzzlePieceProgress(
+        NetworkGameManager manager)
+    {
+        if (progressTextRows.Count == 0)
+        {
+            return;
+        }
+
+        GameDifficulty difficulty =
+            ResolveGameDifficulty(
+                manager
+            );
+
+        GetPuzzlePieceRange(
+            difficulty,
+            out int firstItemId,
+            out int requiredPieces
+        );
+
+        int collectedPieces =
+            CountCollectedPuzzlePieces(
+                firstItemId,
+                requiredPieces,
+                manager
+            );
+
+        collectedPieces =
+            Mathf.Clamp(
+                collectedPieces,
+                0,
+                requiredPieces
+            );
+
+        // -----------------------------------------------------
+        // UPDATE PUZZLE ROW
+        // -----------------------------------------------------
+
+        foreach (
+            KeyValuePair<string, ProgressTextRowUI> pair
+            in progressTextRows)
+        {
+            ProgressTextRowUI row =
+                pair.Value;
+
+            if (row == null)
+            {
+                continue;
+            }
+
+            if (!IsPuzzleProgressRow(
+                    pair.Key,
+                    row.Label))
+            {
+                continue;
+            }
+
+            row.SetProgress(
+                "PUZZLE PIECES",
+                collectedPieces,
+                requiredPieces
+            );
+        }
+    }
+
+    // =========================================================
+    // COUNT COLLECTED PUZZLE PIECES
+    // =========================================================
+
+    private static int CountCollectedPuzzlePieces(
+        int firstItemId,
+        int requiredPieces,
+        NetworkGameManager manager)
+    {
+        int collected =
+            0;
+
+        for (int i = 0;
+             i < requiredPieces;
+             i++)
+        {
+            int itemId =
+                firstItemId + i;
+
+            // Puzzle pieces are unique.
+            //
+            // If at least one player owns this ID,
+            // consider that piece collected.
+            if (GetTeamItemCount(
+                    itemId,
+                    manager) > 0)
+            {
+                collected++;
+            }
+        }
+
+        return collected;
+    }
+
+    // =========================================================
+    // RESOLVE GAME DIFFICULTY
+    // =========================================================
+
+    private static GameDifficulty ResolveGameDifficulty(
+        NetworkGameManager manager)
+    {
+        if (manager != null &&
+            manager.IsNetworkStateReady)
+        {
+            return manager.Difficulty;
+        }
+
+        // -----------------------------------------------------
+        // DIRECT DUNGEON TESTING FALLBACK
+        // -----------------------------------------------------
+
+        PuzzleTableController[] tables =
+            Object.FindObjectsByType<PuzzleTableController>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None
+            );
+
+        foreach (PuzzleTableController table
+                 in tables)
+        {
+            if (table == null)
+            {
+                continue;
+            }
+
+            switch (table.ActiveDifficulty)
+            {
+                case PuzzleTableController
+                    .PuzzleDifficulty.Medium:
+
+                    return GameDifficulty.Normal;
+
+                case PuzzleTableController
+                    .PuzzleDifficulty.Hard:
+
+                    return GameDifficulty.Difficult;
+
+                case PuzzleTableController
+                    .PuzzleDifficulty.Easy:
+
+                    return GameDifficulty.Easy;
+            }
+        }
+
+        return GameDifficulty.Easy;
+    }
+
+    // =========================================================
+    // PUZZLE ID RANGE
+    // =========================================================
+
+    private static void GetPuzzlePieceRange(
+        GameDifficulty difficulty,
+        out int firstItemId,
+        out int requiredPieces)
+    {
+        switch (difficulty)
+        {
+            // -------------------------------------------------
+            // NORMAL = MEDIUM PUZZLE
+            //
+            // MPP1 - MPP16
+            // IDs 2001 - 2016
+            // -------------------------------------------------
+
+            case GameDifficulty.Normal:
+
+                firstItemId =
+                    2001;
+
+                requiredPieces =
+                    16;
+
+                break;
+
+            // -------------------------------------------------
+            // DIFFICULT = HARD PUZZLE
+            //
+            // HPP1 - HPP24
+            // IDs 3001 - 3024
+            // -------------------------------------------------
+
+            case GameDifficulty.Difficult:
+
+                firstItemId =
+                    3001;
+
+                requiredPieces =
+                    24;
+
+                break;
+
+            // -------------------------------------------------
+            // EASY
+            //
+            // PP1 - PP8
+            // IDs 1001 - 1008
+            // -------------------------------------------------
+
+            case GameDifficulty.Easy:
+            default:
+
+                firstItemId =
+                    1001;
+
+                requiredPieces =
+                    8;
+
+                break;
+        }
+    }
+
+    // =========================================================
+    // DETECT PUZZLE ROW
+    // =========================================================
+
+    private static bool IsPuzzleProgressRow(
+        string key,
+        string label)
+    {
+        if (!string.IsNullOrEmpty(
+                key) &&
+            key.IndexOf(
+                "puzzle",
+                System.StringComparison
+                    .OrdinalIgnoreCase) >= 0)
+        {
+            return true;
+        }
+
+        if (!string.IsNullOrEmpty(
+                label) &&
+            label.IndexOf(
+                "PUZZLE PIECES",
+                System.StringComparison
+                    .OrdinalIgnoreCase) >= 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    // =========================================================
+    // SHOW
+    // =========================================================
+
+    public void Show(
+        string title)
     {
         EnsureInitialized();
 
         if (panelRoot != null)
         {
-            panelRoot.SetActive(true);
+            panelRoot.SetActive(
+                true
+            );
         }
         else
         {
-            gameObject.SetActive(true);
+            gameObject.SetActive(
+                true
+            );
         }
 
-        CanvasGroup cg = GetComponent<CanvasGroup>();
+        CanvasGroup cg =
+            GetComponent<CanvasGroup>();
+
         if (cg != null)
         {
-            cg.alpha = 1f;
-            cg.interactable = true;
-            cg.blocksRaycasts = true;
+            cg.alpha =
+                1f;
+
+            cg.interactable =
+                true;
+
+            cg.blocksRaycasts =
+                true;
         }
 
         if (titleText != null)
         {
-            titleText.text = title;
+            titleText.text =
+                title;
         }
     }
+
+    // =========================================================
+    // HIDE
+    // =========================================================
 
     public void Hide()
     {
@@ -251,95 +714,285 @@ public class MissionProgressPanelUI : MonoBehaviour
 
         if (panelRoot != null)
         {
-            panelRoot.SetActive(false);
+            panelRoot.SetActive(
+                false
+            );
         }
         else
         {
-            gameObject.SetActive(false);
+            gameObject.SetActive(
+                false
+            );
         }
     }
 
-    public void SetMission(string title)
+    // =========================================================
+    // SET MISSION
+    // =========================================================
+
+    public void SetMission(
+        string title)
     {
         EnsureInitialized();
+
         ClearRows();
-        Show(title);
+
+        Show(
+            title
+        );
+
         EnsureContentLayout();
     }
 
-    public void SetMission(MissionData mission)
+    public void SetMission(
+        MissionData mission)
     {
         if (mission == null)
-            return;
-
-        // Keep mission details in the separate mission notification panel.
-        // The progress panel content begins with the required item rows.
-        SetMission(mission.title);
-    }
-
-    public void SetProgressText(string key, string text)
-    {
-        EnsureInitialized();
-        if (content == null || string.IsNullOrEmpty(key))
-            return;
-
-        if (!progressTextRows.TryGetValue(key, out TMP_Text row) || row == null)
         {
-            GameObject rowObject = new GameObject(key, typeof(RectTransform));
-            rowObject.transform.SetParent(content, false);
-            row = rowObject.AddComponent<TextMeshProUGUI>();
-            row.font = titleText != null ? titleText.font : null;
-            row.fontSharedMaterial = titleText != null ? titleText.fontSharedMaterial : null;
-            row.fontSize = 22f;
-            row.color = Color.white;
-            row.alignment = TextAlignmentOptions.Left;
-
-            LayoutElement layout = rowObject.AddComponent<LayoutElement>();
-            layout.preferredHeight = 34f;
-            progressTextRows[key] = row;
+            return;
         }
 
-        row.text = text;
+        SetMission(
+            mission.title
+        );
     }
+
+    // =========================================================
+    // EXTRA PROGRESS ROW
+    // =========================================================
+
+    public void SetProgressText(
+        string key,
+        string text)
+    {
+        EnsureInitialized();
+
+        if (content == null ||
+            string.IsNullOrEmpty(
+                key))
+        {
+            return;
+        }
+
+        // -----------------------------------------------------
+        // CREATE EXTRA ROW
+        // -----------------------------------------------------
+
+        if (!progressTextRows.TryGetValue(
+                key,
+                out ProgressTextRowUI row) ||
+            row == null)
+        {
+            row =
+                ProgressTextRowUI.Create(
+                    content,
+                    itemRowPrefab,
+                    titleText,
+                    key
+                );
+
+            progressTextRows[key] =
+                row;
+        }
+
+        if (row == null)
+        {
+            return;
+        }
+
+        // -----------------------------------------------------
+        // PUZZLE ROW
+        // -----------------------------------------------------
+
+        if (IsPuzzleProgressRow(
+                key,
+                text))
+        {
+            NetworkGameManager manager =
+                NetworkGameManager.Instance;
+
+            GameDifficulty difficulty =
+                ResolveGameDifficulty(
+                    manager
+                );
+
+            GetPuzzlePieceRange(
+                difficulty,
+                out int firstItemId,
+                out int requiredPieces
+            );
+
+            int collected =
+                CountCollectedPuzzlePieces(
+                    firstItemId,
+                    requiredPieces,
+                    manager
+                );
+
+            collected =
+                Mathf.Clamp(
+                    collected,
+                    0,
+                    requiredPieces
+                );
+
+            row.SetProgress(
+                "PUZZLE PIECES",
+                collected,
+                requiredPieces
+            );
+
+            return;
+        }
+
+        // -----------------------------------------------------
+        // NORMAL EXTRA PROGRESS
+        //
+        // Example:
+        //
+        // VALID STATUE PHOTOS: 0/4
+        // -----------------------------------------------------
+
+        ParseProgressText(
+            text,
+            out string label,
+            out string value
+        );
+
+        row.SetText(
+            label,
+            value
+        );
+    }
+
+    // =========================================================
+    // PARSE EXTRA PROGRESS TEXT
+    // =========================================================
+
+    private static void ParseProgressText(
+        string text,
+        out string label,
+        out string value)
+    {
+        label =
+            string.Empty;
+
+        value =
+            string.Empty;
+
+        if (string.IsNullOrWhiteSpace(
+                text))
+        {
+            return;
+        }
+
+        int separator =
+            text.LastIndexOf(
+                ':'
+            );
+
+        if (separator < 0)
+        {
+            label =
+                text.Trim();
+
+            return;
+        }
+
+        label =
+            text.Substring(
+                    0,
+                    separator)
+                .Trim();
+
+        value =
+            text.Substring(
+                    separator + 1)
+                .Trim();
+    }
+
+    // =========================================================
+    // TOGGLE
+    // =========================================================
 
     public static void ToggleVisibility()
     {
-        Transform[] allTransforms = Object.FindObjectsByType<Transform>(
-            FindObjectsInactive.Include);
-        bool currentlyVisible = false;
-        bool found = false;
+        Transform[] allTransforms =
+            Object.FindObjectsByType<Transform>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None
+            );
 
-        foreach (Transform candidate in allTransforms)
+        bool currentlyVisible =
+            false;
+
+        bool found =
+            false;
+
+        foreach (Transform candidate
+                 in allTransforms)
         {
-            if (candidate == null || candidate.name != "MissionProgressPanel")
+            if (candidate == null ||
+                candidate.name !=
+                "MissionProgressPanel")
+            {
                 continue;
+            }
 
-            found = true;
-            currentlyVisible |= candidate.gameObject.activeInHierarchy;
+            found =
+                true;
+
+            currentlyVisible |=
+                candidate.gameObject
+                    .activeInHierarchy;
         }
 
         if (!found)
         {
-            Debug.LogWarning("[MISSION PROGRESS] Cannot toggle: panel was not found.");
+            Debug.LogWarning(
+                "[MISSION PROGRESS] Cannot toggle: " +
+                "panel was not found."
+            );
+
             return;
         }
 
-        bool show = !currentlyVisible;
-        foreach (Transform candidate in allTransforms)
+        bool show =
+            !currentlyVisible;
+
+        foreach (Transform candidate
+                 in allTransforms)
         {
-            if (candidate != null && candidate.name == "MissionProgressPanel")
+            if (candidate != null &&
+                candidate.name ==
+                "MissionProgressPanel")
             {
-                candidate.gameObject.SetActive(show);
+                candidate.gameObject.SetActive(
+                    show
+                );
             }
         }
     }
 
-    public void AddItemRow(ItemData itemData, int required)
+    // =========================================================
+    // ADD ITEM ROW
+    // =========================================================
+
+    public void AddItemRow(
+        ItemData itemData,
+        int required)
     {
-        AddItemRow(itemData, required, 0);
+        AddItemRow(
+            itemData,
+            required,
+            0
+        );
     }
 
-    public void AddItemRow(ItemData itemData, int required, int baseline)
+    public void AddItemRow(
+        ItemData itemData,
+        int required,
+        int baseline)
     {
         EnsureInitialized();
 
@@ -352,9 +1005,11 @@ public class MissionProgressPanelUI : MonoBehaviour
         if (content == null)
         {
             Debug.LogWarning(
-                "[MISSION PROGRESS] Content container is null, cannot add item row.",
+                "[MISSION PROGRESS] Content container is null, " +
+                "cannot add item row.",
                 this
             );
+
             return;
         }
 
@@ -373,11 +1028,21 @@ public class MissionProgressPanelUI : MonoBehaviour
                     titleText
                 );
 
-        rows.Add(row);
-        // Objective rows use the same team-wide inventory total as the Fort
-        // mission panel. A pickup by any player advances the shared count.
-        teamObjectives.Add(new TeamObjective(itemData.itemId, required));
+        rows.Add(
+            row
+        );
+
+        teamObjectives.Add(
+            new TeamObjective(
+                itemData.itemId,
+                required
+            )
+        );
     }
+
+    // =========================================================
+    // SET NORMAL ITEM PROGRESS
+    // =========================================================
 
     public void SetProgress(
         int itemId,
@@ -386,19 +1051,32 @@ public class MissionProgressPanelUI : MonoBehaviour
     {
         EnsureInitialized();
 
-        foreach (ItemRowUI row in rows)
+        foreach (ItemRowUI row
+                 in rows)
         {
             if (row != null &&
                 row.ItemId == itemId)
             {
-                row.SetProgress(collected, required);
+                row.SetProgress(
+                    collected,
+                    required
+                );
             }
         }
     }
 
+    // =========================================================
+    // CLEAR
+    // =========================================================
+
     public void ClearRows()
     {
-        foreach (ItemRowUI row in rows)
+        // -----------------------------------------------------
+        // NORMAL ITEMS
+        // -----------------------------------------------------
+
+        foreach (ItemRowUI row
+                 in rows)
         {
             if (row != null)
             {
@@ -407,13 +1085,22 @@ public class MissionProgressPanelUI : MonoBehaviour
         }
 
         rows.Clear();
+
         teamObjectives.Clear();
 
-        foreach (TMP_Text row in progressTextRows.Values)
+        // -----------------------------------------------------
+        // EXTRA ROWS
+        // -----------------------------------------------------
+
+        foreach (ProgressTextRowUI row
+                 in progressTextRows.Values)
         {
             if (row != null)
-                Object.Destroy(row.gameObject);
+            {
+                row.Destroy();
+            }
         }
+
         progressTextRows.Clear();
     }
 
@@ -423,51 +1110,93 @@ public class MissionProgressPanelUI : MonoBehaviour
 
     private void EnsureContentLayout()
     {
-        if (layoutAdded || content == null)
+        if (layoutAdded ||
+            content == null)
         {
             return;
         }
 
-        layoutAdded = true;
+        layoutAdded =
+            true;
 
-        if (content.GetComponent<VerticalLayoutGroup>() == null)
+        // -----------------------------------------------------
+        // VERTICAL LAYOUT
+        // -----------------------------------------------------
+
+        if (content
+                .GetComponent<VerticalLayoutGroup>() ==
+            null)
         {
             VerticalLayoutGroup vlg =
-                content.gameObject.AddComponent<VerticalLayoutGroup>();
+                content.gameObject
+                    .AddComponent<VerticalLayoutGroup>();
 
-            vlg.spacing = 8f;
-            vlg.childControlWidth = true;
-            vlg.childControlHeight = true;
-            vlg.childForceExpandWidth = true;
-            vlg.childForceExpandHeight = false;
-            vlg.childAlignment = TextAnchor.UpperCenter;
+            vlg.spacing =
+                8f;
+
+            vlg.childControlWidth =
+                true;
+
+            vlg.childControlHeight =
+                true;
+
+            vlg.childForceExpandWidth =
+                true;
+
+            vlg.childForceExpandHeight =
+                false;
+
+            vlg.childAlignment =
+                TextAnchor.UpperCenter;
         }
 
+        // -----------------------------------------------------
+        // CONTENT SIZE
+        // -----------------------------------------------------
+
         ContentSizeFitter fitter =
-            content.GetComponent<ContentSizeFitter>();
+            content
+                .GetComponent<ContentSizeFitter>();
 
         if (fitter == null)
         {
             fitter =
-                content.gameObject.AddComponent<ContentSizeFitter>();
+                content.gameObject
+                    .AddComponent<ContentSizeFitter>();
         }
 
         fitter.verticalFit =
-            ContentSizeFitter.FitMode.PreferredSize;
+            ContentSizeFitter
+                .FitMode
+                .PreferredSize;
     }
 
     // =========================================================
-    // ITEM ROW
+    // NORMAL ITEM ROW
     // =========================================================
 
     private class ItemRowUI
     {
-        public int ItemId { get; }
+        public int ItemId
+        {
+            get;
+        }
 
-        private readonly GameObject rowGameObject;
-        private readonly string itemName;
-        private readonly TMP_Text nameText;
-        private readonly TMP_Text countText;
+        private readonly GameObject
+            rowGameObject;
+
+        private readonly string
+            itemName;
+
+        private readonly TMP_Text
+            nameText;
+
+        private readonly TMP_Text
+            countText;
+
+        // =====================================================
+        // CREATE FROM PREFAB
+        // =====================================================
 
         public static ItemRowUI CreateFromPrefab(
             Transform parent,
@@ -476,27 +1205,44 @@ public class MissionProgressPanelUI : MonoBehaviour
             int required)
         {
             GameObject rowGo =
-                Object.Instantiate(prefab, parent, false);
+                Object.Instantiate(
+                    prefab,
+                    parent,
+                    false
+                );
 
             RectTransform rowRt =
-                rowGo.GetComponent<RectTransform>();
+                rowGo
+                    .GetComponent<RectTransform>();
 
             if (rowRt != null)
             {
-                rowRt.anchoredPosition = Vector2.zero;
+                rowRt.anchoredPosition =
+                    Vector2.zero;
+
                 rowRt.sizeDelta =
-                    new Vector2(0f, 50f);
+                    new Vector2(
+                        0f,
+                        50f
+                    );
             }
 
             TMP_Text nameText =
-                FindChildText(rowGo.transform, "ItemName");
+                FindChildText(
+                    rowGo.transform,
+                    "ItemName"
+                );
 
             TMP_Text countText =
-                FindChildText(rowGo.transform, "ItemCount");
+                FindChildText(
+                    rowGo.transform,
+                    "ItemCount"
+                );
 
             if (nameText != null)
             {
-                nameText.text = itemData.itemName;
+                nameText.text =
+                    itemData.itemName;
             }
 
             if (countText != null)
@@ -514,6 +1260,10 @@ public class MissionProgressPanelUI : MonoBehaviour
             );
         }
 
+        // =====================================================
+        // CREATE CODE-BUILT
+        // =====================================================
+
         public static ItemRowUI CreateCodeBuilt(
             Transform parent,
             ItemData itemData,
@@ -521,104 +1271,83 @@ public class MissionProgressPanelUI : MonoBehaviour
             TMP_Text fontSource)
         {
             GameObject rowGo =
-                new GameObject(
-                    "ItemRow",
-                    typeof(RectTransform)
+                CreateBaseRow(
+                    parent
                 );
 
-            rowGo.transform.SetParent(parent, false);
+            // -------------------------------------------------
+            // ICON
+            // -------------------------------------------------
 
-            RectTransform rowRt =
-                rowGo.GetComponent<RectTransform>();
-
-            rowRt.sizeDelta =
-                new Vector2(0f, 40f);
-
-            HorizontalLayoutGroup hlg =
-                rowGo.AddComponent<HorizontalLayoutGroup>();
-
-            hlg.spacing = 10f;
-            hlg.childAlignment = TextAnchor.MiddleLeft;
-            hlg.childControlWidth = false;
-            hlg.childControlHeight = true;
-            hlg.childForceExpandWidth = false;
-            hlg.childForceExpandHeight = true;
-
-            LayoutElement rowLayout =
-                rowGo.AddComponent<LayoutElement>();
-
-            rowLayout.preferredHeight = 40f;
-
-            // Icon
             GameObject iconGo =
                 new GameObject(
                     "ItemIcon",
                     typeof(RectTransform)
                 );
 
-            iconGo.transform.SetParent(rowGo.transform, false);
+            iconGo.transform.SetParent(
+                rowGo.transform,
+                false
+            );
 
             RectTransform iconRt =
-                iconGo.GetComponent<RectTransform>();
+                iconGo
+                    .GetComponent<RectTransform>();
 
             iconRt.sizeDelta =
-                new Vector2(32f, 32f);
+                new Vector2(
+                    32f,
+                    32f
+                );
 
             LayoutElement iconLayout =
-                iconGo.AddComponent<LayoutElement>();
+                iconGo
+                    .AddComponent<LayoutElement>();
 
-            iconLayout.preferredWidth = 32f;
-            iconLayout.preferredHeight = 32f;
+            iconLayout.preferredWidth =
+                32f;
+
+            iconLayout.preferredHeight =
+                32f;
 
             Image icon =
-                iconGo.AddComponent<Image>();
+                iconGo
+                    .AddComponent<Image>();
 
             if (itemData.icon != null)
             {
-                icon.sprite = itemData.icon;
-                icon.preserveAspect = true;
+                icon.sprite =
+                    itemData.icon;
+
+                icon.preserveAspect =
+                    true;
             }
             else
             {
                 icon.color =
-                    new Color(0.2f, 0.2f, 0.2f, 1f);
+                    new Color(
+                        0.2f,
+                        0.2f,
+                        0.2f,
+                        1f
+                    );
             }
 
-            // Count label
-            GameObject labelGo =
-                new GameObject(
-                    "ItemCount",
-                    typeof(RectTransform)
-                );
-
-            labelGo.transform.SetParent(rowGo.transform, false);
-
-            RectTransform labelRt =
-                labelGo.GetComponent<RectTransform>();
-
-            labelRt.sizeDelta =
-                new Vector2(220f, 32f);
-
-            LayoutElement labelLayout =
-                labelGo.AddComponent<LayoutElement>();
-
-            labelLayout.preferredWidth = 220f;
-            labelLayout.preferredHeight = 32f;
+            // -------------------------------------------------
+            // LABEL
+            // -------------------------------------------------
 
             TMP_Text label =
-                labelGo.AddComponent<TextMeshProUGUI>();
+                CreateText(
+                    rowGo.transform,
+                    "ItemCount",
+                    fontSource,
+                    220f
+                );
 
-            if (fontSource != null)
-            {
-                label.font = fontSource.font;
-                label.fontSharedMaterial =
-                    fontSource.fontSharedMaterial;
-            }
-
-            label.fontSize = 26f;
-            label.color = Color.white;
             label.text =
-                $"{itemData.itemName}   0/{required}";
+                $"{itemData.itemName}   " +
+                $"0/{required}";
 
             return new ItemRowUI(
                 rowGo,
@@ -629,24 +1358,9 @@ public class MissionProgressPanelUI : MonoBehaviour
             );
         }
 
-        private static TMP_Text FindChildText(
-            Transform root,
-            string childName)
-        {
-            Transform child = root.Find(childName);
-
-            if (child == null)
-            {
-                return null;
-            }
-
-            TMP_Text text =
-                child.GetComponent<TMP_Text>();
-
-            return text != null
-                ? text
-                : child.GetComponentInChildren<TMP_Text>(true);
-        }
+        // =====================================================
+        // CONSTRUCTOR
+        // =====================================================
 
         private ItemRowUI(
             GameObject rowGameObject,
@@ -655,12 +1369,25 @@ public class MissionProgressPanelUI : MonoBehaviour
             TMP_Text nameText,
             TMP_Text countText)
         {
-            this.rowGameObject = rowGameObject;
-            ItemId = itemId;
-            this.itemName = itemName;
-            this.nameText = nameText;
-            this.countText = countText;
+            this.rowGameObject =
+                rowGameObject;
+
+            ItemId =
+                itemId;
+
+            this.itemName =
+                itemName;
+
+            this.nameText =
+                nameText;
+
+            this.countText =
+                countText;
         }
+
+        // =====================================================
+        // SET PROGRESS
+        // =====================================================
 
         public void SetProgress(
             int collected,
@@ -674,39 +1401,513 @@ public class MissionProgressPanelUI : MonoBehaviour
             countText.text =
                 nameText != null
                     ? $"{collected}/{required}"
-                    : $"{itemName}   {collected}/{required}";
+                    : $"{itemName}   " +
+                      $"{collected}/{required}";
 
             Color targetColor =
                 collected >= required
-                    ? new Color(0.3f, 1f, 0.35f, 1f)
+                    ? CompletedColor
                     : Color.white;
 
-            countText.color = targetColor;
+            countText.color =
+                targetColor;
 
             if (nameText != null)
             {
-                nameText.color = targetColor;
+                nameText.color =
+                    targetColor;
             }
         }
+
+        // =====================================================
+        // DESTROY
+        // =====================================================
 
         public void Destroy()
         {
             if (rowGameObject != null)
             {
-                Object.Destroy(rowGameObject);
+                Object.Destroy(
+                    rowGameObject
+                );
             }
         }
     }
 
+    // =========================================================
+    // EXTRA PROGRESS ROW
+    // =========================================================
+
+    private class ProgressTextRowUI
+    {
+        private readonly GameObject
+            rowGameObject;
+
+        private readonly TMP_Text
+            nameText;
+
+        private readonly TMP_Text
+            countText;
+
+        public string Label
+        {
+            get
+            {
+                return nameText != null
+                    ? nameText.text
+                    : string.Empty;
+            }
+        }
+
+        // =====================================================
+        // CREATE
+        // =====================================================
+
+        public static ProgressTextRowUI Create(
+            Transform parent,
+            GameObject prefab,
+            TMP_Text fontSource,
+            string rowName)
+        {
+            // -------------------------------------------------
+            // USE THE SAME ITEM ROW PREFAB
+            // -------------------------------------------------
+
+            if (prefab != null)
+            {
+                GameObject rowGo =
+                    Object.Instantiate(
+                        prefab,
+                        parent,
+                        false
+                    );
+
+                rowGo.name =
+                    rowName;
+
+                RectTransform rowRt =
+                    rowGo.GetComponent<RectTransform>();
+
+                if (rowRt != null)
+                {
+                    rowRt.anchoredPosition =
+                        Vector2.zero;
+
+                    rowRt.sizeDelta =
+                        new Vector2(
+                            0f,
+                            50f
+                        );
+                }
+
+                TMP_Text nameText =
+                    FindChildText(
+                        rowGo.transform,
+                        "ItemName"
+                    );
+
+                TMP_Text countText =
+                    FindChildText(
+                        rowGo.transform,
+                        "ItemCount"
+                    );
+
+                // Extra progress objectives don't need
+                // an item icon.
+                Transform icon =
+                    rowGo.transform.Find(
+                        "ItemIcon"
+                    );
+
+                if (icon != null)
+                {
+                    icon.gameObject.SetActive(
+                        false
+                    );
+                }
+
+                return new ProgressTextRowUI(
+                    rowGo,
+                    nameText,
+                    countText
+                );
+            }
+
+            // -------------------------------------------------
+            // FALLBACK
+            // -------------------------------------------------
+
+            GameObject fallbackRow =
+                CreateBaseRow(
+                    parent
+                );
+
+            fallbackRow.name =
+                rowName;
+
+            TMP_Text fallbackName =
+                CreateText(
+                    fallbackRow.transform,
+                    "ItemName",
+                    fontSource,
+                    230f
+                );
+
+            TMP_Text fallbackCount =
+                CreateText(
+                    fallbackRow.transform,
+                    "ItemCount",
+                    fontSource,
+                    90f
+                );
+
+            return new ProgressTextRowUI(
+                fallbackRow,
+                fallbackName,
+                fallbackCount
+            );
+        }
+
+        // =====================================================
+        // CONSTRUCTOR
+        // =====================================================
+
+        private ProgressTextRowUI(
+            GameObject rowGameObject,
+            TMP_Text nameText,
+            TMP_Text countText)
+        {
+            this.rowGameObject =
+                rowGameObject;
+
+            this.nameText =
+                nameText;
+
+            this.countText =
+                countText;
+        }
+
+        // =====================================================
+        // SET NUMBER PROGRESS
+        // =====================================================
+
+        public void SetProgress(
+            string label,
+            int collected,
+            int required)
+        {
+            if (nameText != null)
+            {
+                nameText.text =
+                    label;
+            }
+
+            if (countText != null)
+            {
+                countText.text =
+                    $"{collected}/{required}";
+            }
+
+            bool completed =
+                required > 0 &&
+                collected >= required;
+
+            SetColor(
+                completed
+                    ? CompletedColor
+                    : Color.white
+            );
+        }
+
+        // =====================================================
+        // SET RAW TEXT
+        // =====================================================
+
+        public void SetText(
+            string label,
+            string value)
+        {
+            if (nameText != null)
+            {
+                nameText.text =
+                    label;
+            }
+
+            if (countText != null)
+            {
+                countText.text =
+                    value;
+            }
+
+            bool completed =
+                TryParseProgressRatio(
+                    value,
+                    out int collected,
+                    out int required
+                ) &&
+                required > 0 &&
+                collected >= required;
+
+            SetColor(
+                completed
+                    ? CompletedColor
+                    : Color.white
+            );
+        }
+
+        // =====================================================
+        // COLOR
+        // =====================================================
+
+        private void SetColor(
+            Color color)
+        {
+            if (nameText != null)
+            {
+                nameText.color =
+                    color;
+            }
+
+            if (countText != null)
+            {
+                countText.color =
+                    color;
+            }
+        }
+
+        // =====================================================
+        // DESTROY
+        // =====================================================
+
+        public void Destroy()
+        {
+            if (rowGameObject != null)
+            {
+                Object.Destroy(
+                    rowGameObject
+                );
+            }
+        }
+    }
+
+    // =========================================================
+    // PARSE X/Y
+    // =========================================================
+
+    private static bool TryParseProgressRatio(
+        string value,
+        out int collected,
+        out int required)
+    {
+        collected =
+            0;
+
+        required =
+            0;
+
+        if (string.IsNullOrWhiteSpace(
+                value))
+        {
+            return false;
+        }
+
+        string[] parts =
+            value.Split(
+                '/'
+            );
+
+        if (parts.Length != 2)
+        {
+            return false;
+        }
+
+        if (!int.TryParse(
+                parts[0].Trim(),
+                out collected))
+        {
+            return false;
+        }
+
+        if (!int.TryParse(
+                parts[1].Trim(),
+                out required))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    // =========================================================
+    // SHARED UI HELPERS
+    // =========================================================
+
+    private static GameObject CreateBaseRow(
+        Transform parent)
+    {
+        GameObject rowGo =
+            new GameObject(
+                "ItemRow",
+                typeof(RectTransform)
+            );
+
+        rowGo.transform.SetParent(
+            parent,
+            false
+        );
+
+        RectTransform rowRt =
+            rowGo.GetComponent<RectTransform>();
+
+        rowRt.sizeDelta =
+            new Vector2(
+                0f,
+                40f
+            );
+
+        HorizontalLayoutGroup hlg =
+            rowGo.AddComponent<HorizontalLayoutGroup>();
+
+        hlg.spacing =
+            10f;
+
+        hlg.childAlignment =
+            TextAnchor.MiddleLeft;
+
+        hlg.childControlWidth =
+            false;
+
+        hlg.childControlHeight =
+            true;
+
+        hlg.childForceExpandWidth =
+            false;
+
+        hlg.childForceExpandHeight =
+            true;
+
+        LayoutElement rowLayout =
+            rowGo.AddComponent<LayoutElement>();
+
+        rowLayout.preferredHeight =
+            40f;
+
+        return rowGo;
+    }
+
+    private static TMP_Text CreateText(
+        Transform parent,
+        string objectName,
+        TMP_Text fontSource,
+        float width)
+    {
+        GameObject textGo =
+            new GameObject(
+                objectName,
+                typeof(RectTransform)
+            );
+
+        textGo.transform.SetParent(
+            parent,
+            false
+        );
+
+        RectTransform rt =
+            textGo.GetComponent<RectTransform>();
+
+        rt.sizeDelta =
+            new Vector2(
+                width,
+                32f
+            );
+
+        LayoutElement layout =
+            textGo.AddComponent<LayoutElement>();
+
+        layout.preferredWidth =
+            width;
+
+        layout.preferredHeight =
+            32f;
+
+        TMP_Text text =
+            textGo.AddComponent<TextMeshProUGUI>();
+
+        if (fontSource != null)
+        {
+            text.font =
+                fontSource.font;
+
+            text.fontSharedMaterial =
+                fontSource.fontSharedMaterial;
+        }
+
+        text.fontSize =
+            26f;
+
+        text.color =
+            Color.white;
+
+        text.alignment =
+            TextAlignmentOptions.Left;
+
+        return text;
+    }
+
+    private static TMP_Text FindChildText(
+        Transform root,
+        string childName)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        Transform child =
+            root.Find(
+                childName
+            );
+
+        if (child == null)
+        {
+            return null;
+        }
+
+        TMP_Text text =
+            child.GetComponent<TMP_Text>();
+
+        return text != null
+            ? text
+            : child.GetComponentInChildren<TMP_Text>(
+                true
+            );
+    }
+
+    // =========================================================
+    // TEAM OBJECTIVE
+    // =========================================================
+
     private sealed class TeamObjective
     {
-        public int ItemId { get; }
-        public int Required { get; }
-        public TeamObjective(int itemId, int required)
+        public int ItemId
         {
-            ItemId = itemId;
-            Required = required;
+            get;
+        }
+
+        public int Required
+        {
+            get;
+        }
+
+        public TeamObjective(
+            int itemId,
+            int required)
+        {
+            ItemId =
+                itemId;
+
+            Required =
+                required;
         }
     }
 }
-
