@@ -2,7 +2,6 @@ using Fusion;
 using UnityEngine;
 
 // One activation per networked trigger, audiovisual playback only on winner's client.
-[RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(NetworkObject))]
 public sealed class SharedOneShotJumpscareTrigger : NetworkBehaviour
 {
@@ -24,8 +23,15 @@ public sealed class SharedOneShotJumpscareTrigger : NetworkBehaviour
 
     private void Awake()
     {
-        if (detectionCollider == null) detectionCollider = GetComponent<Collider>();
-        if (detectionCollider != null) detectionCollider.isTrigger = true;
+        // Detection can live on a child object. Do not add or depend on a
+        // collider on this NetworkBehaviour's root.
+        if (detectionCollider == null)
+            detectionCollider = GetComponentInChildren<Collider>();
+
+        if (detectionCollider != null)
+            detectionCollider.isTrigger = true;
+        else
+            Debug.LogError($"{nameof(SharedOneShotJumpscareTrigger)} on '{name}' needs a Detection Collider assigned.", this);
     }
 
     private void OnTriggerEnter(Collider other)
