@@ -110,6 +110,8 @@ public class NetworkRunnerHandler :
 
     // Main game runner.
     private NetworkRunner runner;
+    private NetworkRunner startingRunner;
+    private bool applicationQuitting;
 
     public NetworkRunner GameRunner => runner;
 
@@ -126,6 +128,7 @@ public class NetworkRunnerHandler :
     private Coroutine sceneLoadTimeoutCoroutine;
     private bool sceneLoadFallbackInProgress;
     private bool sceneLoadInProgress;
+    private UnityEngine.ThreadPriority previousLoadingPriority;
 
     public void CaptureLocalInventoryForDungeon()
     {
