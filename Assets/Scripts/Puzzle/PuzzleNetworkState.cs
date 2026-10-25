@@ -5,6 +5,25 @@ public class PuzzleNetworkState : NetworkBehaviour
 {
     public static PuzzleNetworkState Instance { get; private set; }
 
+    // Evidence lives in procedurally instantiated rooms, so keep its durable
+    // state on the existing runner-spawned shared puzzle object.
+    [Networked] public int EvidenceCompletedMask { get; private set; }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_PlaceEvidencePhoto(int slot, int photo, RpcInfo info = default)
+    {
+        if (!Object.HasStateAuthority || slot < 0 || slot >= 4 ||
+            (EvidenceCompletedMask & (1 << slot)) != 0) return;
+        bool active = false;
+        foreach (PlayerRef player in Runner.ActivePlayers)
+            if (player == info.Source) { active = true; break; }
+        if (!active) return;
+        EvidenceBoardManager board = FindAnyObjectByType<EvidenceBoardManager>();
+        if (board == null || !board.Matches(slot, photo)) return;
+        EvidenceCompletedMask |= 1 << slot;
+        if (EvidenceCompletedMask == 15) board.NotifyAuthorityCompleted();
+    }
+
     // =========================================================
     // MAXIMUM SUPPORTED PIECES
     // =========================================================

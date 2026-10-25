@@ -5,74 +5,29 @@ using TMPro;
 
 public class PlayerInteractor : NetworkBehaviour
 {
-    // =========================================================
-    // INTERACTION
-    // =========================================================
+[Header("Interaction")]
+[SerializeField] private Camera cam;
+[SerializeField] private PlayerInventory inventory;
+[SerializeField] private GameObject uiRoot;
+[SerializeField] private GameObject promptText;
+[SerializeField] private TMP_Text promptLabel;
+[SerializeField, Min(0.1f)] private float range = 3f;
+[SerializeField] private LayerMask mask = ~0;
 
-    [Header("Interaction")]
+[Header("Hold Interaction UI")]
+[SerializeField] private InteractionPrompt holdPrompt;
+[SerializeField] private bool createFallbackSlider = true;
 
-    [SerializeField]
-    private Camera cam;
+private bool isLocal;
 
-    [SerializeField]
-    private PlayerInventory inventory;
+private IHoldInteractable currentHoldTarget;
+private HoldInteractionSliderUI holdSlider;
+private bool ownsPromptInstance;
+private InteractionPrompt holdPromptPrefab;
 
-    [SerializeField]
-    private GameObject uiRoot;
-
-    [SerializeField]
-    private GameObject promptText;
-
-    [SerializeField]
-    private TMP_Text promptLabel;
-
-    [SerializeField, Min(0.1f)]
-    private float range = 3f;
-
-    [SerializeField]
-    private LayerMask mask = ~0;
-
-    // =========================================================
-    // HOLD INTERACTION UI
-    // =========================================================
-
-    [Header("Hold Interaction UI")]
-
-    [SerializeField]
-    private InteractionPrompt holdPrompt;
-
-    [SerializeField]
-    private bool createFallbackSlider = true;
-
-    // =========================================================
-    // RUNTIME
-    // =========================================================
-
-    private bool isLocal;
-
-    private IHoldInteractable currentHoldTarget;
-
-    private HoldInteractionSliderUI holdSlider;
-
-    // True when this PlayerInteractor instantiated its own
-    // InteractionPrompt.
-    private bool ownsPromptInstance;
-
-    // Keeps the original prefab reference so the prompt can be
-    // recreated if necessary.
-    private InteractionPrompt holdPromptPrefab;
-
-    private float holdProgress;
-
-    private bool holdStarted;
-
-    // True while this interactor currently owns/displays
-    // the shared hold prompt.
-    private bool ownsHoldPrompt;
-
-    // =========================================================
-    // FUSION SPAWN
-    // =========================================================
+private float holdProgress;
+private bool holdStarted;
+private bool ownsHoldPrompt;
 
     public override void Spawned()
     {
@@ -158,10 +113,6 @@ public class PlayerInteractor : NetworkBehaviour
         }
     }
 
-    // =========================================================
-    // ENABLE
-    // =========================================================
-
     private void OnEnable()
     {
         // OnEnable can run before Fusion Spawned().
@@ -185,93 +136,56 @@ public class PlayerInteractor : NetworkBehaviour
         );
     }
 
-    // =========================================================
-    // UPDATE
-    // =========================================================
+private void Update()
+{
+    if (!isLocal || cam == null || inventory == null)
+        return;
 
-    private void Update()
+    if (Keyboard.current == null)
+        return;
+
+    if (PlayerInventoryUI.EvidenceSelectionOpen)
     {
-        if (!isLocal ||
-            cam == null ||
-            inventory == null)
+        CancelHold();
+        UpdatePrompt(null, null);
+        return;
+    }
+
+    Ray ray = cam.ViewportPointToRay(
+        new Vector3(0.5f, 0.5f, 0f)
+    );
+
+    IInteractable target = null;
+    int bestPriority = int.MinValue;
+    float bestDist = float.MaxValue;
+
+    RaycastHit[] hits = Physics.RaycastAll(
+        ray,
+        range,
+        mask,
+        QueryTriggerInteraction.Ignore
+    );
+
+    foreach (RaycastHit hit in hits)
+    {
+        IInteractable candidate =
+            hit.collider.GetComponentInParent<IInteractable>();
+
+        if (candidate is IHoldInteractable candidateHold)
+            candidateHold.UpdateContext(inventory);
+
+        if (candidate == null || !candidate.CanInteract)
+            continue;
+
+        if (candidate.Priority > bestPriority ||
+            (candidate.Priority == bestPriority &&
+             hit.distance < bestDist))
         {
-            return;
+            target = candidate;
+            bestPriority = candidate.Priority;
+            bestDist = hit.distance;
         }
-
-        if (Keyboard.current == null)
-        {
-            return;
-        }
-
-        Ray ray =
-            cam.ViewportPointToRay(
-                new Vector3(
-                    0.5f,
-                    0.5f,
-                    0f
-                )
-            );
-
-        IInteractable target =
-            null;
-
-        int bestPriority =
-            int.MinValue;
-
-        float bestDist =
-            float.MaxValue;
-
-        // -----------------------------------------------------
-        // NORMAL RAYCAST INTERACTION
-        // -----------------------------------------------------
-
-        RaycastHit[] hits =
-            Physics.RaycastAll(
-                ray,
-                range,
-                mask,
-                QueryTriggerInteraction.Ignore
-            );
-
-        foreach (RaycastHit hit in hits)
-        {
-            IInteractable candidate =
-                hit.collider
-                    .GetComponentInParent<IInteractable>();
-
-            if (candidate is IHoldInteractable candidateHold)
-            {
-                candidateHold.UpdateContext(
-                    inventory
-                );
-            }
-
-            if (candidate == null ||
-                !candidate.CanInteract)
-            {
-                continue;
-            }
-
-            if (candidate.Priority > bestPriority ||
-                (
-                    candidate.Priority == bestPriority &&
-                    hit.distance < bestDist
-                ))
-            {
-                target =
-                    candidate;
-
-                bestPriority =
-                    candidate.Priority;
-
-                bestDist =
-                    hit.distance;
-            }
-        }
-
-        // =====================================================
-        // INTERROGATION ROOM GATE
-        // =====================================================
+    }
 
         InterrogationRoomGateUnlock[] roomGates =
             FindObjectsByType<InterrogationRoomGateUnlock>(
@@ -363,174 +277,87 @@ public class PlayerInteractor : NetworkBehaviour
         // HOLD TARGET
         // =====================================================
 
-        IHoldInteractable holdTarget =
-            target as IHoldInteractable;
+    IHoldInteractable holdTarget =
+        target as IHoldInteractable;
 
-        if (holdTarget != null)
-        {
-            holdTarget.UpdateContext(
-                inventory
-            );
-        }
+    if (holdTarget != null)
+        holdTarget.UpdateContext(inventory);
 
-        // -----------------------------------------------------
-        // UPDATE PROMPT
-        // -----------------------------------------------------
+    UpdatePrompt(target, holdTarget);
 
-        UpdatePrompt(
-            target,
-            holdTarget
-        );
-
-        // -----------------------------------------------------
-        // TARGET CHANGED
-        // -----------------------------------------------------
-
-        if (currentHoldTarget != null &&
-            currentHoldTarget != holdTarget)
-        {
-            CancelHold();
-        }
-
-        // =====================================================
-        // QUICK TAP HOLD INTERACTION
-        // =====================================================
-
-        if (holdTarget is IQuickTapHoldInteractable quickTapTarget &&
-            quickTapTarget.CanTapInteract)
-        {
-            if (currentHoldTarget != null)
-            {
-                CancelHold();
-            }
-
-            if (Keyboard.current.eKey.wasPressedThisFrame)
-            {
-                quickTapTarget.TapInteract(
-                    inventory
-                );
-            }
-
-            return;
-        }
-
-        // =====================================================
-        // BEGIN TRACKING HOLD TARGET
-        // =====================================================
-
-        if (holdTarget != null &&
-            currentHoldTarget == null)
-        {
-            currentHoldTarget =
-                holdTarget;
-
-            holdProgress =
-                0f;
-
-            holdStarted =
-                false;
-        }
-
-        // -----------------------------------------------------
-        // PROCESS HOLD
-        // -----------------------------------------------------
-
-        if (currentHoldTarget != null)
-        {
-            ProcessHoldInput();
-        }
-
-        // =====================================================
-        // NORMAL PRESS INTERACTION
-        // =====================================================
-
-        if (target != null &&
-            holdTarget == null &&
-            Keyboard.current.eKey.wasPressedThisFrame)
-        {
-            target.Interact(
-                inventory
-            );
-        }
-    }
-
-    // =========================================================
-    // PROMPT
-    // =========================================================
-
-    private void UpdatePrompt(
-        IInteractable target,
-        IHoldInteractable holdTarget)
+    // Cancel only when the player stops targeting the object.
+    if (currentHoldTarget != null &&
+        currentHoldTarget != holdTarget)
     {
-        // -----------------------------------------------------
-        // HOLD INTERACTION PROMPT
-        // -----------------------------------------------------
-
-        if (holdTarget != null &&
-            holdPrompt != null)
-        {
-            if (promptText != null)
-            {
-                promptText.SetActive(
-                    false
-                );
-            }
-
-            holdPrompt.ShowFor(
-                this,
-                holdTarget.Prompt
-            );
-
-            ownsHoldPrompt =
-                true;
-
-            return;
-        }
-
-        // -----------------------------------------------------
-        // HIDE HOLD PROMPT
-        // -----------------------------------------------------
-
-        if (holdPrompt != null &&
-            ownsHoldPrompt)
-        {
-            holdPrompt.HideFor(
-                this
-            );
-
-            ownsHoldPrompt =
-                false;
-        }
-
-        // -----------------------------------------------------
-        // NORMAL INTERACTION PROMPT
-        // -----------------------------------------------------
-
-        if (promptLabel != null)
-        {
-            promptLabel.text =
-                target != null
-                    ? target.Prompt
-                    : string.Empty;
-        }
-
-        if (promptText != null)
-        {
-            promptText.SetActive(
-                target != null
-            );
-        }
-
-        if (holdSlider != null &&
-            !holdStarted)
-        {
-            holdSlider.Hide();
-        }
+        CancelHold();
     }
 
-    // =========================================================
-    // HOLD INPUT
-    // =========================================================
+    if (holdTarget is IQuickTapHoldInteractable quickTapTarget &&
+        quickTapTarget.CanTapInteract)
+    {
+        if (currentHoldTarget != null)
+            CancelHold();
+
+        if (Keyboard.current.eKey.wasPressedThisFrame)
+            quickTapTarget.TapInteract(inventory);
+
+        return;
+    }
+
+    if (holdTarget != null &&
+        currentHoldTarget == null)
+    {
+        currentHoldTarget = holdTarget;
+        holdProgress = 0f;
+        holdStarted = false;
+    }
+
+    if (currentHoldTarget != null)
+        ProcessHoldInput();
+
+    // Preserve normal press-to-interact behavior.
+    if (target != null &&
+        holdTarget == null &&
+        (target is PolaroidInteractable
+            ? Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame
+            : Keyboard.current.eKey.wasPressedThisFrame))
+    {
+        target.Interact(inventory);
+    }
+}
+
+private void UpdatePrompt(
+    IInteractable target,
+    IHoldInteractable holdTarget)
+{
+    if (holdTarget != null && holdPrompt != null)
+    {
+        if (promptText != null)
+            promptText.SetActive(false);
+
+        holdPrompt.ShowFor(this, holdTarget.Prompt);
+        ownsHoldPrompt = true;
+        return;
+    }
+
+    if (holdPrompt != null && ownsHoldPrompt)
+    {
+        holdPrompt.HideFor(this);
+        ownsHoldPrompt = false;
+    }
+
+    if (promptLabel != null)
+    {
+        promptLabel.text =
+            target != null ? target.Prompt : string.Empty;
+    }
+
+    if (promptText != null)
+        promptText.SetActive(target != null);
+
+    if (holdSlider != null && !holdStarted)
+        holdSlider.Hide();
+}
 
     private void ProcessHoldInput()
     {
@@ -682,115 +509,24 @@ public class PlayerInteractor : NetworkBehaviour
         }
     }
 
-    // =========================================================
-    // CANCEL HOLD
-    // =========================================================
+private void CancelHold()
+{
+    if (holdStarted && currentHoldTarget != null)
+        currentHoldTarget.HoldCancelled();
 
-    private void CancelHold()
+    holdStarted = false;
+    holdProgress = 0f;
+    currentHoldTarget = null;
+
+    if (holdPrompt != null && ownsHoldPrompt)
     {
-        if (holdStarted &&
-            currentHoldTarget != null)
-        {
-            currentHoldTarget.HoldCancelled();
-        }
-
-        holdStarted =
-            false;
-
-        holdProgress =
-            0f;
-
-        currentHoldTarget =
-            null;
-
-        if (holdPrompt != null &&
-            ownsHoldPrompt)
-        {
-            holdPrompt.HideFor(
-                this
-            );
-
-            ownsHoldPrompt =
-                false;
-        }
-
-        if (holdSlider != null)
-        {
-            holdSlider.Hide();
-        }
+        holdPrompt.HideFor(this);
+        ownsHoldPrompt = false;
     }
 
-    // =========================================================
-    // RESET INTERACTION STATE
-    // =========================================================
-
-    public void ResetInteractionState()
-    {
-        // -----------------------------------------------------
-        // CANCEL ACTIVE HOLD
-        // -----------------------------------------------------
-
-        if (holdStarted &&
-            currentHoldTarget != null)
-        {
-            currentHoldTarget.HoldCancelled();
-        }
-
-        holdStarted =
-            false;
-
-        holdProgress =
-            0f;
-
-        currentHoldTarget =
-            null;
-
-        // -----------------------------------------------------
-        // RESET NORMAL PROMPT
-        // -----------------------------------------------------
-
-        if (promptText != null)
-        {
-            promptText.SetActive(
-                false
-            );
-        }
-
-        if (promptLabel != null)
-        {
-            promptLabel.text =
-                string.Empty;
-        }
-
-        // -----------------------------------------------------
-        // RESET HOLD PROMPT
-        // -----------------------------------------------------
-
-        if (holdPrompt != null)
-        {
-            holdPrompt.HideFor(
-                this
-            );
-
-            holdPrompt.Hide();
-
-            ownsHoldPrompt =
-                false;
-        }
-
-        // -----------------------------------------------------
-        // RESET FALLBACK SLIDER
-        // -----------------------------------------------------
-
-        if (holdSlider != null)
-        {
-            holdSlider.Hide();
-        }
-    }
-
-    // =========================================================
-    // ENSURE INTERACTION UI
-    // =========================================================
+    if (holdSlider != null)
+        holdSlider.Hide();
+}
 
     private void EnsureInteractionUI()
     {
@@ -912,10 +648,6 @@ public class PlayerInteractor : NetworkBehaviour
         }
     }
 
-    // =========================================================
-    // FIND PROMPT UNDER LOCAL UI
-    // =========================================================
-
     private InteractionPrompt FindInteractionPromptUnderUIRoot()
     {
         if (uiRoot == null)
@@ -942,35 +674,25 @@ public class PlayerInteractor : NetworkBehaviour
         return null;
     }
 
-    // =========================================================
-    // FIND PROMPT
-    // =========================================================
+private InteractionPrompt FindInteractionPrompt()
+{
+    InteractionPrompt[] prompts =
+        FindObjectsByType<InteractionPrompt>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
+        );
 
-    private InteractionPrompt FindInteractionPrompt()
+    foreach (InteractionPrompt prompt in prompts)
     {
-        InteractionPrompt[] prompts =
-            FindObjectsByType<InteractionPrompt>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None
-            );
-
-        foreach (InteractionPrompt prompt
-                 in prompts)
+        if (prompt != null &&
+            prompt.gameObject.name == "InteractionPrompt")
         {
-            if (prompt != null &&
-                prompt.gameObject.name ==
-                "InteractionPrompt")
-            {
-                return prompt;
-            }
+            return prompt;
         }
-
-        return null;
     }
 
-    // =========================================================
-    // DISABLE
-    // =========================================================
+    return null;
+}
 
     private void OnDisable()
     {
@@ -986,9 +708,69 @@ public class PlayerInteractor : NetworkBehaviour
         ResetInteractionState();
     }
 
-    // =========================================================
-    // DESTROY
-    // =========================================================
+    public void ResetInteractionState()
+    {
+        // -----------------------------------------------------
+        // CANCEL ACTIVE HOLD
+        // -----------------------------------------------------
+
+        if (holdStarted &&
+            currentHoldTarget != null)
+        {
+            currentHoldTarget.HoldCancelled();
+        }
+
+        holdStarted =
+            false;
+
+        holdProgress =
+            0f;
+
+        currentHoldTarget =
+            null;
+
+        // -----------------------------------------------------
+        // RESET NORMAL PROMPT
+        // -----------------------------------------------------
+
+        if (promptText != null)
+        {
+            promptText.SetActive(
+                false
+            );
+        }
+
+        if (promptLabel != null)
+        {
+            promptLabel.text =
+                string.Empty;
+        }
+
+        // -----------------------------------------------------
+        // RESET HOLD PROMPT
+        // -----------------------------------------------------
+
+        if (holdPrompt != null)
+        {
+            holdPrompt.HideFor(
+                this
+            );
+
+            holdPrompt.Hide();
+
+            ownsHoldPrompt =
+                false;
+        }
+
+        // -----------------------------------------------------
+        // RESET FALLBACK SLIDER
+        // -----------------------------------------------------
+
+        if (holdSlider != null)
+        {
+            holdSlider.Hide();
+        }
+    }
 
     private void OnDestroy()
     {
@@ -1010,4 +792,5 @@ public class PlayerInteractor : NetworkBehaviour
                 false;
         }
     }
+
 }
