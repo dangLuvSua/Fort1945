@@ -12,8 +12,17 @@ public class ItemPickup : NetworkBehaviour, IInteractable
 
     [Header("Optional Pickup Jumpscare")]
     [SerializeField, Range(0f, 1f)]
-    [Tooltip("Chance for this item to cause its jumpscare after a successful pickup.")]
+    [Tooltip("Base chance for this item to cause a pickup jumpscare. The selected difficulty scales this chance.")]
     private float pickupJumpscareChance;
+    [SerializeField, Range(0f, 1f)]
+    [Tooltip("Pickup scare chance multiplier on Easy difficulty.")]
+    private float easyJumpscareChanceMultiplier = 0.1f;
+    [SerializeField, Range(0f, 1f)]
+    [Tooltip("Pickup scare chance multiplier on Normal difficulty.")]
+    private float normalJumpscareChanceMultiplier = 0.35f;
+    [SerializeField, Range(0f, 1f)]
+    [Tooltip("Pickup scare chance multiplier on Difficult difficulty.")]
+    private float difficultJumpscareChanceMultiplier = 0.65f;
     [SerializeField]
     [Tooltip("Local screen/video playback prefab. Only the successful collector sees it.")]
     private LocalJumpscarePlayback pickupJumpscarePrefab;
@@ -137,8 +146,9 @@ public class ItemPickup : NetworkBehaviour, IInteractable
 
         pendingCollector = info.Source;
         IsCollecting = true;
+        float difficultyAdjustedChance = GetDifficultyAdjustedJumpscareChance();
         pendingPickupJumpscare = pickupJumpscarePrefab != null &&
-            Random.value < pickupJumpscareChance;
+            Random.value < difficultyAdjustedChance;
 
         // Candle state is stored on the dropped world object.
         NetworkedDroppedItem dropped =
@@ -261,6 +271,22 @@ public class ItemPickup : NetworkBehaviour, IInteractable
 
         if (Object != null && Object.IsValid)
             Runner.Despawn(Object);
+    }
+
+    private float GetDifficultyAdjustedJumpscareChance()
+    {
+        GameDifficulty difficulty = NetworkGameManager.Instance != null
+            ? NetworkGameManager.Instance.Difficulty
+            : GameDifficulty.Normal;
+
+        float multiplier = difficulty switch
+        {
+            GameDifficulty.Easy => easyJumpscareChanceMultiplier,
+            GameDifficulty.Difficult => difficultJumpscareChanceMultiplier,
+            _ => normalJumpscareChanceMultiplier
+        };
+
+        return Mathf.Clamp01(pickupJumpscareChance * multiplier);
     }
 
     private void ApplyPickupJumpscareSanityDamage(PlayerRef player)

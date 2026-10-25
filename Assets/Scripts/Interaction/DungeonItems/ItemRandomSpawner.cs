@@ -48,6 +48,8 @@ public class ItemRandomSpawner : NetworkBehaviour
     private readonly Dictionary<int, int> phaseItemRequirements = new Dictionary<int, int>();
     [Networked]
     private int NetworkObjectivePhase { get; set; }
+    [Networked]
+    private int NetworkCandleBaseline { get; set; }
     [Networked, Capacity(32)]
     private NetworkArray<int> NetworkObjectiveItemIds => default;
     [Networked, Capacity(32)]
@@ -235,6 +237,10 @@ public class ItemRandomSpawner : NetworkBehaviour
             phaseItemsSpawned = false;
             preparingPhase = phase;
             ClearNetworkObjectiveRequirements();
+            ItemData phaseCandle = ResolveCandleItem(rule, gameManager);
+            NetworkCandleBaseline = phase == 1 && phaseCandle != null && gameManager != null
+                ? gameManager.GetTeamItemCount(phaseCandle.itemId)
+                : 0;
         }
 
         if (phase != lastProcessedPhase)
@@ -376,6 +382,8 @@ public class ItemRandomSpawner : NetworkBehaviour
         if (missionProgressPanel == null)
             return;
 
+        NetworkGameManager manager = NetworkGameManager.Instance;
+        ItemData phaseCandle = ResolveCandleItem(rule, manager);
         List<KeyValuePair<int, int>> requirements = GetVisibleObjectiveRequirements();
         foreach (KeyValuePair<int, int> requirement in requirements)
         {
@@ -386,24 +394,26 @@ public class ItemRandomSpawner : NetworkBehaviour
             if (item == null)
                 continue;
 
-            missionProgressPanel.AddItemRow(item, requirement.Value);
+            int baseline = phaseCandle != null && requirement.Key == phaseCandle.itemId
+                ? NetworkCandleBaseline
+                : 0;
+            missionProgressPanel.AddItemRow(item, requirement.Value, baseline);
             configuredObjectiveItemIds.Add(requirement.Key);
         }
 
         // Candles are spawned as a phase requirement even when a proxy has
         // not received the objective metadata yet. Build this row from the
         // shared phase configuration so candle pickups remain visible.
-        NetworkGameManager manager = NetworkGameManager.Instance;
         GameDifficulty difficulty = manager != null && manager.IsNetworkStateReady
             ? manager.Difficulty
             : standaloneDifficulty;
-        ItemData phaseCandle = ResolveCandleItem(rule, manager);
         if (phaseCandle != null &&
             !configuredObjectiveItemIds.Contains(phaseCandle.itemId))
         {
             missionProgressPanel.AddItemRow(
                 phaseCandle,
-                GetPhaseCandleCount(difficulty));
+                GetPhaseCandleCount(difficulty),
+                NetworkCandleBaseline);
             configuredObjectiveItemIds.Add(phaseCandle.itemId);
         }
     }
@@ -552,6 +562,9 @@ public class ItemRandomSpawner : NetworkBehaviour
         foreach (KeyValuePair<int, int> requirement in phaseItemRequirements)
         {
             int collected = manager.GetTeamItemCount(requirement.Key);
+            ItemData candle = candleItem != null ? candleItem : manager.CandleItem;
+            if (candle != null && requirement.Key == candle.itemId)
+                collected = Mathf.Max(0, collected - NetworkCandleBaseline);
             if (collected < requirement.Value)
                 return false;
         }
@@ -572,8 +585,12 @@ public class ItemRandomSpawner : NetworkBehaviour
             if (manager == null)
                 continue;
 
+            int owned = manager.GetTeamItemCount(requirement.Key);
+            ItemData candle = candleItem != null ? candleItem : manager.CandleItem;
+            if (candle != null && requirement.Key == candle.itemId)
+                owned = Mathf.Max(0, owned - NetworkCandleBaseline);
             collected += Mathf.Clamp(
-                manager.GetTeamItemCount(requirement.Key),
+                owned,
                 0,
                 requirement.Value);
         }

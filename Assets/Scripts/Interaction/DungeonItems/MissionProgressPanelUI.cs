@@ -273,7 +273,7 @@ public class MissionProgressPanelUI : MonoBehaviour
                     GetTeamItemCount(
                         objective.ItemId,
                         manager
-                    ),
+                    ) - objective.Baseline,
                     0,
                     objective.Required
                 );
@@ -1035,7 +1035,8 @@ public class MissionProgressPanelUI : MonoBehaviour
         teamObjectives.Add(
             new TeamObjective(
                 itemData.itemId,
-                required
+                required,
+                baseline
             )
         );
     }
@@ -1899,15 +1900,24 @@ public class MissionProgressPanelUI : MonoBehaviour
             get;
         }
 
+        public int Baseline
+        {
+            get;
+        }
+
         public TeamObjective(
             int itemId,
-            int required)
+            int required,
+            int baseline)
         {
             ItemId =
                 itemId;
 
             Required =
                 required;
+
+            Baseline =
+                Mathf.Max(0, baseline);
         }
     }
 }

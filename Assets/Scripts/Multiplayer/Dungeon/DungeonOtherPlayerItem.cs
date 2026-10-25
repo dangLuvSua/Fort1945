@@ -189,8 +189,7 @@ public class DungeonOtherPlayerItem : MonoBehaviour
         if (staminaText != null)
         {
             staminaText.text =
-                $"{Mathf.CeilToInt(playerStamina.Current)}" +
-                $"/{Mathf.CeilToInt(playerStamina.Max)}";
+                $"{Mathf.CeilToInt(playerStamina.Current)}";
         }
     }
 
@@ -229,8 +228,7 @@ public class DungeonOtherPlayerItem : MonoBehaviour
         if (sanityText != null)
         {
             sanityText.text =
-                $"{Mathf.CeilToInt(currentSanity)}" +
-                $"/{Mathf.CeilToInt(maxSanity)}";
+                $"{Mathf.CeilToInt(currentSanity)}";
         }
     }
 
