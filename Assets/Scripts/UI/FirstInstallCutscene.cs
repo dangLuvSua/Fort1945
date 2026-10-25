@@ -4,8 +4,8 @@ using UnityEngine.UI;
 using UnityEngine.Video;
 
 /// <summary>
-/// Plays an assigned cutscene once per install, then remembers completion.
-/// Put this on the cutscene UI object in the scene that should show the intro.
+/// Plays an assigned cutscene on first launch, or every launch when configured.
+/// Put this on the cutscene UI object in the first scene of the build.
 /// </summary>
 public sealed class FirstInstallCutscene : MonoBehaviour
 {
@@ -14,6 +14,8 @@ public sealed class FirstInstallCutscene : MonoBehaviour
     [SerializeField] private VideoPlayer videoPlayer;
     [SerializeField] private GameObject cutsceneRoot;
     [SerializeField] private bool allowSkip = true;
+    [Tooltip("When enabled, play the cutscene every time the app opens, including release builds.")]
+    [SerializeField] private bool playEveryLaunch;
     [SerializeField] private string mainMenuSceneName = "MainMenu";
 #if UNITY_EDITOR
     [SerializeField] private bool replayForTesting;
@@ -27,14 +29,24 @@ public sealed class FirstInstallCutscene : MonoBehaviour
             cutsceneRoot = gameObject;
 
         bool hasAlreadyPlayed = PlayerPrefs.GetInt(PlayedKey, 0) != 0;
+        bool shouldPlayCutscene = playEveryLaunch || !hasAlreadyPlayed;
 #if UNITY_EDITOR
         if (replayForTesting)
-            hasAlreadyPlayed = false;
+            shouldPlayCutscene = true;
 #endif
 
-        if (videoPlayer == null || videoPlayer.clip == null || hasAlreadyPlayed)
+        if (videoPlayer == null || videoPlayer.clip == null || !shouldPlayCutscene)
         {
-            cutsceneRoot.SetActive(false);
+            // This scene is the build's first scene. Hiding the cutscene alone
+            // leaves the player with an empty scene, so continue to the menu.
+            if (Application.CanStreamedLevelBeLoaded(mainMenuSceneName))
+            {
+                SceneManager.LoadScene(mainMenuSceneName);
+            }
+            else
+            {
+                Debug.LogError($"Cannot load scene '{mainMenuSceneName}'. Add it to Build Settings.", this);
+            }
             return;
         }
 
@@ -75,9 +87,12 @@ public sealed class FirstInstallCutscene : MonoBehaviour
             return;
 
         isPlaying = false;
+        bool rememberCompletion = !playEveryLaunch;
 #if UNITY_EDITOR
-        if (!replayForTesting)
+        if (replayForTesting)
+            rememberCompletion = false;
 #endif
+        if (rememberCompletion)
         {
             PlayerPrefs.SetInt(PlayedKey, 1);
             PlayerPrefs.Save();

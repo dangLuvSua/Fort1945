@@ -5743,7 +5743,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  walkSpeed: 45
+  walkSpeed: 5
   runSpeed: 10
   acceleration: 12
   deceleration: 14
@@ -5978,7 +5978,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 28692f9378bb0f84591566468d420fab, type: 2}
   - {fileID: 11400000, guid: 5da2d6b3b3817564189a1e710f1561e7, type: 2}
   - {fileID: 11400000, guid: 958980f066207474e80707dc59def085, type: 2}
-  giveDebugStartingItems: 1
+  giveDebugStartingItems: 0
   debugStartingItemIds: 6600000068000000c9000000ca000000cb000000cc00000069000000
   _SelectedSlot: 0
 --- !u!114 &7925084007181689668
@@ -6095,6 +6095,13 @@ MonoBehaviour:
   saltItem: {fileID: 11400000, guid: 49c7c78e778e32040a342553e0e83829, type: 2}
   saltSprayVFX: {fileID: 6746067635408783740}
   sprayCooldown: 2
+  sprayHitRange: 3.5
+  sprayHitHalfAngle: 20
+  saltStunDuration: 3
+  saltRepelDistance: 5
+  sprayObstacleMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   visualSearchInterval: 0.5
 --- !u!114 &1313644337388063740
 MonoBehaviour:
