@@ -29,8 +29,8 @@ public sealed class EvidenceBoardManager : MonoBehaviour
     public bool IsCompleted => Ready && CompletedMask == 15;
     public bool Ready => PuzzleNetworkState.Instance != null &&
         PuzzleNetworkState.Instance.Object != null &&
-        PuzzleNetworkState.Instance.Object.IsValid &&
-        PuzzleNetworkState.Instance.Object.IsInSimulation;
+        // Remote clients read replicated state without simulating this object.
+        PuzzleNetworkState.Instance.Object.IsValid;
     private int renderedMask;
     private bool completionRaised;
 
