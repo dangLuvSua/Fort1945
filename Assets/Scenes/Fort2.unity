@@ -123910,6 +123910,34 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 363065946138422377, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 363065946138422377, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 363065946138422377, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 902733935526442489, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3135118343995936159, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3135118343995936159, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3135118343995936159, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3328197954593703402, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -123990,20 +124018,103 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3382650553118992454, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3382650553118992454, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3488867784545985956, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
       propertyPath: m_Name
       value: OptionsCanvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 6225579439708009631, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 388.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6260735617768636245, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6260735617768636245, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6260735617768636245, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6357038307426826330, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6357038307426826330, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6357038307426826330, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6803233666973059349, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6803233666973059349, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6864004311773021156, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_text
+      value: 'Back To Game
+
+'
+      objectReference: {fileID: 0}
+    - target: {fileID: 7251667591240920334, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7251667591240920334, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8007729760652821628, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: menuDimOpacity
+      value: 0.957
       objectReference: {fileID: 0}
     - target: {fileID: 8007729760652821628, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
       propertyPath: inGameSettingsRoot
       value: 
       objectReference: {fileID: 1557236155}
+    - target: {fileID: 8035295140376499357, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_Color.a
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8202938352840778950, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
       propertyPath: brightnessOverlay
       value: 
       objectReference: {fileID: 1924916633}
+    - target: {fileID: 8208436808069247069, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_Color.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8262773155240041183, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8262773155240041183, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8648723474488710232, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
+      propertyPath: m_Color.a
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 2586822166173162751, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c0b0638e94c1c7d449ea662efc0e3551, type: 3}
