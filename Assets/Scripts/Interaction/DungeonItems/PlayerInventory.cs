@@ -2226,6 +2226,10 @@ public class PlayerInventory : NetworkBehaviour
 
             IsCandleInitialized(storageIndex);
 
+        int quantity = NetworkQuantities.Get(storageIndex);
+        if (quantity <= 0)
+            return;
+
 
 
         Transform aim = dropOrigin != null ? dropOrigin : transform;
@@ -2394,22 +2398,6 @@ public class PlayerInventory : NetworkBehaviour
 
 
 
-        // Remove all quick-bar references to this stored item.
-
-        for (int i = 0; i < QuickBarSlotCount; i++)
-
-        {
-
-            if (GetQuickBarStorageIndex(i) == storageIndex)
-
-                NetworkQuickBar.Set(i, 0);
-
-        }
-
-
-
-        int quantity = NetworkQuantities.Get(storageIndex);
-
         if (quantity > 1)
 
         {
@@ -2458,21 +2446,18 @@ public class PlayerInventory : NetworkBehaviour
 
             }
 
+            CompactQuickBar();
+            SelectedSlot = -1;
+
 
 
             Debug.Log($"[INVENTORY] {item.itemName} dropped.");
 
         }
 
-        CompactQuickBar();
-
-        SelectedSlot = -1;
-
         PlayDropSound(aim.position);
 
         NotifyInventoryChangedImmediately();
-
-        Debug.Log($"[INVENTORY] {item.itemName} dropped.");
 
     }
 

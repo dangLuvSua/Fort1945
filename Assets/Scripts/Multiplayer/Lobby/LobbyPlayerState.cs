@@ -41,8 +41,8 @@ public class LobbyPlayerState : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-        // This player owns its player object in Shared Mode. Update the
-        // replicated host marker if master-client ownership changes later.
+        // Shared Mode automatically elects a new Master Client on disconnect.
+        // Replicate the new role into this player's host marker for the lobby UI.
         if (Object == null || !Object.HasStateAuthority || Runner == null)
             return;
 

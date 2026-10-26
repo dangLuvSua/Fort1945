@@ -33,6 +33,13 @@ public class AudioSettingsManager : MonoBehaviour
 
     private void Start()
     {
+        // The in-game options prefab has no persistent event targets for its
+        // sliders, so bind them here on the live manager instance.
+        if (masterSlider != null) masterSlider.onValueChanged.AddListener(SetMasterVolume);
+        if (bgmSlider != null) bgmSlider.onValueChanged.AddListener(SetBGMVolume);
+        if (sfxSlider != null) sfxSlider.onValueChanged.AddListener(SetSFXVolume);
+        if (mainMenuSlider != null) mainMenuSlider.onValueChanged.AddListener(SetMainMenuVolume);
+
         // Load saved values
         float master = PlayerPrefs.GetFloat(
             MasterVolume,
@@ -56,16 +63,16 @@ public class AudioSettingsManager : MonoBehaviour
 
         // Set slider positions
         if (masterSlider != null)
-            masterSlider.value = master;
+            masterSlider.SetValueWithoutNotify(master);
 
         if (bgmSlider != null)
-            bgmSlider.value = bgm;
+            bgmSlider.SetValueWithoutNotify(bgm);
 
         if (sfxSlider != null)
-            sfxSlider.value = sfx;
+            sfxSlider.SetValueWithoutNotify(sfx);
 
         if (mainMenuSlider != null)
-            mainMenuSlider.value = mainMenu;
+            mainMenuSlider.SetValueWithoutNotify(mainMenu);
 
         // Apply volumes
         SetMasterVolume(master);
@@ -76,10 +83,8 @@ public class AudioSettingsManager : MonoBehaviour
 
     public void SetMasterVolume(float value)
     {
-        audioMixer.SetFloat(
-            MasterVolume,
-            ConvertToDecibel(value)
-        );
+        if (audioMixer != null)
+            audioMixer.SetFloat(MasterVolume, ConvertToDecibel(value));
 
         PlayerPrefs.SetFloat(MasterVolume, value);
         PlayerPrefs.Save();
@@ -87,10 +92,8 @@ public class AudioSettingsManager : MonoBehaviour
 
     public void SetBGMVolume(float value)
     {
-        audioMixer.SetFloat(
-            BGMVolume,
-            ConvertToDecibel(value)
-        );
+        if (audioMixer != null)
+            audioMixer.SetFloat(BGMVolume, ConvertToDecibel(value));
 
         PlayerPrefs.SetFloat(BGMVolume, value);
         PlayerPrefs.Save();
@@ -98,10 +101,8 @@ public class AudioSettingsManager : MonoBehaviour
 
     public void SetSFXVolume(float value)
     {
-        audioMixer.SetFloat(
-            SFXVolume,
-            ConvertToDecibel(value)
-        );
+        if (audioMixer != null)
+            audioMixer.SetFloat(SFXVolume, ConvertToDecibel(value));
 
         PlayerPrefs.SetFloat(SFXVolume, value);
         PlayerPrefs.Save();
@@ -109,10 +110,8 @@ public class AudioSettingsManager : MonoBehaviour
 
     public void SetMainMenuVolume(float value)
     {
-        audioMixer.SetFloat(
-            MainMenuVolume,
-            ConvertToDecibel(value)
-        );
+        if (audioMixer != null)
+            audioMixer.SetFloat(MainMenuVolume, ConvertToDecibel(value));
 
         PlayerPrefs.SetFloat(MainMenuVolume, value);
         PlayerPrefs.Save();
