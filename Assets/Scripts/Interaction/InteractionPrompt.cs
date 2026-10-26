@@ -8,6 +8,12 @@ public class InteractionPrompt : MonoBehaviour
     [SerializeField] private GameObject promptRoot;
     [SerializeField] private TMP_Text promptText;
 
+    [Header("Screen Size")]
+    [Tooltip("Fixed prompt dimensions in reference Canvas units.")]
+    [SerializeField] private Vector2 fixedPromptSize = new Vector2(466f, 96f);
+    [Tooltip("Prompt offset from screen center in reference Canvas units.")]
+    [SerializeField] private Vector2 fixedPromptOffset = new Vector2(-61.75f, -19.23f);
+
     [Header("Default Text")]
     [SerializeField] private string defaultMessage = "[E] INTERACT";
 
@@ -18,9 +24,14 @@ public class InteractionPrompt : MonoBehaviour
     // Different interactions can share one prompt instance. Only the owner
     // currently showing it may update or hide it.
     private object activeOwner;
+    private RectTransform promptRect;
+    private Canvas rootCanvas;
+    private Vector3 authoredScale;
 
     private void Awake()
     {
+        ApplyFixedLayout();
+
         if (progressSlider == null)
         {
             progressSlider =
@@ -34,6 +45,47 @@ public class InteractionPrompt : MonoBehaviour
         }
 
         Hide();
+    }
+
+    private void LateUpdate()
+    {
+        if (promptRect == null)
+            return;
+
+        if (rootCanvas == null && promptRoot != null)
+        {
+            Canvas parentCanvas = promptRoot.GetComponentInParent<Canvas>();
+            if (parentCanvas != null)
+                rootCanvas = parentCanvas.rootCanvas;
+        }
+
+        if (rootCanvas == null || rootCanvas.scaleFactor <= 0f)
+            return;
+
+        // CanvasScaler enlarges all UI on large displays. Counter its scale
+        // only for this prompt so its on-screen dimensions remain unchanged.
+        promptRect.localScale = authoredScale / rootCanvas.scaleFactor;
+    }
+
+    private void ApplyFixedLayout()
+    {
+        if (promptRoot == null)
+            return;
+
+        promptRect = promptRoot.GetComponent<RectTransform>();
+        if (promptRect == null)
+            return;
+
+        promptRect.anchorMin = new Vector2(0.5f, 0.5f);
+        promptRect.anchorMax = new Vector2(0.5f, 0.5f);
+        promptRect.pivot = new Vector2(0.5f, 0.5f);
+        promptRect.sizeDelta = fixedPromptSize;
+        promptRect.anchoredPosition = fixedPromptOffset;
+        authoredScale = promptRect.localScale;
+
+        Canvas parentCanvas = promptRoot.GetComponentInParent<Canvas>();
+        if (parentCanvas != null)
+            rootCanvas = parentCanvas.rootCanvas;
     }
 
     // =============================================================

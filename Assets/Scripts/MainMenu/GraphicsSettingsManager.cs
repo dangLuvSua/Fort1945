@@ -17,7 +17,7 @@ public class GraphicsSettingsManager : MonoBehaviour
     [SerializeField] private float maxBrightness = 1.5f;
 
     [Header("Brightness Overlay")]
-[SerializeField] private Image brightnessOverlay;
+    [SerializeField] private Image brightnessOverlay;
 
     private struct ResolutionOption
     {
@@ -34,8 +34,8 @@ public class GraphicsSettingsManager : MonoBehaviour
     private ResolutionOption[] resolutions;
 
     private const string QualityKey = "GraphicsQuality";
-    private const string ResolutionWidthKey = "ResolutionWidth";
-    private const string ResolutionHeightKey = "ResolutionHeight";
+    private const string ResolutionWidthKey = "ResolutionWidth_DeviceDefault";
+    private const string ResolutionHeightKey = "ResolutionHeight_DeviceDefault";
     private const string FullscreenKey = "Fullscreen";
     private const string VSyncKey = "VSync";
     private const string BrightnessKey = "Brightness";
@@ -43,8 +43,8 @@ public class GraphicsSettingsManager : MonoBehaviour
     private void Start()
     {
         SetupQuality();
-        SetupResolution();
         SetupFullscreen();
+        SetupResolution();
         SetupVSync();
         SetupBrightness();
     }
@@ -112,9 +112,8 @@ public class GraphicsSettingsManager : MonoBehaviour
         Resolution[] displayModes = Screen.resolutions;
         List<ResolutionOption> supportedModes = new List<ResolutionOption>();
 
-        // Keep the graphics menu from offering tiny modes. Preserve distinct
-        // width/height choices only, since refresh-rate variants look identical
-        // in this dropdown.
+        // Keep larger display modes and the device's current display mode.
+        // The latter may be below 1920x1080 on smaller devices.
         for (int i = 0; i < displayModes.Length; i++)
         {
             Resolution mode = displayModes[i];
@@ -136,12 +135,11 @@ public class GraphicsSettingsManager : MonoBehaviour
                 supportedModes.Add(new ResolutionOption(mode.width, mode.height));
         }
 
-        // A windowed 1920x1080 option still provides the requested minimum on
-        // displays that do not report a matching fullscreen mode.
+        ResolutionOption deviceResolution = GetDeviceResolution();
+        AddResolutionIfMissing(supportedModes, deviceResolution);
+
         if (supportedModes.Count == 0)
-        {
             supportedModes.Add(new ResolutionOption(1920, 1080));
-        }
 
         resolutions = supportedModes.ToArray();
 
@@ -163,8 +161,8 @@ public class GraphicsSettingsManager : MonoBehaviour
 
         resolutionDropdown.AddOptions(options);
 
-        int savedWidth = PlayerPrefs.GetInt(ResolutionWidthKey, 1920);
-        int savedHeight = PlayerPrefs.GetInt(ResolutionHeightKey, 1080);
+        int savedWidth = PlayerPrefs.GetInt(ResolutionWidthKey, deviceResolution.width);
+        int savedHeight = PlayerPrefs.GetInt(ResolutionHeightKey, deviceResolution.height);
         int savedResolution = FindResolutionIndex(savedWidth, savedHeight);
         if (savedResolution < 0)
             savedResolution = FindDefaultResolutionIndex();
@@ -221,6 +219,11 @@ public class GraphicsSettingsManager : MonoBehaviour
 
     private int FindDefaultResolutionIndex()
     {
+        ResolutionOption deviceResolution = GetDeviceResolution();
+        int deviceIndex = FindResolutionIndex(deviceResolution.width, deviceResolution.height);
+        if (deviceIndex >= 0)
+            return deviceIndex;
+
         int bestIndex = 0;
         long bestArea = long.MaxValue;
 
@@ -240,6 +243,34 @@ public class GraphicsSettingsManager : MonoBehaviour
         return bestIndex;
     }
 
+    private static ResolutionOption GetDeviceResolution()
+    {
+        Resolution native = Screen.currentResolution;
+        if (native.width > 0 && native.height > 0)
+            return new ResolutionOption(native.width, native.height);
+
+        if (Screen.width > 0 && Screen.height > 0)
+            return new ResolutionOption(Screen.width, Screen.height);
+
+        return new ResolutionOption(1920, 1080);
+    }
+
+    private static void AddResolutionIfMissing(
+        List<ResolutionOption> options,
+        ResolutionOption candidate)
+    {
+        for (int i = 0; i < options.Count; i++)
+        {
+            if (options[i].width == candidate.width &&
+                options[i].height == candidate.height)
+            {
+                return;
+            }
+        }
+
+        options.Add(candidate);
+    }
+
 
     // =========================
     // FULLSCREEN
@@ -252,7 +283,7 @@ public class GraphicsSettingsManager : MonoBehaviour
 
         bool fullscreen = PlayerPrefs.GetInt(
             FullscreenKey,
-            Screen.fullScreen ? 1 : 0
+            1
         ) == 1;
 
         fullscreenToggle.SetIsOnWithoutNotify(

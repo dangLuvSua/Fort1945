@@ -150,6 +150,7 @@ public class NetworkRunnerHandler :
             return;
         }
 
+        inventory.BeginDungeonInventoryTransfer();
         dungeonInventorySnapshot = inventory.CaptureTransferSnapshot();
         Debug.Log(
             $"[DUNGEON INVENTORY] Saved local inventory before scene load: " +
