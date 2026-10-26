@@ -59,6 +59,15 @@ public sealed class EyeBlinkTransition : MonoBehaviour
     public static void Open()
     {
         EyeBlinkTransition blink = EnsureInstance();
+
+        // A scene loading overlay may request its fade-out as soon as player
+        // setup finishes. If a teleport is still queued behind the closing
+        // eyelid animation, stopping that coroutine here would cancel the
+        // teleport callback and leave PlayerController movement locked.
+        // PlayQueuedTeleports will run the callbacks and open the screen itself.
+        if (blink.pendingTeleports.Count > 0)
+            return;
+
         if (blink.transition != null)
             blink.StopCoroutine(blink.transition);
 

@@ -146,6 +146,14 @@ public class NetworkGameManager : NetworkBehaviour
     public NetworkBool PrisonCell2GateOpen { get; private set; }
 
     [Networked]
+    private TickTimer PrisonCell1GateAutoCloseTimer { get; set; }
+
+    [Networked]
+    private TickTimer PrisonCell2GateAutoCloseTimer { get; set; }
+
+    private const float PrisonCellGateAutoCloseSeconds = 5f;
+
+    [Networked]
     public NetworkBool InterrogationRoomUnlocked { get; private set; }
 
     [Networked]
@@ -577,6 +585,8 @@ public class NetworkGameManager : NetworkBehaviour
             PrisonCell2Unlocked = false;
             PrisonCell1GateOpen = false;
             PrisonCell2GateOpen = false;
+            PrisonCell1GateAutoCloseTimer = default;
+            PrisonCell2GateAutoCloseTimer = default;
             InterrogationRoomUnlocked = false;
             InterrogationRoomGateOpen = false;
             MissionItemsSpawned = false;
@@ -950,6 +960,12 @@ public class NetworkGameManager : NetworkBehaviour
         {
             return;
         }
+
+        if (PrisonCell1GateOpen && PrisonCell1GateAutoCloseTimer.Expired(Runner))
+            SetPrisonCellGateOpenState(1, false);
+
+        if (PrisonCell2GateOpen && PrisonCell2GateAutoCloseTimer.Expired(Runner))
+            SetPrisonCellGateOpenState(2, false);
 
         // This scene NetworkObject follows the Shared Mode master. Keep the
         // replicated player reference in sync after authority transfers;
@@ -2181,13 +2197,13 @@ public class NetworkGameManager : NetworkBehaviour
         if (cellNumber == 1)
         {
             PrisonCell1Unlocked = true;
-            PrisonCell1GateOpen = true;
         }
         else
         {
             PrisonCell2Unlocked = true;
-            PrisonCell2GateOpen = true;
         }
+
+        SetPrisonCellGateOpenState(cellNumber, true);
 
         Debug.Log($"[PRISON GATE] Cell {cellNumber} unlocked by player {info.Source}.", this);
     }
@@ -2223,10 +2239,25 @@ public class NetworkGameManager : NetworkBehaviour
         if (open && !HasEquippedItem(inventory, cellNumber == 1 ? 102 : 104))
             return;
 
+        SetPrisonCellGateOpenState(cellNumber, open);
+    }
+
+    private void SetPrisonCellGateOpenState(int cellNumber, bool open)
+    {
+        TickTimer autoCloseTimer = open
+            ? TickTimer.CreateFromSeconds(Runner, PrisonCellGateAutoCloseSeconds)
+            : default;
+
         if (cellNumber == 1)
+        {
             PrisonCell1GateOpen = open;
-        else
+            PrisonCell1GateAutoCloseTimer = autoCloseTimer;
+        }
+        else if (cellNumber == 2)
+        {
             PrisonCell2GateOpen = open;
+            PrisonCell2GateAutoCloseTimer = autoCloseTimer;
+        }
     }
 
     private PrisonCellGateUnlock FindPrisonCellGate(int cellNumber)
@@ -2366,6 +2397,15 @@ public class NetworkGameManager : NetworkBehaviour
             );
 
             return;
+        }
+
+        int consumedKeyId = GetKeyItemId();
+        if (Runner.TryGetPlayerObject(info.Source, out NetworkObject unlockingPlayer) &&
+            unlockingPlayer != null)
+        {
+            PlayerInventory unlockingInventory = unlockingPlayer.GetComponent<PlayerInventory>();
+            if (unlockingInventory != null)
+                unlockingInventory.RpcConsumeItemCompletely(consumedKeyId);
         }
 
         DungeonGateUnlocked = true;

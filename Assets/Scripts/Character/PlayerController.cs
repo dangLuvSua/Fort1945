@@ -2,6 +2,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
+using UnityEngine.Audio;
 using Fusion;
 
 public class PlayerController : NetworkBehaviour
@@ -155,6 +156,12 @@ public class PlayerController : NetworkBehaviour
     [Header("Network Animation")]
     [Networked]
     private float NetworkAnimationSpeed { get; set; }
+
+    [Header("Dungeon Threat Audio")]
+    [SerializeField] private AudioClip dangerIndicatorClip;
+    [SerializeField, Range(0f, 1f)] private float dangerIndicatorVolume = 0.8f;
+    [SerializeField] private AudioMixerGroup sfxMixerGroup;
+    private AudioSource dangerIndicatorSource;
 
 
     // =========================================================
@@ -1078,6 +1085,26 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>Plays the chase warning only on this player's state authority client.</summary>
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcPlayDangerIndicator(RpcInfo info = default)
+    {
+        if (!Object.HasStateAuthority || dangerIndicatorClip == null)
+            return;
+
+        if (dangerIndicatorSource == null)
+        {
+            dangerIndicatorSource = gameObject.AddComponent<AudioSource>();
+            dangerIndicatorSource.playOnAwake = false;
+            dangerIndicatorSource.loop = false;
+            dangerIndicatorSource.spatialBlend = 0f;
+            dangerIndicatorSource.outputAudioMixerGroup = sfxMixerGroup;
+        }
+
+        if (dangerIndicatorSource.isActiveAndEnabled)
+            dangerIndicatorSource.PlayOneShot(dangerIndicatorClip, dangerIndicatorVolume);
+    }
+
     /// <summary>Teleports this player's state authority to the Fort 2 ending marker.</summary>
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RpcTeleportToEnding(Vector3 position, Quaternion rotation)
@@ -1127,18 +1154,6 @@ public class PlayerController : NetworkBehaviour
         float bottomOffset = characterController.height * 0.5f - characterController.center.y;
         Vector3 playerRootPosition = position + Vector3.up * bottomOffset;
 
-        PlayerInventory inventory = GetComponent<PlayerInventory>();
-        if (inventory != null)
-        {
-            inventory.DropAllItems();
-        }
-        else
-        {
-            Debug.LogWarning(
-                $"[PRISON TELEPORT] Player {Object.Id} has no PlayerInventory; nothing was dropped.",
-                this);
-        }
-
         Teleport(playerRootPosition, rotation);
         if (isLocal)
             Invoke(nameof(PlayPrisonCaptureSfx), 0.35f);
@@ -1170,6 +1185,7 @@ public class PlayerController : NetworkBehaviour
 
         IsCapturedByKempeitai = false;
         isBeingCaptured = false;
+        DungeonAudioController.StopPrisonWhispers();
         Teleport(position, rotation);
     }
 
@@ -1213,6 +1229,21 @@ public class PlayerController : NetworkBehaviour
         moveInput = Vector2.zero;
         runInput = false;
         jumpRequested = false;
+
+        // Drop inventory immediately at the capture position. This happens
+        // before the look animation and prison teleport can change the player
+        // transform or its replicated position.
+        PlayerInventory inventory = GetComponent<PlayerInventory>();
+        if (inventory != null)
+        {
+            inventory.DropAllItems(transform.position, transform.rotation);
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"[CAPTURE] Player {Object.Id} has no PlayerInventory; nothing was dropped.",
+                this);
+        }
     }
     private void UpdateCaptureLook()
     {

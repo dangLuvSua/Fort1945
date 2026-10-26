@@ -1,6 +1,7 @@
 using Fusion;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.AI;
 
 public class SoldierPatrol : NetworkBehaviour
@@ -75,6 +76,12 @@ public class SoldierPatrol : NetworkBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private string speedParameter = "Speed";
     [SerializeField] private float animSmoothing = 10f;
+
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip chaseGrowl;
+    [SerializeField, Range(0f, 1f)] private float chaseGrowlVolume = 0.8f;
+    [SerializeField] private AudioMixerGroup sfxMixerGroup;
 
     private NavMeshAgent agent;
 
@@ -164,6 +171,19 @@ public class SoldierPatrol : NetworkBehaviour
     {
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
+
+        if (audioSource != null)
+        {
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 1f;
+            audioSource.minDistance = 2f;
+            audioSource.maxDistance = 24f;
+            if (sfxMixerGroup != null)
+                audioSource.outputAudioMixerGroup = sfxMixerGroup;
+        }
 
         agent = GetComponent<NavMeshAgent>();
 
@@ -357,6 +377,17 @@ public class SoldierPatrol : NetworkBehaviour
 
         agent.speed = chaseSpeed;
         agent.stoppingDistance = chaseStopDistance;
+
+        RPC_PlayChaseGrowl();
+        if (target != null)
+            target.RpcPlayDangerIndicator();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayChaseGrowl()
+    {
+        if (audioSource != null && audioSource.isActiveAndEnabled && chaseGrowl != null)
+            audioSource.PlayOneShot(chaseGrowl, chaseGrowlVolume);
     }
 
     private void UpdateChase(float dt)

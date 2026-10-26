@@ -135,6 +135,32 @@ public sealed class LocalJumpscarePlayback : MonoBehaviour
         StartCoroutine(PlayFollowUpAndFinish(variant, audioStartedAt));
     }
 
+    /// <summary>Returns a safe wait duration for an external flow that must wait for this scare.</summary>
+    public float GetMaximumPlaybackDuration()
+    {
+        float longestDuration = 0f;
+        if (variants != null)
+        {
+            foreach (JumpscareClipSet variant in variants)
+            {
+                if (variant == null)
+                    continue;
+
+                float audioDuration = Mathf.Max(
+                    variant.scream != null ? variant.scream.length : 0f,
+                    variant.followUpSfx != null ? variant.followUpSfx.length : 0f);
+                float videoDuration = variant.video != null
+                    ? (float)variant.video.length + 1f
+                    : 0f;
+                longestDuration = Mathf.Max(
+                    longestDuration,
+                    Mathf.Max(audioDuration, videoDuration));
+            }
+        }
+
+        return longestDuration + vignetteFadeOut + 0.1f;
+    }
+
     private JumpscareClipSet ChooseVariant()
     {
         if (variants == null || variants.Length == 0)

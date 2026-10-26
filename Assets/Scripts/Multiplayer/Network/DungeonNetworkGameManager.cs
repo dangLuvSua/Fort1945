@@ -1,9 +1,13 @@
+using System.Collections;
 using Fusion;
 using UnityEngine;
 
 /// <summary>Dungeon-only shared state for prison cell gates.</summary>
 public sealed class DungeonNetworkGameManager : NetworkBehaviour
 {
+    [Header("All Players Captured")]
+    [SerializeField] private LocalJumpscarePlayback allCapturedJumpscarePrefab;
+
     public static DungeonNetworkGameManager Instance { get; private set; }
 
     [Networked] public NetworkBool PrisonCell1Unlocked { get; private set; }
@@ -43,6 +47,7 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
             return;
 
         int activePlayerCount = 0;
+        string capturedPlayerRoster = string.Empty;
         foreach (PlayerRef player in Runner.ActivePlayers)
         {
             activePlayerCount++;
@@ -51,13 +56,46 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
                 !playerObject.TryGetComponent(out PlayerController controller) ||
                 !controller.IsCapturedByKempeitai)
                 return;
+
+            if (capturedPlayerRoster.Length > 0)
+                capturedPlayerRoster += ", ";
+            capturedPlayerRoster += player.ToString();
         }
 
         if (activePlayerCount == 0)
             return;
 
         returningCapturedPlayersToLobby = true;
-        Debug.Log("[PRISON] All active players have been captured. Returning the group to the Fort2 lobby.", this);
+        Debug.Log(
+            $"[PRISON] All {activePlayerCount} active players have been captured " +
+            $"({capturedPlayerRoster}). Playing the group jumpscare before returning to Fort2.",
+            this);
+
+        RPC_PlayAllCapturedJumpscare();
+        StartCoroutine(ReturnToLobbyAfterJumpscare());
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayAllCapturedJumpscare()
+    {
+        if (allCapturedJumpscarePrefab == null)
+        {
+            Debug.LogWarning("[PRISON] No all-captured jumpscare prefab is assigned.", this);
+            return;
+        }
+
+        LocalJumpscarePlayback playback = Instantiate(allCapturedJumpscarePrefab);
+        playback.Play();
+    }
+
+    private IEnumerator ReturnToLobbyAfterJumpscare()
+    {
+        if (allCapturedJumpscarePrefab != null)
+        {
+            float duration = allCapturedJumpscarePrefab.GetMaximumPlaybackDuration();
+            if (duration > 0f)
+                yield return new WaitForSecondsRealtime(duration);
+        }
 
         NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
         if (handler == null || !handler.LoadFort2Scene())

@@ -5060,6 +5060,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f4190616b9d4899a64f38c391e5b2d4, type: 3}
   m_Name: DungeonNetworkGameManager
   m_EditorClassIdentifier: Assembly-CSharp::DungeonNetworkGameManager
+  allCapturedJumpscarePrefab: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
   _PrisonCell1Unlocked:
     RawValue: 0
   _PrisonCell2Unlocked:
@@ -5505,6 +5506,11 @@ MonoBehaviour:
   dungeonBgm: {fileID: 8300000, guid: b5c6520386263fe40b401461a98dda64, type: 3}
   dungeonAmbience: {fileID: 8300000, guid: 988224ce290992f4e92eba0445a7e0f3, type: 3}
   prisonCaptureSfx: {fileID: 8300000, guid: 81d84fac28f769c428de827db0cf2577, type: 3}
+  prisonWhisperClips:
+  - {fileID: 8300000, guid: 70a40ad92b73d2048adcae8c35a27a54, type: 3}
+  - {fileID: 8300000, guid: 171ca965c3f66b741aba02a94e661e07, type: 3}
+  - {fileID: 8300000, guid: f14ff588c6b90a54fbf008ea57f7181e, type: 3}
+  prisonWhisperVolume: 0.3
   bgmMixerGroup: {fileID: 3776330322901928331, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
   ambienceMixerGroup: {fileID: 9170187536159203535, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
   sfxMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}

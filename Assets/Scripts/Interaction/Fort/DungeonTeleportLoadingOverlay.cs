@@ -61,7 +61,7 @@ public sealed class DungeonTeleportLoadingOverlay : MonoBehaviour
             "Fonts & Materials/LiberationSans SDF");
         if (label.font == null)
             label.font = TMP_Settings.defaultFontAsset;
-        label.text = "Teleporting...";
+        label.text = "Dungeon Loading...";
         label.fontSize = 36f;
         label.alignment = TextAlignmentOptions.Center;
         label.color = Color.white;

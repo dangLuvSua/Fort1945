@@ -10,27 +10,27 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 1c5673ff53ea03a42b0adf1958c7159e, type: 3}
       propertyPath: m_LocalScale.x
-      value: 4
+      value: 5.9256
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c5673ff53ea03a42b0adf1958c7159e, type: 3}
       propertyPath: m_LocalScale.y
-      value: 4
+      value: 5.9256
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c5673ff53ea03a42b0adf1958c7159e, type: 3}
       propertyPath: m_LocalScale.z
-      value: 4
+      value: 5.9256
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c5673ff53ea03a42b0adf1958c7159e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 62.4229
+      value: 62.425
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c5673ff53ea03a42b0adf1958c7159e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 35.79311
+      value: 35.661
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c5673ff53ea03a42b0adf1958c7159e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -60.63934
+      value: -60.638
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c5673ff53ea03a42b0adf1958c7159e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -272,6 +272,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a857c0596b2e2b42a36a5dc55a5d766, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
+  pickupSound: {fileID: 0}
+  pickupSoundVolume: 1
   itemData: {fileID: 11400000, guid: 49c7c78e778e32040a342553e0e83829, type: 2}
   sourceChest: {fileID: 0}
+  pickupJumpscareChance: 0
+  easyJumpscareChanceMultiplier: 0.1
+  normalJumpscareChanceMultiplier: 0.35
+  difficultJumpscareChanceMultiplier: 0.65
+  pickupJumpscarePrefab: {fileID: 0}
+  easySanityDamage: 5
+  normalSanityDamage: 10
+  difficultSanityDamage: 15
   _ItemId: 202

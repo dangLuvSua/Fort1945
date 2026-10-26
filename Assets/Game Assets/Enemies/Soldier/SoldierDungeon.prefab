@@ -2815,6 +2815,10 @@ MonoBehaviour:
   animator: {fileID: 2183199236842699879}
   speedParameter: Speed
   animSmoothing: 10
+  audioSource: {fileID: -7325700556696357416}
+  chaseGrowl: {fileID: 8300000, guid: dd6541366e38442468afddd8cdc5d41c, type: 3}
+  chaseGrowlVolume: 0.8
+  sfxMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
 --- !u!82 &-7325700556696357416
 AudioSource:
   m_ObjectHideFlags: 0
@@ -2824,7 +2828,7 @@ AudioSource:
   m_GameObject: {fileID: 4893077825615314087}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0

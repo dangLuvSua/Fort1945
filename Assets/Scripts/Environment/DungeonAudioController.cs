@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -13,6 +14,10 @@ public sealed class DungeonAudioController : MonoBehaviour
     [Header("Prison Capture")]
     [SerializeField] private AudioClip prisonCaptureSfx;
 
+    [Header("Prison Whispers")]
+    [SerializeField] private AudioClip[] prisonWhisperClips;
+    [SerializeField, Range(0f, 1f)] private float prisonWhisperVolume = 0.3f;
+
     [Header("Mixer Groups")]
     [SerializeField] private AudioMixerGroup bgmMixerGroup;
     [SerializeField] private AudioMixerGroup ambienceMixerGroup;
@@ -24,6 +29,7 @@ public sealed class DungeonAudioController : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float prisonSfxVolume = 0.8f;
 
     private AudioSource prisonSfxSource;
+    private readonly List<AudioSource> prisonWhisperSources = new List<AudioSource>();
 
     private void Awake()
     {
@@ -53,13 +59,69 @@ public sealed class DungeonAudioController : MonoBehaviour
 
     public static void PlayPrisonCaptureSfx()
     {
-        if (instance == null || instance.prisonCaptureSfx == null ||
-            instance.prisonSfxSource == null)
+        if (instance == null)
             return;
 
-        instance.prisonSfxSource.PlayOneShot(
-            instance.prisonCaptureSfx,
-            instance.prisonSfxVolume);
+        if (instance.prisonCaptureSfx != null && instance.prisonSfxSource != null)
+        {
+            instance.prisonSfxSource.PlayOneShot(
+                instance.prisonCaptureSfx,
+                instance.prisonSfxVolume);
+        }
+
+        instance.StartPrisonWhispers();
+    }
+
+    public static void StopPrisonWhispers()
+    {
+        if (instance == null)
+            return;
+
+        foreach (AudioSource source in instance.prisonWhisperSources)
+        {
+            if (source != null && source.isPlaying)
+                source.Stop();
+        }
+    }
+
+    private void StartPrisonWhispers()
+    {
+        if (prisonWhisperClips == null || prisonWhisperClips.Length == 0)
+            return;
+
+        int validClipCount = 0;
+        foreach (AudioClip clip in prisonWhisperClips)
+        {
+            if (clip != null)
+                validClipCount++;
+        }
+
+        if (validClipCount == 0)
+            return;
+
+        while (prisonWhisperSources.Count < prisonWhisperClips.Length)
+        {
+            AudioSource source = gameObject.AddComponent<AudioSource>();
+            source.playOnAwake = false;
+            source.loop = true;
+            source.spatialBlend = 0f;
+            source.outputAudioMixerGroup = ambienceMixerGroup;
+            prisonWhisperSources.Add(source);
+        }
+
+        float volumePerClip = prisonWhisperVolume / validClipCount;
+        for (int i = 0; i < prisonWhisperClips.Length; i++)
+        {
+            AudioClip clip = prisonWhisperClips[i];
+            AudioSource source = prisonWhisperSources[i];
+            if (clip == null)
+                continue;
+
+            source.clip = clip;
+            source.volume = volumePerClip;
+            if (!source.isPlaying)
+                source.Play();
+        }
     }
 
     private void StartLoop(

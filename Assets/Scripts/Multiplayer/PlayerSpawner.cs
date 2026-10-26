@@ -159,7 +159,10 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
                 playerState.RequestResetReady();
         }
 
-        Debug.Log("[PLAYER SPAWNER] Returned all captured players to Fort2 lobby spawns; players must ready and start again.", this);
+        Debug.Log(
+            $"[PLAYER SPAWNER] Returned all {players.Length} active captured players " +
+            $"({string.Join(", ", players)}) to Fort2 lobby spawns; players must ready and start again.",
+            this);
         lobbyRecoveryComplete = true;
     }
 

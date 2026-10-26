@@ -150,6 +150,16 @@ public class NetworkRunnerHandler :
             return;
         }
 
+        // The Fort 2 dungeon key is consumed by the gate. Strip it from the
+        // transfer inventory as a final safeguard so it can never appear in
+        // the Dungeon after the network scene transition.
+        NetworkGameManager gameManager = NetworkGameManager.Instance;
+        int dungeonKeyId = gameManager != null && gameManager.KeyItem != null
+            ? gameManager.KeyItem.itemId
+            : 103;
+        if (inventory.HasItemId(dungeonKeyId))
+            inventory.RemoveItemCompletely(dungeonKeyId);
+
         inventory.BeginDungeonInventoryTransfer();
         dungeonInventorySnapshot = inventory.CaptureTransferSnapshot();
         Debug.Log(
