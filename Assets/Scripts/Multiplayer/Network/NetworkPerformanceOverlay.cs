@@ -53,16 +53,16 @@ public sealed class NetworkPerformanceOverlay : MonoBehaviour
                 ping = Mathf.RoundToInt(rttMilliseconds).ToString(CultureInfo.InvariantCulture) + " ms";
         }
 
-        string label = $"NET  {connection}\nFPS  {Mathf.RoundToInt(fps)}\nRTT  {ping}\nF3  Toggle";
-        const float width = 170f;
-        const float height = 86f;
+        string label = $"NET  {connection}    |    FPS  {Mathf.RoundToInt(fps)}    |    RTT  {ping}    |    F3  Toggle";
+        float width = Mathf.Min(520f, Screen.width - 24f);
+        const float height = 38f;
         Rect rect = new Rect(Screen.width - width - 12f, 12f, width, height);
 
         Color previousGuiColor = GUI.color;
         GUI.color = new Color(0.035f, 0.045f, 0.06f, 0.88f);
         GUI.Box(rect, GUIContent.none, panelStyle);
         GUI.color = previousGuiColor;
-        GUI.Label(new Rect(rect.x + 10f, rect.y + 7f, rect.width - 20f, rect.height - 14f), label, textStyle);
+        GUI.Label(new Rect(rect.x + 10f, rect.y + 2f, rect.width - 20f, rect.height - 4f), label, textStyle);
     }
 
     private void EnsureStyles()
@@ -76,7 +76,7 @@ public sealed class NetworkPerformanceOverlay : MonoBehaviour
         };
         textStyle = new GUIStyle(GUI.skin.label)
         {
-            alignment = TextAnchor.UpperLeft,
+            alignment = TextAnchor.MiddleLeft,
             fontSize = 14,
             fontStyle = FontStyle.Bold,
             normal = { textColor = Color.white }

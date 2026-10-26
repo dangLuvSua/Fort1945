@@ -15,11 +15,22 @@ public class SoldierDialogueController : MonoBehaviour
 
     private NetworkRunner runner;
     private NetworkGameManager manager;
+    private AudioSource talkAudioSource;
 
     private void Awake()
     {
         if (talkSound == null)
             talkSound = Resources.Load<AudioClip>("SFX/talk");
+
+        // Dialogue is UI feedback, so play it as 2D audio. The dialogue panel
+        // can be far from the local player's AudioListener in world space.
+        talkAudioSource = GetComponent<AudioSource>();
+        if (talkAudioSource == null)
+            talkAudioSource = gameObject.AddComponent<AudioSource>();
+
+        talkAudioSource.playOnAwake = false;
+        talkAudioSource.loop = false;
+        talkAudioSource.spatialBlend = 0f;
 
         HideDialogue();
     }
@@ -41,11 +52,18 @@ public class SoldierDialogueController : MonoBehaviour
 
     public void ShowDialogue(string message, float duration = 0f)
     {
-        if (talkSound != null)
-            AudioSource.PlayClipAtPoint(talkSound, transform.position, talkSoundVolume);
-
-        if (dialoguePanel != null)
+        // The dialogue panel can be this component's own GameObject. Activate
+        // it first so its AudioSource is active before PlayOneShot is called.
+        if (dialoguePanel != null && !dialoguePanel.activeSelf)
             dialoguePanel.SetActive(true);
+
+        if (talkSound != null)
+        {
+            talkAudioSource.enabled = true;
+            talkAudioSource.PlayOneShot(talkSound, talkSoundVolume);
+        }
+        else
+            Debug.LogWarning("[DIALOGUE] Talk SFX is missing. Assign a clip or add Resources/SFX/talk.", this);
 
         // Get host name
         string hostName = GetHostName();
