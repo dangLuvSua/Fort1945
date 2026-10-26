@@ -1,8 +1,5 @@
 using Fusion;
-using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 public class PhaseManager : NetworkBehaviour
 {
@@ -48,9 +45,12 @@ public class PhaseManager : NetworkBehaviour
     [Networked]
     public int PhaseItemsCollected { get; private set; }
 
+    public bool IsNetworkReady { get; private set; }
+
     public override void Spawned()
     {
         Instance = this;
+        IsNetworkReady = true;
 
         if (Object.HasStateAuthority && !PhaseInitialized)
         {
@@ -61,6 +61,7 @@ public class PhaseManager : NetworkBehaviour
 
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
+        IsNetworkReady = false;
         if (Instance == this)
             Instance = null;
     }
@@ -142,6 +143,34 @@ public class PhaseManager : NetworkBehaviour
         }
 
         SetPhase(CurrentPhase + 1);
+        RPC_TeleportPlayersToPhaseSpawn();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_TeleportPlayersToPhaseSpawn()
+    {
+        if (Runner == null || !Runner.IsRunning)
+            return;
+
+        DungeonGenerator generator = FindFirstObjectByType<DungeonGenerator>();
+        if (generator == null || !generator.IsGenerated)
+        {
+            Debug.LogWarning("[PHASE] Dungeon spawn points are not ready; cannot reposition players for the next phase.", this);
+            return;
+        }
+
+        PlayerRef localPlayer = Runner.LocalPlayer;
+        if (!localPlayer.IsValid ||
+            !Runner.TryGetPlayerObject(localPlayer, out NetworkObject playerObject) ||
+            playerObject == null)
+            return;
+
+        PlayerController controller = playerObject.GetComponent<PlayerController>();
+        if (controller == null)
+            return;
+
+        generator.GetSpawn(localPlayer.RawEncoded, out Vector3 position, out Quaternion rotation);
+        controller.Teleport(position, rotation);
     }
 
     /// <summary>Reports one successful camera capture to the state authority.</summary>
@@ -218,126 +247,11 @@ public class PhaseManager : NetworkBehaviour
             return;
 
         endingStarted = true;
-        CreateEndingCrossGlow();
-        EndingSceneTransition.Begin(fadeDuration, "EndingSpawnPoint");
+        EyeBlinkTransition.CloseAndHold(Color.black, fadeDuration);
+        EndingSceneTransition.Begin(
+            string.IsNullOrWhiteSpace(spawnPointName)
+                ? endingSpawnPointName
+                : spawnPointName);
     }
 
-    private static void CreateEndingCrossGlow()
-    {
-        Transform cross = FindTransformByName("White Cross");
-        if (cross == null)
-            return;
-
-        foreach (Renderer renderer in cross.GetComponentsInChildren<Renderer>())
-        {
-            foreach (Material material in renderer.materials)
-            {
-                if (material.HasProperty("_EmissionColor"))
-                {
-                    material.EnableKeyword("_EMISSION");
-                    material.SetColor("_EmissionColor", new Color(3.5f, 3.5f, 3.5f, 1f));
-                }
-            }
-        }
-
-        Transform existing = cross.Find("EndingGlowParticles");
-        if (existing != null)
-            return;
-
-        var particlesObject = new GameObject("EndingGlowParticles");
-        particlesObject.transform.SetParent(cross, false);
-        ParticleSystem particles = particlesObject.AddComponent<ParticleSystem>();
-        var main = particles.main;
-        main.loop = true;
-        main.startLifetime = 1.6f;
-        main.startSpeed = 0.25f;
-        main.startSize = 0.12f;
-        main.startColor = new Color(1f, 0.92f, 0.55f, 0.9f);
-        main.maxParticles = 80;
-        var emission = particles.emission;
-        emission.rateOverTime = 18f;
-        var shape = particles.shape;
-        shape.shapeType = ParticleSystemShapeType.Sphere;
-        shape.radius = 0.65f;
-        var color = particles.colorOverLifetime;
-        color.enabled = true;
-        var gradient = new Gradient();
-        gradient.SetKeys(
-            new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(new Color(1f, 0.82f, 0.35f), 1f) },
-            new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(0.8f, 0.2f), new GradientAlphaKey(0f, 1f) });
-        color.color = gradient;
-        particles.Play();
-    }
-
-    private IEnumerator PlayEndingTransition(float fadeDuration, string spawnPointName)
-    {
-        Image overlay = CreateFadeOverlay();
-        float elapsed = 0f;
-        while (elapsed < fadeDuration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            SetOverlayAlpha(overlay, Mathf.Clamp01(elapsed / fadeDuration));
-            yield return null;
-        }
-
-        SetOverlayAlpha(overlay, 1f);
-        if (Object != null && Object.HasStateAuthority)
-        {
-            Transform endingSpawn = FindTransformByName(spawnPointName);
-            if (endingSpawn == null)
-            {
-                Debug.LogError($"[PHASE] Could not find ending spawn point '{spawnPointName}' in scene '{SceneManager.GetActiveScene().name}'.");
-            }
-            else
-            {
-                foreach (PlayerController player in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
-                    player.RpcTeleportToEnding(endingSpawn.position, endingSpawn.rotation);
-            }
-        }
-
-        yield return new WaitForSecondsRealtime(0.35f);
-        elapsed = 0f;
-        while (elapsed < fadeDuration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            SetOverlayAlpha(overlay, 1f - Mathf.Clamp01(elapsed / fadeDuration));
-            yield return null;
-        }
-
-        Destroy(overlay.canvas.gameObject);
-    }
-
-    private static Transform FindTransformByName(string targetName)
-    {
-        foreach (Transform candidate in FindObjectsByType<Transform>(FindObjectsSortMode.None))
-            if (candidate.name == targetName)
-                return candidate;
-        return null;
-    }
-
-    private static Image CreateFadeOverlay()
-    {
-        var canvasObject = new GameObject("EndingWhiteFade", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        Canvas canvas = canvasObject.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = short.MaxValue;
-        CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        var imageObject = new GameObject("White", typeof(RectTransform), typeof(Image));
-        imageObject.transform.SetParent(canvasObject.transform, false);
-        RectTransform rect = imageObject.GetComponent<RectTransform>();
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-        Image image = imageObject.GetComponent<Image>();
-        image.color = new Color(1f, 1f, 1f, 0f);
-        return image;
-    }
-
-    private static void SetOverlayAlpha(Image image, float alpha)
-    {
-        if (image != null)
-            image.color = new Color(1f, 1f, 1f, alpha);
-    }
 }

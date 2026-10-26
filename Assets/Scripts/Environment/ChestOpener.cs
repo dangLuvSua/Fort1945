@@ -52,9 +52,14 @@ public class ChestOpener : MonoBehaviour
 
     private void Update()
     {
+        bool hasStateAuthority = state != null &&
+            state.Object != null &&
+            state.Object.IsValid &&
+            state.Object.HasStateAuthority;
+
         // Mag-check lang kada 0.1 seconds, hindi kada frame
         checkTimer -= Time.deltaTime;
-        if (checkTimer <= 0f)
+        if (hasStateAuthority && state.IsNetworkReady && checkTimer <= 0f)
         {
             checkTimer = 0.1f;
             bool playerNear = IsPlayerInRange();
@@ -65,8 +70,13 @@ public class ChestOpener : MonoBehaviour
                 isOpen = false;
         }
 
-        if (state != null)
-            state.IsOpen = isOpen;
+        if (state != null && state.IsNetworkReady)
+        {
+            if (hasStateAuthority)
+                state.SetOpen(isOpen);
+            else
+                isOpen = state.IsOpen;
+        }
 
         // Smooth na pag-rotate papunta sa target
         Quaternion target = isOpen ? openRotation : closedRotation;

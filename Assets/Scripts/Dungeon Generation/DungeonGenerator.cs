@@ -345,7 +345,7 @@ public class DungeonGenerator : MonoBehaviour
             return;
 
         PhaseManager phaseManager = PhaseManager.Instance;
-        if (phaseManager == null || !phaseManager.PhaseInitialized ||
+        if (phaseManager == null || !phaseManager.IsNetworkReady || !phaseManager.PhaseInitialized ||
             phaseManager.CurrentPhase != 2)
             return;
 

@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class SoldierDialogueController : MonoBehaviour
 {
+    [Header("Audio")]
+    [SerializeField] private AudioClip talkSound;
+    [SerializeField, Range(0f, 1f)] private float talkSoundVolume = 1f;
+
     [Header("UI")]
     [SerializeField] private GameObject dialoguePanel;
     [SerializeField] private TMP_Text speakerNameText;
@@ -14,6 +18,9 @@ public class SoldierDialogueController : MonoBehaviour
 
     private void Awake()
     {
+        if (talkSound == null)
+            talkSound = Resources.Load<AudioClip>("SFX/talk");
+
         HideDialogue();
     }
 
@@ -34,6 +41,9 @@ public class SoldierDialogueController : MonoBehaviour
 
     public void ShowDialogue(string message, float duration = 0f)
     {
+        if (talkSound != null)
+            AudioSource.PlayClipAtPoint(talkSound, transform.position, talkSoundVolume);
+
         if (dialoguePanel != null)
             dialoguePanel.SetActive(true);
 

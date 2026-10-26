@@ -178,6 +178,9 @@ public class ItemRandomSpawner : NetworkBehaviour
         if (phaseManager == null)
             phaseManager = PhaseManager.Instance;
 
+        if (phaseManager != null && !phaseManager.IsNetworkReady)
+            return;
+
         if (itemHandler == null)
         {
             Debug.LogWarning(
@@ -205,7 +208,7 @@ public class ItemRandomSpawner : NetworkBehaviour
             return;
         }
 
-        if (phaseManager != null && phaseManager.PhaseInitialized)
+        if (phaseManager != null && phaseManager.IsNetworkReady && phaseManager.PhaseInitialized)
         {
             phase = phaseManager.CurrentPhase;
         }
@@ -269,6 +272,7 @@ public class ItemRandomSpawner : NetworkBehaviour
             rule.completionMode != ItemSpawnProfile.PhaseCompletionMode.ExternalSignal &&
             HasCollectedPhaseItems(gameManager) &&
             phaseManager != null &&
+            phaseManager.IsNetworkReady &&
             (rule.completionMode != ItemSpawnProfile.PhaseCompletionMode.CollectItemsAndPhotos ||
              phaseManager.PhotoCapturesThisPhase >= rule.requiredPhotoCaptures) &&
             (!rule.requirePuzzlePieces || phaseManager.PuzzlePiecesCollected))
@@ -283,10 +287,14 @@ public class ItemRandomSpawner : NetworkBehaviour
     {
         if (phaseManager == null)
             phaseManager = PhaseManager.Instance;
+
+        if (phaseManager != null && !phaseManager.IsNetworkReady)
+            return;
+
         if (itemHandler == null)
             return;
 
-        int phase = phaseManager != null && phaseManager.PhaseInitialized
+        int phase = phaseManager != null && phaseManager.IsNetworkReady && phaseManager.PhaseInitialized
             ? phaseManager.CurrentPhase
             : Mathf.Max(1, standalonePhase);
 
@@ -343,13 +351,13 @@ public class ItemRandomSpawner : NetworkBehaviour
                 : 0;
             missionProgressPanel.SetProgressText(
                 "PhotoProgress",
-                $"Valid statue photos: {Mathf.Min(photoCount, rule.requiredPhotoCaptures)}/{rule.requiredPhotoCaptures}");
+                $"Photos: {Mathf.Min(photoCount, rule.requiredPhotoCaptures)}/{rule.requiredPhotoCaptures}");
 
             bool puzzlePiecesCollected = currentPhaseManager != null &&
                 currentPhaseManager.PuzzlePiecesCollected;
             missionProgressPanel.SetProgressText(
                 "PuzzlePieceProgress",
-                puzzlePiecesCollected ? "Puzzle pieces: complete" : "Puzzle pieces: in progress");
+                puzzlePiecesCollected ? "Puzzle: complete" : "Puzzle: in progress");
         }
         else if (phase == 3)
         {
@@ -425,7 +433,7 @@ public class ItemRandomSpawner : NetworkBehaviour
 
         if (Object != null && Object.IsValid && Runner != null && Runner.IsRunning)
         {
-            int currentPhase = phaseManager != null && phaseManager.PhaseInitialized
+            int currentPhase = phaseManager != null && phaseManager.IsNetworkReady && phaseManager.PhaseInitialized
                 ? phaseManager.CurrentPhase
                 : -1;
 
@@ -466,7 +474,7 @@ public class ItemRandomSpawner : NetworkBehaviour
             return;
 
         ClearNetworkObjectiveRequirements();
-        NetworkObjectivePhase = phaseManager != null && phaseManager.PhaseInitialized
+        NetworkObjectivePhase = phaseManager != null && phaseManager.IsNetworkReady && phaseManager.PhaseInitialized
             ? phaseManager.CurrentPhase
             : Mathf.Max(1, standalonePhase);
         int index = 0;
@@ -500,7 +508,7 @@ public class ItemRandomSpawner : NetworkBehaviour
         GameDifficulty difficulty = manager != null && manager.IsNetworkStateReady
             ? manager.Difficulty
             : standaloneDifficulty;
-        int phase = phaseManager != null && phaseManager.PhaseInitialized
+        int phase = phaseManager != null && phaseManager.IsNetworkReady && phaseManager.PhaseInitialized
             ? phaseManager.CurrentPhase
             : Mathf.Max(1, standalonePhase);
         ItemSpawnProfile.PhaseSpawnRule rule = itemHandler.GetSpawnRule(difficulty, phase);
@@ -923,7 +931,19 @@ public class ItemRandomSpawner : NetworkBehaviour
         NetworkObject spawned = Runner.Spawn(
             item.worldPrefab,
             position,
-            rotation
+            rotation,
+            null,
+            (runner, networkObject) =>
+            {
+                NetworkedDroppedItem networkedItem =
+                    networkObject.GetComponent<NetworkedDroppedItem>();
+                if (networkedItem != null)
+                    networkedItem.Initialize(item.itemId);
+
+                ItemPickup pickup = networkObject.GetComponent<ItemPickup>();
+                if (pickup != null)
+                    pickup.Initialize(item.itemId);
+            }
         );
 
         if (spawned == null)
@@ -935,18 +955,6 @@ public class ItemRandomSpawner : NetworkBehaviour
             // Keep the point available so a later attempt can retry.
             return false;
         }
-
-        NetworkedDroppedItem droppedItem =
-            spawned.GetComponent<NetworkedDroppedItem>();
-
-        if (droppedItem != null)
-            droppedItem.Initialize(item.itemId);
-
-        ItemPickup pickup =
-            spawned.GetComponent<ItemPickup>();
-
-        if (pickup != null)
-            pickup.Initialize(item.itemId);
 
         Debug.Log(
             $"[ITEM SPAWNER] Spawned {item.itemName} at {position}."

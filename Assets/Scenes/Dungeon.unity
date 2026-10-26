@@ -20,12 +20,12 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.5471698, g: 0.5471698, b: 0.5471698, a: 1}
+  m_AmbientSkyColor: {r: 0.00015879291, g: 0.00015879291, b: 0.00015879291, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 0.1
   m_AmbientMode: 3
-  m_SubtractiveShadowColor: {r: 0, g: 0.04226415, b: 0.1509434, a: 1}
+  m_SubtractiveShadowColor: {r: 0.26415092, g: 0.26415092, b: 0.26415092, a: 1}
   m_SkyboxMaterial: {fileID: 2100000, guid: daae5f4c8ec13be4c87775da544edcbe, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
@@ -5042,7 +5042,7 @@ MonoBehaviour:
   SortKey: 457926177
   SendPriority: 1
   EnableInterpolation: 1
-  Flags: 262148
+  Flags: 262146
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 2089892836}
@@ -5458,6 +5458,59 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 764ceef508f898a488dc0208d15db7f0, type: 3}
+--- !u!1 &1742195582937011001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1742195582937011002}
+  - component: {fileID: 1742195582937011003}
+  m_Layer: 0
+  m_Name: Dungeon Audio
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1742195582937011002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1742195582937011001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1742195582937011003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1742195582937011001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ba544c614a4462ba2e44a34bc7d7540, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DungeonAudioController
+  dungeonBgm: {fileID: 8300000, guid: b5c6520386263fe40b401461a98dda64, type: 3}
+  dungeonAmbience: {fileID: 8300000, guid: 988224ce290992f4e92eba0445a7e0f3, type: 3}
+  prisonCaptureSfx: {fileID: 8300000, guid: 81d84fac28f769c428de827db0cf2577, type: 3}
+  bgmMixerGroup: {fileID: 3776330322901928331, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
+  ambienceMixerGroup: {fileID: 9170187536159203535, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
+  sfxMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
+  bgmVolume: 0.242
+  ambienceVolume: 0.325
+  prisonSfxVolume: 0.727
 --- !u!1001 &3898107298759794209
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6047,3 +6100,4 @@ SceneRoots:
   - {fileID: 168789134}
   - {fileID: 1879114104}
   - {fileID: 1236878092}
+  - {fileID: 1742195582937011002}

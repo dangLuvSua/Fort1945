@@ -113,6 +113,10 @@ public class PlayerInventory : NetworkBehaviour
 
     [SerializeField] private float throwUp = 1.5f;
 
+    [Header("Drop Audio")]
+    [SerializeField] private AudioClip itemDropSound;
+    [SerializeField, Range(0f, 1f)] private float itemDropVolume = 1f;
+
 
 
     [Header("Item Database")]
@@ -411,6 +415,8 @@ public class PlayerInventory : NetworkBehaviour
     public override void Spawned()
 
     {
+        if (itemDropSound == null)
+            itemDropSound = Resources.Load<AudioClip>("SFX/item-drop");
 
         // Mark the inventory ready only after Fusion calls Spawned().
 
@@ -1953,6 +1959,161 @@ public class PlayerInventory : NetworkBehaviour
 
 
 
+    /// <summary>Drops every stored world item before a soldier capture teleport.</summary>
+    public int DropAllItems()
+    {
+        if (Object == null || !Object.HasStateAuthority || Runner == null)
+            return 0;
+
+        Transform aim = dropOrigin != null ? dropOrigin : transform;
+        Vector3 basePosition = aim.position + aim.forward * 0.8f;
+        Quaternion rotation = Quaternion.Euler(0f, aim.eulerAngles.y, 0f);
+        int droppedCount = 0;
+
+        for (int storageIndex = 0; storageIndex < StorageSlotCount; storageIndex++)
+        {
+            int itemId = NetworkSlots.Get(storageIndex);
+            int quantity = NetworkQuantities.Get(storageIndex);
+            if (itemId <= 0 || quantity <= 0)
+                continue;
+
+            ItemData item = GetItemData(itemId);
+            if (item == null || item.worldPrefab == null)
+            {
+                Debug.LogWarning(
+                    $"[INVENTORY] Could not drop item ID {itemId}; its ItemData or world prefab is missing.",
+                    this);
+                continue;
+            }
+
+            int droppedFromSlot = 0;
+            for (int copy = 0; copy < quantity; copy++)
+            {
+                Vector2 scatter = UnityEngine.Random.insideUnitCircle * 0.45f;
+                Vector3 position = basePosition +
+                    aim.right * scatter.x +
+                    aim.forward * scatter.y +
+                    Vector3.up * (0.05f + droppedCount * 0.025f);
+
+                if (!TrySpawnCapturedDrop(item, itemId, storageIndex, aim, position, rotation))
+                    break;
+
+                droppedFromSlot++;
+                droppedCount++;
+            }
+
+            if (droppedFromSlot == 0)
+                continue;
+
+            int remaining = quantity - droppedFromSlot;
+            if (remaining > 0)
+            {
+                NetworkQuantities.Set(storageIndex, remaining);
+                continue;
+            }
+
+            NetworkSlots.Set(storageIndex, 0);
+            NetworkQuantities.Set(storageIndex, 0);
+            ClearCandleState(storageIndex);
+
+            for (int quickBarIndex = 0; quickBarIndex < QuickBarSlotCount; quickBarIndex++)
+            {
+                if (GetQuickBarStorageIndex(quickBarIndex) == storageIndex)
+                    NetworkQuickBar.Set(quickBarIndex, 0);
+            }
+        }
+
+        if (droppedCount > 0)
+        {
+            CompactQuickBar();
+            SelectedSlot = -1;
+            PlayDropSound(aim.position);
+            NotifyInventoryChangedImmediately();
+            Debug.Log($"[INVENTORY] Dropped {droppedCount} item(s) when the player was captured.", this);
+        }
+
+        return droppedCount;
+    }
+
+    private bool TrySpawnCapturedDrop(
+        ItemData item,
+        int itemId,
+        int storageIndex,
+        Transform aim,
+        Vector3 position,
+        Quaternion rotation)
+    {
+        NetworkObject droppedObject = Runner.Spawn(
+            item.worldPrefab,
+            position,
+            rotation);
+
+        if (droppedObject == null)
+        {
+            Debug.LogError($"[INVENTORY] Failed to spawn captured drop '{item.itemName}'.", this);
+            return false;
+        }
+
+        bool isCandle = IsCandleSlot(storageIndex);
+        NetworkedDroppedItem droppedItem = droppedObject.GetComponent<NetworkedDroppedItem>();
+        if (droppedItem != null)
+        {
+            if (isCandle)
+            {
+                droppedItem.Initialize(
+                    itemId,
+                    IsCandleInitialized(storageIndex),
+                    GetCandleRemaining(storageIndex),
+                    GetCandleMaxLife(storageIndex),
+                    false);
+            }
+            else
+            {
+                droppedItem.Initialize(itemId);
+            }
+        }
+
+        ItemPickup pickup = droppedObject.GetComponent<ItemPickup>();
+        if (pickup != null)
+            pickup.Initialize(itemId);
+
+        KeyPickup keyPickup = droppedObject.GetComponent<KeyPickup>();
+        if (keyPickup != null)
+            keyPickup.Initialize(itemId);
+
+        DroppedItemPhysics physics = droppedObject.GetComponent<DroppedItemPhysics>();
+        if (physics != null)
+        {
+            Vector3 launchDirection =
+                (aim.forward + aim.right * UnityEngine.Random.Range(-0.6f, 0.6f)).normalized;
+            physics.Launch(
+                launchDirection * throwForce + Vector3.up * throwUp,
+                UnityEngine.Random.insideUnitSphere * 3f);
+
+            Collider[] playerColliders = GetComponentsInChildren<Collider>();
+            Collider[] itemColliders = droppedObject.GetComponentsInChildren<Collider>();
+            foreach (Collider itemCollider in itemColliders)
+            {
+                if (itemCollider == null)
+                    continue;
+
+                foreach (Collider playerCollider in playerColliders)
+                {
+                    if (playerCollider != null && itemCollider != playerCollider)
+                        Physics.IgnoreCollision(itemCollider, playerCollider, true);
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private void PlayDropSound(Vector3 position)
+    {
+        if (itemDropSound != null)
+            AudioSource.PlayClipAtPoint(itemDropSound, position, itemDropVolume);
+    }
+
     private void RequestDrop()
 
     {
@@ -2306,6 +2467,8 @@ public class PlayerInventory : NetworkBehaviour
         CompactQuickBar();
 
         SelectedSlot = -1;
+
+        PlayDropSound(aim.position);
 
         NotifyInventoryChangedImmediately();
 

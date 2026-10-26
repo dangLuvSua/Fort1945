@@ -271,7 +271,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6917f76044ca7154a919ec2dde06aa4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChestState
-  IsOpen: 0
+  _IsOpen:
+    RawValue: 0
 --- !u!114 &5323193135523077135
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -291,6 +292,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 7618921837119600802}
+  - {fileID: 6653722604862738178}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &-1631069018290795605
 MonoBehaviour:

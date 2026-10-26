@@ -120,7 +120,7 @@ public class KeyPickup : NetworkBehaviour, IInteractable
                 ChestState sourceChest =
                     ChestObject.GetComponent<ChestState>();
 
-                if (sourceChest != null)
+                if (sourceChest != null && sourceChest.IsNetworkReady)
                 {
                     return sourceChest.IsOpen;
                 }
@@ -149,7 +149,7 @@ public class KeyPickup : NetworkBehaviour, IInteractable
                     GetComponentInParent<ChestState>();
             }
 
-            if (chest != null)
+            if (chest != null && chest.IsNetworkReady)
             {
                 return chest.IsOpen;
             }

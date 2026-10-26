@@ -50,7 +50,7 @@ public class ChestLoot : NetworkBehaviour
         if (chestState == null)
             chestState = GetComponent<ChestState>();
 
-        if (chestState != null && chestState.IsOpen)
+        if (chestState != null && chestState.IsNetworkReady && chestState.IsOpen)
             SpawnItem();
     }
 

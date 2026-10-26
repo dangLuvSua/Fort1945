@@ -11,7 +11,7 @@ using UnityEngine.UI;
 ///
 /// Extra mission progress such as:
 /// - VALID STATUE PHOTOS: 0/4
-/// - PUZZLE PIECES: 0/8
+/// - PUZZLE: 0/8
 ///
 /// also uses the same ItemRow prefab layout.
 ///
@@ -470,7 +470,7 @@ public class MissionProgressPanelUI : MonoBehaviour
             }
 
             row.SetProgress(
-                "PUZZLE PIECES",
+                "Puzzle",
                 collectedPieces,
                 requiredPieces
             );
@@ -837,7 +837,7 @@ public class MissionProgressPanelUI : MonoBehaviour
                 );
 
             row.SetProgress(
-                "PUZZLE PIECES",
+                "Puzzle",
                 collected,
                 requiredPieces
             );

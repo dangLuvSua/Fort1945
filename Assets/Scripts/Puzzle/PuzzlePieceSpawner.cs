@@ -335,7 +335,7 @@ public class PuzzlePieceSpawner : NetworkBehaviour
         }
 
         PhaseManager phaseManager = PhaseManager.Instance;
-        if (phaseManager != null && phaseManager.PhaseInitialized &&
+        if (phaseManager != null && phaseManager.IsNetworkReady && phaseManager.PhaseInitialized &&
             phaseManager.CurrentPhase < 2)
             return;
 
@@ -413,6 +413,7 @@ public class PuzzlePieceSpawner : NetworkBehaviour
         NetworkGameManager manager = NetworkGameManager.Instance;
         PhaseManager phaseManager = PhaseManager.Instance;
         if (manager == null || !manager.IsNetworkStateReady || phaseManager == null ||
+            !phaseManager.IsNetworkReady ||
             !phaseManager.PhaseInitialized || phaseManager.CurrentPhase != 2)
             return;
 
