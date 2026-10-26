@@ -158,6 +158,9 @@ public class PlayerInventory : NetworkBehaviour
 
     public int SelectedSlot { get; private set; }
 
+    [Networked]
+    public NetworkBool DungeonTransferReady { get; private set; }
+
 
 
     // Candle data is associated with STORAGE slots.
@@ -222,6 +225,7 @@ public class PlayerInventory : NetworkBehaviour
             candleRemaining[i] = CandleLifeBySlot.Get(i);
             candleMaxLife[i] = CandleMaxLifeBySlot.Get(i);
             candleInitialized[i] = CandleInitializedBySlot.Get(i);
+
         }
 
         for (int i = 0; i < QuickBarSlotCount; i++)
@@ -247,6 +251,18 @@ public class PlayerInventory : NetworkBehaviour
 
         pendingTransferSnapshot = snapshot;
         return false;
+    }
+
+    public void BeginDungeonInventoryTransfer()
+    {
+        if (Object != null && Object.HasStateAuthority)
+            DungeonTransferReady = false;
+    }
+
+    public void MarkDungeonInventoryTransferReady()
+    {
+        if (Object != null && Object.HasStateAuthority)
+            DungeonTransferReady = true;
     }
 
     private void NotifyInventoryChangedImmediately()

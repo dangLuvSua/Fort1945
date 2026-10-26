@@ -52,6 +52,8 @@ public class DungeonPlayerSpawner : MonoBehaviour
     private NetworkRunner runner;
 
     private bool hasSpawnedLocalPlayer;
+    private bool spawnInProgress;
+    private PlayerInventory inventoryAwaitingRestore;
     private float debugTimer;
 
     public bool IsLocalPlayerReady => hasSpawnedLocalPlayer;
@@ -248,8 +250,14 @@ public class DungeonPlayerSpawner : MonoBehaviour
 
     private void TrySpawnLocalPlayer()
     {
-        if (hasSpawnedLocalPlayer)
+        if (hasSpawnedLocalPlayer || spawnInProgress)
             return;
+
+        if (inventoryAwaitingRestore != null)
+        {
+            TryFinishInventoryRestore();
+            return;
+        }
 
         if (runner == null)
             return;
@@ -334,6 +342,26 @@ public class DungeonPlayerSpawner : MonoBehaviour
             return;
         }
 
+        if (existingPlayer == null)
+        {
+            if (!TryGetDungeonSpawn(localPlayer, null, out Vector3 spawnPosition, out Quaternion spawnRotation))
+                return;
+
+            Debug.Log(
+                $"[DUNGEON SPAWN] Loading PlayerRoot asynchronously at {spawnPosition}.",
+                this);
+            spawnInProgress = true;
+            runner.SpawnAsync(
+                playerPrefab,
+                spawnPosition,
+                spawnRotation,
+                localPlayer,
+                null,
+                (NetworkSpawnFlags)0,
+                OnAsyncPlayerSpawnCompleted);
+            return;
+        }
+
         bool success =
             SpawnOrTeleportPlayer(
                 localPlayer,
@@ -349,39 +377,70 @@ public class DungeonPlayerSpawner : MonoBehaviour
             return;
         }
 
-        PlayerInventory inventory =
-            existingPlayer != null
-                ? existingPlayer.GetComponent<PlayerInventory>()
-                : runner.GetPlayerObject(localPlayer)?.GetComponent<PlayerInventory>();
-        if (inventory != null)
-        {
-            NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
-            if (handler != null && !handler.RestoreLocalInventoryForDungeon(inventory))
-            {
-                return;
-            }
+        BeginInventoryRestore(existingPlayer);
+    }
 
-            hasSpawnedLocalPlayer = true;
-            inventory.RefreshInventoryDisplay();
-            Debug.Log(
-                $"[DUNGEON SPAWN] Carried inventory after placement: " +
-                $"candle (203) x{inventory.GetQuantityForItemId(203)}, " +
-                $"Dungeon Key (103) x{inventory.GetQuantityForItemId(103)}. " +
-                $"Reused Fort player={existingPlayer != null}.",
-                inventory);
-        }
-        else
+    private void OnAsyncPlayerSpawnCompleted(NetworkSpawnOp spawnOperation)
+    {
+        spawnInProgress = false;
+
+        NetworkObject playerObject = spawnOperation.Object;
+        if (playerObject == null)
         {
             Debug.LogError(
-                "[DUNGEON SPAWN] PlayerInventory is missing from the placed player.",
+                $"[DUNGEON SPAWN] Fusion could not finish loading/spawning PlayerRoot. " +
+                $"Spawn status: {spawnOperation.Status}.",
                 this);
             return;
         }
 
+        NetworkRunner completedRunner = spawnOperation.Runner;
+        if (completedRunner == null || !completedRunner.IsRunning)
+        {
+            Debug.LogWarning("[DUNGEON SPAWN] Runner stopped before PlayerRoot finished spawning.", this);
+            return;
+        }
+
+        completedRunner.SetPlayerObject(completedRunner.LocalPlayer, playerObject);
+        Debug.Log("[DUNGEON SPAWN] Async PlayerRoot spawn completed and was registered.", playerObject);
+        BeginInventoryRestore(playerObject);
+    }
+
+    private void BeginInventoryRestore(NetworkObject playerObject)
+    {
+        PlayerInventory inventory = playerObject != null
+            ? playerObject.GetComponent<PlayerInventory>()
+            : null;
+
+        if (inventory == null)
+        {
+            Debug.LogError("[DUNGEON SPAWN] PlayerInventory is missing from the placed PlayerRoot.", this);
+            return;
+        }
+
+        inventoryAwaitingRestore = inventory;
+        TryFinishInventoryRestore();
+    }
+
+    private void TryFinishInventoryRestore()
+    {
+        if (inventoryAwaitingRestore == null)
+            return;
+
+        NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
+        if (handler != null && !handler.RestoreLocalInventoryForDungeon(inventoryAwaitingRestore))
+            return;
+
+        PlayerInventory inventory = inventoryAwaitingRestore;
+        inventoryAwaitingRestore = null;
+        inventory.MarkDungeonInventoryTransferReady();
+        inventory.RefreshInventoryDisplay();
+        hasSpawnedLocalPlayer = true;
         Debug.Log(
-            "[DUNGEON SPAWN] " +
-            "Local player dungeon placement complete."
-        );
+            $"[DUNGEON SPAWN] Local player placement complete. " +
+            $"carried candle (203) x{inventory.GetQuantityForItemId(203)}, " +
+            $"Dungeon Key (103) x{inventory.GetQuantityForItemId(103)}.",
+            inventory);
     }
 
     private bool SpawnOrTeleportPlayer(
@@ -422,40 +481,11 @@ public class DungeonPlayerSpawner : MonoBehaviour
             return true;
         }
 
-        Debug.Log(
-            $"[DUNGEON SPAWN] " +
-            $"Spawning new PlayerRoot at {spawnPosition}"
-        );
-
-        NetworkObject playerObject =
-            runner.Spawn(
-                playerPrefab,
-                spawnPosition,
-                spawnRotation,
-                player
-            );
-
-        if (playerObject == null)
-        {
-            Debug.LogError(
-                "[DUNGEON SPAWN] " +
-                "Runner.Spawn returned NULL."
-            );
-
-            return false;
-        }
-
-        runner.SetPlayerObject(
-            player,
-            playerObject
-        );
-
-        Debug.Log(
-            $"[DUNGEON SPAWN] " +
-            $"Spawned PlayerRoot for {player}."
-        );
-
-        return true;
+        Debug.LogError(
+            $"[DUNGEON SPAWN] Existing PlayerRoot for {player} was not available; " +
+            "new PlayerRoot creation must use the asynchronous spawn path.",
+            this);
+        return false;
     }
 
     private bool TryGetDungeonSpawn(

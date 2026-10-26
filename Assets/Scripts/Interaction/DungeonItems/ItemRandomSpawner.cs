@@ -221,6 +221,14 @@ public class ItemRandomSpawner : NetworkBehaviour
             return;
         }
 
+        // Preserve Fort candles in inventory, but take the Phase 1 baseline
+        // only after every player has finished restoring their carried items.
+        // Otherwise a fast dungeon generation could count Fort candles as new
+        // dungeon mission pickups.
+        if (phase == 1 && gameManager != null && gameManager.IsNetworkStateReady &&
+            !AreAllDungeonInventoriesReady())
+            return;
+
         ItemSpawnProfile.PhaseSpawnRule rule =
             itemHandler.GetSpawnRule(difficulty, phase);
 
@@ -281,6 +289,29 @@ public class ItemRandomSpawner : NetworkBehaviour
             phaseItemsSpawned = false;
             phaseManager.AdvancePhase();
         }
+    }
+
+    private bool AreAllDungeonInventoriesReady()
+    {
+        if (Runner == null || !Runner.IsRunning)
+            return false;
+
+        bool foundPlayer = false;
+        foreach (PlayerRef player in Runner.ActivePlayers)
+        {
+            foundPlayer = true;
+            if (!Runner.TryGetPlayerObject(player, out NetworkObject playerObject) ||
+                playerObject == null)
+            {
+                return false;
+            }
+
+            PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
+            if (inventory == null || !inventory.DungeonTransferReady)
+                return false;
+        }
+
+        return foundPlayer;
     }
 
     private void Update()
