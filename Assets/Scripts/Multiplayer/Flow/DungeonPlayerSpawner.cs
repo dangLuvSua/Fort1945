@@ -401,8 +401,30 @@ public class DungeonPlayerSpawner : MonoBehaviour
             return;
         }
 
+        // SpawnAsync starts at a provisional position before PlayerController.Spawned
+        // has finished configuring the dungeon CharacterController. Recalculate the
+        // floor offset now that the controller exists, matching the existing-player
+        // teleport path above.
+        if (!TryGetDungeonSpawn(
+            completedRunner.LocalPlayer,
+            playerObject,
+            out Vector3 correctedPosition,
+            out Quaternion correctedRotation))
+        {
+            Debug.LogError(
+                "[DUNGEON SPAWN] Async PlayerRoot spawned, but no valid dungeon ground " +
+                "position could be calculated. Despawning it so the placement can retry " +
+                "after dungeon ground becomes available.",
+                playerObject);
+            completedRunner.Despawn(playerObject);
+            return;
+        }
+
         completedRunner.SetPlayerObject(completedRunner.LocalPlayer, playerObject);
-        Debug.Log("[DUNGEON SPAWN] Async PlayerRoot spawn completed and was registered.", playerObject);
+        TeleportPlayer(playerObject, correctedPosition, correctedRotation);
+        Debug.Log(
+            $"[DUNGEON SPAWN] Async PlayerRoot ground-aligned at {correctedPosition} and registered.",
+            playerObject);
         BeginInventoryRestore(playerObject);
     }
 
@@ -532,11 +554,8 @@ public class DungeonPlayerSpawner : MonoBehaviour
             $"Raw dungeon spawn position: {position}"
         );
 
-        position =
-            GetCorrectGroundPosition(
-                position,
-                playerObject
-            );
+        if (!TryGetCorrectGroundPosition(position, playerObject, out position))
+            return false;
 
         Debug.Log(
             $"[DUNGEON SPAWN] " +
@@ -616,10 +635,12 @@ public class DungeonPlayerSpawner : MonoBehaviour
         return preferredIndex;
     }
 
-    private Vector3 GetCorrectGroundPosition(
+    private bool TryGetCorrectGroundPosition(
         Vector3 origin,
-        NetworkObject playerObject)
+        NetworkObject playerObject,
+        out Vector3 correctedPosition)
     {
+        correctedPosition = origin;
         Vector3 rayOrigin =
             origin +
             Vector3.up *
@@ -682,10 +703,12 @@ public class DungeonPlayerSpawner : MonoBehaviour
                     $"Bottom Offset: {bottomOffset}"
                 );
 
-                return finalPosition;
+                correctedPosition = finalPosition;
+                return true;
             }
 
-            return hit.point + Vector3.up;
+            correctedPosition = hit.point + Vector3.up;
+            return true;
         }
 
         Debug.LogWarning(
@@ -694,7 +717,7 @@ public class DungeonPlayerSpawner : MonoBehaviour
             $"using Ground Layer mask {groundLayer.value}."
         );
 
-        return origin;
+        return false;
     }
 
     private void TeleportPlayer(
