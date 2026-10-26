@@ -24,6 +24,7 @@ public sealed class DungeonTeleportLoadingOverlay : MonoBehaviour
             return;
 
         Debug.Log("[TELEPORT OVERLAY] Showing persistent Dungeon transition overlay.");
+        EyeBlinkTransition.CloseAndHold(backgroundColor);
 
         GameObject root = new GameObject(
             "Dungeon Teleport Loading Overlay",
@@ -35,7 +36,7 @@ public sealed class DungeonTeleportLoadingOverlay : MonoBehaviour
         Canvas canvas = root.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.overrideSorting = true;
-        canvas.sortingOrder = 32000;
+        canvas.sortingOrder = 32001;
 
         CanvasScaler scaler = root.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -45,9 +46,6 @@ public sealed class DungeonTeleportLoadingOverlay : MonoBehaviour
             root.GetComponent<DungeonTeleportLoadingOverlay>();
         overlay.canvasGroup = root.GetComponent<CanvasGroup>();
         overlay.fadeDuration = Mathf.Max(0.01f, duration);
-
-        Image background = CreateImage("Black Fade", root.transform, backgroundColor);
-        StretchToFill(background.rectTransform);
 
         GameObject labelObject = new GameObject(
             "Teleporting Label", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -81,6 +79,7 @@ public sealed class DungeonTeleportLoadingOverlay : MonoBehaviour
 
     public static void Hide()
     {
+        EyeBlinkTransition.Open();
         DungeonTeleportLoadingOverlay overlay =
             FindFirstObjectByType<DungeonTeleportLoadingOverlay>(FindObjectsInactive.Include);
         if (overlay != null)
@@ -112,22 +111,4 @@ public sealed class DungeonTeleportLoadingOverlay : MonoBehaviour
             Time.unscaledDeltaTime / fadeDuration);
     }
 
-    private static Image CreateImage(string objectName, Transform parent, Color color)
-    {
-        GameObject imageObject = new GameObject(
-            objectName, typeof(RectTransform), typeof(Image));
-        imageObject.transform.SetParent(parent, false);
-        Image image = imageObject.GetComponent<Image>();
-        image.color = color;
-        image.raycastTarget = true;
-        return image;
-    }
-
-    private static void StretchToFill(RectTransform rect)
-    {
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-    }
 }

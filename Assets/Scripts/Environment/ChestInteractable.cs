@@ -18,17 +18,23 @@ public class ChestInteractable : MonoBehaviour, IInteractable
         openRot = closedRot * Quaternion.Euler(openEuler);
     }
 
-    public string Prompt => state.IsOpen ? "Press E to close" : "Press E to open";
-    public bool CanInteract => true;
+    public string Prompt => state != null && state.IsNetworkReady && state.IsOpen
+        ? "Press E to close"
+        : "Press E to open";
+    public bool CanInteract => state != null && state.IsNetworkReady;
     public int Priority => 0;
 
     public void Interact(PlayerInventory inv)
     {
-        state.IsOpen = !state.IsOpen;
+        if (state != null && state.IsNetworkReady)
+            state.ToggleOpen();
     }
 
     void Update()
     {
+        if (lid == null || state == null || !state.IsNetworkReady)
+            return;
+
         lid.localRotation = Quaternion.Slerp(
             lid.localRotation,
             state.IsOpen ? openRot : closedRot,

@@ -1,18 +1,15 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
-/// <summary>Persists the final white fade while Fusion changes from Dungeon to Fort2.</summary>
+/// <summary>Keeps the eye-blink closed while Fusion changes from Dungeon to Fort2.</summary>
 public sealed class EndingSceneTransition : MonoBehaviour
 {
     private static EndingSceneTransition instance;
-    private Image overlay;
-    private float fadeDuration;
     private string spawnParentName;
     private bool sceneAuthority;
 
-    public static void Begin(float duration, string spawnParent)
+    public static void Begin(string spawnParent)
     {
         if (instance != null)
             return;
@@ -20,7 +17,6 @@ public sealed class EndingSceneTransition : MonoBehaviour
         var root = new GameObject("EndingSceneTransition");
         instance = root.AddComponent<EndingSceneTransition>();
         DontDestroyOnLoad(root);
-        instance.fadeDuration = Mathf.Max(0.1f, duration);
         instance.spawnParentName = spawnParent;
         NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
         instance.sceneAuthority = handler != null && handler.IsSceneAuthority;
@@ -29,16 +25,6 @@ public sealed class EndingSceneTransition : MonoBehaviour
 
     private IEnumerator Run()
     {
-        overlay = CreateOverlay();
-        float elapsed = 0f;
-        while (elapsed < fadeDuration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            SetAlpha(elapsed / fadeDuration);
-            yield return null;
-        }
-        SetAlpha(1f);
-
         float timeout = 30f;
         bool loadRequested = false;
         while (SceneManager.GetActiveScene().name != "Fort2" && timeout > 0f)
@@ -69,6 +55,7 @@ public sealed class EndingSceneTransition : MonoBehaviour
         // Allow scene objects and network players to finish initializing.
         yield return null;
         yield return null;
+        CreateEndingCrossGlow();
         NetworkRunnerHandler currentHandler = NetworkRunnerHandler.Instance;
         sceneAuthority = currentHandler != null && currentHandler.IsSceneAuthority;
         if (sceneAuthority)
@@ -91,14 +78,7 @@ public sealed class EndingSceneTransition : MonoBehaviour
 
         DisableFortGameplaySystems();
 
-        yield return new WaitForSecondsRealtime(0.35f);
-        elapsed = 0f;
-        while (elapsed < fadeDuration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            SetAlpha(1f - elapsed / fadeDuration);
-            yield return null;
-        }
+        yield return new WaitForSecondsRealtime(0.75f);
         Destroy(gameObject);
     }
 
@@ -130,30 +110,74 @@ public sealed class EndingSceneTransition : MonoBehaviour
         return null;
     }
 
-    private static Image CreateOverlay()
+    private static void CreateEndingCrossGlow()
     {
-        var canvasObject = new GameObject("EndingWhiteFadeCanvas", typeof(Canvas), typeof(CanvasScaler));
-        canvasObject.transform.SetParent(instance.transform, false);
-        Canvas canvas = canvasObject.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = short.MaxValue;
-        CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        var imageObject = new GameObject("White", typeof(RectTransform), typeof(Image));
-        imageObject.transform.SetParent(canvasObject.transform, false);
-        RectTransform rect = imageObject.GetComponent<RectTransform>();
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-        Image image = imageObject.GetComponent<Image>();
-        image.color = new Color(1f, 1f, 1f, 0f);
-        return image;
+        Transform cross = FindNamedTransform("White Cross");
+        if (cross == null)
+        {
+            Debug.LogWarning("[ENDING] Could not find the White Cross to apply its glow.");
+            return;
+        }
+
+        foreach (Renderer renderer in cross.GetComponentsInChildren<Renderer>())
+        {
+            foreach (Material material in renderer.materials)
+            {
+                if (!material.HasProperty("_EmissionColor"))
+                    continue;
+
+                material.EnableKeyword("_EMISSION");
+                material.SetColor("_EmissionColor", new Color(3.5f, 3.5f, 3.5f, 1f));
+            }
+        }
+
+        if (cross.Find("EndingGlowLight") == null)
+        {
+            GameObject lightObject = new GameObject("EndingGlowLight");
+            lightObject.transform.SetParent(cross, false);
+            lightObject.transform.localPosition = Vector3.up * 1.2f;
+            Light glow = lightObject.AddComponent<Light>();
+            glow.type = LightType.Point;
+            glow.color = new Color(1f, 0.88f, 0.62f);
+            glow.intensity = 2.5f;
+            glow.range = 5f;
+        }
+
+        if (cross.Find("EndingGlowParticles") != null)
+            return;
+
+        GameObject particlesObject = new GameObject("EndingGlowParticles");
+        particlesObject.transform.SetParent(cross, false);
+        ParticleSystem particles = particlesObject.AddComponent<ParticleSystem>();
+        ParticleSystem.MainModule main = particles.main;
+        main.loop = true;
+        main.startLifetime = 1.6f;
+        main.startSpeed = 0.25f;
+        main.startSize = 0.12f;
+        main.startColor = new Color(1f, 0.92f, 0.55f, 0.9f);
+        main.maxParticles = 80;
+        ParticleSystem.EmissionModule emission = particles.emission;
+        emission.rateOverTime = 18f;
+        ParticleSystem.ShapeModule shape = particles.shape;
+        shape.shapeType = ParticleSystemShapeType.Sphere;
+        shape.radius = 0.65f;
+        ParticleSystem.ColorOverLifetimeModule color = particles.colorOverLifetime;
+        color.enabled = true;
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(
+            new[]
+            {
+                new GradientColorKey(Color.white, 0f),
+                new GradientColorKey(new Color(1f, 0.82f, 0.35f), 1f)
+            },
+            new[]
+            {
+                new GradientAlphaKey(0f, 0f),
+                new GradientAlphaKey(0.8f, 0.2f),
+                new GradientAlphaKey(0f, 1f)
+            });
+        color.color = gradient;
+        particles.Play();
     }
 
-    private void SetAlpha(float alpha)
-    {
-        if (overlay != null)
-            overlay.color = new Color(1f, 1f, 1f, Mathf.Clamp01(alpha));
-    }
 }

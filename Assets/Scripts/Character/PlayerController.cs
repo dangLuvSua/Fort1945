@@ -241,6 +241,7 @@ public class PlayerController : NetworkBehaviour
         if (isLocal)
         {
             SetupInput();
+            EyeBlinkTransition.OpenFromBlack();
         }
 
         CheckGroundAtSpawn();
@@ -1022,8 +1023,26 @@ public class PlayerController : NetworkBehaviour
         Vector3 position,
         Quaternion rotation)
     {
-        if (characterController == null)
+        if (isLocal)
+        {
+            movementLockedUntil = float.PositiveInfinity;
+            EyeBlinkTransition.PlayTeleport(
+                () => ApplyTeleport(position, rotation));
             return;
+        }
+
+        ApplyTeleport(position, rotation);
+    }
+
+    private void ApplyTeleport(
+        Vector3 position,
+        Quaternion rotation)
+    {
+        if (characterController == null)
+        {
+            movementLockedUntil = Time.time;
+            return;
+        }
 
         characterController.enabled = false;
 
@@ -1108,7 +1127,22 @@ public class PlayerController : NetworkBehaviour
         float bottomOffset = characterController.height * 0.5f - characterController.center.y;
         Vector3 playerRootPosition = position + Vector3.up * bottomOffset;
 
+        PlayerInventory inventory = GetComponent<PlayerInventory>();
+        if (inventory != null)
+        {
+            inventory.DropAllItems();
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"[PRISON TELEPORT] Player {Object.Id} has no PlayerInventory; nothing was dropped.",
+                this);
+        }
+
         Teleport(playerRootPosition, rotation);
+        if (isLocal)
+            Invoke(nameof(PlayPrisonCaptureSfx), 0.35f);
+
         IsCapturedByKempeitai = true;
         expectedTeleportPosition = playerRootPosition;
         verifyTeleportOnNextNetworkTick = true;
@@ -1117,6 +1151,11 @@ public class PlayerController : NetworkBehaviour
             $"[PRISON TELEPORT] Player {Object.Id} moved from {previousPosition} to {transform.position} " +
             $"on state authority. Floor={position}, CharacterController bottom offset={bottomOffset:F2}, " +
             $"lock=0.25s.", this);
+    }
+
+    private void PlayPrisonCaptureSfx()
+    {
+        DungeonAudioController.PlayPrisonCaptureSfx();
     }
 
     /// <summary>Returns this player to the Fort2 lobby spawn and clears the capture state.</summary>

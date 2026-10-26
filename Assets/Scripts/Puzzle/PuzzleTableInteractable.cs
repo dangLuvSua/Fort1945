@@ -146,7 +146,7 @@ public class PuzzleTableInteractable :
             true;
 
         PhaseManager phaseManager = PhaseManager.Instance;
-        if (phaseManager != null && phaseManager.PhaseInitialized &&
+        if (phaseManager != null && phaseManager.IsNetworkReady && phaseManager.PhaseInitialized &&
             phaseManager.CurrentPhase >= 3)
         {
             phaseManager.ReportExternalPhaseComplete();

@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class ItemPickup : NetworkBehaviour, IInteractable
 {
+    [Header("Audio")]
+    [SerializeField] private AudioClip pickupSound;
+    [SerializeField, Range(0f, 1f)] private float pickupSoundVolume = 1f;
+
     [Header("Item")]
     [SerializeField] private ItemData itemData;
 
@@ -44,6 +48,12 @@ public class ItemPickup : NetworkBehaviour, IInteractable
     // serialized by IsCollecting and pendingCollector.
     private bool pendingPickupJumpscare;
 
+    private void Awake()
+    {
+        if (pickupSound == null)
+            pickupSound = Resources.Load<AudioClip>("SFX/item-pickup");
+    }
+
     public int NetworkItemId => ItemId;
     public ItemData Item => itemData;
 
@@ -72,13 +82,14 @@ public class ItemPickup : NetworkBehaviour, IInteractable
                 ChestState chest =
                     SourceChestObject.GetComponent<ChestState>();
 
-                return chest != null && chest.IsOpen;
+                return chest != null && chest.IsNetworkReady && chest.IsOpen;
             }
 
             if (sourceChest == null)
                 sourceChest = GetComponentInParent<ChestState>();
 
-            return sourceChest == null || sourceChest.IsOpen;
+            return sourceChest == null ||
+                (sourceChest.IsNetworkReady && sourceChest.IsOpen);
         }
     }
 
@@ -224,6 +235,15 @@ public class ItemPickup : NetworkBehaviour, IInteractable
         if (added)
         {
             inventory.NotifyItemCollected(itemId);
+
+            if (pickupSound != null)
+            {
+                AudioSource.PlayClipAtPoint(
+                    pickupSound,
+                    playerObject.transform.position,
+                    pickupSoundVolume
+                );
+            }
 
             if (playPickupJumpscare && pickupJumpscarePrefab != null)
             {
