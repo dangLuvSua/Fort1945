@@ -5015,6 +5015,7 @@ MonoBehaviour:
   totalPhases: 3
   endingFadeDuration: 3
   endingSpawnPointName: EndingSpawnPoint
+  endingVideo: {fileID: 32900000, guid: 29a6d3488c230ed4e9e131579e99989e, type: 3}
   testCompletePhases: 0
   testReturnToFort2: 0
   _CurrentPhase: 1

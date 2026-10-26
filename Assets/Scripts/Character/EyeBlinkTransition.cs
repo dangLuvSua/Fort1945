@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>Creates a simple top-and-bottom eyelid wipe for local transitions.</summary>
@@ -73,6 +74,61 @@ public sealed class EyeBlinkTransition : MonoBehaviour
 
         blink.transition = blink.StartCoroutine(
             blink.AnimateCoverage(0f, DefaultOpenDuration, false));
+    }
+
+    /// <summary>Opens the local blink after a networked scene load completes.</summary>
+    public static void OpenAfterSceneLoads(string sceneName)
+    {
+        if (string.IsNullOrWhiteSpace(sceneName))
+            return;
+
+        EyeBlinkTransition blink = EnsureInstance();
+        blink.StartCoroutine(blink.WaitForSceneThenOpen(sceneName));
+    }
+
+    private IEnumerator WaitForSceneThenOpen(string sceneName)
+    {
+        float timeout = 60f;
+        while (SceneManager.GetActiveScene().name != sceneName && timeout > 0f)
+        {
+            timeout -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (SceneManager.GetActiveScene().name != sceneName)
+        {
+            Debug.LogWarning($"[EYE BLINK] Timed out waiting for scene '{sceneName}'; reopening the screen.");
+            Open();
+            yield break;
+        }
+
+        // Give Fort2's network scene objects and player spawn logic a moment
+        // to initialize while the black eyelids still cover the transition.
+        float spawnTimeout = 20f;
+        bool localPlayerReturned = false;
+        while (!localPlayerReturned && spawnTimeout > 0f)
+        {
+            PlayerController[] players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+            foreach (PlayerController player in players)
+            {
+                if (player != null && player.Object != null && player.Object.HasInputAuthority)
+                {
+                    localPlayerReturned = !player.IsCapturedByKempeitai;
+                    break;
+                }
+            }
+
+            if (localPlayerReturned)
+                break;
+
+            spawnTimeout -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (!localPlayerReturned)
+            Debug.LogWarning("[EYE BLINK] Fort2 loaded, but local player return was not confirmed before reopening.");
+
+        Open();
     }
 
     private void Awake()

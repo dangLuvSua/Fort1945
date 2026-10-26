@@ -1,5 +1,6 @@
 using Fusion;
 using UnityEngine;
+using UnityEngine.Video;
 
 public class PhaseManager : NetworkBehaviour
 {
@@ -15,6 +16,7 @@ public class PhaseManager : NetworkBehaviour
     [Header("Ending")]
     [SerializeField, Min(0.1f)] private float endingFadeDuration = 1.5f;
     [SerializeField] private string endingSpawnPointName = "EndingSpawnPoint";
+    [SerializeField] private VideoClip endingVideo;
     private bool endingStarted;
 
     [Header("Testing (Play Mode)")]
@@ -251,7 +253,8 @@ public class PhaseManager : NetworkBehaviour
         EndingSceneTransition.Begin(
             string.IsNullOrWhiteSpace(spawnPointName)
                 ? endingSpawnPointName
-                : spawnPointName);
+                : spawnPointName,
+            endingVideo);
     }
 
 }

@@ -132,14 +132,16 @@ public partial class PlayerInventoryUI : MonoBehaviour
     public void SetGalleryTabActive(bool active)
     {
         if (!active) CancelEvidencePlacement();
-        if (galleryTabActive == active)
-            return;
+        if (galleryTabActive != active)
+        {
+            galleryTabActive = active;
+            // A tab represents a separate browsing context. Clear the old item
+            // selection and its preview, but leave all stored photos intact.
+            ClearDescription();
+        }
 
-        galleryTabActive = active;
-        // A tab represents a separate browsing context. Clear the old item
-        // selection and its preview, but leave all stored photos intact.
-        ClearDescription();
         ApplyDescriptionPanelVisibility();
+        ApplyDeleteButtonVisibility();
     }
 
     private void UpdateGalleryPreview(ItemData item)
@@ -165,7 +167,6 @@ public partial class PlayerInventoryUI : MonoBehaviour
         }
 
         // Fallback for scenes that have not assigned the visual panel root.
-        // The delete action remains available while browsing gallery photos.
         if (descriptionIcon != null)
             descriptionIcon.gameObject.SetActive(visible);
         if (descriptionName != null)
@@ -186,6 +187,7 @@ public partial class PlayerInventoryUI : MonoBehaviour
             inventoryPanel.SetActive(openOnStart);
 
         ClearDescription();
+        ApplyDeleteButtonVisibility();
 
         if (equipButton != null)
             equipButton.onClick.AddListener(EquipSelectedItem);
@@ -195,6 +197,12 @@ public partial class PlayerInventoryUI : MonoBehaviour
 
         if (deleteInventoryButton != null)
             deleteInventoryButton.onClick.AddListener(DeleteSelectedItemCompletely);
+    }
+
+    private void ApplyDeleteButtonVisibility()
+    {
+        if (deleteInventoryButton != null)
+            deleteInventoryButton.gameObject.SetActive(galleryTabActive);
     }
 
     private void OnEnable()

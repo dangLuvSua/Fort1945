@@ -5,12 +5,6 @@ using UnityEngine;
 public class ChestLoot : NetworkBehaviour
 {
     [Header("Loot")]
-    [Tooltip("Possible ItemData assets that can appear in this chest.")]
-    [SerializeField] private ItemData[] possibleItems;
-
-    [Tooltip("Networked prefab used for ALL key/item types.")]
-    [SerializeField] private NetworkObject itemPrefab;
-
     [Tooltip("Where the item appears inside the chest.")]
     [SerializeField] private Transform itemSpawnPoint;
 
@@ -64,16 +58,6 @@ public class ChestLoot : NetworkBehaviour
             return;
         lootSpawned = true;
 
-        if (itemPrefab == null)
-        {
-            Debug.LogError(
-                $"[CHEST LOOT] {name} has no item NetworkObject prefab.",
-                this
-            );
-
-            return;
-        }
-
         if (itemSpawnPoint == null)
         {
             Debug.LogError(
@@ -101,22 +85,18 @@ public class ChestLoot : NetworkBehaviour
         // CHOOSE ITEM
         // =====================================================
 
-        List<ItemData> phaseItems = null;
         ItemRandomSpawner itemSpawner = FindFirstObjectByType<ItemRandomSpawner>();
-        if (itemSpawner != null)
-            phaseItems = itemSpawner.GetCurrentPhaseRequiredItems();
+        List<ItemData> objectiveItems = itemSpawner != null
+            ? itemSpawner.GetCurrentPhaseRequiredItems()
+            : null;
 
-        ItemData[] choices = possibleItems;
-        if (phaseItems != null && phaseItems.Count > 0)
-            choices = phaseItems.ToArray();
-
-        if (choices == null || choices.Length == 0)
+        if (objectiveItems == null || objectiveItems.Count == 0)
         {
-            Debug.LogWarning($"[CHEST LOOT] {name} has no items eligible for the active phase.", this);
+            Debug.LogWarning($"[CHEST LOOT] {name} skipped: no active phase objective items are available.", this);
             return;
         }
 
-        ItemData selectedItem = choices[Random.Range(0, choices.Length)];
+        ItemData selectedItem = objectiveItems[Random.Range(0, objectiveItems.Count)];
 
         if (selectedItem == null)
         {
@@ -138,32 +118,48 @@ public class ChestLoot : NetworkBehaviour
             return;
         }
 
+        if (selectedItem.worldPrefab == null)
+        {
+            Debug.LogError(
+                $"[CHEST LOOT] Objective item '{selectedItem.itemName}' has no world prefab.",
+                this);
+            return;
+        }
+
         // =====================================================
         // NETWORK SPAWN
         // =====================================================
 
         spawnedItem = Runner.Spawn(
-            itemPrefab,
+            selectedItem.worldPrefab,
             itemSpawnPoint.position,
             itemSpawnPoint.rotation,
             null,
             (runner, networkObject) =>
             {
-                KeyPickup pickup =
-                    networkObject.GetComponent<KeyPickup>();
+                NetworkedDroppedItem droppedItem = networkObject.GetComponent<NetworkedDroppedItem>();
+                if (droppedItem != null)
+                    droppedItem.Initialize(selectedItem.itemId);
 
-                if (pickup != null)
+                // Spawn the objective's own world prefab and initialize its
+                // pickup with this chest, so it cannot be collected closed.
+                ItemPickup itemPickup = networkObject.GetComponent<ItemPickup>();
+                if (itemPickup != null)
                 {
-                    pickup.Initialize(
+                    itemPickup.Initialize(
                         selectedItem.itemId,
                         Object
                     );
+                }
+                else if (networkObject.TryGetComponent(out KeyPickup keyPickup))
+                {
+                    keyPickup.Initialize(selectedItem.itemId, Object);
                 }
                 else
                 {
                     Debug.LogError(
                         "[CHEST LOOT] " +
-                        "Spawned item has no KeyPickup component."
+                        "Spawned item has neither ItemPickup nor KeyPickup component."
                     );
                 }
             }

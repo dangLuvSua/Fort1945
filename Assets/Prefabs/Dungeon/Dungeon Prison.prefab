@@ -1414,6 +1414,7 @@ MonoBehaviour:
   gateToRotate: {fileID: 8654427928524047120}
   openRotationOffset: {x: 0, y: 90, z: 0}
   openDuration: 1.25
+  autoCloseDelay: 5
   blockingColliders:
   - {fileID: 9016745696567753202}
   - {fileID: 7852310070983930861}
@@ -1874,6 +1875,7 @@ MonoBehaviour:
   gateToRotate: {fileID: 8029488860717730947}
   openRotationOffset: {x: 0, y: 90, z: 0}
   openDuration: 1.25
+  autoCloseDelay: 5
   blockingColliders:
   - {fileID: 505426667486179936}
   - {fileID: 9088651827206621215}

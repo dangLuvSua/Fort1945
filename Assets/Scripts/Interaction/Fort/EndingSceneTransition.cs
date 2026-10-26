@@ -1,15 +1,19 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using UnityEngine.Video;
 
-/// <summary>Keeps the eye-blink closed while Fusion changes from Dungeon to Fort2.</summary>
+/// <summary>Returns players to Fort2, plays the ending video, then sends them to the lobby.</summary>
 public sealed class EndingSceneTransition : MonoBehaviour
 {
     private static EndingSceneTransition instance;
     private string spawnParentName;
+    private VideoClip endingVideo;
+    private PlayerSpawner fortPlayerSpawner;
     private bool sceneAuthority;
 
-    public static void Begin(string spawnParent)
+    public static void Begin(string spawnParent, VideoClip video)
     {
         if (instance != null)
             return;
@@ -18,6 +22,7 @@ public sealed class EndingSceneTransition : MonoBehaviour
         instance = root.AddComponent<EndingSceneTransition>();
         DontDestroyOnLoad(root);
         instance.spawnParentName = spawnParent;
+        instance.endingVideo = video;
         NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
         instance.sceneAuthority = handler != null && handler.IsSceneAuthority;
         instance.StartCoroutine(instance.Run());
@@ -62,6 +67,7 @@ public sealed class EndingSceneTransition : MonoBehaviour
         {
             Transform parent = FindNamedTransform(spawnParentName);
             PlayerSpawner playerSpawner = FindFirstObjectByType<PlayerSpawner>();
+            fortPlayerSpawner = playerSpawner;
             if (parent == null)
             {
                 Debug.LogError($"[ENDING] Spawn group '{spawnParentName}' was not found in Fort2.");
@@ -78,8 +84,101 @@ public sealed class EndingSceneTransition : MonoBehaviour
 
         DisableFortGameplaySystems();
 
+        // Let the players settle at the White Cross before playing the finale.
+        yield return new WaitForSecondsRealtime(2f);
+        if (endingVideo != null)
+            yield return PlayEndingVideo(endingVideo);
+        else
+            Debug.LogError("[ENDING] No ending video is assigned to PhaseManager; skipping video playback.");
+
+        // Each client plays the clip locally. Only scene authority issues the
+        // networked teleports, so everyone returns to the lobby together.
+        if (sceneAuthority)
+        {
+            if (fortPlayerSpawner != null)
+                fortPlayerSpawner.ReturnExistingPlayersToLobby();
+            else
+                Debug.LogError("[ENDING] Fort2 PlayerSpawner was not found; cannot return players to the lobby.");
+        }
+
         yield return new WaitForSecondsRealtime(0.75f);
         Destroy(gameObject);
+    }
+
+    private IEnumerator PlayEndingVideo(VideoClip clip)
+    {
+        GameObject overlay = new GameObject("EndingVideoOverlay", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(RawImage));
+        Canvas canvas = overlay.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = short.MaxValue;
+        CanvasScaler scaler = overlay.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        RawImage image = overlay.GetComponent<RawImage>();
+        RectTransform rect = image.rectTransform;
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        image.color = Color.white;
+        image.raycastTarget = true;
+
+        RenderTexture renderTexture = new RenderTexture(1920, 1080, 0, RenderTextureFormat.ARGB32)
+        {
+            name = "EndingVideoRenderTexture"
+        };
+        renderTexture.Create();
+        image.texture = renderTexture;
+
+        VideoPlayer player = overlay.AddComponent<VideoPlayer>();
+        player.playOnAwake = false;
+        player.isLooping = false;
+        player.source = VideoSource.VideoClip;
+        player.clip = clip;
+        player.renderMode = VideoRenderMode.RenderTexture;
+        player.targetTexture = renderTexture;
+        player.audioOutputMode = VideoAudioOutputMode.Direct;
+
+        bool finished = false;
+        player.loopPointReached += _ => finished = true;
+        player.errorReceived += (_, message) =>
+        {
+            Debug.LogError($"[ENDING] Video playback failed: {message}");
+            finished = true;
+        };
+
+        player.Prepare();
+        float prepareTimeout = 20f;
+        while (!player.isPrepared && prepareTimeout > 0f)
+        {
+            prepareTimeout -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (!player.isPrepared)
+        {
+            Debug.LogError("[ENDING] Timed out preparing the ending video.");
+            finished = true;
+        }
+        else
+        {
+            player.Play();
+        }
+
+        float playbackTimeout = (float)clip.length + 15f;
+        while (!finished && playbackTimeout > 0f)
+        {
+            playbackTimeout -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (!finished)
+            Debug.LogWarning("[ENDING] Ending video playback timed out; returning players to the lobby.");
+
+        player.Stop();
+        renderTexture.Release();
+        Destroy(overlay);
+        Destroy(renderTexture);
     }
 
     private static void DisableFortGameplaySystems()
@@ -100,6 +199,12 @@ public sealed class EndingSceneTransition : MonoBehaviour
     {
         foreach (T component in FindObjectsByType<T>(FindObjectsSortMode.None))
             component.enabled = false;
+    }
+
+    private void OnDestroy()
+    {
+        if (instance == this)
+            instance = null;
     }
 
     private static Transform FindNamedTransform(string targetName)
