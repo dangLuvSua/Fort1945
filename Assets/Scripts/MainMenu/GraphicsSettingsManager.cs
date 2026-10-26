@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 public class GraphicsSettingsManager : MonoBehaviour
 {
@@ -18,10 +19,23 @@ public class GraphicsSettingsManager : MonoBehaviour
     [Header("Brightness Overlay")]
 [SerializeField] private Image brightnessOverlay;
 
-    private Resolution[] resolutions;
+    private struct ResolutionOption
+    {
+        public int width;
+        public int height;
+
+        public ResolutionOption(int width, int height)
+        {
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    private ResolutionOption[] resolutions;
 
     private const string QualityKey = "GraphicsQuality";
-    private const string ResolutionKey = "Resolution";
+    private const string ResolutionWidthKey = "ResolutionWidth";
+    private const string ResolutionHeightKey = "ResolutionHeight";
     private const string FullscreenKey = "Fullscreen";
     private const string VSyncKey = "VSync";
     private const string BrightnessKey = "Brightness";
@@ -47,6 +61,8 @@ public class GraphicsSettingsManager : MonoBehaviour
         qualityDropdown.ClearOptions();
 
         string[] qualityNames = QualitySettings.names;
+        if (qualityNames == null || qualityNames.Length == 0)
+            return;
 
         qualityDropdown.AddOptions(
             new System.Collections.Generic.List<string>(qualityNames)
@@ -93,14 +109,46 @@ public class GraphicsSettingsManager : MonoBehaviour
         if (resolutionDropdown == null)
             return;
 
-        resolutions = Screen.resolutions;
+        Resolution[] displayModes = Screen.resolutions;
+        List<ResolutionOption> supportedModes = new List<ResolutionOption>();
+
+        // Keep the graphics menu from offering tiny modes. Preserve distinct
+        // width/height choices only, since refresh-rate variants look identical
+        // in this dropdown.
+        for (int i = 0; i < displayModes.Length; i++)
+        {
+            Resolution mode = displayModes[i];
+            if (mode.width < 1920 || mode.height < 1080)
+                continue;
+
+            bool alreadyAdded = false;
+            for (int j = 0; j < supportedModes.Count; j++)
+            {
+                if (supportedModes[j].width == mode.width &&
+                    supportedModes[j].height == mode.height)
+                {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+
+            if (!alreadyAdded)
+                supportedModes.Add(new ResolutionOption(mode.width, mode.height));
+        }
+
+        // A windowed 1920x1080 option still provides the requested minimum on
+        // displays that do not report a matching fullscreen mode.
+        if (supportedModes.Count == 0)
+        {
+            supportedModes.Add(new ResolutionOption(1920, 1080));
+        }
+
+        resolutions = supportedModes.ToArray();
 
         resolutionDropdown.ClearOptions();
 
         var options =
             new System.Collections.Generic.List<string>();
-
-        int currentResolutionIndex = 0;
 
         for (int i = 0; i < resolutions.Length; i++)
         {
@@ -111,25 +159,15 @@ public class GraphicsSettingsManager : MonoBehaviour
 
             options.Add(option);
 
-            if (resolutions[i].width == Screen.currentResolution.width &&
-                resolutions[i].height == Screen.currentResolution.height)
-            {
-                currentResolutionIndex = i;
-            }
         }
 
         resolutionDropdown.AddOptions(options);
 
-        int savedResolution = PlayerPrefs.GetInt(
-            ResolutionKey,
-            currentResolutionIndex
-        );
-
-        savedResolution = Mathf.Clamp(
-            savedResolution,
-            0,
-            resolutions.Length - 1
-        );
+        int savedWidth = PlayerPrefs.GetInt(ResolutionWidthKey, 1920);
+        int savedHeight = PlayerPrefs.GetInt(ResolutionHeightKey, 1080);
+        int savedResolution = FindResolutionIndex(savedWidth, savedHeight);
+        if (savedResolution < 0)
+            savedResolution = FindDefaultResolutionIndex();
 
         resolutionDropdown.SetValueWithoutNotify(
             savedResolution
@@ -148,7 +186,9 @@ public class GraphicsSettingsManager : MonoBehaviour
             resolutions.Length == 0)
             return;
 
-        Resolution resolution =
+        resolutionIndex = Mathf.Clamp(resolutionIndex, 0, resolutions.Length - 1);
+
+        ResolutionOption resolution =
             resolutions[resolutionIndex];
 
         Screen.SetResolution(
@@ -157,10 +197,8 @@ public class GraphicsSettingsManager : MonoBehaviour
             Screen.fullScreenMode
         );
 
-        PlayerPrefs.SetInt(
-            ResolutionKey,
-            resolutionIndex
-        );
+        PlayerPrefs.SetInt(ResolutionWidthKey, resolution.width);
+        PlayerPrefs.SetInt(ResolutionHeightKey, resolution.height);
 
         PlayerPrefs.Save();
 
@@ -168,6 +206,38 @@ public class GraphicsSettingsManager : MonoBehaviour
         {
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
         }
+    }
+
+    private int FindResolutionIndex(int width, int height)
+    {
+        for (int i = 0; i < resolutions.Length; i++)
+        {
+            if (resolutions[i].width == width && resolutions[i].height == height)
+                return i;
+        }
+
+        return -1;
+    }
+
+    private int FindDefaultResolutionIndex()
+    {
+        int bestIndex = 0;
+        long bestArea = long.MaxValue;
+
+        for (int i = 0; i < resolutions.Length; i++)
+        {
+            if (resolutions[i].width == 1920 && resolutions[i].height == 1080)
+                return i;
+
+            long area = (long)resolutions[i].width * resolutions[i].height;
+            if (area < bestArea)
+            {
+                bestArea = area;
+                bestIndex = i;
+            }
+        }
+
+        return bestIndex;
     }
 
 

@@ -207,6 +207,9 @@ public class NetworkRunnerHandler :
 
         Instance = this;
 
+        if (GetComponent<NetworkPerformanceOverlay>() == null)
+            gameObject.AddComponent<NetworkPerformanceOverlay>();
+
         DontDestroyOnLoad(gameObject);
         Application.runInBackground = true;
 
@@ -1408,6 +1411,14 @@ public class NetworkRunnerHandler :
         Debug.Log(
             $"[GAME] Player left: {player}"
         );
+
+        if (callbackRunner == runner && callbackRunner.IsSharedModeMasterClient)
+        {
+            Debug.Log(
+                "[HOST] This client is the current Shared Mode Master Client. " +
+                "Fusion assigns that role to another connected player when the master disconnects."
+            );
+        }
     }
 
 
@@ -1548,6 +1559,9 @@ public class NetworkRunnerHandler :
         NetworkRunner callbackRunner,
         HostMigrationToken hostMigrationToken)
     {
+        // The game starts in GameMode.Shared. Shared Mode automatically
+        // reassigns the Master Client on disconnect; this callback is for
+        // Host/Server topology migration and is not used for this session.
     }
 
 

@@ -203,11 +203,10 @@ public class InGameOptionsController : MonoBehaviour
     {
         if (optionsCanvas != null) optionsCanvas.enabled = visible;
         if (optionsRaycaster != null) optionsRaycaster.enabled = visible;
-        // Deactivate the actual canvas owner so every descendant stops rendering
-        // and receiving input, including nested canvases and generated UI.
-        // HUD button UnityEvents can still call OpenPanel on this inactive component.
-        gameObject.SetActive(visible);
+        // Keep this controller enabled while the canvas is hidden so it can
+        // still listen for Escape and reopen the settings menu.
         if (visible) EnableMenuBlur();
+        else DisableMenuBlur();
     }
 
     private void InitializeMenuBackdrop()
@@ -252,6 +251,11 @@ public class InGameOptionsController : MonoBehaviour
     }
 
     private void OnDisable()
+    {
+        DisableMenuBlur();
+    }
+
+    private void DisableMenuBlur()
     {
         if (menuBlurVolume != null) menuBlurVolume.enabled = false;
         if (blurredCamera != null)

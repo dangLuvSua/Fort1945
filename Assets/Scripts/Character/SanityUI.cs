@@ -31,10 +31,7 @@ public class SanityUI : MonoBehaviour
     }
     private void FindLocalPlayerSanity()
     {
-        PlayerSanity[] players =
-            FindObjectsByType<PlayerSanity>(
-                FindObjectsSortMode.None
-            );
+        PlayerSanity[] players = FindObjectsByType<PlayerSanity>();
 
         foreach (PlayerSanity candidate in players)
         {

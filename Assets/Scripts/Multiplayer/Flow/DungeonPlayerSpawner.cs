@@ -1,4 +1,5 @@
 using Fusion;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -43,6 +44,10 @@ public class DungeonPlayerSpawner : MonoBehaviour
     )]
     [SerializeField]
     private float groundCheckDistance = 50f;
+
+    [Tooltip("Horizontal radius used to consider a dungeon spawn point occupied by another player.")]
+    [SerializeField]
+    private float spawnOccupiedRadius = 2f;
 
     private NetworkRunner runner;
 
@@ -483,8 +488,7 @@ public class DungeonPlayerSpawner : MonoBehaviour
             return false;
         }
 
-        int index =
-            (int)player.RawEncoded % spawnCount;
+        int index = GetAvailableSpawnIndex(player, playerObject, spawnCount);
 
         dungeon.GetSpawn(
             index,
@@ -494,6 +498,7 @@ public class DungeonPlayerSpawner : MonoBehaviour
 
         Debug.Log(
             $"[DUNGEON SPAWN] " +
+            $"Selected spawn point {index + 1}/{spawnCount}. " +
             $"Raw dungeon spawn position: {position}"
         );
 
@@ -509,6 +514,76 @@ public class DungeonPlayerSpawner : MonoBehaviour
         );
 
         return true;
+    }
+
+    private int GetAvailableSpawnIndex(
+        PlayerRef localPlayer,
+        NetworkObject localPlayerObject,
+        int spawnCount)
+    {
+        PlayerRef[] activePlayers = runner.ActivePlayers
+            .OrderBy(player => player.RawEncoded)
+            .ToArray();
+
+        int playerOrder = System.Array.IndexOf(activePlayers, localPlayer);
+        if (playerOrder < 0)
+            playerOrder = Mathf.Abs((int)localPlayer.RawEncoded);
+
+        int preferredIndex = playerOrder % spawnCount;
+        bool[] occupied = new bool[spawnCount];
+        float occupiedRadius = Mathf.Max(0.1f, spawnOccupiedRadius);
+        float occupiedRadiusSquared = occupiedRadius * occupiedRadius;
+
+        // Ignore the local player's old position when reusing/teleporting the
+        // Fort player object. Other players reserve the nearest spawn if they
+        // are still standing within the spawn area.
+        foreach (PlayerRef otherPlayer in activePlayers)
+        {
+            if (otherPlayer == localPlayer ||
+                !runner.TryGetPlayerObject(otherPlayer, out NetworkObject otherObject) ||
+                otherObject == null ||
+                otherObject == localPlayerObject)
+            {
+                continue;
+            }
+
+            Vector3 playerPosition = otherObject.transform.position;
+            int nearestSpawnIndex = -1;
+            float nearestDistanceSquared = float.MaxValue;
+
+            for (int spawnIndex = 0; spawnIndex < spawnCount; spawnIndex++)
+            {
+                dungeon.GetSpawn(spawnIndex, out Vector3 spawnPosition, out Quaternion _);
+                Vector2 playerXZ = new Vector2(playerPosition.x, playerPosition.z);
+                Vector2 spawnXZ = new Vector2(spawnPosition.x, spawnPosition.z);
+                float distanceSquared = (playerXZ - spawnXZ).sqrMagnitude;
+
+                if (distanceSquared < nearestDistanceSquared)
+                {
+                    nearestDistanceSquared = distanceSquared;
+                    nearestSpawnIndex = spawnIndex;
+                }
+            }
+
+            if (nearestSpawnIndex >= 0 && nearestDistanceSquared <= occupiedRadiusSquared)
+                occupied[nearestSpawnIndex] = true;
+        }
+
+        // The preferred index gives different players different points even
+        // when several clients are spawned on the same tick and have not yet
+        // observed one another at their destination.
+        for (int offset = 0; offset < spawnCount; offset++)
+        {
+            int candidateIndex = (preferredIndex + offset) % spawnCount;
+            if (!occupied[candidateIndex])
+                return candidateIndex;
+        }
+
+        Debug.LogWarning(
+            "[DUNGEON SPAWN] All dungeon spawn points are occupied; " +
+            $"reusing preferred spawn point {preferredIndex + 1}.",
+            this);
+        return preferredIndex;
     }
 
     private Vector3 GetCorrectGroundPosition(
