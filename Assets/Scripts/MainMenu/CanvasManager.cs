@@ -305,7 +305,11 @@ public class CanvasManager : MonoBehaviour
     public void ShowMainMenu()
     {
         PlayClickSound();
+        ReturnToMainMenuCanvas();
+    }
 
+    private void ReturnToMainMenuCanvas()
+    {
         HideAllCanvases();
 
         if (mainMenuCanvas != null)
@@ -426,6 +430,9 @@ public class CanvasManager : MonoBehaviour
                 "CanvasManager: Character Selection Player Name Input is not assigned."
             );
 
+            PlayerPrefs.Save();
+            PlayClickSound();
+            ReturnToMainMenuCanvas();
             return;
         }
 
@@ -442,11 +449,17 @@ public class CanvasManager : MonoBehaviour
         // Make sure the input shows exactly what was saved.
         characterSelectionPlayerNameInput.text = playerName;
 
+        // Audio and graphics controls save their changes as they are made.
+        // Flush all preferences together before returning to the menu.
+        PlayerPrefs.Save();
+
         PlayClickSound();
 
         Debug.Log(
             $"Character Selection Name Saved: {PlayerProfile.PlayerName}"
         );
+
+        ReturnToMainMenuCanvas();
     }
 
 
@@ -457,14 +470,8 @@ public class CanvasManager : MonoBehaviour
     public void BackToMainMenu()
     {
         PlayClickSound();
-
-        HideAllCanvases();
-
-        if (mainMenuCanvas != null)
-            mainMenuCanvas.SetActive(true);
-
-        SetCharacterSelectionCamera(false);
-        SetCharacterSelectionObjects(false);
+        PlayerPrefs.Save();
+        ReturnToMainMenuCanvas();
     }
 
 
@@ -666,6 +673,9 @@ public class CanvasManager : MonoBehaviour
                 "CanvasManager: Player Name Input is not assigned."
             );
 
+            PlayerPrefs.Save();
+            PlayClickSound();
+            ReturnToMainMenuCanvas();
             return;
         }
 
@@ -677,18 +687,22 @@ public class CanvasManager : MonoBehaviour
             playerName = "Player";
         }
 
-        // Save ONLY the player name.
+        // Save the player name and flush all current options.
         PlayerProfile.SetPlayerName(playerName);
 
         // Update input field.
         playerNameInput.text =
             playerName;
 
+        PlayerPrefs.Save();
+
         PlayClickSound();
 
         Debug.Log(
             $"Player Name Saved: {PlayerProfile.PlayerName}"
         );
+
+        ReturnToMainMenuCanvas();
     }
 
 

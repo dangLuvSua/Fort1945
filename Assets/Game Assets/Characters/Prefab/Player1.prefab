@@ -156,6 +156,9 @@ MonoBehaviour:
   audioListener: {fileID: 456366816188813220}
   cameraHolder: {fileID: 680699209972203130}
   playerBody: {fileID: 39863869884320424}
+  dangerIndicatorClip: {fileID: 8300000, guid: 5c95b1c22ed7d2441a2a965c22fed90a, type: 3}
+  dangerIndicatorVolume: 0.8
+  sfxMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
   speedParameter: Speed
 --- !u!1 &2112932317437281867
 GameObject:

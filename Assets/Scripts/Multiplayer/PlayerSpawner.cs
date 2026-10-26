@@ -159,7 +159,10 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
                 playerState.RequestResetReady();
         }
 
-        Debug.Log("[PLAYER SPAWNER] Returned all captured players to Fort2 lobby spawns; players must ready and start again.", this);
+        Debug.Log(
+            $"[PLAYER SPAWNER] Returned all {players.Length} active captured players " +
+            $"({string.Join(", ", players)}) to Fort2 lobby spawns; players must ready and start again.",
+            this);
         lobbyRecoveryComplete = true;
     }
 
@@ -286,6 +289,51 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
         if (players.Length > endingPoints.Length)
             Debug.LogWarning($"[PLAYER SPAWNER] {players.Length} players connected; only the first four can use the ending spawn points.", this);
 
+        return true;
+    }
+
+    /// <summary>Returns connected players to the normal Fort2 lobby spawns after the ending.</summary>
+    public bool ReturnExistingPlayersToLobby()
+    {
+        if (Runner == null || !Runner.IsSceneAuthority)
+        {
+            Debug.LogWarning("[PLAYER SPAWNER] Lobby return must be requested by Fusion scene authority.", this);
+            return false;
+        }
+
+        if (spawnPoints == null || spawnPoints.Length == 0)
+        {
+            Debug.LogError("[PLAYER SPAWNER] Fort2 lobby spawn points are not assigned.", this);
+            return false;
+        }
+
+        PlayerRef[] players = Runner.ActivePlayers.OrderBy(player => player.RawEncoded).ToArray();
+        for (int index = 0; index < players.Length; index++)
+        {
+            PlayerRef player = players[index];
+            if (!Runner.TryGetPlayerObject(player, out NetworkObject playerObject) || playerObject == null)
+                continue;
+
+            PlayerController controller = playerObject.GetComponent<PlayerController>();
+            Transform spawnPoint = spawnPoints[player.RawEncoded % spawnPoints.Length];
+            if (controller == null || spawnPoint == null)
+            {
+                Debug.LogWarning($"[PLAYER SPAWNER] Could not return {player}: player controller or lobby spawn point is missing.", this);
+                continue;
+            }
+
+            Vector3 position = TryGetGroundPosition(spawnPoint, out Vector3 groundPosition)
+                ? groundPosition
+                : spawnPoint.position + Vector3.up * playerHeightOffset;
+            controller.RpcReturnToLobby(position, spawnPoint.rotation);
+
+            LobbyPlayerState playerState = playerObject.GetComponent<LobbyPlayerState>();
+            if (playerState != null)
+                playerState.RequestResetReady();
+        }
+
+        lobbyRecoveryComplete = false;
+        Debug.Log($"[PLAYER SPAWNER] Returned {players.Length} connected players to Fort2 lobby spawns after the ending.", this);
         return true;
     }
 

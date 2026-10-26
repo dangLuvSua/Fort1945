@@ -45,7 +45,7 @@ Light:
   m_Type: 2
   m_Color: {r: 0.7924528, g: 0.4918931, b: 0, a: 1}
   m_Intensity: 1
-  m_Range: 35
+  m_Range: 64.2
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -5209,8 +5209,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a857c0596b2e2b42a36a5dc55a5d766, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
+  pickupSound: {fileID: 0}
+  pickupSoundVolume: 1
   itemData: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
   sourceChest: {fileID: 0}
+  pickupJumpscareChance: 0
+  easyJumpscareChanceMultiplier: 0.1
+  normalJumpscareChanceMultiplier: 0.35
+  difficultJumpscareChanceMultiplier: 0.65
+  pickupJumpscarePrefab: {fileID: 0}
+  easySanityDamage: 5
+  normalSanityDamage: 10
+  difficultSanityDamage: 15
   _ItemId: 203
 --- !u!114 &2201492016366204546
 MonoBehaviour:

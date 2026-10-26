@@ -29,6 +29,14 @@ public class SoldierFootstepAudio : MonoBehaviour
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
 
+        if (audioSource != null)
+        {
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 1f;
+            audioSource.minDistance = 2f;
+            audioSource.maxDistance = 24f;
+        }
+
         // If attached to a child model, track parent. Otherwise track self.
         movementRoot = transform.parent != null ? transform.parent : transform;
     }

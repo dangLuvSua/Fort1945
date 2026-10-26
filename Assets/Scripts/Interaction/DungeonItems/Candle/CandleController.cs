@@ -1,12 +1,19 @@
 
 using Fusion;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.InputSystem;
 
 public class CandleController : NetworkBehaviour
 {
     [Header("Toggle")]
     [SerializeField] private Key toggleKey = Key.F;
+
+    [Header("Audio")]
+    [SerializeField] private AudioClip lightSfx;
+    [SerializeField, Range(0f, 1f)] private float lightSfxVolume = 0.8f;
+    [SerializeField] private AudioMixerGroup sfxMixerGroup;
+    private AudioSource lightSfxSource;
 
     [Header("Lifetime (Minutes)")]
     [SerializeField, Min(0.1f)] private float easyLifeMinutes = 15f;
@@ -166,10 +173,31 @@ public class CandleController : NetworkBehaviour
 
         CandleOn = !CandleOn;
 
+        if (CandleOn)
+            PlayLightSfx();
+
         Debug.Log(
             $"[CANDLE] {(CandleOn ? "ON" : "OFF")} | " +
             $"Remaining: {FormatTime(inventory.GetCandleRemaining(slot))}"
         );
+    }
+
+    private void PlayLightSfx()
+    {
+        if (lightSfx == null)
+            return;
+
+        if (lightSfxSource == null)
+        {
+            lightSfxSource = gameObject.AddComponent<AudioSource>();
+            lightSfxSource.playOnAwake = false;
+            lightSfxSource.loop = false;
+            lightSfxSource.spatialBlend = 0f;
+            lightSfxSource.outputAudioMixerGroup = sfxMixerGroup;
+        }
+
+        if (lightSfxSource.isActiveAndEnabled)
+            lightSfxSource.PlayOneShot(lightSfx, lightSfxVolume);
     }
 
     private void FindCurrentCandle()

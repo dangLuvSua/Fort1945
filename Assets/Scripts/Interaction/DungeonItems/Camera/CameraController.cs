@@ -72,6 +72,12 @@ public class CameraController : NetworkBehaviour
         if (Object == null || !Object.HasInputAuthority)
             return;
 
+        if (isCameraOpen && !IsViewfinderAllowedThisPhase())
+        {
+            CloseCamera();
+            return;
+        }
+
         if (Keyboard.current != null &&
             Keyboard.current.xKey.wasPressedThisFrame)
         {
@@ -144,6 +150,16 @@ public class CameraController : NetworkBehaviour
                selectedItem.itemId == cameraItem.itemId;
     }
 
+    private static bool IsViewfinderAllowedThisPhase()
+    {
+        PhaseManager phaseManager = PhaseManager.Instance;
+        if (phaseManager == null || !phaseManager.IsNetworkReady ||
+            !phaseManager.PhaseInitialized)
+            return true;
+
+        return phaseManager.CurrentPhase != 1 && phaseManager.CurrentPhase != 3;
+    }
+
     public void BindUI(CameraViewfinderUI ui)
     {
         viewfinderUI = ui;
@@ -156,6 +172,7 @@ public class CameraController : NetworkBehaviour
     {
         if (Object == null ||
             !Object.HasInputAuthority ||
+            !IsViewfinderAllowedThisPhase() ||
             !IsHoldingCamera())
         {
             return;
@@ -210,6 +227,7 @@ public class CameraController : NetworkBehaviour
         if (Object == null ||
             !Object.HasInputAuthority ||
             !isCameraOpen ||
+            !IsViewfinderAllowedThisPhase() ||
             !IsHoldingCamera())
         {
             return;

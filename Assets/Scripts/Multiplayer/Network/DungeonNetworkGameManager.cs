@@ -1,9 +1,13 @@
+using System.Collections;
 using Fusion;
 using UnityEngine;
 
 /// <summary>Dungeon-only shared state for prison cell gates.</summary>
 public sealed class DungeonNetworkGameManager : NetworkBehaviour
 {
+    [Header("All Players Captured")]
+    [SerializeField] private LocalJumpscarePlayback allCapturedJumpscarePrefab;
+
     public static DungeonNetworkGameManager Instance { get; private set; }
 
     [Networked] public NetworkBool PrisonCell1Unlocked { get; private set; }
@@ -13,6 +17,8 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
 
     private bool networkStateReady;
     private bool returningCapturedPlayersToLobby;
+    private Coroutine prisonCell1AutoCloseRoutine;
+    private Coroutine prisonCell2AutoCloseRoutine;
     public bool IsNetworkStateReady => networkStateReady;
 
     public override void Spawned()
@@ -43,6 +49,7 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
             return;
 
         int activePlayerCount = 0;
+        string capturedPlayerRoster = string.Empty;
         foreach (PlayerRef player in Runner.ActivePlayers)
         {
             activePlayerCount++;
@@ -51,20 +58,65 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
                 !playerObject.TryGetComponent(out PlayerController controller) ||
                 !controller.IsCapturedByKempeitai)
                 return;
+
+            if (capturedPlayerRoster.Length > 0)
+                capturedPlayerRoster += ", ";
+            capturedPlayerRoster += player.ToString();
         }
 
         if (activePlayerCount == 0)
             return;
 
         returningCapturedPlayersToLobby = true;
-        Debug.Log("[PRISON] All active players have been captured. Returning the group to the Fort2 lobby.", this);
+        Debug.Log(
+            $"[PRISON] All {activePlayerCount} active players have been captured " +
+            $"({capturedPlayerRoster}). Playing the group jumpscare before returning to Fort2.",
+            this);
+
+        RPC_PlayAllCapturedJumpscare();
+        StartCoroutine(ReturnToLobbyAfterJumpscare());
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayAllCapturedJumpscare()
+    {
+        if (allCapturedJumpscarePrefab == null)
+        {
+            Debug.LogWarning("[PRISON] No all-captured jumpscare prefab is assigned.", this);
+            return;
+        }
+
+        LocalJumpscarePlayback playback = Instantiate(allCapturedJumpscarePrefab);
+        playback.Play();
+    }
+
+    private IEnumerator ReturnToLobbyAfterJumpscare()
+    {
+        if (allCapturedJumpscarePrefab != null)
+        {
+            float duration = allCapturedJumpscarePrefab.GetMaximumPlaybackDuration();
+            if (duration > 0f)
+                yield return new WaitForSecondsRealtime(duration);
+        }
+
+        RPC_CloseScreenForFort2Load();
+        // Let each player's eyelids finish closing before the scene transition.
+        yield return new WaitForSecondsRealtime(0.4f);
 
         NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
         if (handler == null || !handler.LoadFort2Scene())
         {
             returningCapturedPlayersToLobby = false;
+            EyeBlinkTransition.Open();
             Debug.LogError("[PRISON] Could not return the captured group to Fort2.", this);
         }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_CloseScreenForFort2Load()
+    {
+        EyeBlinkTransition.CloseAndHold(Color.black, 0.35f);
+        EyeBlinkTransition.OpenAfterSceneLoads("Fort2");
     }
 
     public static DungeonNetworkGameManager ResolveInstance()
@@ -164,11 +216,66 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
         {
             PrisonCell1Unlocked = unlocked;
             PrisonCell1GateOpen = open;
+            RestartPrisonCellAutoClose(1, open);
         }
         else if (cellNumber == 2)
         {
             PrisonCell2Unlocked = unlocked;
             PrisonCell2GateOpen = open;
+            RestartPrisonCellAutoClose(2, open);
         }
+    }
+
+    private void RestartPrisonCellAutoClose(int cellNumber, bool open)
+    {
+        Coroutine routine = cellNumber == 1
+            ? prisonCell1AutoCloseRoutine
+            : prisonCell2AutoCloseRoutine;
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+        }
+
+        if (cellNumber == 1)
+            prisonCell1AutoCloseRoutine = null;
+        else
+            prisonCell2AutoCloseRoutine = null;
+
+        if (!open)
+            return;
+
+        PrisonCellGateUnlock gate = FindGate(cellNumber);
+        float delay = gate != null ? gate.AutoCloseDelay : 5f;
+        if (delay > 0f)
+        {
+            routine = StartCoroutine(AutoClosePrisonCell(cellNumber, delay));
+            if (cellNumber == 1)
+                prisonCell1AutoCloseRoutine = routine;
+            else
+                prisonCell2AutoCloseRoutine = routine;
+        }
+    }
+
+    private IEnumerator AutoClosePrisonCell(int cellNumber, float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+
+        bool isStillOpen = cellNumber == 1
+            ? PrisonCell1GateOpen
+            : PrisonCell2GateOpen;
+        bool isStillUnlocked = cellNumber == 1
+            ? PrisonCell1Unlocked
+            : PrisonCell2Unlocked;
+
+        if (Object != null && Object.HasStateAuthority && isStillOpen && isStillUnlocked)
+        {
+            Debug.Log($"[PRISON GATE] Cell {cellNumber} auto-closed after {delay:0.##} seconds.", this);
+            SetCellState(cellNumber, true, false);
+        }
+
+        if (cellNumber == 1)
+            prisonCell1AutoCloseRoutine = null;
+        else
+            prisonCell2AutoCloseRoutine = null;
     }
 }

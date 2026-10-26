@@ -27,6 +27,8 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
     [SerializeField] private Transform gateToRotate;
     [SerializeField] private Vector3 openRotationOffset = new Vector3(0f, 90f, 0f);
     [SerializeField, Min(0.05f)] private float openDuration = 1.25f;
+    [SerializeField, Min(0f), Tooltip("Automatically close the gate this many seconds after it opens.")]
+    private float autoCloseDelay = 5f;
     [Tooltip("Optional colliders to disable after unlocking, such as the bars' blocking collider.")]
     [SerializeField] private Collider[] blockingColliders;
     [SerializeField] private AudioSource unlockAudio;
@@ -39,9 +41,11 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
     private bool gateOpen;
     private bool gateTogglePending;
     private Coroutine gateMotionRoutine;
+    private Coroutine localAutoCloseRoutine;
     private float requestPendingSince;
 
     public int CellNumber => cellNumber;
+    public float AutoCloseDelay => autoCloseDelay;
 
     public string Prompt
     {
@@ -282,9 +286,28 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
         if (open && unlockAudio != null)
             unlockAudio.Play();
 
+        if (localAutoCloseRoutine != null)
+        {
+            StopCoroutine(localAutoCloseRoutine);
+            localAutoCloseRoutine = null;
+        }
+
+        // Network sessions use the scene authority's shared timer. This local
+        // fallback keeps the gate behavior consistent in standalone testing.
+        if (open && !IsNetworkSessionRunning() && autoCloseDelay > 0f)
+            localAutoCloseRoutine = StartCoroutine(CloseLocallyAfterDelay());
+
         if (gateMotionRoutine != null)
             StopCoroutine(gateMotionRoutine);
         gateMotionRoutine = StartCoroutine(AnimateGate(open));
+    }
+
+    private IEnumerator CloseLocallyAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(autoCloseDelay);
+        localAutoCloseRoutine = null;
+        if (unlocked && gateOpen)
+            CloseGate();
     }
 
     private bool HasRequiredKey()

@@ -9,12 +9,24 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: f611a1da59de874478c532a310d5f4c9, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 4.1611533
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f611a1da59de874478c532a310d5f4c9, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 4.1611533
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f611a1da59de874478c532a310d5f4c9, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 6.5664926
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f611a1da59de874478c532a310d5f4c9, type: 3}
       propertyPath: m_LocalPosition.x
       value: 62.4229
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f611a1da59de874478c532a310d5f4c9, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 35.79311
+      value: 35.911
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f611a1da59de874478c532a310d5f4c9, type: 3}
       propertyPath: m_LocalPosition.z
@@ -46,6 +58,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f611a1da59de874478c532a310d5f4c9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f611a1da59de874478c532a310d5f4c9, type: 3}
+      propertyPath: m_ConstrainProportionsScale
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: f611a1da59de874478c532a310d5f4c9, type: 3}
@@ -239,6 +255,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a857c0596b2e2b42a36a5dc55a5d766, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
+  pickupSound: {fileID: 0}
+  pickupSoundVolume: 1
   itemData: {fileID: 0}
   sourceChest: {fileID: 0}
+  pickupJumpscareChance: 0
+  easyJumpscareChanceMultiplier: 0.1
+  normalJumpscareChanceMultiplier: 0.35
+  difficultJumpscareChanceMultiplier: 0.65
+  pickupJumpscarePrefab: {fileID: 0}
+  easySanityDamage: 5
+  normalSanityDamage: 10
+  difficultSanityDamage: 15
   _ItemId: 0

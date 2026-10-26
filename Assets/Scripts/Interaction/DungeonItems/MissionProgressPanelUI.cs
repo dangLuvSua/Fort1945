@@ -71,6 +71,7 @@ public class MissionProgressPanelUI : MonoBehaviour
             new Dictionary<string, ProgressTextRowUI>();
 
     private bool layoutAdded;
+    private ItemRandomSpawner networkObjectiveSource;
 
     // =========================================================
     // COLORS
@@ -249,6 +250,9 @@ public class MissionProgressPanelUI : MonoBehaviour
 
     private void Update()
     {
+        if (networkObjectiveSource == null)
+            networkObjectiveSource = Object.FindFirstObjectByType<ItemRandomSpawner>();
+
         NetworkGameManager manager =
             NetworkGameManager.Instance;
 
@@ -277,6 +281,17 @@ public class MissionProgressPanelUI : MonoBehaviour
                     0,
                     objective.Required
                 );
+
+            if (networkObjectiveSource != null &&
+                networkObjectiveSource.TryGetNetworkObjectiveProgress(
+                    objective.ItemId,
+                    out int networkCollected,
+                    out int networkRequired))
+            {
+                collected = networkCollected;
+                SetProgress(objective.ItemId, collected, networkRequired);
+                continue;
+            }
 
             SetProgress(
                 objective.ItemId,

@@ -252,10 +252,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48cdb6c956b7eab4f96ac42777cef575, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChestLoot
-  possibleItems:
-  - {fileID: 11400000, guid: 83911e1fa10d6b546a50ebe92b8da173, type: 2}
-  - {fileID: 11400000, guid: d98faaf2d5a8a2b46adbd30d840696f4, type: 2}
-  itemPrefab: {fileID: 1434193415856722423, guid: 78df1db2fbc8ec64f949fac0c05bf693, type: 3}
   itemSpawnPoint: {fileID: 6446990708619316521}
   spawnChance: 1
   showGizmo: 1

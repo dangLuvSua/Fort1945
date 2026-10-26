@@ -5603,6 +5603,7 @@ MonoBehaviour:
   gateToRotate: {fileID: 2210639876367201603}
   openRotationOffset: {x: 0, y: -90, z: 0}
   openDuration: 1.25
+  autoCloseDelay: 5
   blockingColliders: []
   unlockAudio: {fileID: 5422516337947590870}
 --- !u!82 &5422516337947590870
@@ -27225,6 +27226,7 @@ MonoBehaviour:
   gateToRotate: {fileID: 263672627998863387}
   openRotationOffset: {x: 0, y: -90, z: 0}
   openDuration: 1.25
+  autoCloseDelay: 5
   blockingColliders: []
   unlockAudio: {fileID: 3251019187310131183}
 --- !u!82 &3251019187310131183

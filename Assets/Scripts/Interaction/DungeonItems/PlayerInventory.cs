@@ -1462,6 +1462,21 @@ public class PlayerInventory : NetworkBehaviour
 
     }
 
+    /// <summary>Consumes an item on this inventory's state authority.</summary>
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcConsumeItemCompletely(int itemId, RpcInfo info = default)
+    {
+        if (Object == null || !Object.HasStateAuthority)
+            return;
+
+        if (!RemoveItemCompletely(itemId))
+        {
+            Debug.LogWarning(
+                $"[INVENTORY] Could not consume item ID {itemId} from player {Object.InputAuthority}.",
+                this);
+        }
+    }
+
     public bool IsItemInQuickBar(int itemId)
 
     {
@@ -1975,15 +1990,14 @@ public class PlayerInventory : NetworkBehaviour
 
 
 
-    /// <summary>Drops every stored world item before a soldier capture teleport.</summary>
-    public int DropAllItems()
+    /// <summary>Drops every stored world item at the position where the soldier caught the player.</summary>
+    public int DropAllItems(Vector3 capturePosition, Quaternion captureRotation)
     {
         if (Object == null || !Object.HasStateAuthority || Runner == null)
             return 0;
 
-        Transform aim = dropOrigin != null ? dropOrigin : transform;
-        Vector3 basePosition = aim.position + aim.forward * 0.8f;
-        Quaternion rotation = Quaternion.Euler(0f, aim.eulerAngles.y, 0f);
+        Vector3 basePosition = capturePosition;
+        Quaternion rotation = Quaternion.Euler(0f, captureRotation.eulerAngles.y, 0f);
         int droppedCount = 0;
 
         for (int storageIndex = 0; storageIndex < StorageSlotCount; storageIndex++)
@@ -2007,11 +2021,10 @@ public class PlayerInventory : NetworkBehaviour
             {
                 Vector2 scatter = UnityEngine.Random.insideUnitCircle * 0.45f;
                 Vector3 position = basePosition +
-                    aim.right * scatter.x +
-                    aim.forward * scatter.y +
+                    captureRotation * new Vector3(scatter.x, 0f, scatter.y) +
                     Vector3.up * (0.05f + droppedCount * 0.025f);
 
-                if (!TrySpawnCapturedDrop(item, itemId, storageIndex, aim, position, rotation))
+                if (!TrySpawnCapturedDrop(item, itemId, storageIndex, position, rotation))
                     break;
 
                 droppedFromSlot++;
@@ -2043,7 +2056,7 @@ public class PlayerInventory : NetworkBehaviour
         {
             CompactQuickBar();
             SelectedSlot = -1;
-            PlayDropSound(aim.position);
+            PlayDropSound(capturePosition);
             NotifyInventoryChangedImmediately();
             Debug.Log($"[INVENTORY] Dropped {droppedCount} item(s) when the player was captured.", this);
         }
@@ -2055,7 +2068,6 @@ public class PlayerInventory : NetworkBehaviour
         ItemData item,
         int itemId,
         int storageIndex,
-        Transform aim,
         Vector3 position,
         Quaternion rotation)
     {
@@ -2100,12 +2112,9 @@ public class PlayerInventory : NetworkBehaviour
         DroppedItemPhysics physics = droppedObject.GetComponent<DroppedItemPhysics>();
         if (physics != null)
         {
-            Vector3 launchDirection =
-                (aim.forward + aim.right * UnityEngine.Random.Range(-0.6f, 0.6f)).normalized;
-            physics.Launch(
-                launchDirection * throwForce + Vector3.up * throwUp,
-                UnityEngine.Random.insideUnitSphere * 3f);
-
+            // Captured inventory should remain at the catch location instead
+            // of being thrown away from it. The dynamic body will settle under
+            // gravity after spawning.
             Collider[] playerColliders = GetComponentsInChildren<Collider>();
             Collider[] itemColliders = droppedObject.GetComponentsInChildren<Collider>();
             foreach (Collider itemCollider in itemColliders)
