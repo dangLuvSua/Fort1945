@@ -109,6 +109,14 @@ public class CandleController : NetworkBehaviour
             );
         }
 
+        // Remove any spent candle still selected, including restored inventory.
+        if (inventory.GetCandleRemaining(slot) <= 0f)
+        {
+            CandleOn = false;
+            inventory.TryConsumeBurnedOutCandle(slot, GetLifetimeForCurrentDifficulty());
+            return;
+        }
+
         if (!CandleOn)
             return;
 
@@ -121,6 +129,7 @@ public class CandleController : NetworkBehaviour
         if (remaining <= 0f)
         {
             CandleOn = false;
+            inventory.TryConsumeBurnedOutCandle(slot, GetLifetimeForCurrentDifficulty());
 
             Debug.Log(
                 $"[CANDLE] Player {Object.InputAuthority}'s candle burned out."

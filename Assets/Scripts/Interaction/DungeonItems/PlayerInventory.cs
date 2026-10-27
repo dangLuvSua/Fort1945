@@ -2153,6 +2153,43 @@ public class PlayerInventory : NetworkBehaviour
 
     }
 
+    /// <summary>Deletes one spent candle and prepares the next copy in its stack.</summary>
+    public bool TryConsumeBurnedOutCandle(int storageIndex, float nextCandleLife)
+    {
+        if (Object == null || !Object.HasStateAuthority || Runner == null ||
+            storageIndex != GetSelectedStorageSlot() || !IsCandleSlot(storageIndex) ||
+            !IsCandleInitialized(storageIndex) || GetCandleRemaining(storageIndex) > 0f)
+            return false;
+
+        int quantityBefore = NetworkQuantities.Get(storageIndex);
+        if (quantityBefore <= 0)
+            return false;
+
+        if (quantityBefore > 1)
+        {
+            NetworkQuantities.Set(storageIndex, quantityBefore - 1);
+            ClearCandleState(storageIndex);
+            InitializeCandleSlot(storageIndex, nextCandleLife);
+        }
+        else
+        {
+            NetworkSlots.Set(storageIndex, 0);
+            NetworkQuantities.Set(storageIndex, 0);
+            ClearCandleState(storageIndex);
+            for (int index = 0; index < QuickBarSlotCount; index++)
+            {
+                if (GetQuickBarStorageIndex(index) == storageIndex)
+                    NetworkQuickBar.Set(index, 0);
+            }
+            CompactQuickBar();
+            SelectedSlot = -1;
+        }
+
+        NotifyInventoryChangedImmediately();
+
+        return true;
+    }
+
 
 
     private void DropAuthoritative(int quickBarIndex)

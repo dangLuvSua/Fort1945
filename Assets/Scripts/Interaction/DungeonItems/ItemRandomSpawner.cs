@@ -48,8 +48,6 @@ public class ItemRandomSpawner : NetworkBehaviour
     private readonly Dictionary<int, int> phaseItemRequirements = new Dictionary<int, int>();
     [Networked]
     private int NetworkObjectivePhase { get; set; }
-    [Networked]
-    private int NetworkCandleBaseline { get; set; }
     [Networked, Capacity(32)]
     private NetworkArray<int> NetworkObjectiveItemIds => default;
     [Networked, Capacity(32)]
@@ -60,6 +58,7 @@ public class ItemRandomSpawner : NetworkBehaviour
         new Dictionary<ItemSpawnProfile.ItemSpawnEntry, int>();
     private int displayedPhase = -1;
     private bool phaseItemsSpawned;
+    private int phaseCandlesSpawned;
     private int preparingPhase = -1;
     private readonly HashSet<int> phaseTwoSpawnedIds = new HashSet<int>();
     private readonly List<Transform> missionSpawnTargets = new List<Transform>();
@@ -223,10 +222,7 @@ public class ItemRandomSpawner : NetworkBehaviour
             return;
         }
 
-        // Preserve Fort candles in inventory, but take the Phase 1 baseline
-        // only after every player has finished restoring their carried items.
-        // Otherwise a fast dungeon generation could count Fort candles as new
-        // dungeon mission pickups.
+        // Wait for carried inventories before checking the first mission's items.
         if (phase == 1 && gameManager != null && gameManager.IsNetworkStateReady &&
             !AreAllDungeonInventoriesReady())
             return;
@@ -247,13 +243,10 @@ public class ItemRandomSpawner : NetworkBehaviour
         {
             phaseItemRequirements.Clear();
             phaseEntrySpawnCounts.Clear();
+            phaseCandlesSpawned = 0;
             phaseItemsSpawned = false;
             preparingPhase = phase;
             ClearNetworkObjectiveRequirements();
-            ItemData phaseCandle = ResolveCandleItem(rule, gameManager);
-            NetworkCandleBaseline = phase == 1 && phaseCandle != null && gameManager != null
-                ? gameManager.GetTeamItemCount(phaseCandle.itemId)
-                : 0;
         }
 
         if (phase != lastProcessedPhase)
@@ -265,11 +258,10 @@ public class ItemRandomSpawner : NetworkBehaviour
             if (!spawned)
                 return;
 
-            // Phase 1 spawns its normal difficulty-based candle quota in the
-            // Dungeon, while candles carried from Fort 2 remain in inventory.
-            // Make both quantities part of one team objective total. For
-            // example, 2 carried + 2 spawned becomes 2/4 at mission start.
-            AddCarriedCandlesToPhaseOneRequirement(rule);
+            // Candles remain usable supplies, never collection requirements.
+            ItemData optionalCandle = ResolveCandleItem(rule, gameManager);
+            if (optionalCandle != null)
+                phaseItemRequirements.Remove(optionalCandle.itemId);
 
             PublishPhaseObjectiveRequirements();
             phaseItemsSpawned = true;
@@ -434,7 +426,8 @@ public class ItemRandomSpawner : NetworkBehaviour
         List<KeyValuePair<int, int>> requirements = GetVisibleObjectiveRequirements();
         foreach (KeyValuePair<int, int> requirement in requirements)
         {
-            if (configuredObjectiveItemIds.Contains(requirement.Key))
+            if ((phaseCandle != null && requirement.Key == phaseCandle.itemId) ||
+                configuredObjectiveItemIds.Contains(requirement.Key))
                 continue;
 
             ItemData item = FindPhaseItemData(rule, requirement.Key);
@@ -445,26 +438,6 @@ public class ItemRandomSpawner : NetworkBehaviour
             configuredObjectiveItemIds.Add(requirement.Key);
         }
 
-        // Candles are spawned as a phase requirement even when a proxy has
-        // not received the objective metadata yet. Build this row from the
-        // shared phase configuration so candle pickups remain visible.
-        GameDifficulty difficulty = manager != null && manager.IsNetworkStateReady
-            ? manager.Difficulty
-            : standaloneDifficulty;
-        int currentPhase = phaseManager != null && phaseManager.IsNetworkReady &&
-            phaseManager.PhaseInitialized
-            ? phaseManager.CurrentPhase
-            : Mathf.Max(1, standalonePhase);
-        if (phaseCandle != null &&
-            !configuredObjectiveItemIds.Contains(phaseCandle.itemId))
-        {
-            missionProgressPanel.AddItemRow(
-                phaseCandle,
-                GetPhaseCandleCount(difficulty) +
-                    (currentPhase == 1 ? NetworkCandleBaseline : 0),
-                0);
-            configuredObjectiveItemIds.Add(phaseCandle.itemId);
-        }
     }
 
     private List<KeyValuePair<int, int>> GetVisibleObjectiveRequirements()
@@ -644,7 +617,7 @@ public class ItemRandomSpawner : NetworkBehaviour
                 return false;
         }
 
-        return phaseItemRequirements.Count > 0;
+        return true;
     }
 
     private void UpdateNetworkedPhaseItemProgress(NetworkGameManager manager)
@@ -675,29 +648,6 @@ public class ItemRandomSpawner : NetworkBehaviour
         }
 
         phaseManager.UpdateItemProgress(required, collected);
-    }
-
-    private void AddCarriedCandlesToPhaseOneRequirement(
-        ItemSpawnProfile.PhaseSpawnRule rule)
-    {
-        if (phaseManager == null || phaseManager.CurrentPhase != 1 ||
-            NetworkCandleBaseline <= 0)
-            return;
-
-        ItemData phaseCandle = ResolveCandleItem(rule, NetworkGameManager.Instance);
-        if (phaseCandle == null ||
-            !phaseItemRequirements.TryGetValue(phaseCandle.itemId, out int dungeonCandleCount) ||
-            dungeonCandleCount <= 0)
-            return;
-
-        phaseItemRequirements[phaseCandle.itemId] =
-            dungeonCandleCount + NetworkCandleBaseline;
-
-        Debug.Log(
-            $"[ITEM SPAWNER] Phase 1 candle objective includes " +
-            $"{NetworkCandleBaseline} carried + {dungeonCandleCount} spawned = " +
-            $"{phaseItemRequirements[phaseCandle.itemId]} total.",
-            this);
     }
 
     private bool SpawnGuaranteedPrisonKeys()
@@ -819,9 +769,7 @@ public class ItemRandomSpawner : NetworkBehaviour
         if (phaseCandle != null)
         {
             int targetCandles = GetPhaseCandleCount(difficulty);
-            int currentCandles = spawnedRequirements.TryGetValue(phaseCandle.itemId, out int alreadySpawned)
-                ? alreadySpawned
-                : 0;
+            int currentCandles = phaseCandlesSpawned;
             while (currentCandles < targetCandles)
             {
                 if (!SpawnAtRandomPoint(phaseCandle))
@@ -834,7 +782,7 @@ public class ItemRandomSpawner : NetworkBehaviour
 
                 currentCandles++;
                 spawnedCount++;
-                spawnedRequirements[phaseCandle.itemId] = currentCandles;
+                phaseCandlesSpawned = currentCandles;
             }
         }
 
