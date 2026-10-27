@@ -47490,8 +47490,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DungeonZoneVisual
   zoneFloorRenderer: {fileID: 1656214187}
-  redColor: {r: 1, g: 0.05, b: 0.05, a: 0.45}
-  greenColor: {r: 0.1, g: 1, b: 0.3, a: 0.45}
+  redColor: {r: 1, g: 0.05, b: 0.05, a: 0}
+  greenColor: {r: 0.1, g: 1, b: 0.3, a: 0}
   hideWhenInactive: 1
 --- !u!43 &664351337
 Mesh:

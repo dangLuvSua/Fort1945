@@ -1260,7 +1260,12 @@ MonoBehaviour:
   - {fileID: 8275036606477059702, guid: a57f3687fefa6d345965d1a95b590791, type: 3}
   - {fileID: 1971275880761204592, guid: 4e391c9c14c2ed34098243ab16bf1ed9, type: 3}
   spawnAllUniqueRooms: 1
-  numberOfRooms: 10
+  numberOfRooms: 4
+  easyRoomCount: 5
+  normalRoomCount: 6
+  difficultRoomCount: 8
+  standaloneDifficulty: 2
+  branchEndWallSize: {x: 6, y: 8, z: 0.5}
   maxCorridorsBeforeRoom: 5
   placementAttempts: 15
   chestPrefabs:
@@ -2594,6 +2599,7 @@ MonoBehaviour:
     m_Bits: 512
   groundCheckHeight: 10
   groundCheckDistance: 50
+  spawnOccupiedRadius: 2
 --- !u!1 &1125250635
 GameObject:
   m_ObjectHideFlags: 0
@@ -5062,6 +5068,7 @@ MonoBehaviour:
   m_Name: DungeonNetworkGameManager
   m_EditorClassIdentifier: Assembly-CSharp::DungeonNetworkGameManager
   allCapturedJumpscarePrefab: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
+  allCapturedReturnDelay: 3
   _PrisonCell1Unlocked:
     RawValue: 0
   _PrisonCell2Unlocked:
