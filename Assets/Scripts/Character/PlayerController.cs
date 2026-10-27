@@ -1041,6 +1041,12 @@ public class PlayerController : NetworkBehaviour
         ApplyTeleport(position, rotation);
     }
 
+    /// <summary>Applies a teleport immediately when another transition already owns the screen fade.</summary>
+    public void TeleportDuringTransition(Vector3 position, Quaternion rotation)
+    {
+        ApplyTeleport(position, rotation);
+    }
+
     private void ApplyTeleport(
         Vector3 position,
         Quaternion rotation)

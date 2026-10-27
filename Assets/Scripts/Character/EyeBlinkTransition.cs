@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>Creates a simple top-and-bottom eyelid wipe for local transitions.</summary>
 public sealed class EyeBlinkTransition : MonoBehaviour
@@ -42,6 +43,74 @@ public sealed class EyeBlinkTransition : MonoBehaviour
             blink.StopCoroutine(blink.transition);
 
         blink.transition = blink.StartCoroutine(blink.PlayQueuedTeleports());
+    }
+
+    public static void PlayPhaseCompletion(
+        TMP_FontAsset font,
+        string message,
+        Action teleport,
+        Action onComplete,
+        float messageDuration = 2.25f)
+    {
+        EyeBlinkTransition blink = EnsureInstance();
+        if (blink.transition != null)
+            blink.StopCoroutine(blink.transition);
+        blink.transition = blink.StartCoroutine(
+            blink.PlayPhaseCompletionSequence(font, message, teleport, onComplete, messageDuration));
+    }
+
+    private IEnumerator PlayPhaseCompletionSequence(
+        TMP_FontAsset font,
+        string message,
+        Action teleport,
+        Action onComplete,
+        float messageDuration)
+    {
+        yield return AnimateCoverage(1f, 0.5f, true);
+
+        GameObject screen = new GameObject("Phase Completed Screen");
+        Canvas screenCanvas = screen.AddComponent<Canvas>();
+        screenCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        screenCanvas.overrideSorting = true;
+        // Keep the completion card above the persistent eyelid canvas and
+        // any scene overlay canvases during the covered part of the blink.
+        screenCanvas.sortingOrder = short.MaxValue;
+        screen.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        Image background = new GameObject("Black Background", typeof(RectTransform), typeof(Image))
+            .GetComponent<Image>();
+        background.transform.SetParent(screen.transform, false);
+        background.rectTransform.anchorMin = Vector2.zero;
+        background.rectTransform.anchorMax = Vector2.one;
+        background.rectTransform.offsetMin = Vector2.zero;
+        background.rectTransform.offsetMax = Vector2.zero;
+        background.color = Color.black;
+        background.raycastTarget = false;
+
+        TextMeshProUGUI label = new GameObject("Phase Completed Text", typeof(RectTransform), typeof(TextMeshProUGUI))
+            .GetComponent<TextMeshProUGUI>();
+        label.transform.SetParent(screen.transform, false);
+        label.rectTransform.anchorMin = new Vector2(0.1f, 0.4f);
+        label.rectTransform.anchorMax = new Vector2(0.9f, 0.6f);
+        label.rectTransform.offsetMin = Vector2.zero;
+        label.rectTransform.offsetMax = Vector2.zero;
+        label.alignment = TextAlignmentOptions.Center;
+        label.text = string.IsNullOrWhiteSpace(message) ? "PHASE COMPLETED" : message;
+        label.color = new Color(0.65f, 0.03f, 0.03f, 1f);
+        label.fontSize = 42f;
+        label.enableAutoSizing = true;
+        label.fontSizeMin = 24f;
+        label.fontSizeMax = 48f;
+        if (font != null)
+            label.font = font;
+
+        yield return new WaitForSecondsRealtime(Mathf.Max(0.5f, messageDuration));
+        teleport?.Invoke();
+        yield return new WaitForSecondsRealtime(0.15f);
+        Destroy(screen);
+        SetLidColor(Color.black);
+        yield return AnimateCoverage(0f, DefaultOpenDuration, false);
+        onComplete?.Invoke();
+        transition = null;
     }
 
     public static void CloseAndHold(
