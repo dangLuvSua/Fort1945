@@ -8,6 +8,7 @@ public class DifficultySettings
     public float enemyDamageMultiplier;
     public float enemySpeedMultiplier;
     public float enemyDetectionMultiplier;
+    public int soldierSpawnCount;
 
     // Player
     public float playerStaminaMultiplier;
@@ -25,12 +26,14 @@ public class DifficultySettings
         float enemyDetectionMultiplier,
         float playerStaminaMultiplier,
         int additionalItems,
-        float puzzleTimeMultiplier)
+        float puzzleTimeMultiplier,
+        int soldierSpawnCount)
     {
         this.enemyHealthMultiplier = enemyHealthMultiplier;
         this.enemyDamageMultiplier = enemyDamageMultiplier;
         this.enemySpeedMultiplier = enemySpeedMultiplier;
         this.enemyDetectionMultiplier = enemyDetectionMultiplier;
+        this.soldierSpawnCount = soldierSpawnCount;
         this.playerStaminaMultiplier = playerStaminaMultiplier;
         this.additionalItems = additionalItems;
         this.puzzleTimeMultiplier = puzzleTimeMultiplier;
