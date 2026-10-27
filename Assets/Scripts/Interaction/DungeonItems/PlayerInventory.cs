@@ -2849,6 +2849,15 @@ public class PlayerInventory : NetworkBehaviour
 
             return;
 
+        // Held and world items can share a prefab. Suppress overlays immediately,
+        // before deferred destruction of the pickup scripts on this clone.
+        foreach (PickupHighlight highlight in visual.GetComponentsInChildren<PickupHighlight>(true))
+        {
+            highlight.SetHighlighted(false);
+            highlight.enabled = false;
+            Destroy(highlight);
+        }
+
 
 
         foreach (DroppedItemPhysics c in

@@ -121,6 +121,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 7820745109092032711}
   - component: {fileID: 4024102600893539658}
   - component: {fileID: 5290687999525144174}
   - component: {fileID: 4409824909487921322}
@@ -225,3 +226,19 @@ MonoBehaviour:
   itemData: {fileID: 11400000, guid: d19d98b361c579a4d8ff4bcf99dad3e2, type: 2}
   sourceChest: {fileID: 0}
   _ItemId: 0
+--- !u!114 &7820745109092032711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3754099032284177157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80ce726a137a4e2e954417e40d4f9a61, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PickupHighlight
+  rimMaterial: {fileID: 2100000, guid: 639a95c2ef5e46a1b76d8bdf4da45d78, type: 2}
+  targetRenderers: []
+  requireCollectiblePickup: 1
+  highlightEnabled: 1
