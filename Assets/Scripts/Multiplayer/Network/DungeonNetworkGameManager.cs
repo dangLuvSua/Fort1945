@@ -1,5 +1,6 @@
 using System.Collections;
 using Fusion;
+using TMPro;
 using UnityEngine;
 
 /// <summary>Dungeon-only shared state for prison cell gates.</summary>
@@ -7,8 +8,12 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
 {
     [Header("All Players Captured")]
     [SerializeField] private LocalJumpscarePlayback allCapturedJumpscarePrefab;
-    [SerializeField, Min(0f), Tooltip("Maximum seconds to show the game-over jumpscare before returning to Fort2.")]
+    [SerializeField, Min(0f), Tooltip("Minimum seconds to show the group jumpscare before the GAME OVER card.")]
     private float allCapturedReturnDelay = 3f;
+    [SerializeField] private TMP_FontAsset gameOverFont;
+    [SerializeField, Min(0.5f)] private float gameOverDisplayDuration = 2.5f;
+    [SerializeField, Tooltip("Turn on during Play Mode to preview the GAME OVER card without starting the lobby return.")]
+    private bool testGameOverScreen;
 
     public static DungeonNetworkGameManager Instance { get; private set; }
 
@@ -22,6 +27,20 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
     private Coroutine prisonCell1AutoCloseRoutine;
     private Coroutine prisonCell2AutoCloseRoutine;
     public bool IsNetworkStateReady => networkStateReady;
+
+    private void Update()
+    {
+        if (!testGameOverScreen)
+            return;
+
+        testGameOverScreen = false;
+        EyeBlinkTransition.PlayPhaseCompletion(
+            gameOverFont,
+            "GAME OVER",
+            null,
+            null,
+            gameOverDisplayDuration);
+    }
 
     public override void Spawned()
     {
@@ -96,12 +115,16 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
     {
         if (allCapturedJumpscarePrefab != null)
         {
-            float duration = Mathf.Min(
+            float duration = Mathf.Max(
                 allCapturedJumpscarePrefab.GetMaximumPlaybackDuration(),
                 Mathf.Max(0f, allCapturedReturnDelay));
             if (duration > 0f)
                 yield return new WaitForSecondsRealtime(duration);
         }
+
+        RPC_ShowGameOverScreen();
+        // Match the card's close, hold, and open sequence before loading Fort2.
+        yield return new WaitForSecondsRealtime(0.5f + gameOverDisplayDuration + 0.75f);
 
         RPC_CloseScreenForFort2Load();
         // Let each player's eyelids finish closing before the scene transition.
@@ -114,6 +137,17 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
             EyeBlinkTransition.Open();
             Debug.LogError("[PRISON] Could not return the captured group to Fort2.", this);
         }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_ShowGameOverScreen()
+    {
+        EyeBlinkTransition.PlayPhaseCompletion(
+            gameOverFont,
+            "GAME OVER",
+            null,
+            null,
+            gameOverDisplayDuration);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

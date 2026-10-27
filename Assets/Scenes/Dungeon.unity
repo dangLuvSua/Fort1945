@@ -5023,8 +5023,11 @@ MonoBehaviour:
   endingFadeDuration: 3
   endingSpawnPointName: EndingSpawnPoint
   endingVideo: {fileID: 32900000, guid: 29a6d3488c230ed4e9e131579e99989e, type: 3}
+  phaseCompletedFont: {fileID: 11400000, guid: 2cdb1a24e07c1ab4795e83c1237cde14, type: 2}
+  phaseCompletedDisplayDuration: 2.5
   testCompletePhases: 0
   testReturnToFort2: 0
+  testPhaseCompletionScreen: 0
   _CurrentPhase: 1
   _PhaseInitialized:
     RawValue: 0
@@ -5070,6 +5073,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DungeonNetworkGameManager
   allCapturedJumpscarePrefab: {fileID: 3230472224271863465, guid: 4c95b9ea3ce07444f948636a76a8f0af, type: 3}
   allCapturedReturnDelay: 3
+  gameOverFont: {fileID: 11400000, guid: 2cdb1a24e07c1ab4795e83c1237cde14, type: 2}
+  gameOverDisplayDuration: 2.5
+  testGameOverScreen: 0
   _PrisonCell1Unlocked:
     RawValue: 0
   _PrisonCell2Unlocked:
