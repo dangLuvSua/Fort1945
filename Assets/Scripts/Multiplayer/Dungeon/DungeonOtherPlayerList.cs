@@ -39,7 +39,7 @@ public class DungeonOtherPlayerList : MonoBehaviour
     {
         FindRunner();
 
-        if (runner == null)
+        if (runner == null || !runner.IsRunning)
             return;
 
 
@@ -53,12 +53,25 @@ public class DungeonOtherPlayerList : MonoBehaviour
 
     private void FindRunner()
     {
-        if (runner != null)
+        NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
+        if (handler != null)
+        {
+            runner = handler.GameRunner;
+            return;
+        }
+
+        if (runner != null && runner.IsRunning)
             return;
 
-
-        runner =
-            FindAnyObjectByType<NetworkRunner>();
+        runner = null;
+        foreach (NetworkRunner candidate in FindObjectsByType<NetworkRunner>(FindObjectsSortMode.None))
+        {
+            if (candidate.IsRunning && candidate.LocalPlayer.IsValid)
+            {
+                runner = candidate;
+                break;
+            }
+        }
     }
 
 
@@ -247,7 +260,8 @@ public class DungeonOtherPlayerList : MonoBehaviour
                 );
 
 
-            item.UpdateDisplay(
+            item.Setup(
+                playerState,
                 avatar
             );
         }

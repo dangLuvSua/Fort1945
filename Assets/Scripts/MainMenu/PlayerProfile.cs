@@ -5,6 +5,11 @@ public static class PlayerProfile
     private const string PlayerNameKey = "PlayerName";
     private const string SelectedCharacterKey = "SelectedCharacter";
 
+    // Keep this process's profile across scene changes. ParrelSync editors can
+    // share PlayerPrefs, so rereading them on spawn can pick up another player.
+    private static string cachedPlayerName;
+    private static string cachedSelectedCharacter;
+
 
     // =====================================================
     // GET PLAYER NAME
@@ -14,10 +19,10 @@ public static class PlayerProfile
     {
         get
         {
-            return PlayerPrefs.GetString(
+            return cachedPlayerName ?? (cachedPlayerName = PlayerPrefs.GetString(
                 PlayerNameKey,
                 "Player"
-            );
+            ));
         }
     }
 
@@ -34,6 +39,8 @@ public static class PlayerProfile
         {
             name = "Player";
         }
+
+        cachedPlayerName = name;
 
         PlayerPrefs.SetString(
             PlayerNameKey,
@@ -56,10 +63,10 @@ public static class PlayerProfile
     {
         get
         {
-            return PlayerPrefs.GetString(
+            return cachedSelectedCharacter ?? (cachedSelectedCharacter = PlayerPrefs.GetString(
                 SelectedCharacterKey,
                 "Character1"
-            );
+            ));
         }
     }
 
@@ -74,6 +81,8 @@ public static class PlayerProfile
         {
             characterId = "Character1";
         }
+
+        cachedSelectedCharacter = characterId;
 
         PlayerPrefs.SetString(
             SelectedCharacterKey,

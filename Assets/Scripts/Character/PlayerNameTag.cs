@@ -16,6 +16,10 @@ public class PlayerNameTag : MonoBehaviour
     private PlayerNetwork playerNetwork;
     private CharacterController characterController;
     private Transform playerRoot;
+    private Animator characterAnimator;
+    private Transform head;
+    private SkinnedMeshRenderer[] bodyRenderers;
+    private float nextHeadSearch;
 
     private void Awake()
     {
@@ -63,8 +67,8 @@ public class PlayerNameTag : MonoBehaviour
     private void LateUpdate()
     {
         UpdateName();
-        PlaceAboveHead();
         FaceCamera();
+        PlaceAboveHead();
     }
 
     private void PlaceAboveHead()
@@ -74,13 +78,43 @@ public class PlayerNameTag : MonoBehaviour
             return;
         }
 
+        if (head == null && Time.unscaledTime >= nextHeadSearch)
+        {
+            nextHeadSearch = Time.unscaledTime + 0.25f;
+            characterAnimator = playerRoot.GetComponentInChildren<Animator>();
+            if (characterAnimator != null && characterAnimator.isHuman)
+            {
+                head = characterAnimator.GetBoneTransform(HumanBodyBones.Head);
+                bodyRenderers = characterAnimator.GetComponentsInChildren<SkinnedMeshRenderer>();
+            }
+        }
+
         float topY = characterController != null
             ? characterController.center.y + characterController.height * 0.5f
             : 1.8f;
 
-        transform.position = playerRoot.TransformPoint(
-            new Vector3(0f, topY + headClearance, 0f)
-        );
+        Vector3 anchor = playerRoot.TransformPoint(new Vector3(0f, topY, 0f));
+        if (head != null)
+        {
+            anchor = head.position;
+            // Include the crown/hair above the head bone, which is inside the skull.
+            foreach (SkinnedMeshRenderer bodyRenderer in bodyRenderers)
+            {
+                if (bodyRenderer != null && bodyRenderer.gameObject.activeInHierarchy)
+                    anchor.y = Mathf.Max(anchor.y, bodyRenderer.bounds.max.y);
+            }
+        }
+
+        transform.position = anchor + Vector3.up * headClearance;
+        if (nameText != null && !string.IsNullOrWhiteSpace(nameText.text))
+        {
+            // Place the visible glyphs, regardless of the text rectangle's pivot.
+            nameText.ForceMeshUpdate();
+            Bounds glyphs = nameText.textBounds;
+            Vector3 bottomCenter = new Vector3(glyphs.center.x, glyphs.min.y, glyphs.center.z);
+            transform.position += anchor + Vector3.up * headClearance
+                - nameText.transform.TransformPoint(bottomCenter);
+        }
     }
 
     private void UpdateName()
@@ -90,7 +124,7 @@ public class PlayerNameTag : MonoBehaviour
             return;
         }
 
-        if (playerNetwork == null)
+        if (playerNetwork == null || playerNetwork.Object == null || !playerNetwork.Object.IsValid)
         {
             return;
         }

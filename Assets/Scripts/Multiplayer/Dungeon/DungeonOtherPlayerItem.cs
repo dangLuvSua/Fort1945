@@ -55,6 +55,12 @@ public class DungeonOtherPlayerItem : MonoBehaviour
         LobbyPlayerState state,
         Sprite characterAvatar)
     {
+        if (playerState == state && state != null)
+        {
+            UpdateDisplay(characterAvatar);
+            return;
+        }
+
         playerState = state;
 
         // Reset cached components in case this UI entry is reused.
@@ -86,7 +92,7 @@ public class DungeonOtherPlayerItem : MonoBehaviour
 
     private void Update()
     {
-        if (playerState == null)
+        if (playerState == null || playerState.Object == null || !playerState.Object.IsValid)
             return;
 
         // Player objects may spawn after the list entry.
@@ -172,6 +178,9 @@ public class DungeonOtherPlayerItem : MonoBehaviour
         if (staminaSlider == null || playerStamina == null)
             return;
 
+        if (playerStamina.Object == null || !playerStamina.Object.IsValid)
+            return;
+
         staminaSlider.minValue = 0f;
         staminaSlider.maxValue = Mathf.Max(
             0.01f,
@@ -239,7 +248,7 @@ public class DungeonOtherPlayerItem : MonoBehaviour
 
     public void UpdateDisplay(Sprite characterAvatar)
     {
-        if (playerState == null)
+        if (playerState == null || playerState.Object == null || !playerState.Object.IsValid)
             return;
 
         // Player name
