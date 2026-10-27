@@ -225,6 +225,9 @@ public class NetworkRunnerHandler :
         if (GetComponent<NetworkPerformanceOverlay>() == null)
             gameObject.AddComponent<NetworkPerformanceOverlay>();
 
+        if (GetComponent<ItemControlHintOverlay>() == null)
+            gameObject.AddComponent<ItemControlHintOverlay>();
+
         DontDestroyOnLoad(gameObject);
         Application.runInBackground = true;
 

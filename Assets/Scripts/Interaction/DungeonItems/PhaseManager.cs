@@ -157,8 +157,21 @@ public class PhaseManager : NetworkBehaviour
         PhaseItemsRequired = 0;
         PhaseItemsCollected = 0;
         PhaseInitialized = true;
+        RPC_ResetPhaseJumpscares();
 
         Debug.Log($"[PHASE] Changed to Phase {CurrentPhase}.");
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_ResetPhaseJumpscares()
+    {
+        foreach (SharedOneShotJumpscareTrigger trigger in
+                 FindObjectsByType<SharedOneShotJumpscareTrigger>(FindObjectsSortMode.None))
+            trigger.ResetForPhase();
+
+        foreach (LocalJumpscareTrigger trigger in
+                 FindObjectsByType<LocalJumpscareTrigger>(FindObjectsSortMode.None))
+            trigger.ResetForPhase();
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

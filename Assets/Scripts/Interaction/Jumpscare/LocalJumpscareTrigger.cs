@@ -26,6 +26,16 @@ public sealed class LocalJumpscareTrigger : MonoBehaviour
         triggerCollider.isTrigger = true;
     }
 
+    /// <summary>Re-arms this local trigger when the next phase begins.</summary>
+    public void ResetForPhase()
+    {
+        hasTriggered = false;
+        if (triggerCollider == null)
+            triggerCollider = GetComponent<Collider>();
+        if (triggerCollider != null)
+            triggerCollider.enabled = true;
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (hasTriggered)

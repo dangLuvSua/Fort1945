@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Fusion;
 using TMPro;
 using UnityEngine;
@@ -15,6 +16,11 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
     [SerializeField, Tooltip("Turn on during Play Mode to preview the GAME OVER card without starting the lobby return.")]
     private bool testGameOverScreen;
 
+    [Header("Santelmo Dungeon Intro")]
+    [SerializeField, Min(1f)] private float santelmoLine1Duration = 8f;
+    [SerializeField, Min(1f)] private float santelmoLine2Duration = 12f;
+    [SerializeField, Min(1f)] private float santelmoLine3Duration = 8f;
+
     public static DungeonNetworkGameManager Instance { get; private set; }
 
     [Networked] public NetworkBool PrisonCell1Unlocked { get; private set; }
@@ -24,6 +30,11 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
 
     private bool networkStateReady;
     private bool returningCapturedPlayersToLobby;
+    private bool santelmoIntroStarted;
+    private bool santelmoIntroVisualsActive;
+    private readonly Dictionary<GameObject, bool> santelmoHiddenUiObjects = new();
+    private readonly Dictionary<Canvas, bool> santelmoHiddenCanvases = new();
+    private GameObject santelmoVfxObject;
     private Coroutine prisonCell1AutoCloseRoutine;
     private Coroutine prisonCell2AutoCloseRoutine;
     public bool IsNetworkStateReady => networkStateReady;
@@ -53,11 +64,17 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
             PrisonCell2Unlocked = false;
             PrisonCell1GateOpen = false;
             PrisonCell2GateOpen = false;
+            if (!santelmoIntroStarted)
+            {
+                santelmoIntroStarted = true;
+                StartCoroutine(PlaySantelmoIntroWhenReady());
+            }
         }
     }
 
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
+        SetLocalPlayerIntroMovementLocked(false);
         networkStateReady = false;
         if (Instance == this)
             Instance = null;
@@ -96,6 +113,175 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
 
         RPC_PlayAllCapturedJumpscare();
         StartCoroutine(ReturnToLobbyAfterJumpscare());
+    }
+
+    private IEnumerator PlaySantelmoIntroWhenReady()
+    {
+        const float readinessTimeout = 60f;
+        float remaining = readinessTimeout;
+        DungeonGenerator generator = null;
+        bool allPlayersReady = false;
+
+        while (remaining > 0f)
+        {
+            if (Runner == null || !Runner.IsRunning || Object == null || !Object.HasStateAuthority)
+                yield break;
+
+            if (generator == null)
+                generator = FindFirstObjectByType<DungeonGenerator>();
+
+            allPlayersReady = generator != null && generator.IsGenerated;
+            int playerCount = 0;
+            if (allPlayersReady)
+            {
+                foreach (PlayerRef player in Runner.ActivePlayers)
+                {
+                    playerCount++;
+                    if (!Runner.TryGetPlayerObject(player, out NetworkObject playerObject) ||
+                        playerObject == null ||
+                        !playerObject.TryGetComponent(out PlayerInventory inventory) ||
+                        !inventory.DungeonTransferReady)
+                    {
+                        allPlayersReady = false;
+                        break;
+                    }
+                }
+
+                allPlayersReady &= playerCount > 0;
+            }
+
+            if (allPlayersReady)
+                break;
+
+            remaining -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (!allPlayersReady)
+        {
+            Debug.LogWarning("[DUNGEON INTRO] Timed out waiting for dungeon generation and all players to finish spawning; skipping Santelmo's intro.", this);
+            yield break;
+        }
+
+        RPC_ShowSantelmoIntroLine(
+            "Makinig kayong mabuti. Gamitin ang Kandila bilang liwanag at babala sa mga kaluluwang malapit. Ang Asin ang inyong panangga laban sa kanila.");
+        yield return new WaitForSecondsRealtime(santelmoLine1Duration);
+
+        RPC_ShowSantelmoIntroLine(
+            "Hanapin ang Susi upang mabuksan ang mga selda. Gamitin ang Kamera upang makuha ang larawan at kuwento ng mga kaluluwa. Kung may bumagsak sa takot, gamitin ang Krus upang siya'y maibangon.");
+        yield return new WaitForSecondsRealtime(santelmoLine2Duration);
+
+        RPC_ShowSantelmoIntroLine(
+            "Ingatan ang inyong katinuan. Kapag tuluyan kayong nilamon ng takot, mawawala ang inyong kontrol sa sarili.");
+        yield return new WaitForSecondsRealtime(santelmoLine3Duration);
+
+        RPC_HideSantelmoIntro();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_ShowSantelmoIntroLine(string message)
+    {
+        if (!santelmoIntroVisualsActive)
+            EnterSantelmoIntroVisuals();
+
+        SoldierDialogueController dialogue = FindFirstObjectByType<SoldierDialogueController>(
+            FindObjectsInactive.Include);
+        if (dialogue == null)
+        {
+            Debug.LogWarning("[DUNGEON INTRO] DialoguePanel with SoldierDialogueController was not found on this client.", this);
+            return;
+        }
+
+        dialogue.ShowDialogueAs("Santelmo", message);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_HideSantelmoIntro()
+    {
+        SoldierDialogueController dialogue = FindFirstObjectByType<SoldierDialogueController>(
+            FindObjectsInactive.Include);
+        if (dialogue != null)
+            dialogue.HideDialogue();
+
+        ExitSantelmoIntroVisuals();
+    }
+
+    private void EnterSantelmoIntroVisuals()
+    {
+        santelmoIntroVisualsActive = true;
+        SetLocalPlayerIntroMovementLocked(true);
+        santelmoHiddenUiObjects.Clear();
+        santelmoHiddenCanvases.Clear();
+
+        SoldierDialogueController dialogue = FindFirstObjectByType<SoldierDialogueController>(
+            FindObjectsInactive.Include);
+        Canvas dialogueCanvas = dialogue != null
+            ? dialogue.GetComponentInParent<Canvas>(true)
+            : null;
+
+        foreach (Canvas canvas in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+        {
+            if (canvas == null || canvas == dialogueCanvas)
+                continue;
+
+            santelmoHiddenCanvases[canvas] = canvas.enabled;
+            canvas.enabled = false;
+        }
+
+        if (dialogueCanvas != null && dialogue != null)
+        {
+            Transform canvasTransform = dialogueCanvas.transform;
+            for (int index = 0; index < canvasTransform.childCount; index++)
+            {
+                GameObject child = canvasTransform.GetChild(index).gameObject;
+                if (child == dialogue.gameObject)
+                    continue;
+
+                santelmoHiddenUiObjects[child] = child.activeSelf;
+                child.SetActive(false);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[DUNGEON INTRO] Could not find the DialoguePanel's Canvas; hiding other canvases while Santelmo speaks.", this);
+        }
+
+        santelmoVfxObject = GameObject.Find("VFX_Fire_01_Medium 1");
+        if (santelmoVfxObject != null)
+            santelmoVfxObject.SetActive(true);
+        else
+            Debug.LogWarning("[DUNGEON INTRO] Santelmo VFX 'VFX_Fire_01_Medium 1' was not found in the generated dungeon.", this);
+    }
+
+    private void ExitSantelmoIntroVisuals()
+    {
+        santelmoIntroVisualsActive = false;
+        SetLocalPlayerIntroMovementLocked(false);
+
+        if (santelmoVfxObject != null)
+            santelmoVfxObject.SetActive(false);
+        santelmoVfxObject = null;
+
+        foreach (KeyValuePair<GameObject, bool> entry in santelmoHiddenUiObjects)
+            if (entry.Key != null)
+                entry.Key.SetActive(entry.Value);
+        santelmoHiddenUiObjects.Clear();
+
+        foreach (KeyValuePair<Canvas, bool> entry in santelmoHiddenCanvases)
+            if (entry.Key != null)
+                entry.Key.enabled = entry.Value;
+        santelmoHiddenCanvases.Clear();
+    }
+
+    private void SetLocalPlayerIntroMovementLocked(bool locked)
+    {
+        foreach (PlayerController player in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+        {
+            if (player.Object == null || !player.Object.IsValid || !player.Object.HasInputAuthority)
+                continue;
+
+            player.SetIntroMovementLocked(locked);
+        }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
