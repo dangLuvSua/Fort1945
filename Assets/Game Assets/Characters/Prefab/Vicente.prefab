@@ -185,3 +185,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CameraPhotoPoint
   photo: {fileID: 2800000, guid: 519c68dfa9e39874291b1b4c70c7de6a, type: 3}
   objectThatMustBeVisible: {fileID: 5534658048913680820}
+  proximityVoice: {fileID: 8300000, guid: b6d2cbef54042214f9522c5355b0c1c0, type: 3}
+  voiceVolume: 0.8
+  voiceTriggerDistance: 5
+  voiceResetDistance: 6

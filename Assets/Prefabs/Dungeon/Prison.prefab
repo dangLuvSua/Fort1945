@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 307597945458215174}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.627, y: -0.27, z: 28.89}
+  m_LocalPosition: {x: -2.72, y: -0.27, z: 28.89}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5492,7 +5492,7 @@ Transform:
   m_GameObject: {fileID: 1538384265161248510}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0.7071067, z: -0.000000053385072, w: 0.000000053385083}
-  m_LocalPosition: {x: 22.317307, y: 0.3585434, z: 18.422775}
+  m_LocalPosition: {x: 0.007307, y: 0.2785434, z: 3.338451}
   m_LocalScale: {x: -7.6506815, y: -7.6506815, z: -7.6506815}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5703,50 +5703,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!1 &1673207699276403932
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5171175391733289042}
-  - component: {fileID: 3711385069863856342}
-  m_Layer: 0
-  m_Name: ChestPoint (1)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5171175391733289042
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1673207699276403932}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: -0, w: -0.7071068}
-  m_LocalPosition: {x: 31.451584, y: 0.25, z: 16.030334}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4770147733201180035}
-  m_LocalEulerAnglesHint: {x: 0, y: 270, z: 0}
---- !u!114 &3711385069863856342
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1673207699276403932}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e233f61fd22f28944b5a640c1a1418bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DungeonChestPoint
 --- !u!1 &1683277133059143988
 GameObject:
   m_ObjectHideFlags: 0
@@ -11883,7 +11839,7 @@ Transform:
   m_GameObject: {fileID: 4296962044604327479}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.265, y: -0.088001, z: -0.254}
+  m_LocalPosition: {x: -6.523, y: -0.088001, z: 0.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -27754,7 +27710,7 @@ Transform:
   m_GameObject: {fileID: 6337123035091546347}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 22.31, y: 0.08, z: 15.084324}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -43301,7 +43257,6 @@ Transform:
   - {fileID: 1369354331337715576}
   - {fileID: 1060320444101792325}
   - {fileID: 2618821354911534001}
-  - {fileID: 5171175391733289042}
   - {fileID: 2624653131304981150}
   - {fileID: 1321746605152727426}
   - {fileID: 5106441491065212914}
@@ -44016,7 +43971,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6199313297984816896, guid: af9d71990c5e4ec4aaaaecc195799dae, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 19.53
+      value: 16.67
       objectReference: {fileID: 0}
     - target: {fileID: 6199313297984816896, guid: af9d71990c5e4ec4aaaaecc195799dae, type: 3}
       propertyPath: m_LocalRotation.w

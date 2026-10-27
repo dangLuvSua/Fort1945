@@ -2440,6 +2440,7 @@ MonoBehaviour:
   candleItem: {fileID: 11400000, guid: c25349f6ab50afa4ca463e0e4c41498e, type: 2}
   phaseTwoGuaranteedItems:
   - {fileID: 11400000, guid: 7623e8308b325a24cb3752c1a93ecc4c, type: 2}
+  phaseThreeGuaranteedItems:
   - {fileID: 11400000, guid: fd0716f576c9a3f4b93d566f21ee6e41, type: 2}
 --- !u!114 &1106075645
 MonoBehaviour:

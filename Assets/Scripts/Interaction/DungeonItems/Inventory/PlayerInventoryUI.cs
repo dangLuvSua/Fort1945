@@ -193,7 +193,7 @@ public partial class PlayerInventoryUI : MonoBehaviour
             equipButton.onClick.AddListener(EquipSelectedItem);
 
         if (removeButton != null)
-            removeButton.onClick.AddListener(RemoveSelectedItemFromQuickBar);
+            removeButton.onClick.AddListener(DropSelectedItem);
 
         if (deleteInventoryButton != null)
             deleteInventoryButton.onClick.AddListener(DeleteSelectedItemCompletely);
@@ -225,7 +225,7 @@ public partial class PlayerInventoryUI : MonoBehaviour
             equipButton.onClick.RemoveListener(EquipSelectedItem);
 
         if (removeButton != null)
-            removeButton.onClick.RemoveListener(RemoveSelectedItemFromQuickBar);
+            removeButton.onClick.RemoveListener(DropSelectedItem);
 
         if (deleteInventoryButton != null)
             deleteInventoryButton.onClick.RemoveListener(DeleteSelectedItemCompletely);
@@ -908,27 +908,22 @@ public partial class PlayerInventoryUI : MonoBehaviour
             );
     }
 
-    public void RemoveSelectedItemFromQuickBar()
+    public void DropSelectedItem()
     {
-        if (!IsInventoryReady() || selectedItem == null)
+        if (!IsInventoryReady() || selectedItem == null ||
+            inventory.IsCapturedPhoto(selectedItem) || selectedItem.worldPrefab == null ||
+            selectedStorageIndex < 0)
             return;
 
-        bool removed =
-            inventory.RemoveItemFromQuickBar(selectedItem.itemId);
+        ItemData stored = inventory.GetStorageItemAt(selectedStorageIndex);
+        if (stored == null || stored.itemId != selectedItem.itemId)
+            return;
 
-        if (removed)
-        {
-            selectedQuickBarIndex = -1;
+        if (inventory.DropStorageItem(selectedStorageIndex))
             Refresh();
-        }
         else
-        {
-            Debug.LogWarning(
-                "[INVENTORY UI] This item is not in the quickbar."
-            );
-        }
+            Debug.LogWarning("[INVENTORY UI] Could not drop the selected item.");
     }
-
     public void DeleteSelectedItemCompletely()
     {
         if (!IsInventoryReady() || selectedItem == null)
@@ -1007,7 +1002,8 @@ public partial class PlayerInventoryUI : MonoBehaviour
             removeButton.interactable =
                 hasSelection &&
                 itemExists &&
-                inventory.IsItemInQuickBar(selectedItem.itemId);
+                !isCapturedPhoto &&
+                selectedItem.worldPrefab != null;
         }
 
         if (deleteInventoryButton != null)

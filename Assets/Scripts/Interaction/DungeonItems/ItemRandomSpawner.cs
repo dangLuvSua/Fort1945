@@ -36,6 +36,8 @@ public class ItemRandomSpawner : NetworkBehaviour
 
     [Header("Phase 2 Key Items")]
     [SerializeField] private ItemData[] phaseTwoGuaranteedItems;
+    [Header("Phase 3 Key Items")]
+    [SerializeField] private ItemData[] phaseThreeGuaranteedItems;
 
     private readonly List<ItemSpawnPoint> availablePoints =
         new List<ItemSpawnPoint>();
@@ -61,6 +63,7 @@ public class ItemRandomSpawner : NetworkBehaviour
     private int phaseCandlesSpawned;
     private int preparingPhase = -1;
     private readonly HashSet<int> phaseTwoSpawnedIds = new HashSet<int>();
+    private readonly HashSet<int> phaseThreeSpawnedIds = new HashSet<int>();
     private readonly List<Transform> missionSpawnTargets = new List<Transform>();
     private MissionProgressPanelUI missionProgressPanel;
     private readonly HashSet<int> configuredObjectiveItemIds = new HashSet<int>();
@@ -252,6 +255,8 @@ public class ItemRandomSpawner : NetworkBehaviour
         if (phase != lastProcessedPhase)
         {
             if (phase == 2 && !SpawnPhaseTwoGuaranteedItems())
+                return;
+            if (phase == 3 && !SpawnGuaranteedPhaseItems(phaseThreeGuaranteedItems, phaseThreeSpawnedIds, 3))
                 return;
 
             bool spawned = SpawnPhaseItems(difficulty, phase, rule, phaseItemRequirements);
@@ -568,6 +573,11 @@ public class ItemRandomSpawner : NetworkBehaviour
             foreach (ItemData item in phaseTwoGuaranteedItems)
                 AddUniqueLootItem(items, item);
         }
+        if (phase == 3 && phaseThreeGuaranteedItems != null)
+        {
+            foreach (ItemData item in phaseThreeGuaranteedItems)
+                AddUniqueLootItem(items, item);
+        }
 
         return items;
     }
@@ -590,6 +600,15 @@ public class ItemRandomSpawner : NetworkBehaviour
             {
                 if (entry?.item != null && entry.item.itemId == itemId)
                     return entry.item;
+            }
+        }
+
+        if (phaseThreeGuaranteedItems != null)
+        {
+            foreach (ItemData item in phaseThreeGuaranteedItems)
+            {
+                if (item != null && item.itemId == itemId)
+                    return item;
             }
         }
 
@@ -698,23 +717,28 @@ public class ItemRandomSpawner : NetworkBehaviour
 
     private bool SpawnPhaseTwoGuaranteedItems()
     {
-        if (phaseTwoGuaranteedItems == null)
+        return SpawnGuaranteedPhaseItems(phaseTwoGuaranteedItems, phaseTwoSpawnedIds, 2);
+    }
+
+    private bool SpawnGuaranteedPhaseItems(ItemData[] items, HashSet<int> spawnedIds, int phase)
+    {
+        if (items == null)
             return true;
 
-        foreach (ItemData item in phaseTwoGuaranteedItems)
+        foreach (ItemData item in items)
         {
-            if (item == null || phaseTwoSpawnedIds.Contains(item.itemId))
+            if (item == null || spawnedIds.Contains(item.itemId))
                 continue;
 
             if (!SpawnAtMissionTarget(item))
             {
                 Debug.LogWarning(
-                    $"[ITEM SPAWNER] Could not spawn Phase 2 item '{item.itemName}' at a mystery/statue point; retrying.",
+                    $"[ITEM SPAWNER] Could not spawn Phase {phase} item '{item.itemName}' at a mystery/statue point; retrying.",
                     this);
                 return false;
             }
 
-            phaseTwoSpawnedIds.Add(item.itemId);
+            spawnedIds.Add(item.itemId);
             phaseItemRequirements[item.itemId] = 1;
         }
 
@@ -723,6 +747,10 @@ public class ItemRandomSpawner : NetworkBehaviour
 
     private bool SpawnAtMissionTarget(ItemData item)
     {
+        // Gate keys must remain accessible before any locked room is opened.
+        if (RequiresCorridorSpawn(item))
+            return SpawnAtRandomPoint(item);
+
         while (missionSpawnTargets.Count > 0)
         {
             int index = Random.Range(0, missionSpawnTargets.Count);
@@ -948,7 +976,23 @@ public class ItemRandomSpawner : NetworkBehaviour
         if (availablePoints.Count == 0)
             return false;
 
-        int index = Random.Range(0, availablePoints.Count);
+        List<int> eligibleIndices = new List<int>();
+        for (int candidateIndex = 0; candidateIndex < availablePoints.Count; candidateIndex++)
+        {
+            ItemSpawnPoint candidate = availablePoints[candidateIndex];
+            if (candidate == null || !candidate.canSpawnItems || !candidate.gameObject.activeInHierarchy)
+                continue;
+            if (RequiresCorridorSpawn(item) && !IsCorridorSpawnPoint(candidate.transform))
+                continue;
+            eligibleIndices.Add(candidateIndex);
+        }
+        if (eligibleIndices.Count == 0)
+        {
+            Debug.LogWarning($"[ITEM SPAWNER] No eligible unused spawn point for '{item.itemName}'. Gate keys require corridor markers; no locked-room fallback is allowed.", this);
+            return false;
+        }
+
+        int index = eligibleIndices[Random.Range(0, eligibleIndices.Count)];
         ItemSpawnPoint point = availablePoints[index];
 
         if (point == null)
@@ -963,6 +1007,23 @@ public class ItemRandomSpawner : NetworkBehaviour
 
         availablePoints.RemoveAt(index);
         return true;
+    }
+
+    private static bool RequiresCorridorSpawn(ItemData item)
+    {
+        return item != null && (item.itemId == 102 || item.itemId == 104 || item.itemId == 105);
+    }
+
+    private bool IsCorridorSpawnPoint(Transform point)
+    {
+        if (dungeonGenerator == null)
+            return false;
+        foreach (GameObject piece in dungeonGenerator.GeneratedPieces)
+        {
+            if (piece != null && point.IsChildOf(piece.transform) && dungeonGenerator.IsCorridorPiece(piece))
+                return true;
+        }
+        return false;
     }
 
     private bool SpawnAtPosition(ItemData item, Vector3 position, Quaternion rotation)
