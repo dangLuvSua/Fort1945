@@ -268,6 +268,9 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 892c08399cf5c4e4c9cdf30c308325cf, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 7820745109092032711}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 892c08399cf5c4e4c9cdf30c308325cf, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 3702181336296980624}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 892c08399cf5c4e4c9cdf30c308325cf, type: 3}
       insertIndex: -1
@@ -462,3 +465,19 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 2775441832562816976, guid: 892c08399cf5c4e4c9cdf30c308325cf, type: 3}
+--- !u!114 &7820745109092032711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1294585307656218199}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80ce726a137a4e2e954417e40d4f9a61, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PickupHighlight
+  rimMaterial: {fileID: 2100000, guid: 639a95c2ef5e46a1b76d8bdf4da45d78, type: 2}
+  targetRenderers: []
+  requireCollectiblePickup: 1
+  highlightEnabled: 1
