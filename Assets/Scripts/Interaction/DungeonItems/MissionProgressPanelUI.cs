@@ -1017,6 +1017,14 @@ public class MissionProgressPanelUI : MonoBehaviour
             return;
         }
 
+        // Dungeon candles are supplies, not objectives. Keep Fort2 rows intact.
+        bool isCandle = itemData.itemId == 203 ||
+            (itemData.heldPrefab != null &&
+             itemData.heldPrefab.GetComponentInChildren<CandleVisual>(true) != null);
+        if (isCandle && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Equals(
+            "Dungeon", System.StringComparison.OrdinalIgnoreCase))
+            return;
+
         if (content == null)
         {
             Debug.LogWarning(
