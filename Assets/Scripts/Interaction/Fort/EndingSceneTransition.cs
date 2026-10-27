@@ -57,9 +57,19 @@ public sealed class EndingSceneTransition : MonoBehaviour
             yield break;
         }
 
-        // Allow scene objects and network players to finish initializing.
-        yield return null;
-        yield return null;
+        // Wait for Fort2's ending markers and network player objects before
+        // attempting the coordinated placement. Scene loading can finish
+        // before Fusion has finished attaching every player object.
+        float readinessTimeout = 20f;
+        while (!IsFort2Ready() && readinessTimeout > 0f)
+        {
+            readinessTimeout -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (!IsFort2Ready())
+            Debug.LogWarning("[ENDING] Fort2 did not become fully ready before the 20 second timeout; continuing with available scene objects.");
+
         CreateEndingCrossGlow();
         NetworkRunnerHandler currentHandler = NetworkRunnerHandler.Instance;
         sceneAuthority = currentHandler != null && currentHandler.IsSceneAuthority;
@@ -84,8 +94,9 @@ public sealed class EndingSceneTransition : MonoBehaviour
 
         DisableFortGameplaySystems();
 
-        // Let the players settle at the White Cross before playing the finale.
-        yield return new WaitForSecondsRealtime(2f);
+        // Keep the White Cross visible and glowing for the requested five
+        // seconds after players are placed there.
+        yield return new WaitForSecondsRealtime(5f);
         if (endingVideo != null)
             yield return PlayEndingVideo(endingVideo);
         else
@@ -213,6 +224,39 @@ public sealed class EndingSceneTransition : MonoBehaviour
             if (transform.name == targetName)
                 return transform;
         return null;
+    }
+
+    private bool IsFort2Ready()
+    {
+        if (SceneManager.GetActiveScene().name != "Fort2")
+            return false;
+
+        Transform spawnParent = FindNamedTransform(spawnParentName);
+        if (spawnParent == null ||
+            spawnParent.Find("ESP_01") == null ||
+            spawnParent.Find("ESP_02") == null ||
+            spawnParent.Find("ESP_03") == null ||
+            spawnParent.Find("ESP_04") == null ||
+            FindFirstObjectByType<PlayerSpawner>() == null)
+            return false;
+
+        NetworkRunnerHandler handler = NetworkRunnerHandler.Instance;
+        if (handler == null || !handler.IsSceneAuthority)
+            return true;
+
+        var runner = handler.GameRunner;
+        if (runner == null)
+            return false;
+
+        foreach (var player in runner.ActivePlayers)
+        {
+            if (!runner.TryGetPlayerObject(player, out var playerObject) ||
+                playerObject == null ||
+                !playerObject.TryGetComponent(out PlayerController _))
+                return false;
+        }
+
+        return true;
     }
 
     private static void CreateEndingCrossGlow()
