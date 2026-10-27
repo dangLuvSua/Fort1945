@@ -16,6 +16,10 @@ public class CameraController : NetworkBehaviour
     [SerializeField] private Camera cameraViewCamera;
 
     [Header("Capture")]
+    [Tooltip("Maximum distance in world units for a character photo to qualify.")]
+    [SerializeField, Min(0.1f)] private float maximumCharacterCaptureDistance = 5f;
+    [Tooltip("Minimum fraction of the viewfinder height occupied by the character.")]
+    [SerializeField, Range(0.01f, 1f)] private float minimumCharacterFrameHeight = 0.25f;
     [SerializeField] private RenderTexture cameraViewTexture;
     [SerializeField] private RenderTexture photoRenderTexture;
 
@@ -37,6 +41,7 @@ public class CameraController : NetworkBehaviour
     private bool isCameraOpen;
     private bool captureInProgress;
     private bool capturedPhotoValidForMission;
+    private string capturedMissionPhotoId;
     private readonly Dictionary<GameObject, bool> hudVisibilityBeforeCamera =
         new Dictionary<GameObject, bool>();
 
@@ -259,10 +264,13 @@ public class CameraController : NetworkBehaviour
 
             if (capturedPhoto != null)
             {
-                byte[] encodedPhoto = capturedPhoto.EncodeToJPG(80);
-                bool storedLocally = inventory != null &&
+                // Scene-only shots may be previewed, but are never archived or shared.
+                byte[] encodedPhoto = capturedPhotoValidForMission
+                    ? capturedPhoto.EncodeToJPG(80)
+                    : null;
+                bool storedLocally = capturedPhotoValidForMission && inventory != null &&
                     inventory.StoreCapturedPhoto(capturedPhoto, encodedPhoto);
-                if (!storedLocally)
+                if (capturedPhotoValidForMission && !storedLocally)
                 {
                     Debug.LogWarning(
                         "[CAMERA] Gallery is full or the local inventory is not " +
@@ -278,7 +286,7 @@ public class CameraController : NetworkBehaviour
                 }
 
                 if (storedLocally && capturedPhotoValidForMission)
-                    PhaseManager.Instance?.ReportPhotoCaptured();
+                    PhaseManager.Instance?.ReportPhotoCaptured(capturedMissionPhotoId);
 
                 if (shutterAudio != null)
                     shutterAudio.Play();
@@ -296,6 +304,7 @@ public class CameraController : NetworkBehaviour
     private IEnumerator CapturePhoto()
     {
         capturedPhotoValidForMission = false;
+        capturedMissionPhotoId = null;
 
         if (!photoRenderTexture.IsCreated())
             photoRenderTexture.Create();
@@ -317,7 +326,7 @@ public class CameraController : NetworkBehaviour
             CameraPhotoPoint candidate = hit.collider != null
                 ? hit.collider.GetComponentInParent<CameraPhotoPoint>()
                 : null;
-            if (candidate == null || candidate.Photo == null ||
+            if (candidate == null || candidate.Photo == null || !candidate.IsValidMissionCapture(cameraViewCamera, maximumCharacterCaptureDistance, minimumCharacterFrameHeight) ||
                 (photoPointMask.value & (1 << candidate.gameObject.layer)) == 0 ||
                 hit.distance >= nearestPhotoPointDepth)
                 continue;
@@ -336,11 +345,11 @@ public class CameraController : NetworkBehaviour
                 FindObjectsSortMode.None);
             foreach (CameraPhotoPoint candidate in photoPoints)
             {
-                if (candidate == null || candidate.Photo == null ||
+                if (candidate == null || candidate.Photo == null || !candidate.IsValidMissionCapture(cameraViewCamera, maximumCharacterCaptureDistance, minimumCharacterFrameHeight) ||
                     (photoPointMask.value & (1 << candidate.gameObject.layer)) == 0)
                     continue;
 
-                if (TrySelectVisiblePoint(candidate, candidate.PhotoAimPosition,
+                if (TrySelectVisiblePoint(candidate, candidate.CaptureAimPosition,
                         ref selectedPhotoPoint, ref nearestPhotoPointDepth))
                     usedVisiblePointFallback = true;
 
@@ -362,6 +371,7 @@ public class CameraController : NetworkBehaviour
             if (capturedPhoto != null)
                 Destroy(capturedPhoto);
             capturedPhotoValidForMission = true;
+            capturedMissionPhotoId = selectedPhotoPoint.Photo.name;
             capturedPhoto = CreateReadableCopy(selectedPhotoPoint.Photo);
             string selectionMethod = usedVisiblePointFallback
                 ? "visible trigger"

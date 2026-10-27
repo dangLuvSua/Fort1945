@@ -2193,45 +2193,26 @@ public class PlayerInventory : NetworkBehaviour
 
 
     private void DropAuthoritative(int quickBarIndex)
-
     {
-
-        if (Object == null ||
-
-            !Object.HasStateAuthority ||
-
-            Runner == null)
-
-        {
-
+        if (quickBarIndex < 0 || quickBarIndex >= QuickBarSlotCount)
             return;
+        DropStorageItem(GetQuickBarStorageIndex(quickBarIndex));
+    }
 
-        }
+    public bool DropStorageItem(int storageIndex)
+    {
+        if (Object == null || !Object.HasStateAuthority || Runner == null ||
+            !IsValidStorageIndex(storageIndex))
+            return false;
+        int quantityBefore = NetworkQuantities.Get(storageIndex);
+        if (quantityBefore <= 0)
+            return false;
+        DropStorageAuthoritative(storageIndex);
+        return NetworkQuantities.Get(storageIndex) == quantityBefore - 1;
+    }
 
-
-
-        if (quickBarIndex < 0 ||
-
-            quickBarIndex >= QuickBarSlotCount)
-
-        {
-
-            return;
-
-        }
-
-
-
-        int storageIndex = GetQuickBarStorageIndex(quickBarIndex);
-
-
-
-        if (storageIndex < 0)
-
-            return;
-
-
-
+    private void DropStorageAuthoritative(int storageIndex)
+    {
         int itemId = NetworkSlots.Get(storageIndex);
 
 

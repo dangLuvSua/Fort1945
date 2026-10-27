@@ -18,6 +18,7 @@ public class PhaseManager : NetworkBehaviour
     [SerializeField] private string endingSpawnPointName = "EndingSpawnPoint";
     [SerializeField] private VideoClip endingVideo;
     private bool endingStarted;
+    private float nextProximityVoiceCheck;
 
     [Header("Testing (Play Mode)")]
     [SerializeField, Tooltip("Turn this on during Play Mode to trigger the all-phases-complete ending. Resets itself after triggering.")]
@@ -34,6 +35,8 @@ public class PhaseManager : NetworkBehaviour
 
     [Networked]
     public int PhotoCapturesThisPhase { get; private set; }
+    [Networked, Capacity(32)]
+    private NetworkArray<NetworkString<_128>> CapturedMissionPhotoIds => default;
 
     [Networked]
     public NetworkBool SequenceComplete { get; private set; }
@@ -70,6 +73,18 @@ public class PhaseManager : NetworkBehaviour
 
     private void Update()
     {
+        if (IsNetworkReady && Object != null && Object.IsValid && Object.HasStateAuthority &&
+            Runner != null && Runner.IsRunning && CurrentPhase == 2 && !SequenceComplete &&
+            Time.unscaledTime >= nextProximityVoiceCheck)
+        {
+            nextProximityVoiceCheck = Time.unscaledTime + 0.2f;
+            foreach (CameraPhotoPoint point in FindObjectsByType<CameraPhotoPoint>(FindObjectsSortMode.None))
+            {
+                if (point.ShouldPlayProximityVoice(Runner))
+                    RPC_PlayCharacterVoice(point.Photo.name);
+            }
+        }
+
         if (testReturnToFort2)
         {
             testReturnToFort2 = false;
@@ -119,12 +134,27 @@ public class PhaseManager : NetworkBehaviour
 
         CurrentPhase = phase;
         PhotoCapturesThisPhase = 0;
+        for (int index = 0; index < CapturedMissionPhotoIds.Length; index++)
+            CapturedMissionPhotoIds.Set(index, default);
         PuzzlePiecesCollected = false;
         PhaseItemsRequired = 0;
         PhaseItemsCollected = 0;
         PhaseInitialized = true;
 
         Debug.Log($"[PHASE] Changed to Phase {CurrentPhase}.");
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayCharacterVoice(string photoId)
+    {
+        foreach (CameraPhotoPoint point in FindObjectsByType<CameraPhotoPoint>(FindObjectsSortMode.None))
+        {
+            if (point.Photo != null && point.Photo.name == photoId)
+            {
+                point.PlayProximityVoice();
+                break;
+            }
+        }
     }
 
     public void AdvancePhase()
@@ -176,20 +206,50 @@ public class PhaseManager : NetworkBehaviour
     }
 
     /// <summary>Reports one successful camera capture to the state authority.</summary>
-    public void ReportPhotoCaptured()
+    public void ReportPhotoCaptured(string photoId)
     {
         if (Object == null || !Object.IsValid)
             return;
 
-        RPC_ReportPhotoCaptured();
+        if (!string.IsNullOrWhiteSpace(photoId))
+            RPC_ReportPhotoCaptured(photoId);
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_ReportPhotoCaptured(RpcInfo info = default)
+    private void RPC_ReportPhotoCaptured(string photoId, RpcInfo info = default)
     {
         if (!Object.HasStateAuthority || SequenceComplete || CurrentPhase != 2)
             return;
 
+        if (string.IsNullOrWhiteSpace(photoId) || photoId.Length > 128)
+            return;
+
+        // Validate against generated character photo points, then deduplicate
+        // across the whole team. Ordinary snapshots never supply a target ID.
+        bool knownTarget = false;
+        foreach (CameraPhotoPoint point in FindObjectsByType<CameraPhotoPoint>(FindObjectsSortMode.None))
+        {
+            if (point.Photo != null && point.Photo.name == photoId)
+            {
+                knownTarget = true;
+                break;
+            }
+        }
+        if (!knownTarget)
+            return;
+
+        int emptyIndex = -1;
+        for (int index = 0; index < CapturedMissionPhotoIds.Length; index++)
+        {
+            string existing = CapturedMissionPhotoIds.Get(index).ToString();
+            if (existing == photoId)
+                return;
+            if (emptyIndex < 0 && string.IsNullOrEmpty(existing))
+                emptyIndex = index;
+        }
+        if (emptyIndex < 0)
+            return;
+        CapturedMissionPhotoIds.Set(emptyIndex, photoId);
         PhotoCapturesThisPhase++;
     }
 
