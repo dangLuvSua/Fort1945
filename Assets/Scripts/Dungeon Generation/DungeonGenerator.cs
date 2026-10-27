@@ -71,6 +71,15 @@ public class DungeonGenerator : MonoBehaviour
     [Min(2)]
     [Tooltip("Total number of terminal rooms, including the Unique Rooms and the Entrance.")]
     public int numberOfRooms = 10;
+    [Header("Rooms By Difficulty")]
+    [SerializeField, Min(2)] private int easyRoomCount = 5;
+    [SerializeField, Min(2)] private int normalRoomCount = 6;
+    [SerializeField, Min(2)] private int difficultRoomCount = 8;
+    [Tooltip("Difficulty used when playing the Dungeon scene without a game session.")]
+    [SerializeField] private GameDifficulty standaloneDifficulty = GameDifficulty.Normal;
+    [Tooltip("Wall size used to close the extra intersection exit for an odd room count (world units).")]
+    [SerializeField] private Vector3 branchEndWallSize = new Vector3(6f, 8f, 0.5f);
+    [Header("Corridor Placement")]
     [Min(0)]
     [Tooltip("Maximum number of normal corridors before a terminal room.")]
 
@@ -321,21 +330,36 @@ public class DungeonGenerator : MonoBehaviour
 
 
 
-    private void Start()
+    private IEnumerator Start()
 
     {
+
+        if (!generateOnStart)
+            yield break;
+
+        // Every peer must resolve the replicated difficulty before generating.
+        while (NetworkRunnerHandler.Instance != null &&
+               NetworkRunnerHandler.Instance.GameRunner != null &&
+               (NetworkGameManager.Instance == null || !NetworkGameManager.Instance.IsDifficultyReady))
+            yield return null;
+
+        GameDifficulty difficulty = NetworkGameManager.Instance != null &&
+            NetworkGameManager.Instance.IsDifficultyReady
+            ? NetworkGameManager.Instance.Difficulty
+            : standaloneDifficulty;
+        numberOfRooms = difficulty switch
+        {
+            GameDifficulty.Easy => easyRoomCount,
+            GameDifficulty.Difficult => difficultRoomCount,
+            _ => normalRoomCount
+        };
+        Debug.Log($"[DUNGEON GENERATOR] {difficulty}: {numberOfRooms} terminal rooms.", this);
 
         ApplyMultiplayerSeed();
 
 
 
-        if (generateOnStart)
-
-        {
-
-            GenerateDungeonWithRetries();
-
-        }
+        GenerateDungeonWithRetries();
 
     }
 
@@ -631,47 +655,8 @@ public class DungeonGenerator : MonoBehaviour
 
 
 
-        if (numberOfRooms % 2 != 0)
-
-        {
-
-            Debug.LogWarning(
-
-                "This branching topology works cleanly with " +
-
-                "an EVEN number of terminal rooms. " +
-
-                "Odd room counts may require the future loop system."
-
-            );
-
-        }
-
-
-
-        int intersectionsNeeded;
-
-
-
-        if (numberOfRooms % 2 == 0)
-
-        {
-
-            intersectionsNeeded = (numberOfRooms - 2) / 2;
-
-        }
-
-        else
-
-        {
-
-            intersectionsNeeded = Mathf.Max(0, (numberOfRooms - 3) / 2);
-
-        }
-
-
-
-
+        // Round up for odd totals; seal the surplus exit after placing rooms.
+        int intersectionsNeeded = Mathf.Max(0, (numberOfRooms - 1) / 2);
 
         // -----------------------------------------------------
 
@@ -1854,6 +1839,18 @@ public class DungeonGenerator : MonoBehaviour
 
 
 
+        // Odd room totals leave one surplus intersection exit.
+        if (roomsCreated == numberOfRooms)
+        {
+            foreach (DungeonConnector exit in new List<DungeonConnector>(availableExits))
+            {
+                if (exit == null || exit.used)
+                    continue;
+                SealUnusedExit(exit);
+                exit.used = true;
+                availableExits.Remove(exit);
+            }
+        }
         return LayoutComplete();
 
     }
@@ -1870,6 +1867,27 @@ public class DungeonGenerator : MonoBehaviour
 
 
 
+    private void SealUnusedExit(DungeonConnector exit)
+    {
+        GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        wall.name = "Closed Branch Wall";
+        wall.layer = exit.gameObject.layer;
+        wall.transform.SetPositionAndRotation(
+            exit.transform.position + Vector3.up * (branchEndWallSize.y * 0.5f),
+            exit.transform.rotation);
+        wall.transform.localScale = branchEndWallSize;
+        wall.transform.SetParent(transform, true);
+        // Reuse a dungeon surface material for the solid branch closure.
+        foreach (Renderer surface in exit.transform.parent.GetComponentsInChildren<Renderer>())
+        {
+            if (surface is MeshRenderer && surface.sharedMaterial != null)
+            {
+                wall.GetComponent<Renderer>().sharedMaterial = surface.sharedMaterial;
+                break;
+            }
+        }
+        generatedPieces.Add(wall);
+    }
     private bool TryCreateBranchToRoom(DungeonConnector startingExit)
 
     {

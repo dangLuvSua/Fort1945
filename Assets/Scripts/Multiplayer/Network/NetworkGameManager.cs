@@ -27,6 +27,9 @@ public class NetworkGameManager : NetworkBehaviour
     public GameDifficulty Difficulty { get; private set; }
         = GameDifficulty.Normal;
     [Networked]
+    private NetworkBool DifficultyInitialized { get; set; }
+    public bool IsDifficultyReady => networkStateReady && DifficultyInitialized;
+    [Networked]
     public PlayerRef HostPlayer { get; set; }
     public void SetDifficulty(GameDifficulty difficulty)
     {
@@ -59,6 +62,8 @@ public class NetworkGameManager : NetworkBehaviour
         }
 
         Difficulty = difficulty;
+        if (NetworkRunnerHandler.Instance != null)
+            NetworkRunnerHandler.Instance.SessionDifficulty = difficulty;
 
         Debug.Log(
             $"[DIFFICULTY] Difficulty has been set to: {Difficulty}"
@@ -577,6 +582,11 @@ public class NetworkGameManager : NetworkBehaviour
 
         if (Object.HasStateAuthority)
         {
+            if (NetworkRunnerHandler.Instance != null &&
+                NetworkRunnerHandler.Instance.SessionDifficulty.HasValue)
+                Difficulty = NetworkRunnerHandler.Instance.SessionDifficulty.Value;
+            DifficultyInitialized = true;
+
             HostPlayer = Runner.LocalPlayer;
             GameStarted = false;
             LobbyLocked = false;
@@ -954,6 +964,10 @@ public class NetworkGameManager : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
+        // Cache the replicated selection on every peer, including future hosts.
+        if (IsDifficultyReady && NetworkRunnerHandler.Instance != null)
+            NetworkRunnerHandler.Instance.SessionDifficulty = Difficulty;
+
         if (!networkStateReady || Runner == null ||
             !Runner.IsSharedModeMasterClient ||
             !Object.HasStateAuthority)

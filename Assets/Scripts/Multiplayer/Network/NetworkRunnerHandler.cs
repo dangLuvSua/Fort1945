@@ -114,6 +114,8 @@ public class NetworkRunnerHandler :
     private bool applicationQuitting;
 
     public NetworkRunner GameRunner => runner;
+    // This handler survives scene changes; scene NetworkGameManagers do not.
+    public GameDifficulty? SessionDifficulty { get; set; }
 
     // Separate runner used ONLY for browsing lobbies.
     private NetworkRunner lobbyRunner;
@@ -1539,6 +1541,7 @@ public class NetworkRunnerHandler :
 
         if (callbackRunner == runner)
         {
+            SessionDifficulty = null;
             // StartGame returns this reason to StartRunner, which owns startup UI.
             if (callbackRunner == startingRunner) return;
 
