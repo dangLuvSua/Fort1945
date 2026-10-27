@@ -17,6 +17,7 @@ public class DungeonEnemySpawner : MonoBehaviour
     [SerializeField] private string pointGroup = "";
 
     [Header("Rules")]
+    [Tooltip("Enemy limit for other groups. The Soldier group uses the selected difficulty's soldier spawn count.")]
     [SerializeField] private int maxEnemies = 6;
 
     [Range(0f, 1f)]
@@ -75,13 +76,30 @@ public class DungeonEnemySpawner : MonoBehaviour
         if (runner == null)
             return;
 
-        pending = false;
-
         // Spawn through the active game session, once, from its state authority.
         if (!runner.IsSharedModeMasterClient && !runner.IsServer)
+        {
+            pending = false;
             return;
+        }
 
-        SpawnEnemies();
+        int spawnLimit = maxEnemies;
+        GameDifficulty? difficulty = null;
+        if (pointGroup == "Soldier")
+        {
+            NetworkGameManager manager = NetworkGameManager.Instance;
+            // Keep pending until the active session has its initialized difficulty.
+            // Do not fall back to Normal while network state is still arriving.
+            if (manager == null || manager.Object == null || !manager.Object.IsValid ||
+                manager.Runner != runner || !manager.IsDifficultyReady)
+                return;
+
+            difficulty = manager.Difficulty;
+            spawnLimit = DifficultyDatabase.Get(difficulty.Value).soldierSpawnCount;
+        }
+
+        pending = false;
+        SpawnEnemies(spawnLimit, difficulty);
     }
 
     private void FindRunner()
@@ -111,7 +129,7 @@ public class DungeonEnemySpawner : MonoBehaviour
         }
     }
 
-    private void SpawnEnemies()
+    private void SpawnEnemies(int spawnLimit, GameDifficulty? difficulty)
     {
         if (enemyPrefabs == null || enemyPrefabs.Length == 0)
         {
@@ -140,7 +158,7 @@ public class DungeonEnemySpawner : MonoBehaviour
 
         foreach (DungeonEnemyPoint point in points)
         {
-            if (count >= maxEnemies)
+            if (count >= spawnLimit)
                 break;
 
             if (Random.value > spawnChancePerPoint)
@@ -163,18 +181,22 @@ public class DungeonEnemySpawner : MonoBehaviour
                 continue;
             }
 
-            runner.Spawn(
+            NetworkObject enemy = runner.Spawn(
                 prefab,
                 hit.position,
                 point.transform.rotation
             );
 
-            count++;
+            if (enemy != null)
+                count++;
         }
 
         spawned = true;
 
-        Debug.Log($"[ENEMY SPAWN:{pointGroup}] Spawned {count} enemies from {points.Count} points.");
+        string difficultyInfo = difficulty.HasValue
+            ? $" Difficulty: {difficulty.Value}, limit: {spawnLimit}."
+            : "";
+        Debug.Log($"[ENEMY SPAWN:{pointGroup}] Spawned {count} enemies from {points.Count} points.{difficultyInfo}");
     }
 
     private void Shuffle<T>(List<T> list)

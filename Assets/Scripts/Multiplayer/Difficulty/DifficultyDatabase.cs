@@ -12,7 +12,8 @@ public static class DifficultyDatabase
                     0.80f, // Detection
                     1.25f, // Player stamina
                     1,     // Additional items
-                    1.50f  // Puzzle time
+                    1.50f, // Puzzle time
+                    2      // Soldier spawn limit
                 );
 
             case GameDifficulty.Difficult:
@@ -23,7 +24,8 @@ public static class DifficultyDatabase
                     1.30f,
                     0.80f,
                     -1,
-                    0.70f
+                    0.70f,
+                    5      // Soldier spawn limit
                 );
 
             default:
@@ -34,7 +36,8 @@ public static class DifficultyDatabase
                     1.00f,
                     1.00f,
                     0,
-                    1.00f
+                    1.00f,
+                    3      // Soldier spawn limit
                 );
         }
     }
