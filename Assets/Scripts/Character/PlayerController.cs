@@ -190,6 +190,7 @@ public class PlayerController : NetworkBehaviour
 
     private bool runInput;
     private float movementLockedUntil;
+    private bool introMovementLocked;
     private bool skipMovementAfterTeleport;
     private bool verifyTeleportOnNextNetworkTick;
     private bool verifyTeleportAfterMovement;
@@ -402,6 +403,16 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
+        if (introMovementLocked)
+        {
+            moveInput = Vector2.zero;
+            runInput = false;
+            jumpRequested = false;
+            if (Cursor.lockState == CursorLockMode.Locked)
+                HandleLook();
+            return;
+        }
+
         ReadInput();
 
         if (Cursor.lockState == CursorLockMode.Locked)
@@ -444,6 +455,20 @@ public class PlayerController : NetworkBehaviour
         {
             jumpRequested = true;
         }
+    }
+
+    /// <summary>Temporarily blocks movement and jumping during the Santelmo intro.</summary>
+    public void SetIntroMovementLocked(bool locked)
+    {
+        if (Object == null || !Object.IsValid || !Object.HasInputAuthority)
+            return;
+
+        introMovementLocked = locked;
+        moveInput = Vector2.zero;
+        runInput = false;
+        jumpRequested = false;
+        if (locked)
+            currentVelocity = Vector3.zero;
     }
 
 

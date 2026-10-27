@@ -99722,7 +99722,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 975457816}
         m_TargetAssemblyTypeName: InGameOptionsController, Assembly-CSharp
-        m_MethodName: OpenGraphicsPanel
+        m_MethodName: OpenSettingsPanel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

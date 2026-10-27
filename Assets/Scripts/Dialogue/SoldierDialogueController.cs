@@ -6,6 +6,7 @@ public class SoldierDialogueController : MonoBehaviour
 {
     [Header("Audio")]
     [SerializeField] private AudioClip talkSound;
+    [SerializeField] private AudioClip santelmoTalkSound;
     [SerializeField, Range(0f, 1f)] private float talkSoundVolume = 1f;
 
     [Header("UI")]
@@ -80,6 +81,37 @@ public class SoldierDialogueController : MonoBehaviour
 
         CancelInvoke(nameof(HideDialogue));
 
+        if (duration > 0f)
+            Invoke(nameof(HideDialogue), duration);
+    }
+
+    /// <summary>Shows dialogue under a supplied speaker name without changing the existing soldier dialogue API.</summary>
+    public void ShowDialogueAs(string speakerName, string message, float duration = 0f)
+    {
+        if (dialoguePanel != null && !dialoguePanel.activeSelf)
+            dialoguePanel.SetActive(true);
+
+        AudioClip dialogueSound = speakerName == "Santelmo" && santelmoTalkSound != null
+            ? santelmoTalkSound
+            : talkSound;
+
+        if (dialogueSound != null)
+        {
+            talkAudioSource.enabled = true;
+            talkAudioSource.PlayOneShot(dialogueSound, talkSoundVolume);
+        }
+        else
+            Debug.LogWarning("[DIALOGUE] Talk SFX is missing. Assign a clip or add Resources/SFX/talk.", this);
+
+        if (speakerNameText != null)
+            speakerNameText.text = string.IsNullOrWhiteSpace(speakerName) ? "" : speakerName;
+
+        if (dialogueText != null)
+            dialogueText.text = message;
+
+        Debug.Log($"[DIALOGUE] {speakerName}: {message}");
+
+        CancelInvoke(nameof(HideDialogue));
         if (duration > 0f)
             Invoke(nameof(HideDialogue), duration);
     }

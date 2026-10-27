@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using System.Collections.Generic;
 
 public class InGameOptionsController : MonoBehaviour
 {
@@ -30,6 +31,8 @@ public class InGameOptionsController : MonoBehaviour
     private UniversalAdditionalCameraData blurredCamera;
     private bool previousPostProcessing;
     private LayerMask previousVolumeMask;
+    private readonly Dictionary<Canvas, bool> hiddenDungeonCanvases = new();
+    private readonly Dictionary<GraphicRaycaster, bool> hiddenDungeonRaycasters = new();
 
     public bool IsAnyPanelOpen
     {
@@ -62,7 +65,9 @@ public class InGameOptionsController : MonoBehaviour
             backToGame.onClick.AddListener(CloseAllPanels);
         }
         HideSubPanels();
-        SetCanvasVisible(false);
+        // Keep managers active for their startup settings load, even before the menu opens.
+        if (optionsCanvas != null) optionsCanvas.enabled = false;
+        if (optionsRaycaster != null) optionsRaycaster.enabled = false;
     }
 
     private void Update()
@@ -107,6 +112,11 @@ public class InGameOptionsController : MonoBehaviour
     public void OpenAudioPanel()
     {
         OpenPanel(audioPanel);
+    }
+
+    public void OpenSettingsPanel()
+    {
+        OpenAudioPanel();
     }
 
     public void OpenControlsPanel()
@@ -201,12 +211,70 @@ public class InGameOptionsController : MonoBehaviour
 
     private void SetCanvasVisible(bool visible)
     {
+        if (visible) gameObject.SetActive(true);
         if (optionsCanvas != null) optionsCanvas.enabled = visible;
         if (optionsRaycaster != null) optionsRaycaster.enabled = visible;
-        // Keep this controller enabled while the canvas is hidden so it can
-        // still listen for Escape and reopen the settings menu.
-        if (visible) EnableMenuBlur();
-        else DisableMenuBlur();
+        if (visible)
+        {
+            HideDungeonCanvases();
+            EnableMenuBlur();
+        }
+        else
+        {
+            RestoreDungeonCanvases();
+            DisableMenuBlur();
+        }
+        // Hide the whole hierarchy, including nested canvases, on Back to Game.
+        // HUD buttons can reactivate it; PlayerController handles Escape while inactive.
+        if (!visible) gameObject.SetActive(false);
+    }
+
+    private void HideDungeonCanvases()
+    {
+        if (gameObject.scene.name != "Dungeon" || hiddenDungeonCanvases.Count > 0) return;
+
+        GraphicsSettingsManager graphics = GetComponent<GraphicsSettingsManager>();
+        Canvas brightnessCanvas = graphics != null ? graphics.BrightnessCanvas : null;
+        foreach (Canvas canvas in FindObjectsByType<Canvas>(FindObjectsInactive.Include))
+        {
+            if (canvas.gameObject.scene != gameObject.scene) continue;
+            Transform candidate = canvas.transform;
+            // Keep the options hierarchy, its dialog, and the graphics brightness effect.
+            if (candidate.IsChildOf(transform) || transform.IsChildOf(candidate)) continue;
+            if (leaveModalPanel != null &&
+                (candidate.IsChildOf(leaveModalPanel.transform) ||
+                 leaveModalPanel.transform.IsChildOf(candidate))) continue;
+            if (brightnessCanvas != null &&
+                (candidate.IsChildOf(brightnessCanvas.transform) ||
+                 brightnessCanvas.transform.IsChildOf(candidate))) continue;
+
+            hiddenDungeonCanvases.Add(canvas, canvas.enabled);
+            canvas.enabled = false;
+            foreach (GraphicRaycaster raycaster in canvas.GetComponents<GraphicRaycaster>())
+            {
+                hiddenDungeonRaycasters.Add(raycaster, raycaster.enabled);
+                raycaster.enabled = false;
+            }
+        }
+    }
+
+    private void LateUpdate()
+    {
+        // Other UI scripts may try to show their canvases while options are open.
+        foreach (Canvas canvas in hiddenDungeonCanvases.Keys)
+            if (canvas != null) canvas.enabled = false;
+        foreach (GraphicRaycaster raycaster in hiddenDungeonRaycasters.Keys)
+            if (raycaster != null) raycaster.enabled = false;
+    }
+
+    private void RestoreDungeonCanvases()
+    {
+        foreach (var entry in hiddenDungeonCanvases)
+            if (entry.Key != null) entry.Key.enabled = entry.Value;
+        foreach (var entry in hiddenDungeonRaycasters)
+            if (entry.Key != null) entry.Key.enabled = entry.Value;
+        hiddenDungeonCanvases.Clear();
+        hiddenDungeonRaycasters.Clear();
     }
 
     private void InitializeMenuBackdrop()
@@ -252,6 +320,7 @@ public class InGameOptionsController : MonoBehaviour
 
     private void OnDisable()
     {
+        RestoreDungeonCanvases();
         DisableMenuBlur();
     }
 
@@ -273,6 +342,10 @@ public class InGameOptionsController : MonoBehaviour
 
     private void HideSubPanels()
     {
+        foreach (TMP_Dropdown dropdown in GetComponentsInChildren<TMP_Dropdown>(true))
+        {
+            if (dropdown.IsExpanded) dropdown.Hide();
+        }
         if (audioPanel != null) audioPanel.SetActive(false);
         if (controlsPanel != null) controlsPanel.SetActive(false);
         if (graphicsPanel != null) graphicsPanel.SetActive(false);

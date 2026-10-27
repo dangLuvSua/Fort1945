@@ -91,6 +91,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1628a515f60f66d4ab3409687866485e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoldierDialogueController
+  santelmoTalkSound: {fileID: 8300000, guid: 75b3567a7c43b594194e269262232e9f, type: 3}
   dialoguePanel: {fileID: 964301916194303227}
   speakerNameText: {fileID: 3639678708936364475}
   dialogueText: {fileID: 8218863501957623067}

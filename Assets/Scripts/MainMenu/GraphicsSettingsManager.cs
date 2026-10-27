@@ -19,6 +19,8 @@ public class GraphicsSettingsManager : MonoBehaviour
     [Header("Brightness Overlay")]
     [SerializeField] private Image brightnessOverlay;
 
+    internal Canvas BrightnessCanvas => brightnessOverlay != null ? brightnessOverlay.canvas : null;
+
     private struct ResolutionOption
     {
         public int width;
@@ -88,7 +90,11 @@ public class GraphicsSettingsManager : MonoBehaviour
 
     public void SetQuality(int qualityIndex)
     {
+        qualityIndex = Mathf.Clamp(qualityIndex, 0, QualitySettings.names.Length - 1);
         QualitySettings.SetQualityLevel(qualityIndex);
+        // Quality presets can overwrite VSync; preserve the user's explicit choice.
+        QualitySettings.vSyncCount = PlayerPrefs.GetInt(VSyncKey,
+            vSyncToggle != null && vSyncToggle.isOn ? 1 : 0) == 1 ? 1 : 0;
 
         PlayerPrefs.SetInt(QualityKey, qualityIndex);
         PlayerPrefs.Save();
@@ -381,26 +387,18 @@ public class GraphicsSettingsManager : MonoBehaviour
         );
     }
 
-   public void ApplyBrightness(float brightness)
-{
-    if (brightnessOverlay == null)
-        return;
-
-    float alpha = 1f - brightness;
-
-    alpha = Mathf.Clamp01(alpha);
-
-    Color color = brightnessOverlay.color;
-
-    color.a = alpha;
-
-    brightnessOverlay.color = color;
-
-    PlayerPrefs.SetFloat(
-        BrightnessKey,
-        brightness
-    );
-
-    PlayerPrefs.Save();
-}
+    public void ApplyBrightness(float brightness)
+    {
+        brightness = Mathf.Clamp(brightness, minBrightness, maxBrightness);
+        if (brightnessOverlay != null)
+        {
+            // Black dims below neutral; white brightens above neutral.
+            Color color = brightness > 1f ? Color.white : Color.black;
+            color.a = Mathf.Clamp01(Mathf.Abs(1f - brightness));
+            brightnessOverlay.color = color;
+            brightnessOverlay.raycastTarget = false;
+        }
+        PlayerPrefs.SetFloat(BrightnessKey, brightness);
+        PlayerPrefs.Save();
+    }
 }

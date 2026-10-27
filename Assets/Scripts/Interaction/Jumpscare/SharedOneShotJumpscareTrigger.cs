@@ -34,6 +34,14 @@ public sealed class SharedOneShotJumpscareTrigger : NetworkBehaviour
             Debug.LogError($"{nameof(SharedOneShotJumpscareTrigger)} on '{name}' needs a Detection Collider assigned.", this);
     }
 
+    /// <summary>Re-arms this networked trigger when the next phase begins.</summary>
+    public void ResetForPhase()
+    {
+        requestPending = false;
+        if (Object != null && Object.IsValid && Object.HasStateAuthority)
+            HasTriggered = false;
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (HasTriggered || requestPending) return;
