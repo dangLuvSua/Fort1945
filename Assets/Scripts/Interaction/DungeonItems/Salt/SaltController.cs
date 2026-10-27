@@ -56,6 +56,9 @@ public class SaltController : NetworkBehaviour
     private float nextSprayTime;
     private float searchTimer;
 
+    public bool IsSpraying => Time.time < nextSprayTime ||
+        (saltSprayVFX != null && saltSprayVFX.IsAlive(true));
+
     public override void Spawned()
     {
         inventory = GetComponent<PlayerInventory>();

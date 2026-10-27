@@ -12,6 +12,8 @@ public sealed class ItemControlHintOverlay : MonoBehaviour
     private PlayerInventory localInventory;
     private PlayerInventoryUI localInventoryUI;
     private CameraController localCameraController;
+    private CandleController localCandleController;
+    private SaltController localSaltController;
     private float nextRefreshTime;
     private bool visible;
     private string primaryHint;
@@ -43,6 +45,8 @@ public sealed class ItemControlHintOverlay : MonoBehaviour
             localInventory = null;
             localInventoryUI = null;
             localCameraController = null;
+            localCandleController = null;
+            localSaltController = null;
             return;
         }
 
@@ -51,6 +55,12 @@ public sealed class ItemControlHintOverlay : MonoBehaviour
 
         if (localCameraController == null || localCameraController.gameObject != playerObject.gameObject)
             localCameraController = playerObject.GetComponent<CameraController>();
+
+        if (localCandleController == null || localCandleController.gameObject != playerObject.gameObject)
+            localCandleController = playerObject.GetComponent<CandleController>();
+
+        if (localSaltController == null || localSaltController.gameObject != playerObject.gameObject)
+            localSaltController = playerObject.GetComponent<SaltController>();
 
         if (localInventoryUI == null || !localInventoryUI.IsForInventory(localInventory))
         {
@@ -101,26 +111,26 @@ public sealed class ItemControlHintOverlay : MonoBehaviour
                 break;
 
             case 202: // Salt
+                if (localSaltController != null && localSaltController.IsSpraying)
+                    return;
                 primaryHint = "F";
                 secondaryHint = "Spray Salt";
                 break;
 
             case 203: // Candle
+                if (localCandleController != null && localCandleController.Object != null &&
+                    localCandleController.Object.IsValid && localCandleController.Object.IsInSimulation &&
+                    localCandleController.IsCandleLit)
+                    return;
                 primaryHint = "F";
                 secondaryHint = "Light or extinguish Candle";
                 break;
 
             case 204: // Camera
                 if (localCameraController != null && localCameraController.IsCameraOpen)
-                {
-                    primaryHint = "Right-click";
-                    secondaryHint = "Take Photo";
-                }
-                else
-                {
-                    primaryHint = "X";
-                    secondaryHint = "Open Camera";
-                }
+                    return;
+                primaryHint = "X";
+                secondaryHint = "Open Camera";
                 break;
 
             default:
@@ -139,8 +149,7 @@ public sealed class ItemControlHintOverlay : MonoBehaviour
     private bool IsActionHeld(ItemData item)
     {
         Keyboard keyboard = Keyboard.current;
-        // Opening the camera changes its hint in the same frame. Keep it hidden
-        // until X is released, then show the photo action while the camera is idle.
+        // Hide immediately on input, before the item controller updates its state.
         if (item.itemId == 204 && keyboard != null && keyboard.xKey.isPressed)
             return true;
 
@@ -165,9 +174,12 @@ public sealed class ItemControlHintOverlay : MonoBehaviour
 
         const float width = 340f;
         const float height = 52f;
+        float inventoryTop = Screen.height * 0.16f;
+        if (localInventoryUI != null && localInventoryUI.TryGetQuickBarScreenTop(out float screenTop))
+            inventoryTop = screenTop;
         Rect panelRect = new Rect(
             (Screen.width - width) * 0.5f,
-            (Screen.height - height) * 0.5f + 310f,
+            Mathf.Max(0f, Screen.height - inventoryTop - height - 12f),
             width,
             height);
 

@@ -116,8 +116,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 4615255a27db74d45ae21f4a08253dbd, type: 3}
   - {fileID: 8300000, guid: e7161b7a4ccd6de418a978910dfcd102, type: 3}
   prisonerCrySfx: {fileID: 8300000, guid: af0bb0ce1a2dd3f41b3984478be1b772, type: 3}
-  crawlSfxVolume: 0.75
-  prisonerCryVolume: 0.9
+  crawlSfxVolume: 1
+  prisonerCryVolume: 1
   sfxMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
   crawlSfxInterval: 0.55
   crawlSfxIntervalRandomness: 0.15

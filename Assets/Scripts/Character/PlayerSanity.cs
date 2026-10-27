@@ -23,8 +23,6 @@ public class PlayerSanity : NetworkBehaviour
     private float recoveryPerSecond = 2f;
 
     [Header("Cross Revive Feedback")]
-    [SerializeField, Range(0f, 1f), Tooltip("Cross can heal a teammate at or below this sanity percentage.")]
-    private float crossHealThresholdPercent = 0.5f;
     [SerializeField, Tooltip("Audio played for every player when a Cross revive completes.")]
     private AudioClip chantSfx;
     [SerializeField, Tooltip("Mixer group used to route the revive chant.")]
@@ -91,8 +89,7 @@ public class PlayerSanity : NetworkBehaviour
     public bool IsInsane => IsNetworkSpawned && CurrentSanity <= 0f;
     public bool CanBeHealedByCross =>
         IsNetworkSpawned &&
-        CurrentSanity < maxSanity &&
-        SanityPercent <= crossHealThresholdPercent;
+        CurrentSanity < maxSanity;
 
     public float LowSanitySeverity =>
         Mathf.InverseLerp(visionEffectsStartPercent, 0f, SanityPercent);

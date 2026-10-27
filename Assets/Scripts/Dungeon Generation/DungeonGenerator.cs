@@ -3680,6 +3680,15 @@ public class DungeonGenerator : MonoBehaviour
 
 
 
+        // Mark cell entrances before the runtime bake. Only crawlers exclude this area.
+        foreach (GameObject piece in GeneratedPieces)
+        {
+            if (piece == null)
+                continue;
+            foreach (PrisonCellGateUnlock cell in piece.GetComponentsInChildren<PrisonCellGateUnlock>())
+                cell.PrepareCrawlerBarrier(navMeshSurface.layerMask);
+        }
+
         navMeshSurface.RemoveData();
 
         navMeshSurface.BuildNavMesh();

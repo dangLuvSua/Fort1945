@@ -70,6 +70,34 @@ public partial class PlayerInventoryUI : MonoBehaviour
 
     public bool IsForInventory(PlayerInventory candidate) => inventory == candidate;
 
+    private readonly Vector3[] quickBarScreenCorners = new Vector3[4];
+
+    public bool TryGetQuickBarScreenTop(out float screenTop)
+    {
+        screenTop = 0f;
+        bool found = false;
+        if (quickSlots == null)
+            return false;
+
+        foreach (InventorySlotUI slot in quickSlots)
+        {
+            if (slot == null || !slot.gameObject.activeInHierarchy ||
+                !(slot.transform is RectTransform rect))
+                continue;
+
+            Canvas canvas = slot.GetComponentInParent<Canvas>();
+            Camera canvasCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? canvas.worldCamera : null;
+            rect.GetWorldCorners(quickBarScreenCorners);
+            foreach (Vector3 corner in quickBarScreenCorners)
+                screenTop = Mathf.Max(screenTop,
+                    RectTransformUtility.WorldToScreenPoint(canvasCamera, corner).y);
+            found = true;
+        }
+
+        return found;
+    }
+
     public void SetQuickBarVisible(bool visible)
     {
         GameObject root = quickBarRoot;
