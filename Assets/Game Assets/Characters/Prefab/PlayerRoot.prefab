@@ -5742,6 +5742,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac430167059e08640b50ec0271202488, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  _IsCapturedByKempeitai:
+    RawValue: 0
   inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   walkSpeed: 5
   runSpeed: 10
@@ -5783,7 +5785,7 @@ MonoBehaviour:
   dungeonPlayerScale: 2
   dungeonWallClearance: 0.05
   defaultPlayerScale: 1
-  dangerIndicatorClip: {fileID: 8300000, guid: 5c95b1c22ed7d2441a2a965c22fed90a, type: 3}
+  dangerIndicatorClip: {fileID: 8300000, guid: 4743a85298fc0a745b44117252bcba88, type: 3}
   dangerIndicatorVolume: 0.8
   sfxMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
   speedParameter: Speed
@@ -5897,6 +5899,8 @@ MonoBehaviour:
     RawValue: 0
   _IsHost:
     RawValue: 0
+  _IsLobbyCreator:
+    RawValue: 0
   _PlayerName:
     _length: 0
     _data:
@@ -5924,6 +5928,8 @@ MonoBehaviour:
   dropOrigin: {fileID: 5854169451270767622}
   throwForce: 2.75
   throwUp: 1.5
+  itemDropSound: {fileID: 0}
+  itemDropVolume: 1
   itemCatalog:
   - {fileID: 11400000, guid: d98faaf2d5a8a2b46adbd30d840696f4, type: 2}
   - {fileID: 11400000, guid: 7623e8308b325a24cb3752c1a93ecc4c, type: 2}
@@ -5984,6 +5990,8 @@ MonoBehaviour:
   giveDebugStartingItems: 0
   debugStartingItemIds: 6600000068000000c9000000ca000000cb000000cc00000069000000
   _SelectedSlot: 0
+  _DungeonTransferReady:
+    RawValue: 0
 --- !u!114 &7925084007181689668
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections;
 using Fusion;
 using UnityEngine;
@@ -2656,9 +2656,7 @@ public class NetworkGameManager : NetworkBehaviour
             return false;
         }
 
-        // -------------------------------------------------
-        // Candles are a team objective. Any player can collect them; only
-        // their combined inventory total matters for unlocking the gate.
+        // Candles remain required for the Fort2 entrance mission.
         int requiredCandles = GetDifficultyAdjustedCandleCount();
         int teamCandles = GetTeamItemCount(GetCandleItemId());
         if (teamCandles < requiredCandles)
