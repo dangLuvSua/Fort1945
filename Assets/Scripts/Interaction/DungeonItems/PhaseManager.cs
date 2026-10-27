@@ -1,4 +1,5 @@
 using Fusion;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Video;
 
@@ -17,6 +18,8 @@ public class PhaseManager : NetworkBehaviour
     [SerializeField, Min(0.1f)] private float endingFadeDuration = 1.5f;
     [SerializeField] private string endingSpawnPointName = "EndingSpawnPoint";
     [SerializeField] private VideoClip endingVideo;
+    [SerializeField] private TMP_FontAsset phaseCompletedFont;
+    [SerializeField, Min(0.5f)] private float phaseCompletedDisplayDuration = 2.5f;
     private bool endingStarted;
     private float nextProximityVoiceCheck;
 
@@ -26,6 +29,9 @@ public class PhaseManager : NetworkBehaviour
 
     [SerializeField, Tooltip("Turn this on during Play Mode to directly test the white fade, return to Fort2, and ESP spawn placement. Resets itself after triggering.")]
     private bool testReturnToFort2;
+
+    [SerializeField, Tooltip("Turn this on during Play Mode to preview the phase-completed screen and mission panel without changing phase state.")]
+    private bool testPhaseCompletionScreen;
 
     [Networked]
     public int CurrentPhase { get; private set; }
@@ -73,6 +79,17 @@ public class PhaseManager : NetworkBehaviour
 
     private void Update()
     {
+        if (testPhaseCompletionScreen)
+        {
+            testPhaseCompletionScreen = false;
+            EyeBlinkTransition.PlayPhaseCompletion(
+                phaseCompletedFont,
+                "PHASE COMPLETED",
+                null,
+                () => MissionManager.ShowRaw("PHASE COMPLETED", "The next mission will begin shortly.", 0f),
+                phaseCompletedDisplayDuration);
+        }
+
         if (IsNetworkReady && Object != null && Object.IsValid && Object.HasStateAuthority &&
             Runner != null && Runner.IsRunning && CurrentPhase == 2 && !SequenceComplete &&
             Time.unscaledTime >= nextProximityVoiceCheck)
@@ -169,17 +186,35 @@ public class PhaseManager : NetworkBehaviour
         {
             SequenceComplete = true;
             Debug.Log("[PHASE] All mission phases completed.");
-            RPC_ShowMission("ALL MISSIONS COMPLETE", "You completed every mission phase.");
-            RPC_BeginEnding(endingFadeDuration, endingSpawnPointName);
+            RPC_ShowPhaseCompletion(CurrentPhase, true, true);
             return;
         }
 
+        int completedPhase = CurrentPhase;
         SetPhase(CurrentPhase + 1);
-        RPC_TeleportPlayersToPhaseSpawn();
+        RPC_ShowPhaseCompletion(completedPhase, true, false);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_TeleportPlayersToPhaseSpawn()
+    private void RPC_ShowPhaseCompletion(int completedPhase, bool teleportToStart, bool beginEnding)
+    {
+        EyeBlinkTransition.PlayPhaseCompletion(
+            phaseCompletedFont,
+            beginEnding ? "SUCCESSFULLY UNCOVERED THE HISTORY" : "PHASE COMPLETED",
+            teleportToStart ? TeleportLocalPlayerToDungeonStart : null,
+            () =>
+            {
+                MissionManager.ShowRaw(
+                    beginEnding ? "SUCCESSFULLY UNCOVERED THE HISTORY" : $"PHASE {completedPhase} COMPLETE",
+                    beginEnding ? "You completed every mission phase." : "Proceed to the next mission.",
+                    0f);
+                if (beginEnding && Object != null && Object.IsValid && Object.HasStateAuthority)
+                    RPC_BeginEnding(endingFadeDuration, endingSpawnPointName);
+            },
+            phaseCompletedDisplayDuration);
+    }
+
+    private void TeleportLocalPlayerToDungeonStart()
     {
         if (Runner == null || !Runner.IsRunning)
             return;
@@ -187,22 +222,22 @@ public class PhaseManager : NetworkBehaviour
         DungeonGenerator generator = FindFirstObjectByType<DungeonGenerator>();
         if (generator == null || !generator.IsGenerated)
         {
-            Debug.LogWarning("[PHASE] Dungeon spawn points are not ready; cannot reposition players for the next phase.", this);
+            Debug.LogWarning("[PHASE] Dungeon starting spawn is not ready; cannot reposition player.", this);
             return;
         }
 
         PlayerRef localPlayer = Runner.LocalPlayer;
-        if (!localPlayer.IsValid ||
-            !Runner.TryGetPlayerObject(localPlayer, out NetworkObject playerObject) ||
-            playerObject == null)
+        if (!localPlayer.IsValid || !Runner.TryGetPlayerObject(localPlayer, out NetworkObject playerObject) || playerObject == null)
             return;
 
         PlayerController controller = playerObject.GetComponent<PlayerController>();
         if (controller == null)
             return;
 
+        // Keep the team distributed across the entrance spawn points, matching
+        // the dungeon's initial per-player spawn assignment.
         generator.GetSpawn(localPlayer.RawEncoded, out Vector3 position, out Quaternion rotation);
-        controller.Teleport(position, rotation);
+        controller.TeleportDuringTransition(position, rotation);
     }
 
     /// <summary>Reports one successful camera capture to the state authority.</summary>
