@@ -7,6 +7,8 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
 {
     [Header("All Players Captured")]
     [SerializeField] private LocalJumpscarePlayback allCapturedJumpscarePrefab;
+    [SerializeField, Min(0f), Tooltip("Maximum seconds to show the game-over jumpscare before returning to Fort2.")]
+    private float allCapturedReturnDelay = 3f;
 
     public static DungeonNetworkGameManager Instance { get; private set; }
 
@@ -94,7 +96,9 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
     {
         if (allCapturedJumpscarePrefab != null)
         {
-            float duration = allCapturedJumpscarePrefab.GetMaximumPlaybackDuration();
+            float duration = Mathf.Min(
+                allCapturedJumpscarePrefab.GetMaximumPlaybackDuration(),
+                Mathf.Max(0f, allCapturedReturnDelay));
             if (duration > 0f)
                 yield return new WaitForSecondsRealtime(duration);
         }
