@@ -11,6 +11,11 @@ public class LobbyPlayerState : NetworkBehaviour
     [Networked]
     public NetworkBool IsHost { get; private set; }
 
+    // Unlike IsHost, this remains true only for the player who created
+    // the session, even if Shared Mode elects a different master later.
+    [Networked]
+    public NetworkBool IsLobbyCreator { get; private set; }
+
     [Networked]
     public NetworkString<_32> PlayerName { get; private set; }
 
@@ -85,6 +90,8 @@ public class LobbyPlayerState : NetworkBehaviour
             Runner != null &&
             Runner.IsSharedModeMasterClient;
 
+        IsLobbyCreator = IsHost;
+
 
         Debug.Log(
             $"[LOBBY PLAYER] Initialized:\n" +
@@ -92,6 +99,14 @@ public class LobbyPlayerState : NetworkBehaviour
             $"Character: {SelectedCharacter}\n" +
             $"Host: {IsHost}"
         );
+    }
+
+    public override void Render()
+    {
+        if (Object == null || !(bool)IsLobbyCreator || NetworkRunnerHandler.Instance == null)
+            return;
+
+        NetworkRunnerHandler.Instance.RegisterLobbyCreator(Object.InputAuthority);
     }
 
 

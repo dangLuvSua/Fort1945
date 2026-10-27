@@ -124,6 +124,8 @@ public class NetworkRunnerHandler :
     private PlayerInventory.InventoryTransferSnapshot dungeonInventorySnapshot;
 
     private string currentSessionName;
+    private PlayerRef lobbyCreatorPlayer = PlayerRef.None;
+    private bool returningToMenuAfterCreatorLeaves;
     private Coroutine failureModalCoroutine;
     private Coroutine sceneLoadTimeoutCoroutine;
     private bool sceneLoadFallbackInProgress;
@@ -470,6 +472,9 @@ public class NetworkRunnerHandler :
         string sessionName,
         string lobbyName)
     {
+        lobbyCreatorPlayer = PlayerRef.None;
+        returningToMenuAfterCreatorLeaves = false;
+
         if (string.IsNullOrWhiteSpace(sessionName))
         {
             sessionName =
@@ -519,6 +524,9 @@ public class NetworkRunnerHandler :
     public async void JoinGame(
         string sessionName)
     {
+        lobbyCreatorPlayer = PlayerRef.None;
+        returningToMenuAfterCreatorLeaves = false;
+
         if (string.IsNullOrWhiteSpace(sessionName))
         {
             Debug.LogWarning(
@@ -1338,6 +1346,12 @@ public class NetworkRunnerHandler :
         DungeonTeleportLoadingOverlay.Hide();
     }
 
+    public void RegisterLobbyCreator(PlayerRef player)
+    {
+        if (player.IsValid && lobbyCreatorPlayer == PlayerRef.None)
+            lobbyCreatorPlayer = player;
+    }
+
     private void RestoreLoadingPriority()
     {
         if (!sceneLoadInProgress) return;
@@ -1423,13 +1437,53 @@ public class NetworkRunnerHandler :
             $"[GAME] Player left: {player}"
         );
 
-        if (callbackRunner == runner && callbackRunner.IsSharedModeMasterClient)
+        if (callbackRunner != runner || returningToMenuAfterCreatorLeaves)
+            return;
+
+        bool creatorLeft = player == lobbyCreatorPlayer;
+        if (!creatorLeft && callbackRunner.TryGetPlayerObject(player, out NetworkObject playerObject) &&
+            playerObject != null)
         {
-            Debug.Log(
-                "[HOST] This client is the current Shared Mode Master Client. " +
-                "Fusion assigns that role to another connected player when the master disconnects."
-            );
+            LobbyPlayerState playerState = playerObject.GetComponent<LobbyPlayerState>();
+            creatorLeft = playerState != null && (bool)playerState.IsLobbyCreator;
         }
+
+        if (creatorLeft)
+        {
+            Debug.Log("[HOST] Lobby creator left. Shutting down the session for all players.");
+            returningToMenuAfterCreatorLeaves = true;
+            ReturnToMainMenuAfterCreatorLeaves();
+        }
+    }
+
+    private async void ReturnToMainMenuAfterCreatorLeaves()
+    {
+        NetworkRunner gameRunnerToStop = runner;
+        NetworkRunner lobbyRunnerToStop = lobbyRunner;
+        runner = null;
+        lobbyRunner = null;
+        startingRunner = null;
+        CancelPendingFailure();
+        RemoveLoadingScreen();
+        ClearGameSessionState();
+
+        try
+        {
+            Task gameShutdown = gameRunnerToStop != null
+                ? gameRunnerToStop.Shutdown()
+                : Task.CompletedTask;
+            Task lobbyShutdown = lobbyRunnerToStop != null
+                ? lobbyRunnerToStop.Shutdown()
+                : Task.CompletedTask;
+            await Task.WhenAll(gameShutdown, lobbyShutdown);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception);
+        }
+
+        if (this != null && !applicationQuitting)
+            SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
     }
 
 
