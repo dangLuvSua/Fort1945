@@ -1,6 +1,8 @@
 using System.Collections;
 using Fusion;
 using UnityEngine;
+using UnityEngine.AI;
+using Unity.AI.Navigation;
 
 /// <summary>Hold-to-unlock interaction for one dungeon prison cell.</summary>
 public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQuickTapHoldInteractable
@@ -43,6 +45,61 @@ public sealed class PrisonCellGateUnlock : MonoBehaviour, IHoldInteractable, IQu
     private Coroutine gateMotionRoutine;
     private Coroutine localAutoCloseRoutine;
     private float requestPendingSince;
+    private NavMeshModifierVolume crawlerBarrier;
+
+    /// <summary>Marks the closed doorway before baking, independently of gate motion.</summary>
+    public void PrepareCrawlerBarrier(LayerMask navigationLayers)
+    {
+        int area = NavMesh.GetAreaFromName("CrawlerBlocked");
+        if (area < 0)
+        {
+            Debug.LogError("[PRISON CELL] Missing CrawlerBlocked navigation area.", this);
+            return;
+        }
+
+        Transform gate = gateToRotate != null ? gateToRotate : transform;
+        Bounds bounds = default;
+        bool found = false;
+        foreach (Collider gateCollider in gate.GetComponentsInChildren<Collider>())
+        {
+            if (gateCollider.isTrigger || !gateCollider.enabled)
+                continue;
+            if (!found)
+                bounds = gateCollider.bounds;
+            else
+                bounds.Encapsulate(gateCollider.bounds);
+            found = true;
+        }
+
+        if (!found)
+        {
+            Debug.LogError("[PRISON CELL] Cannot mark crawler barrier: gate has no blocking collider.", this);
+            return;
+        }
+
+        if (crawlerBarrier == null)
+        {
+            GameObject barrier = new GameObject($"Cell {cellNumber} Crawler Barrier");
+            // Interactive gates can be excluded from the surface's geometry mask.
+            // Modifier volumes must use an included layer to participate in the bake.
+            for (int layer = 0; layer < 32; layer++)
+            {
+                if ((navigationLayers.value & (1 << layer)) == 0)
+                    continue;
+                barrier.layer = layer;
+                break;
+            }
+            barrier.transform.position = bounds.center;
+            // Keep the barrier stationary when the gate leaf swings open.
+            barrier.transform.SetParent(gate.parent, true);
+            crawlerBarrier = barrier.AddComponent<NavMeshModifierVolume>();
+            bounds.Expand(new Vector3(0.6f, 2f, 0.6f));
+            crawlerBarrier.size = new Vector3(
+                Mathf.Max(1f, bounds.size.x), bounds.size.y, Mathf.Max(1f, bounds.size.z));
+            crawlerBarrier.center = Vector3.zero;
+            crawlerBarrier.area = area;
+        }
+    }
 
     public int CellNumber => cellNumber;
     public float AutoCloseDelay => autoCloseDelay;

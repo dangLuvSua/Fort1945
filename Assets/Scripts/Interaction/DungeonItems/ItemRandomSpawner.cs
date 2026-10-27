@@ -344,6 +344,11 @@ public class ItemRandomSpawner : NetworkBehaviour
 
         if (phase != displayedPhase)
         {
+            // Wait until the completion screen opens before presenting the briefing.
+            // Keep displayedPhase unchanged so this client retries on the next frame.
+            if (phaseManager != null && phaseManager.IsShowingPhaseCompletion)
+                return;
+
             displayedPhase = phase;
             configuredObjectiveItemIds.Clear();
             missionProgressPanel = MissionProgressPanelUI.Create();
@@ -400,7 +405,7 @@ public class ItemRandomSpawner : NetworkBehaviour
             bool complete = phaseManager != null && phaseManager.SequenceComplete;
             missionProgressPanel.SetProgressText(
                 "BoardProgress",
-                complete ? "Interrogation board: complete" : "Interrogation board: in progress");
+                complete ? "Puzzle and persona identification: complete" : "Complete the puzzle and identify the persona");
         }
     }
 

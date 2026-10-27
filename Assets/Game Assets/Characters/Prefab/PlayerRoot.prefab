@@ -6071,7 +6071,6 @@ MonoBehaviour:
   startingSanity: 100
   allowRecovery: 0
   recoveryPerSecond: 2
-  crossHealThresholdPercent: 0.5
   chantSfx: {fileID: 8300000, guid: 609b385f84aeac9498e713f0ba212850, type: 3}
   chantMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
   glowDuration: 5

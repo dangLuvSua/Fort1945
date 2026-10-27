@@ -58,6 +58,8 @@ public class PhaseManager : NetworkBehaviour
 
     public bool IsNetworkReady { get; private set; }
 
+    public bool IsShowingPhaseCompletion { get; private set; }
+
     public override void Spawned()
     {
         Instance = this;
@@ -211,16 +213,21 @@ public class PhaseManager : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_ShowPhaseCompletion(int completedPhase, bool teleportToStart, bool beginEnding)
     {
+        IsShowingPhaseCompletion = true;
         EyeBlinkTransition.PlayPhaseCompletion(
             phaseCompletedFont,
             beginEnding ? "SUCCESSFULLY UNCOVERED THE HISTORY" : "PHASE COMPLETED",
             teleportToStart ? TeleportLocalPlayerToDungeonStart : null,
             () =>
             {
-                MissionManager.ShowRaw(
-                    beginEnding ? "SUCCESSFULLY UNCOVERED THE HISTORY" : $"PHASE {completedPhase} COMPLETE",
-                    beginEnding ? "You completed every mission phase." : "Proceed to the next mission.",
-                    0f);
+                // ItemRandomSpawner presents the next briefing after the transition.
+                // Reusing the modal here would overwrite its content and OK callback.
+                IsShowingPhaseCompletion = false;
+                if (beginEnding)
+                    MissionManager.ShowRaw(
+                        "SUCCESSFULLY UNCOVERED THE HISTORY",
+                        "You completed every mission phase.",
+                        0f);
                 if (beginEnding && Object != null && Object.IsValid && Object.HasStateAuthority)
                     RPC_BeginEnding(endingFadeDuration, endingSpawnPointName);
             },

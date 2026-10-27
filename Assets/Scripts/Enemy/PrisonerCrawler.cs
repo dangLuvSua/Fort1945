@@ -36,8 +36,8 @@ public class PrisonerCrawler : NetworkBehaviour
     [Header("Audio")]
     [SerializeField] private AudioClip[] crawlSfx;
     [SerializeField] private AudioClip prisonerCrySfx;
-    [SerializeField, Range(0f, 1f)] private float crawlSfxVolume = 0.75f;
-    [SerializeField, Range(0f, 1f)] private float prisonerCryVolume = 0.9f;
+    [SerializeField, Range(0f, 1f)] private float crawlSfxVolume = 1f;
+    [SerializeField, Range(0f, 1f)] private float prisonerCryVolume = 1f;
     [SerializeField] private AudioMixerGroup sfxMixerGroup;
     [SerializeField, Min(0.1f)] private float crawlSfxInterval = 0.55f;
     [SerializeField, Min(0f)] private float crawlSfxIntervalRandomness = 0.15f;
@@ -93,6 +93,9 @@ public class PrisonerCrawler : NetworkBehaviour
 
         if (Object.HasStateAuthority)
         {
+            int cellArea = NavMesh.GetAreaFromName("CrawlerBlocked");
+            if (cellArea >= 0)
+                agent.areaMask &= ~(1 << cellArea);
             agent.enabled = true;
             agent.speed = crawlSpeed;
             agent.angularSpeed = turnSpeed;
@@ -354,7 +357,7 @@ public class PrisonerCrawler : NetworkBehaviour
                 repelTarget,
                 out NavMeshHit hit,
                 2f,
-                NavMesh.AllAreas))
+                agent.areaMask))
         {
             agent.stoppingDistance = stopDistance;
             agent.SetDestination(hit.position);
