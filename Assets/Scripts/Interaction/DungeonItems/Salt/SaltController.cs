@@ -1,6 +1,7 @@
 
 using Fusion;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.InputSystem;
 
 public class SaltController : NetworkBehaviour
@@ -15,6 +16,12 @@ public class SaltController : NetworkBehaviour
     [Header("Spray Visual")]
     [Tooltip("Assign the salt spray Particle System.")]
     [SerializeField] private ParticleSystem saltSprayVFX;
+
+    [Header("Audio")]
+    [SerializeField] private AudioClip saltSpraySfx;
+    [SerializeField, Range(0f, 1f)] private float saltSprayVolume = 0.8f;
+    [SerializeField] private AudioMixerGroup sfxMixerGroup;
+    private AudioSource saltAudioSource;
 
     [Tooltip("Minimum time between spray requests.")]
     [SerializeField, Min(0.05f)]
@@ -55,6 +62,7 @@ public class SaltController : NetworkBehaviour
 
         FindSaltSprayVisual();
         StopSaltVisual();
+        SetupSaltAudio();
     }
 
     private void Update()
@@ -136,6 +144,9 @@ public class SaltController : NetworkBehaviour
     )]
     private void RPC_PlaySaltSpray()
     {
+        if (saltSpraySfx != null && saltAudioSource != null)
+            saltAudioSource.PlayOneShot(saltSpraySfx, saltSprayVolume);
+
         if (saltSprayVFX == null)
             FindSaltSprayVisual();
 
@@ -155,6 +166,29 @@ public class SaltController : NetworkBehaviour
         );
 
         saltSprayVFX.Play(true);
+    }
+
+    private void SetupSaltAudio()
+    {
+        if (saltSprayVFX == null)
+            FindSaltSprayVisual();
+
+        Transform audioParent = saltSprayVFX != null
+            ? saltSprayVFX.transform
+            : transform;
+
+        saltAudioSource = audioParent.GetComponent<AudioSource>();
+        if (saltAudioSource == null)
+            saltAudioSource = audioParent.gameObject.AddComponent<AudioSource>();
+
+        saltAudioSource.playOnAwake = false;
+        saltAudioSource.loop = false;
+        saltAudioSource.spatialBlend = 1f;
+        saltAudioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+        saltAudioSource.minDistance = 1.5f;
+        saltAudioSource.maxDistance = 18f;
+        saltAudioSource.dopplerLevel = 0f;
+        saltAudioSource.outputAudioMixerGroup = sfxMixerGroup;
     }
 
     private void RepelCrawlersNearSpray()

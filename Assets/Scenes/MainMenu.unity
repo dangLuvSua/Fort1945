@@ -309,10 +309,10 @@ MonoBehaviour:
   - {fileID: 510082048}
   characterNameText: {fileID: 1116428826}
   characterNames:
-  - Character 1
-  - Character 2
-  - Character 3
-  - Character 4
+  - Inigo
+  - Carlo
+  - Maya
+  - Clara
   equipButton: {fileID: 658527803}
 --- !u!1 &39392444
 GameObject:
@@ -1477,7 +1477,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Justine Veneracion | Asawa ng project Manager
+  m_text: 'Justine Veneracion | Game Programmer
 
 '
   m_isRightToLeft: 0

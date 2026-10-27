@@ -1,5 +1,6 @@
 using Fusion;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.AI;
 
 public class PrisonerCrawler : NetworkBehaviour
@@ -32,6 +33,25 @@ public class PrisonerCrawler : NetworkBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private string awakeParameter = "IsAwake";
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip[] crawlSfx;
+    [SerializeField] private AudioClip prisonerCrySfx;
+    [SerializeField, Range(0f, 1f)] private float crawlSfxVolume = 0.75f;
+    [SerializeField, Range(0f, 1f)] private float prisonerCryVolume = 0.9f;
+    [SerializeField] private AudioMixerGroup sfxMixerGroup;
+    [SerializeField, Min(0.1f)] private float crawlSfxInterval = 0.55f;
+    [SerializeField, Min(0f)] private float crawlSfxIntervalRandomness = 0.15f;
+    [SerializeField, Min(0.1f)] private float cryIntervalMin = 7f;
+    [SerializeField, Min(0.1f)] private float cryIntervalMax = 13f;
+    [SerializeField, Min(0.1f)] private float audioMaxDistance = 22f;
+
+    private AudioSource audioSource;
+    private float nextCrawlSfxTime;
+    private float nextCryTime;
+    private Vector3 previousAudioPosition;
+    private bool audioAwakeInitialized;
+    private bool lastAudioAwake;
+
     // Naka-network para makita ng lahat ng players ang animation
     [Networked]
     public NetworkBool IsAwake { get; private set; }
@@ -63,6 +83,7 @@ public class PrisonerCrawler : NetworkBehaviour
 
         spawnPosition = transform.position;
         spawnRotation = transform.rotation;
+        SetupAudio();
 
         if (agent == null)
         {
@@ -83,6 +104,92 @@ public class PrisonerCrawler : NetworkBehaviour
             // Ang host lang ang nagpapagalaw, susunod lang ang iba sa NetworkTransform
             agent.enabled = false;
         }
+    }
+
+    private void SetupAudio()
+    {
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+
+        audioSource.playOnAwake = false;
+        audioSource.loop = false;
+        audioSource.spatialBlend = 1f;
+        audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+        audioSource.minDistance = 2f;
+        audioSource.maxDistance = Mathf.Max(2f, audioMaxDistance);
+        audioSource.dopplerLevel = 0f;
+        audioSource.outputAudioMixerGroup = sfxMixerGroup;
+        previousAudioPosition = transform.position;
+        nextCrawlSfxTime = Time.time + Random.Range(0.1f, crawlSfxInterval);
+        ScheduleNextCry();
+    }
+
+    private void Update()
+    {
+        if (audioSource == null)
+            return;
+
+        bool awake = IsAwake;
+        if (!audioAwakeInitialized)
+        {
+            audioAwakeInitialized = true;
+            lastAudioAwake = awake;
+        }
+        else if (awake != lastAudioAwake)
+        {
+            lastAudioAwake = awake;
+            if (awake)
+            {
+                PlayCry();
+                ScheduleNextCry();
+                nextCrawlSfxTime = Time.time + 0.2f;
+            }
+        }
+
+        Vector3 currentPosition = transform.position;
+        bool moving = awake && (currentPosition - previousAudioPosition).sqrMagnitude > 0.0004f;
+        previousAudioPosition = currentPosition;
+
+        if (!awake)
+            return;
+
+        if (moving && Time.time >= nextCrawlSfxTime)
+        {
+            PlayRandomCrawlSfx();
+            nextCrawlSfxTime = Time.time + Mathf.Max(
+                0.1f,
+                crawlSfxInterval + Random.Range(-crawlSfxIntervalRandomness, crawlSfxIntervalRandomness));
+        }
+
+        if (Time.time >= nextCryTime)
+        {
+            PlayCry();
+            ScheduleNextCry();
+        }
+    }
+
+    private void PlayRandomCrawlSfx()
+    {
+        if (crawlSfx == null || crawlSfx.Length == 0)
+            return;
+
+        AudioClip clip = crawlSfx[Random.Range(0, crawlSfx.Length)];
+        if (clip != null)
+            audioSource.PlayOneShot(clip, crawlSfxVolume);
+    }
+
+    private void PlayCry()
+    {
+        if (prisonerCrySfx != null)
+            audioSource.PlayOneShot(prisonerCrySfx, prisonerCryVolume);
+    }
+
+    private void ScheduleNextCry()
+    {
+        float min = Mathf.Max(0.1f, cryIntervalMin);
+        float max = Mathf.Max(min, cryIntervalMax);
+        nextCryTime = Time.time + Random.Range(min, max);
     }
 
     // =========================================================

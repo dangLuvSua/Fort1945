@@ -6114,6 +6114,9 @@ MonoBehaviour:
   sprayKey: 20
   saltItem: {fileID: 11400000, guid: 49c7c78e778e32040a342553e0e83829, type: 2}
   saltSprayVFX: {fileID: 6746067635408783740}
+  saltSpraySfx: {fileID: 8300000, guid: 7022875b753c85c4fb9062e9e36b1315, type: 3}
+  saltSprayVolume: 0.8
+  sfxMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
   sprayCooldown: 2
   sprayHitRange: 3.5
   sprayHitHalfAngle: 20
