@@ -27,6 +27,7 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
     [Networked] public NetworkBool PrisonCell2Unlocked { get; private set; }
     [Networked] public NetworkBool PrisonCell1GateOpen { get; private set; }
     [Networked] public NetworkBool PrisonCell2GateOpen { get; private set; }
+    [Networked] public NetworkBool SantelmoIntroComplete { get; private set; }
 
     private bool networkStateReady;
     private bool returningCapturedPlayersToLobby;
@@ -38,6 +39,9 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
     private Coroutine prisonCell1AutoCloseRoutine;
     private Coroutine prisonCell2AutoCloseRoutine;
     public bool IsNetworkStateReady => networkStateReady;
+    public bool CanShowInitialMissionBriefing =>
+        networkStateReady && Object != null && Object.IsValid &&
+        SantelmoIntroComplete && !santelmoIntroVisualsActive;
 
     private void Update()
     {
@@ -66,6 +70,7 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
             PrisonCell2GateOpen = false;
             if (!santelmoIntroStarted)
             {
+                SantelmoIntroComplete = false;
                 santelmoIntroStarted = true;
                 StartCoroutine(PlaySantelmoIntroWhenReady());
             }
@@ -160,6 +165,7 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
         if (!allPlayersReady)
         {
             Debug.LogWarning("[DUNGEON INTRO] Timed out waiting for dungeon generation and all players to finish spawning; skipping Santelmo's intro.", this);
+            SantelmoIntroComplete = true;
             yield break;
         }
 
@@ -176,6 +182,7 @@ public sealed class DungeonNetworkGameManager : NetworkBehaviour
         yield return new WaitForSecondsRealtime(santelmoLine3Duration);
 
         RPC_HideSantelmoIntro();
+        SantelmoIntroComplete = true;
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

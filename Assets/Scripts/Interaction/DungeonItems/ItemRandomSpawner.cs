@@ -344,6 +344,17 @@ public class ItemRandomSpawner : NetworkBehaviour
 
         if (phase != displayedPhase)
         {
+            // The scene component can exist before Fusion calls Spawned().
+            // Wait for the intro's replicated completion state on every client.
+            if (displayedPhase < 0)
+            {
+                DungeonNetworkGameManager dungeonManager = DungeonNetworkGameManager.Instance;
+                if (dungeonManager == null)
+                    dungeonManager = FindFirstObjectByType<DungeonNetworkGameManager>(FindObjectsInactive.Include);
+                if (dungeonManager != null && !dungeonManager.CanShowInitialMissionBriefing)
+                    return;
+            }
+
             // Wait until the completion screen opens before presenting the briefing.
             // Keep displayedPhase unchanged so this client retries on the next frame.
             if (phaseManager != null && phaseManager.IsShowingPhaseCompletion)
