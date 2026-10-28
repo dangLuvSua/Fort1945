@@ -83,8 +83,9 @@ public class PlayerSanity : NetworkBehaviour
             ? Mathf.Clamp01(CurrentSanity / maxSanity)
             : 0f;
 
+    // Remote players can have valid replicated state without being simulated locally.
     public bool IsNetworkSpawned =>
-        networkSpawned && Object != null && Object.IsValid && Object.IsInSimulation;
+        networkSpawned && Object != null && Object.IsValid;
 
     public bool IsInsane => IsNetworkSpawned && CurrentSanity <= 0f;
     public bool CanBeHealedByCross =>
