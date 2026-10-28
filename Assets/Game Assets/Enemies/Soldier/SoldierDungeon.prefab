@@ -2810,7 +2810,7 @@ MonoBehaviour:
   loseSightTime: 4
   loseRange: 20
   searchTimeout: 10
-  captureRange: 2.5
+  captureRange: 2
   captureFreezeTime: 0.8
   animator: {fileID: 2183199236842699879}
   speedParameter: Speed
