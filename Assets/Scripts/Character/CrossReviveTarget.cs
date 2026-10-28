@@ -32,11 +32,24 @@ public class CrossReviveTarget : MonoBehaviour, IHoldInteractable, IKeyHoldInter
     }
 
     public void Interact(PlayerInventory inventory) { }
-    public void HoldStarted(PlayerInventory inventory) => reviverInventory = inventory;
-    public void HoldCancelled() { }
+    public void HoldStarted(PlayerInventory inventory)
+    {
+        reviverInventory = inventory;
+        if (CanInteract)
+            sanity.StartCrossReviveChant();
+    }
+
+    public void HoldCancelled()
+    {
+        if (sanity != null)
+            sanity.StopCrossReviveChant();
+    }
 
     public void HoldCompleted(PlayerInventory inventory)
     {
+        if (sanity != null)
+            sanity.StopCrossReviveChant();
+
         reviverInventory = inventory;
         if (!CanInteract || inventory == null || !sanity.IsNetworkSpawned ||
             sanity.Object == null ||
