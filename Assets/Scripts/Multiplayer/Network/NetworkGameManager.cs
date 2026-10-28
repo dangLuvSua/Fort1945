@@ -2311,7 +2311,20 @@ public class NetworkGameManager : NetworkBehaviour
             return;
 
         PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
-        if (inventory == null || !inventory.HasItemId(keyItemId))
+        if (inventory == null || !HasEquippedItem(inventory, keyItemId))
+            return;
+
+        bool playerOutside = false;
+        InterrogationRoomGateUnlock[] gates = FindObjectsByType<InterrogationRoomGateUnlock>(FindObjectsSortMode.None);
+        foreach (InterrogationRoomGateUnlock gate in gates)
+        {
+            if (gate != null && gate.IsPlayerOnOutsideSide(playerObject.transform))
+            {
+                playerOutside = true;
+                break;
+            }
+        }
+        if (!playerOutside)
             return;
 
         InterrogationRoomUnlocked = true;
@@ -2336,19 +2349,29 @@ public class NetworkGameManager : NetworkBehaviour
             return;
 
         bool playerInside = false;
+        bool playerOutside = false;
         InterrogationRoomGateUnlock[] gates = FindObjectsByType<InterrogationRoomGateUnlock>(FindObjectsSortMode.None);
         foreach (InterrogationRoomGateUnlock gate in gates)
         {
-            if (gate != null && gate.IsPlayerOnInsideSide(playerObject.transform))
+            if (gate == null)
+                continue;
+
+            if (gate.IsPlayerOnInsideSide(playerObject.transform))
             {
                 playerInside = true;
-                break;
             }
+            if (gate.IsPlayerOnOutsideSide(playerObject.transform))
+                playerOutside = true;
         }
 
-        // The room side can always open the gate to exit. Outside operation
-        // requires the permanent unlock state, which is only granted by the key RPC.
-        if (open && !InterrogationRoomUnlocked && !playerInside)
+        PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
+        bool hasEquippedKey = HasEquippedItem(inventory, 105);
+
+        // The room side can open the gate to exit. Outside operation always
+        // requires the key equipped, including after the lock was unlocked.
+        if (open && playerOutside && !hasEquippedKey)
+            return;
+        if (!playerInside && !playerOutside)
             return;
         if (!open && !InterrogationRoomUnlocked && !playerInside)
             return;
