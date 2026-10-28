@@ -6074,7 +6074,7 @@ MonoBehaviour:
   chantSfx: {fileID: 8300000, guid: 609b385f84aeac9498e713f0ba212850, type: 3}
   chantMixerGroup: {fileID: -2918404742203968529, guid: 9cc4b0de500303642990899f2cc12e77, type: 2}
   glowDuration: 5
-  reviveGlowColor: {r: 1, g: 0.87919176, b: 0.4575472, a: 1}
+  reviveGlowColor: {r: 1, g: 0.7753624, b: 0, a: 1}
   visionEffectsStartPercent: 0.612
   visionPulseSpeed: 1.6
   maximumRedVignette: 1
@@ -6140,6 +6140,8 @@ MonoBehaviour:
   cameraItem: {fileID: 11400000, guid: 4e79d39b7f5292347bab8d08e48bc3ab, type: 2}
   playerCamera: {fileID: 2575002923815907540}
   cameraViewCamera: {fileID: 9169718980628111219}
+  maximumCharacterCaptureDistance: 5
+  minimumCharacterFrameHeight: 0.25
   cameraViewTexture: {fileID: 8400000, guid: 4e607408284e88b438295aeb015f5e05, type: 2}
   photoRenderTexture: {fileID: 8400000, guid: 6498c9949d3f0ed41862adc5b9c90953, type: 2}
   photoGhostLayer:

@@ -317,6 +317,25 @@ public sealed class InterrogationRoomGateUnlock : MonoBehaviour, IHoldInteractab
         return Vector3.Dot(playerOffset, sideDirection) > 0.05f;
     }
 
+    /// <summary>Used by NetworkGameManager to validate an outside gate request.</summary>
+    public bool IsPlayerOnOutsideSide(Transform playerRoot)
+    {
+        if (playerRoot == null || gateToRotate == null)
+            return false;
+
+        Vector3 sideDirection = outsideSidePoint != null
+            ? outsideSidePoint.position - gateToRotate.position
+            : gateToRotate.forward;
+        sideDirection.y = 0f;
+        if (sideDirection.sqrMagnitude < 0.0001f)
+            return false;
+        sideDirection.Normalize();
+
+        Vector3 playerOffset = playerRoot.position - gateToRotate.position;
+        playerOffset.y = 0f;
+        return Vector3.Dot(playerOffset, sideDirection) > 0.05f;
+    }
+
     private IEnumerator AnimateGate(bool open)
     {
         float duration = Mathf.Max(0.05f, openDuration);

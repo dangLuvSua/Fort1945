@@ -29,6 +29,7 @@ public class PlayerSanity : NetworkBehaviour
     private AudioMixerGroup chantMixerGroup;
     [SerializeField, Min(0.1f)] private float glowDuration = 5f;
     [SerializeField] private Color reviveGlowColor = new Color(1f, 0.8f, 0.1f);
+    private AudioSource chantSource;
 
     [Header("Low Sanity Vision")]
     [SerializeField, Range(0f, 1f)] private float visionEffectsStartPercent = 0.5f;
@@ -387,6 +388,40 @@ public class PlayerSanity : NetworkBehaviour
             0f,
             maxSanity
         );
+    }
+
+    public void StartCrossReviveChant()
+    {
+        if (chantSfx == null)
+            return;
+
+        if (chantSource == null)
+            chantSource = GetComponent<AudioSource>();
+        if (chantSource == null)
+            chantSource = gameObject.AddComponent<AudioSource>();
+
+        chantSource.Stop();
+        chantSource.clip = chantSfx;
+        chantSource.loop = true;
+        chantSource.playOnAwake = false;
+        chantSource.spatialBlend = 1f;
+        chantSource.minDistance = 1f;
+        chantSource.maxDistance = 20f;
+        chantSource.outputAudioMixerGroup = chantMixerGroup;
+        chantSource.Play();
+    }
+
+    public void StopCrossReviveChant()
+    {
+        if (chantSource == null)
+            return;
+
+        if (chantSource.clip == chantSfx && chantSource.loop)
+        {
+            chantSource.Stop();
+            chantSource.loop = false;
+            chantSource.clip = null;
+        }
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
