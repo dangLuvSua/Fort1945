@@ -366,7 +366,7 @@ public class PlayerController : NetworkBehaviour
         bool optionsOwnCursor = InGameOptionsController.Instance != null &&
             InGameOptionsController.Instance.isActiveAndEnabled;
 
-        if (!optionsOwnCursor && Keyboard.current != null &&
+        if (!MissionPanel.IsOpen && !optionsOwnCursor && Keyboard.current != null &&
             Keyboard.current.escapeKey.wasPressedThisFrame)
         {
             // The options canvas is inactive after Back to Game, so its Update
@@ -382,7 +382,8 @@ public class PlayerController : NetworkBehaviour
             }
         }
 
-        if ((!optionsOwnCursor || !InGameOptionsController.Instance.IsAnyPanelOpen) &&
+        if (!MissionPanel.IsOpen &&
+            (!optionsOwnCursor || !InGameOptionsController.Instance.IsAnyPanelOpen) &&
             Mouse.current != null &&
             Mouse.current.leftButton.wasPressedThisFrame)
         {

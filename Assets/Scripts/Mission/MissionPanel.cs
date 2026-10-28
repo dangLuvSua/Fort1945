@@ -10,6 +10,11 @@ using UnityEngine.UI;
 
 public class MissionPanel : MonoBehaviour
 {
+    private static MissionPanel activePanel;
+
+    public static bool IsOpen => activePanel != null &&
+        activePanel.panelRoot != null && activePanel.panelRoot.activeInHierarchy;
+
     // =========================================================
     // Inspector Fields — References
     // =========================================================
@@ -71,6 +76,9 @@ public class MissionPanel : MonoBehaviour
     private Action pendingAcknowledge;
     private GameObject canvasBackgroundObject;
     private Image canvasBackgroundImage;
+    private bool ownsCursor;
+    private CursorLockMode previousCursorLockState;
+    private bool previousCursorVisible;
 
 
     // =========================================================
@@ -108,8 +116,31 @@ public class MissionPanel : MonoBehaviour
     }
 
 
+    private void LateUpdate()
+    {
+        if (!ownsCursor)
+            return;
+
+        if (!IsOpen)
+        {
+            ReleaseCursor();
+            return;
+        }
+
+        // Keep the OK button usable if another gameplay system locks the mouse.
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    private void OnDisable()
+    {
+        ReleaseCursor();
+    }
+
     private void OnDestroy()
     {
+        ReleaseCursor();
+
         if (canvasBackgroundObject != null)
             canvasBackgroundObject.SetActive(false);
 
@@ -243,6 +274,7 @@ public class MissionPanel : MonoBehaviour
         {
             panelRoot.SetActive(true);
             EnsurePanelOnTop();
+            AcquireCursor();
         }
 
 
@@ -309,6 +341,7 @@ public class MissionPanel : MonoBehaviour
                 panelRoot.SetActive(false);
 
             SetCanvasBackgroundVisible(false);
+            ReleaseCursor();
         }
 
 
@@ -338,7 +371,38 @@ public class MissionPanel : MonoBehaviour
             panelRoot.SetActive(false);
 
         SetCanvasBackgroundVisible(false);
+        ReleaseCursor();
         deactivateCoroutine = null;
+    }
+
+    private void AcquireCursor()
+    {
+        // Replacing the message must preserve the state from the first Show.
+        if (!ownsCursor)
+        {
+            previousCursorLockState = Cursor.lockState;
+            previousCursorVisible = Cursor.visible;
+            ownsCursor = true;
+        }
+
+        activePanel = this;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    private void ReleaseCursor()
+    {
+        if (!ownsCursor)
+            return;
+
+        ownsCursor = false;
+        if (activePanel == this)
+            activePanel = null;
+
+        bool menuOpen = InGameOptionsController.Instance != null &&
+            InGameOptionsController.Instance.IsMenuOpen;
+        Cursor.lockState = menuOpen ? CursorLockMode.None : previousCursorLockState;
+        Cursor.visible = menuOpen || previousCursorVisible;
     }
 
     private void SetCanvasBackgroundVisible(bool visible)

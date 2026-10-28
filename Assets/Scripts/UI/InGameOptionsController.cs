@@ -34,6 +34,9 @@ public class InGameOptionsController : MonoBehaviour
     private readonly Dictionary<Canvas, bool> hiddenDungeonCanvases = new();
     private readonly Dictionary<GraphicRaycaster, bool> hiddenDungeonRaycasters = new();
 
+    public bool IsMenuOpen => (optionsCanvas != null && optionsCanvas.isActiveAndEnabled) ||
+        IsAnyPanelOpen;
+
     public bool IsAnyPanelOpen
     {
         get
@@ -72,6 +75,9 @@ public class InGameOptionsController : MonoBehaviour
 
     private void Update()
     {
+        if (MissionPanel.IsOpen)
+            return;
+
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
             if (IsAnyPanelOpen)
@@ -360,6 +366,12 @@ public class InGameOptionsController : MonoBehaviour
 
     private void LockCursor()
     {
+        if (MissionPanel.IsOpen)
+        {
+            UnlockCursor();
+            return;
+        }
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
