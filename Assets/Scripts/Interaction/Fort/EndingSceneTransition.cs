@@ -96,6 +96,7 @@ public sealed class EndingSceneTransition : MonoBehaviour
 
         // Keep the White Cross visible and glowing for the requested five
         // seconds after players are placed there.
+        EyeBlinkTransition.Open();
         yield return new WaitForSecondsRealtime(5f);
         if (endingVideo != null)
             yield return PlayEndingVideo(endingVideo);

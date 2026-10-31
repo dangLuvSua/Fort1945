@@ -401,8 +401,34 @@ public class MissionPanel : MonoBehaviour
 
         bool menuOpen = InGameOptionsController.Instance != null &&
             InGameOptionsController.Instance.IsMenuOpen;
-        Cursor.lockState = menuOpen ? CursorLockMode.None : previousCursorLockState;
-        Cursor.visible = menuOpen || previousCursorVisible;
+
+        bool puzzleOwnsCursor = false;
+        PuzzleModeController[] puzzleModes =
+            FindObjectsByType<PuzzleModeController>(FindObjectsSortMode.None);
+
+        foreach (PuzzleModeController puzzleMode in puzzleModes)
+        {
+            if (puzzleMode == null ||
+                (puzzleMode.Object != null &&
+                 !puzzleMode.Object.HasInputAuthority))
+            {
+                continue;
+            }
+
+            if (puzzleMode.IsInPuzzleMode ||
+                puzzleMode.IsShowingPuzzleIntro ||
+                puzzleMode.IsShowingPuzzleResult)
+            {
+                puzzleOwnsCursor = true;
+                break;
+            }
+        }
+
+        bool cursorMustRemainFree = menuOpen || puzzleOwnsCursor;
+        Cursor.lockState = cursorMustRemainFree
+            ? CursorLockMode.None
+            : previousCursorLockState;
+        Cursor.visible = cursorMustRemainFree || previousCursorVisible;
     }
 
     private void SetCanvasBackgroundVisible(bool visible)
